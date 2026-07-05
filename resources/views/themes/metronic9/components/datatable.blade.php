@@ -41,8 +41,8 @@
                                 render: function(data, type, row, meta) {
                                     @if (array_key_exists('buttons', $col))
                                         var str = {!! json_encode(\App\Helpers\Ui::TableActionCol($col['buttons'])) !!};
-                                        @foreach ($options['keys'] as $key)
-                                            str = str.replace("{{ '{'.$key.'}' }}", row.{{ $key }});
+                                        @foreach (array_unique($options['keys'] ?? ['id']) as $key)
+                                            str = str.split('{{ '{'.$key.'}' }}').join(String(row.{{ $key }}));
                                         @endforeach
                                         return str;
                                     @elseif (array_key_exists('template', $col))
@@ -57,7 +57,7 @@
                                             @php $fields = $options['keys']; @endphp
                                         @endif
                                         @foreach ($fields as $key)
-                                            str = str.replace("{{ '{'.$key.'}' }}", row.{{ $key }});
+                                            str = str.split('{{ '{'.$key.'}' }}').join(String(row.{{ $key }}));
                                         @endforeach
                                         return str;
                                     @else

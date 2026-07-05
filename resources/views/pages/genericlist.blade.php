@@ -7,7 +7,7 @@
 
         $options = [
             'columns' => $columns,
-            'keys' => ['id', 'id'],
+            'keys' => ['id'],
             'tableClass' => 'table-hover table-striped',
             'dataRoute' => 'api.'.Str::snake($model).'.index',
             'model' => $model,
