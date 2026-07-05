@@ -4,9 +4,14 @@
     $formRoute = in_array($verb, ['POST', 'post'], true)
         ? ['route' => $route]
         : ['route' => [$route, $dto->id]];
+    $formOpenOptions = array_merge($formRoute, ['id' => $id, 'files' => true, 'method' => 'post']);
+
+    if ($inModal) {
+        $formOpenOptions['attributes'] = ['data-modal-form' => 'true'];
+    }
 @endphp
 
-{{ Form::open(array_merge($formRoute, ['id' => 'form1', 'files' => true, 'method' => 'post'])) }}
+{{ Form::open($formOpenOptions) }}
     <div class="{{ $inModal ? '' : 'card-body border-top p-9' }}">
         @if (! in_array($verb, ['POST', 'post'], true))
             @method($verb)

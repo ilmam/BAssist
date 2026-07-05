@@ -40,7 +40,7 @@ class BaseController extends Controller
         $data = $this->getData($request);
         $this->modelRepository->create($data->toArray());
 
-        return redirect()->route(model_route_name($this->modelName, 'index'));
+        return $this->respondAfterMutation($request);
     }
 
     public function show($id)
@@ -119,12 +119,21 @@ class BaseController extends Controller
         $data = $this->getData($request);
         $this->modelRepository->update($id, $data->toArray());
 
-        return redirect()->route(model_route_name($this->modelName, 'index'));
+        return $this->respondAfterMutation($request);
     }
 
     public function destroy($id)
     {
         $this->modelRepository->delete($id);
+
+        return $this->respondAfterMutation(request());
+    }
+
+    protected function respondAfterMutation(Request $request)
+    {
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json(['success' => true]);
+        }
 
         return redirect()->route(model_route_name($this->modelName, 'index'));
     }

@@ -65,7 +65,7 @@ class Datatable extends Component
                 'action' => 'delete',
                 'text' => '',
                 'icon' => 'trash',
-                'link' => '#',
+                'link' => $baseUrl.'/{id}',
                 'modalUrl' => $modalDeleteUrl,
             ],
         ];

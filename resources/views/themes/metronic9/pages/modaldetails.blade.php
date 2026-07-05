@@ -20,7 +20,7 @@
 
 <div class="kt-modal-footer flex justify-end gap-2.5">
     <button class="kt-btn kt-btn-outline" data-kt-modal-dismiss="true" type="button">Cancel</button>
-    <form method="POST" action="{{ model_route($model, 'destroy', $dto->id) }}">
+    <form method="POST" action="{{ model_route($model, 'destroy', $dto->id) }}" data-modal-form="true">
         @csrf
         @method('DELETE')
         <button type="submit" class="kt-btn kt-btn-destructive">Delete</button>

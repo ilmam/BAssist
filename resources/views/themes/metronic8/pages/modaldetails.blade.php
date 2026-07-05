@@ -20,7 +20,7 @@
 
 <div class="modal-footer">
     <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-    <form method="POST" action="{{ model_route($model, 'destroy', $dto->id) }}" class="d-inline">
+    <form method="POST" action="{{ model_route($model, 'destroy', $dto->id) }}" class="d-inline" data-modal-form="true">
         @csrf
         @method('DELETE')
         <button type="submit" class="btn btn-danger">Delete</button>

@@ -17,6 +17,7 @@ class FormBuilder
         $attributes = $options['attributes'] ?? [];
         $action = $this->resolveAction($options);
 
+        $id = $options['id'] ?? null;
         unset($options['method'], $options['files'], $options['attributes'], $options['route'], $options['url'], $options['id']);
         $attributes['method'] = $this->getMethod($method);
         $attributes['action'] = $action;
@@ -25,8 +26,8 @@ class FormBuilder
             $attributes['enctype'] = 'multipart/form-data';
         }
 
-        if (isset($options['id'])) {
-            $attributes['id'] = $options['id'];
+        if ($id) {
+            $attributes['id'] = $id;
         }
 
         $html = '<form'.$this->attributes($attributes).'>';

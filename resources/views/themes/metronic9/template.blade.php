@@ -57,6 +57,8 @@
     <script src="{{ ui_asset('js/layouts/demo1.js') }}"></script>
     @stack('scripts')
     <script>
+        let modalReturnUrl = null;
+
         document.addEventListener('click', function (event) {
             const trigger = event.target.closest('[data-modal-url]');
             if (!trigger) {
@@ -68,10 +70,27 @@
         });
 
         window.addEventListener('popstate', function () {
-            closeModal(false);
+            if (!history.state?.modal) {
+                hideModalUi();
+                modalReturnUrl = null;
+            }
         });
 
-        function closeModal(updateHistory = true) {
+        function restoreListUrl() {
+            const returnUrl = history.state?.returnUrl || modalReturnUrl;
+
+            if (!returnUrl) {
+                return;
+            }
+
+            if (history.state?.modal || window.location.pathname.includes('/modal/')) {
+                history.replaceState(null, '', returnUrl);
+            }
+
+            modalReturnUrl = null;
+        }
+
+        function hideModalUi() {
             const modal = document.getElementById('mianModal');
             if (!modal) {
                 return;
@@ -85,10 +104,11 @@
             if (container) {
                 container.innerHTML = '';
             }
+        }
 
-            if (updateHistory && history.state?.modal) {
-                history.back();
-            }
+        function closeModal() {
+            restoreListUrl();
+            hideModalUi();
         }
 
         function openModal(url) {
@@ -98,6 +118,8 @@
             if (!modal || !container) {
                 return;
             }
+
+            modalReturnUrl = window.location.href;
 
             fetch(url, {
                 headers: {
@@ -110,13 +132,63 @@
                     modal.classList.remove('hidden');
                     modal.classList.add('open');
                     document.body.classList.add('overflow-hidden');
-                    history.pushState({ modal: true }, '', url);
-
-                    container.querySelectorAll('[data-kt-modal-dismiss]').forEach((button) => {
-                        button.addEventListener('click', () => closeModal());
-                    });
+                    history.pushState({ modal: true, returnUrl: modalReturnUrl }, '', url);
                 });
         }
+
+        document.getElementById('mianModal')?.addEventListener('click', function (event) {
+            if (event.target.closest('[data-kt-modal-dismiss]')) {
+                closeModal();
+            }
+        });
+
+        function reloadDataTables() {
+            if (typeof $ !== 'undefined' && $.fn.dataTable) {
+                $.fn.dataTable.tables({ visible: true, api: true }).ajax.reload(null, false);
+            }
+        }
+
+        document.addEventListener('submit', function (event) {
+            const form = event.target.closest('form[data-modal-form]');
+            if (!form) {
+                return;
+            }
+
+            event.preventDefault();
+
+            const submitButton = form.querySelector('[type="submit"]');
+            if (submitButton) {
+                submitButton.disabled = true;
+            }
+
+            fetch(form.action, {
+                method: 'POST',
+                body: new FormData(form),
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json',
+                },
+            })
+                .then(async (response) => {
+                    if (!response.ok) {
+                        const payload = await response.json().catch(() => ({}));
+                        throw payload;
+                    }
+
+                    return response.json();
+                })
+                .then(() => {
+                    reloadDataTables();
+                    closeModal();
+                })
+                .catch(() => {
+                    if (submitButton) {
+                        submitButton.disabled = false;
+                    }
+
+                    window.alert('Save failed. Please check the form and try again.');
+                });
+        });
     </script>
 </body>
 </html>

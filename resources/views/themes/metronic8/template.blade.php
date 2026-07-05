@@ -49,6 +49,8 @@
     <script src="{{ ui_asset('plugins/custom/datatables/datatables.bundle.js') }}"></script>
     @stack('scripts')
     <script>
+        let modalReturnUrl = null;
+
         document.addEventListener('click', function (event) {
             const trigger = event.target.closest('[data-modal-url]');
             if (!trigger) {
@@ -60,27 +62,54 @@
         });
 
         window.addEventListener('popstate', function () {
-            closeModal(false);
+            if (!history.state?.modal) {
+                hideModalUi();
+                modalReturnUrl = null;
+            }
         });
 
-        function closeModal(updateHistory = true) {
+        function restoreListUrl() {
+            const returnUrl = history.state?.returnUrl || modalReturnUrl;
+
+            if (!returnUrl) {
+                return;
+            }
+
+            if (history.state?.modal || window.location.pathname.includes('/modal/')) {
+                history.replaceState(null, '', returnUrl);
+            }
+
+            modalReturnUrl = null;
+        }
+
+        function hideModalUi() {
             const modalEl = document.getElementById('mianModal');
             if (!modalEl) {
                 return;
             }
 
             if (typeof bootstrap !== 'undefined') {
-                bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+                const instance = bootstrap.Modal.getInstance(modalEl);
+                if (instance) {
+                    instance.hide();
+                }
             }
 
             const container = modalEl.querySelector('[data-modal-container], .modal-content');
             if (container) {
                 container.innerHTML = '';
             }
+        }
 
-            if (updateHistory && history.state?.modal) {
-                history.back();
+        function closeModal() {
+            const modalEl = document.getElementById('mianModal');
+            if (typeof bootstrap !== 'undefined' && modalEl) {
+                bootstrap.Modal.getInstance(modalEl)?.hide();
+                return;
             }
+
+            restoreListUrl();
+            hideModalUi();
         }
 
         function openModal(url) {
@@ -90,6 +119,8 @@
             if (!modalEl || !container) {
                 return;
             }
+
+            modalReturnUrl = window.location.href;
 
             fetch(url, {
                 headers: {
@@ -102,9 +133,62 @@
                     if (typeof bootstrap !== 'undefined') {
                         bootstrap.Modal.getOrCreateInstance(modalEl).show();
                     }
-                    history.pushState({ modal: true }, '', url);
+                    history.pushState({ modal: true, returnUrl: modalReturnUrl }, '', url);
                 });
         }
+
+        document.getElementById('mianModal')?.addEventListener('hidden.bs.modal', function () {
+            restoreListUrl();
+            hideModalUi();
+        });
+
+        function reloadDataTables() {
+            if (typeof $ !== 'undefined' && $.fn.dataTable) {
+                $.fn.dataTable.tables({ visible: true, api: true }).ajax.reload(null, false);
+            }
+        }
+
+        document.addEventListener('submit', function (event) {
+            const form = event.target.closest('form[data-modal-form]');
+            if (!form) {
+                return;
+            }
+
+            event.preventDefault();
+
+            const submitButton = form.querySelector('[type="submit"]');
+            if (submitButton) {
+                submitButton.disabled = true;
+            }
+
+            fetch(form.action, {
+                method: 'POST',
+                body: new FormData(form),
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json',
+                },
+            })
+                .then(async (response) => {
+                    if (!response.ok) {
+                        const payload = await response.json().catch(() => ({}));
+                        throw payload;
+                    }
+
+                    return response.json();
+                })
+                .then(() => {
+                    reloadDataTables();
+                    closeModal();
+                })
+                .catch(() => {
+                    if (submitButton) {
+                        submitButton.disabled = false;
+                    }
+
+                    window.alert('Save failed. Please check the form and try again.');
+                });
+        });
     </script>
 </body>
 </html>

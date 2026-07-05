@@ -114,7 +114,7 @@ class Ui
             $iconClass = self::tableActionIcon($icon, $theme);
 
             if ($modalUrl) {
-                $colValue .= '<a href="'.e($modalUrl).'" class="'.$buttonClass.' js-open-modal" data-modal-url="'.e($modalUrl).'">';
+                $colValue .= '<a href="'.$link.'" class="'.$buttonClass.' js-open-modal" data-modal-url="'.e($modalUrl).'">';
             } else {
                 $colValue .= '<a href="'.$link.'" class="'.$buttonClass.'">';
             }
@@ -126,7 +126,7 @@ class Ui
             $iconClass = self::tableActionIcon($icon, $theme);
 
             if ($modalUrl) {
-                $colValue .= '<a href="'.e($modalUrl).'" class="'.$buttonClass.' js-open-modal" data-modal-url="'.e($modalUrl).'">';
+                $colValue .= '<a href="'.$link.'" class="'.$buttonClass.' js-open-modal" data-modal-url="'.e($modalUrl).'">';
             } else {
                 $colValue .= '<a href="'.$link.'" class="'.$buttonClass.'">';
             }
@@ -153,7 +153,7 @@ class Ui
             $buttonClass = self::keyset($option, 'buttonClass', 'kt-btn kt-btn-sm kt-btn-icon kt-btn-ghost');
 
             return '<div class="inline-flex items-center">'
-                .'<a href="'.e($modalUrl).'" class="'.$buttonClass.' js-open-modal" data-modal-url="'.e($modalUrl).'">'
+                .'<a href="'.$link.'" class="'.$buttonClass.' js-open-modal" data-modal-url="'.e($modalUrl).'">'
                 .($iconClass ? '<i class="'.$iconClass.'"></i>' : '')
                 .'</a>'
                 .'<div class="inline-flex" data-kt-menu="true" data-kt-menu-placement="bottom-end">'
@@ -162,7 +162,7 @@ class Ui
                 .'</button>'
                 .'<div class="kt-menu kt-menu-default kt-menu-dropdown min-w-[160px]">'
                 .'<div class="kt-menu-item"><a href="'.e($modalUrl).'" class="kt-menu-link js-open-modal" data-modal-url="'.e($modalUrl).'"><span class="kt-menu-title">Open</span></a></div>'
-                .'<div class="kt-menu-item"><a href="'.e($modalUrl).'" class="kt-menu-link" target="_blank" rel="noopener"><span class="kt-menu-title">Open in new page</span></a></div>'
+                .'<div class="kt-menu-item"><a href="'.$link.'" class="kt-menu-link" target="_blank" rel="noopener"><span class="kt-menu-title">Open in new page</span></a></div>'
                 .'</div>'
                 .'</div>'
                 .'</div>';
@@ -171,13 +171,13 @@ class Ui
         $buttonClass = self::keyset($option, 'buttonClass', 'btn btn-sm btn-icon btn-light btn-active-light-primary h-25px w-25px');
 
         return '<div class="btn-group">'
-            .'<a href="'.e($modalUrl).'" class="'.$buttonClass.' js-open-modal" data-modal-url="'.e($modalUrl).'">'
+            .'<a href="'.$link.'" class="'.$buttonClass.' js-open-modal" data-modal-url="'.e($modalUrl).'">'
             .($iconClass ? '<i class="'.$iconClass.'"></i>' : '')
             .'</a>'
             .'<button type="button" class="'.$buttonClass.' dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false"></button>'
             .'<ul class="dropdown-menu dropdown-menu-end">'
             .'<li><a class="dropdown-item js-open-modal" data-modal-url="'.e($modalUrl).'" href="'.e($modalUrl).'">Open</a></li>'
-            .'<li><a class="dropdown-item" href="'.e($modalUrl).'" target="_blank" rel="noopener">Open in new page</a></li>'
+            .'<li><a class="dropdown-item" href="'.$link.'" target="_blank" rel="noopener">Open in new page</a></li>'
             .'</ul>'
             .'</div>';
     }
