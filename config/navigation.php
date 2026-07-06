@@ -19,12 +19,6 @@ return [
             'icon' => 'element-11',
             'icon_v8' => 'element-11',
         ],
-        [
-            'label' => 'Categories',
-            'route' => 'categories.index',
-            'icon' => 'category',
-            'icon_v8' => 'category',
-        ],
     ],
 
 ];

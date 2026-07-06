@@ -53,7 +53,22 @@ if (! function_exists('ui_component_view')) {
 if (! function_exists('nav_items')) {
     function nav_items(): array
     {
-        return config('navigation.items', []);
+        $items = config('navigation.items', []);
+
+        foreach (\App\Support\CrudEntityRegistry::all() as $model => $options) {
+            if (! ($options['nav'] ?? false)) {
+                continue;
+            }
+
+            $items[] = [
+                'label' => $options['nav_label'] ?? \Illuminate\Support\Str::plural($model),
+                'route' => model_route_name($model, 'index'),
+                'icon' => $options['nav_icon'] ?? 'element-11',
+                'icon_v8' => $options['nav_icon_v8'] ?? ($options['nav_icon'] ?? 'element-11'),
+            ];
+        }
+
+        return $items;
     }
 }
 

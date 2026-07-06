@@ -6,6 +6,7 @@ use App\Http\Controllers\Concerns\RespondsWithModal;
 use Illuminate\Http\Request;
 use App\Helpers\AttributeHelper;
 use App\Helpers\FormHelper;
+use App\Support\RepositoryResolver;
 
 class BaseController extends Controller
 {
@@ -166,8 +167,6 @@ class BaseController extends Controller
 
     protected function initiateModelRepository($modelName)
     {
-        $repositoryClassName = "\\App\\Repositories\\".$modelName.'Repository';
-
-        return new $repositoryClassName;
+        return RepositoryResolver::make($modelName);
     }
 }

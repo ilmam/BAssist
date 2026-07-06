@@ -4,6 +4,10 @@ namespace App\Repositories;
 
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * Base data access layer for entities. HTTP routes must never touch models
+ * directly; controllers resolve a repository and call methods on it.
+ */
 class BaseRepository
 {
     use \App\Traits\DataHelperTrait;

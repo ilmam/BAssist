@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use Illuminate\Http\Request;
 use App\Traits\DataHelperTrait;
+use App\Support\RepositoryResolver;
 use Yajra\DataTables\Facades\DataTables;
 
 class BaseApiController extends \App\Http\Controllers\Controller
@@ -60,8 +61,6 @@ class BaseApiController extends \App\Http\Controllers\Controller
 
     protected function initiateModelRepository($modelName)
     {
-        $repositoryClassName = "\\App\\Repositories\\".$modelName.'Repository';
-
-        return new $repositoryClassName;
+        return RepositoryResolver::make($modelName);
     }
 }
