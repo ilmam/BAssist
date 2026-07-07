@@ -1,28 +1,24 @@
 <?php
 namespace App\Helpers;
 
-use App\Attributes\ValuePropertyAttribute;
+use App\Support\DtoMetadata;
 
 class AttributeHelper
 {
-    public static function getPropertyAttributes($object, $attributeName, $includeArguments=true)
+    public static function getPropertyAttributes($object, $attributeName, $includeArguments = true)
     {
-        $reflect = new \ReflectionClass($object);
-        $props = $reflect->getProperties(\ReflectionProperty::IS_PUBLIC);
+        if ($attributeName === 'FormFieldAttribute') {
+            $fields = DtoMetadata::for($object)->formFields();
 
-        $properties = [];
-        foreach($props as $prop) {
-            $attributes = $prop->getAttributes("App\Attributes\\$attributeName");
-            foreach ($attributes as $attribute) {
-                if ($attribute->getName() == "App\Attributes\\$attributeName") {
-                    if ($includeArguments) {
-                        $properties[$prop->name] = $attribute->getArguments();
-                    } else {
-                        $properties[] = $prop->name;
-                    }
-                }
+            if ($includeArguments) {
+                return $fields;
             }
+
+            return array_keys($fields);
         }
-        return $properties;
+
+        throw new \InvalidArgumentException(
+            "AttributeHelper only delegates FormFieldAttribute to DtoMetadata. Use DtoMetadata::for() for [{$attributeName}]."
+        );
     }
 }

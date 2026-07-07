@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Concerns\RespondsWithModal;
 use Illuminate\Http\Request;
-use App\Helpers\AttributeHelper;
 use App\Helpers\FormHelper;
+use App\Support\DtoMetadata;
 use App\Support\RepositoryResolver;
 
 class BaseController extends Controller
@@ -17,16 +17,22 @@ class BaseController extends Controller
     public function index()
     {
         $result = $this->modelRepository->getFirst();
+        $columns = DtoMetadata::for($this->modelRepository->viewDto)->listColumns(withPrefix: true);
 
-        return view(model_page_view($this->modelName, 'list'), ['dto' => $result, 'model' => $this->modelName]);
+        return view(model_page_view($this->modelName, 'list'), [
+            'dto' => $result,
+            'model' => $this->modelName,
+            'columns' => $columns,
+        ]);
     }
 
     public function create()
     {
         $dtoClass = $this->modelRepository->editDto;
         $dto = $dtoClass::from($dtoClass::empty());
-        $fields = AttributeHelper::getPropertyAttributes($this->modelRepository->editDto, 'FormFieldAttribute', true);
-        $formFields = FormHelper::getFormFields($fields);
+        $formFields = FormHelper::getFormFields(
+            DtoMetadata::for($this->modelRepository->editDto)->formFields()
+        );
 
         return view(model_page_view($this->modelName, 'form'), [
             'dto' => $dto,
@@ -59,7 +65,7 @@ class BaseController extends Controller
         $data = ['dto' => $dto, 'model' => $this->modelName, 'fields' => $fields];
 
         return $this->respondModalOrPage(
-            'themes.'.ui_theme().'.pages.modalview',
+            model_modal_view($this->modelName, 'view'),
             $data,
             model_page_view($this->modelName, 'details'),
             $data
@@ -78,7 +84,7 @@ class BaseController extends Controller
         $data = ['dto' => $dto, 'model' => $this->modelName, 'fields' => $fields];
 
         return $this->respondModalOrPage(
-            'themes.'.ui_theme().'.pages.modaldetails',
+            model_modal_view($this->modelName, 'delete'),
             $data,
             model_page_view($this->modelName, 'details'),
             $data
@@ -96,7 +102,7 @@ class BaseController extends Controller
         ];
 
         return $this->respondModalOrPage(
-            'themes.'.ui_theme().'.pages.modalform',
+            model_modal_view($this->modelName, 'form'),
             $data,
             model_page_view($this->modelName, 'form'),
             $data
@@ -149,7 +155,7 @@ class BaseController extends Controller
     protected function buildEditForm($id): array
     {
         $dto = $this->modelRepository->editById($id);
-        $fields = AttributeHelper::getPropertyAttributes($this->modelRepository->editDto, 'FormFieldAttribute', true);
+        $fields = DtoMetadata::for($this->modelRepository->editDto)->formFields();
 
         foreach ($fields as $title => &$options) {
             $type = $options[0];

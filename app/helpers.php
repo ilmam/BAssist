@@ -116,6 +116,36 @@ if (! function_exists('model_page_view')) {
     }
 }
 
+if (! function_exists('model_modal_view')) {
+    function model_modal_view(string $model, string $action): string
+    {
+        $defaults = [
+            'view' => 'pages.modals.view',
+            'form' => 'pages.modals.form',
+            'delete' => 'pages.modals.delete',
+        ];
+
+        if (! array_key_exists($action, $defaults)) {
+            throw new InvalidArgumentException("Unknown model modal action [{$action}].");
+        }
+
+        $resource = \Illuminate\Support\Str::plural(\Illuminate\Support\Str::snake($model));
+        $override = "pages.{$resource}.modals.{$action}";
+
+        if (ViewFactory::exists($override)) {
+            return $override;
+        }
+
+        $configured = config("crud.models.{$model}.modals.{$action}");
+
+        if (is_string($configured) && ViewFactory::exists($configured)) {
+            return $configured;
+        }
+
+        return $defaults[$action];
+    }
+}
+
 if (! function_exists('model_route_name')) {
     function model_route_name(string $model, string $action = 'index'): string
     {

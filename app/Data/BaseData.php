@@ -1,16 +1,16 @@
 <?php
 namespace App\Data;
 
+use App\Support\DtoMetadata;
 use Spatie\LaravelData\Data;
-use Illuminate\Http\Request;
 
 class BaseData extends Data
 {
     const VALUE_PROPERTY_ATTRIBUTE = "App\Attributes\ValuePropertyAttribute";
 
     /**
-     * Get array of ValueProperty fields
-     * This used to retrieve columns for datatable
+     * Get array of ValueProperty fields using cached DTO metadata.
+     * Used for datatable columns and detail views.
      */
     public function getFields($onlyHeaders = false, $withPrefix = true, $prefix = '', $object = null)
     {
@@ -18,74 +18,15 @@ class BaseData extends Data
             $object = $this;
         }
 
-        $reflect = new \ReflectionClass($object);
-        $props = $reflect->getProperties(\ReflectionProperty::IS_PUBLIC);
-
-        $fields = array();
-        $sep = ".";
-
-        foreach($props as $prop) {
-            $value = $prop->getValue($object);
-            $fieldName = $prop->getName();
-            $fullFieldName = ltrim($prefix.$sep.$fieldName, ".");
-
-            if (is_array($value) || is_object($value)) {
-                $fields = array_merge($fields, $this->getFields($onlyHeaders, $withPrefix, $fullFieldName, $value));
-            } else {
-                $attributes = $prop->getAttributes();
-                foreach ($attributes as $attribute) {
-                    if ($attribute->getName() == self::VALUE_PROPERTY_ATTRIBUTE) {
-                        $key = $withPrefix ? $fullFieldName : $fieldName;
-                        if ($onlyHeaders) {
-                            $fields[] = $key;
-                        } else {
-                            $fields[$key] = $object->{$fieldName}; //$prop->getValue($object);
-                        }
-                    }
-                }
-            }
-        }
-        return $fields;
+        return DtoMetadata::for($object)->extractValues($object, $onlyHeaders, $withPrefix);
     }
 
     /**
-     * Get array of ValueProperty fields
-     * This used to retrieve columns for datatable
+     * Alias for getFields().
      */
     public function getColumns($onlyHeaders = false, $withPrefix = true, $prefix = '', $object = null)
     {
-        if ($object == null) {
-            $object = $this;
-        }
-
-        $reflect = new \ReflectionClass($object);
-        $props = $reflect->getProperties(\ReflectionProperty::IS_PUBLIC);
-
-        $fields = array();
-        $sep = ".";
-
-        foreach($props as $prop) {
-            $value = $prop->getValue($object);
-            $fieldName = $prop->getName();
-            $fullFieldName = ltrim($prefix.$sep.$fieldName, ".");
-
-            if (is_array($value) || is_object($value)) {
-                $fields = array_merge($fields, $this->getFields($onlyHeaders, $withPrefix, $fullFieldName, $value));
-            } else {
-                $attributes = $prop->getAttributes();
-                foreach ($attributes as $attribute) {
-                    if ($attribute->getName() == self::VALUE_PROPERTY_ATTRIBUTE) {
-                        $key = $withPrefix ? $fullFieldName : $fieldName;
-                        if ($onlyHeaders) {
-                            $fields[] = $key;
-                        } else {
-                            $fields[$key] = $prop->getValue($object);
-                        }
-                    }
-                }
-            }
-        }
-        return $fields;
+        return $this->getFields($onlyHeaders, $withPrefix, $prefix, $object);
     }
 
     /**

@@ -7,6 +7,13 @@
 <a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
 </p>
 
+## About this project
+
+Generic Laravel CRUD with theme-aware UI (Metronic 8/9).
+
+- **[docs/ui-views.md](docs/ui-views.md)** — view conventions, page/modal architecture, per-model overrides
+- **[docs/dto-metadata.md](docs/dto-metadata.md)** — cached DTO attribute metadata (forms, datatables, details) and how to clear the cache
+
 ## About Laravel
 
 Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:

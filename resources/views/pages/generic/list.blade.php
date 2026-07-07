@@ -2,9 +2,6 @@
 
 @section('main')
     @php
-        $data = ArrayHelper::squash_array(array: $dto, withPrefix: true, onlyHeaders: false);
-        $columns = array_keys($data);
-
         $options = [
             'columns' => $columns,
             'keys' => ['id'],

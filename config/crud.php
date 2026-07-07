@@ -24,6 +24,11 @@ return [
     | Optional: set views.{action} below only when the view path does not
     | follow that convention (e.g. a shared or non-standard blade).
     |
+    | Modal fragments follow the same pattern under pages/modals/:
+    |   pages/modals/view.blade.php, form.blade.php, delete.blade.php
+    | Per-model modal overrides: pages/{resource}/modals/{action}.blade.php
+    | Optional config escape hatch: modals.{action} on the model entry.
+    |
     */
 
     'exclude' => [
