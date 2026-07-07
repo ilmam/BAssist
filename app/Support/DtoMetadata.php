@@ -3,6 +3,8 @@
 namespace App\Support;
 
 use App\Attributes\FormFieldAttribute;
+use App\Attributes\HidePropertyAttribute;
+use App\Attributes\ListPropertyAttribute;
 use App\Attributes\ValuePropertyAttribute;
 use Illuminate\Support\Facades\Cache;
 use ReflectionClass;
@@ -44,7 +46,8 @@ class DtoMetadata
     }
 
     /**
-     * Dot-notation paths for properties marked with ValuePropertyAttribute.
+     * Dot-notation paths for properties marked with ValuePropertyAttribute (detail/view pages).
+     * Properties marked with HidePropertyAttribute are excluded.
      *
      * @return list<string>
      */
@@ -63,7 +66,33 @@ class DtoMetadata
     }
 
     /**
+     * Dot-notation paths for properties marked with ListPropertyAttribute (datatable columns).
+     * Falls back to valueFieldPaths() when no ListPropertyAttribute is present on the DTO.
+     * Properties marked with HidePropertyAttribute are excluded.
+     *
+     * @return list<string>
+     */
+    public function listFieldPaths(bool $withPrefix = true): array
+    {
+        $paths = $this->schema()['list_fields'];
+
+        if ($paths === []) {
+            $paths = $this->schema()['value_fields'];
+        }
+
+        if ($withPrefix) {
+            return $paths;
+        }
+
+        return array_map(
+            static fn (string $path) => str_contains($path, '.') ? substr($path, strrpos($path, '.') + 1) : $path,
+            $paths
+        );
+    }
+
+    /**
      * Column headers for list/datatable views (includes id when present).
+     * Uses ListPropertyAttribute fields; falls back to ValuePropertyAttribute fields.
      *
      * @return list<string>
      */
@@ -75,7 +104,7 @@ class DtoMetadata
             $columns[] = 'id';
         }
 
-        return array_merge($columns, $this->valueFieldPaths($withPrefix));
+        return array_merge($columns, $this->listFieldPaths($withPrefix));
     }
 
     /**
@@ -102,7 +131,7 @@ class DtoMetadata
     }
 
     /**
-     * @return array{form_fields: array<string, array<int, mixed>>, value_fields: list<string>}
+     * @return array{form_fields: array<string, array<int, mixed>>, value_fields: list<string>, list_fields: list<string>}
      */
     public function schema(): array
     {
@@ -117,6 +146,7 @@ class DtoMetadata
         $schema = [
             'form_fields' => self::discoverFormFields($this->className),
             'value_fields' => self::discoverValueFields($this->className),
+            'list_fields'  => self::discoverListFields($this->className),
         ];
 
         if ($this->cacheEnabled()) {
@@ -207,6 +237,9 @@ class DtoMetadata
     }
 
     /**
+     * Discover properties for detail/view display (ValuePropertyAttribute).
+     * Properties with HidePropertyAttribute are excluded.
+     *
      * @return list<string>
      */
     protected static function discoverValueFields(string $class, string $prefix = ''): array
@@ -215,17 +248,56 @@ class DtoMetadata
         $reflect = new ReflectionClass($class);
 
         foreach ($reflect->getProperties(ReflectionProperty::IS_PUBLIC) as $property) {
+            if ($property->getAttributes(HidePropertyAttribute::class) !== []) {
+                continue;
+            }
+
             $fieldName = $property->getName();
             $fullFieldName = ltrim($prefix.'.'.$fieldName, '.');
             $nestedClass = self::nestedClassName($property);
 
-            if ($nestedClass !== null && class_exists($nestedClass)) {
+            if ($nestedClass !== null && class_exists($nestedClass) && is_subclass_of($nestedClass, \Spatie\LaravelData\Data::class)) {
                 $fields = array_merge($fields, self::discoverValueFields($nestedClass, $fullFieldName));
 
                 continue;
             }
 
             foreach ($property->getAttributes(ValuePropertyAttribute::class) as $attribute) {
+                $fields[] = $fullFieldName;
+            }
+        }
+
+        return $fields;
+    }
+
+    /**
+     * Discover properties for list/datatable display (ListPropertyAttribute).
+     * Properties with HidePropertyAttribute are excluded.
+     * Returns empty array when no ListPropertyAttribute is found; listFieldPaths() handles the fallback.
+     *
+     * @return list<string>
+     */
+    protected static function discoverListFields(string $class, string $prefix = ''): array
+    {
+        $fields = [];
+        $reflect = new ReflectionClass($class);
+
+        foreach ($reflect->getProperties(ReflectionProperty::IS_PUBLIC) as $property) {
+            if ($property->getAttributes(HidePropertyAttribute::class) !== []) {
+                continue;
+            }
+
+            $fieldName = $property->getName();
+            $fullFieldName = ltrim($prefix.'.'.$fieldName, '.');
+            $nestedClass = self::nestedClassName($property);
+
+            if ($nestedClass !== null && class_exists($nestedClass) && is_subclass_of($nestedClass, \Spatie\LaravelData\Data::class)) {
+                $fields = array_merge($fields, self::discoverListFields($nestedClass, $fullFieldName));
+
+                continue;
+            }
+
+            foreach ($property->getAttributes(ListPropertyAttribute::class) as $attribute) {
                 $fields[] = $fullFieldName;
             }
         }
