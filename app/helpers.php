@@ -86,6 +86,36 @@ if (! function_exists('ui_form_view')) {
     }
 }
 
+if (! function_exists('model_page_view')) {
+    function model_page_view(string $model, string $action): string
+    {
+        $defaults = [
+            'list' => 'pages.generic.list',
+            'form' => 'pages.generic.form',
+            'details' => 'pages.generic.details',
+        ];
+
+        if (! array_key_exists($action, $defaults)) {
+            throw new InvalidArgumentException("Unknown model page action [{$action}].");
+        }
+
+        $resource = \Illuminate\Support\Str::plural(\Illuminate\Support\Str::snake($model));
+        $override = "pages.{$resource}.{$action}";
+
+        if (ViewFactory::exists($override)) {
+            return $override;
+        }
+
+        $configured = config("crud.models.{$model}.views.{$action}");
+
+        if (is_string($configured) && ViewFactory::exists($configured)) {
+            return $configured;
+        }
+
+        return $defaults[$action];
+    }
+}
+
 if (! function_exists('model_route_name')) {
     function model_route_name(string $model, string $action = 'index'): string
     {

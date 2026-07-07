@@ -18,7 +18,7 @@ class BaseController extends Controller
     {
         $result = $this->modelRepository->getFirst();
 
-        return view('pages.genericlist', ['dto' => $result, 'model' => $this->modelName]);
+        return view(model_page_view($this->modelName, 'list'), ['dto' => $result, 'model' => $this->modelName]);
     }
 
     public function create()
@@ -28,7 +28,7 @@ class BaseController extends Controller
         $fields = AttributeHelper::getPropertyAttributes($this->modelRepository->editDto, 'FormFieldAttribute', true);
         $formFields = FormHelper::getFormFields($fields);
 
-        return view('pages.genericform', [
+        return view(model_page_view($this->modelName, 'form'), [
             'dto' => $dto,
             'model' => $this->modelName,
             'formFields' => $formFields,
@@ -49,7 +49,7 @@ class BaseController extends Controller
         $dto = $this->modelRepository->getById($id);
         $fields = $dto->getFields(onlyHeaders: false, withPrefix: false, object: $dto);
 
-        return view('pages.genericdetails', ['dto' => $dto, 'model' => $this->modelName, 'fields' => $fields]);
+        return view(model_page_view($this->modelName, 'details'), ['dto' => $dto, 'model' => $this->modelName, 'fields' => $fields]);
     }
 
     public function modalView($id)
@@ -61,7 +61,7 @@ class BaseController extends Controller
         return $this->respondModalOrPage(
             'themes.'.ui_theme().'.pages.modalview',
             $data,
-            'pages.genericdetails',
+            model_page_view($this->modelName, 'details'),
             $data
         );
     }
@@ -80,7 +80,7 @@ class BaseController extends Controller
         return $this->respondModalOrPage(
             'themes.'.ui_theme().'.pages.modaldetails',
             $data,
-            'pages.genericdetails',
+            model_page_view($this->modelName, 'details'),
             $data
         );
     }
@@ -98,7 +98,7 @@ class BaseController extends Controller
         return $this->respondModalOrPage(
             'themes.'.ui_theme().'.pages.modalform',
             $data,
-            'pages.genericform',
+            model_page_view($this->modelName, 'form'),
             $data
         );
     }
@@ -107,7 +107,7 @@ class BaseController extends Controller
     {
         $form = $this->buildEditForm($id);
 
-        return view('pages.genericform', [
+        return view(model_page_view($this->modelName, 'form'), [
             'dto' => $form['dto'],
             'model' => $this->modelName,
             'formFields' => $form['formFields'],
