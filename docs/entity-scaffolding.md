@@ -14,6 +14,19 @@ php artisan make:entity Product --profile=custom --fields="name:string,category_
 - `hybrid`: generic files plus page and modal view overrides.
 - `custom`: hybrid files plus web/API controller overrides and `config/crud.php` wiring.
 
+## Base Entity Convention
+
+Generated models extend `App\Models\BaseModel`, which owns the shared entity conventions:
+
+- primary key: `id`
+- timestamps enabled: `created_at`, `updated_at`
+- timestamp casts: `datetime`
+- audit user columns: `created_by`, `updated_by`, `deleted_by`
+- soft deletes enabled with `deleted_at`
+
+Generated migrations include `$table->timestamps()`, nullable audit user foreign keys, and `$table->softDeletes()` by default.
+`BaseModel` exposes `createdBy()`, `updatedBy()`, and `deletedBy()` relations.
+
 ## Current Field Syntax
 
 ```text

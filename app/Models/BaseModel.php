@@ -2,21 +2,80 @@
 
 namespace App\Models;
 
-use App\Attributes\RelationAttribute;
-use App\Traits\RelationsManagerTrait;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
-
-class BaseModel extends Model
+abstract class BaseModel extends Model
 {
     use \App\Traits\RelationsManagerTrait;
+    use SoftDeletes;
 
-    public function DoSomething()
+    public const CREATED_AT = 'created_at';
+    public const UPDATED_AT = 'updated_at';
+    public const DELETED_AT = 'deleted_at';
+    public const CREATED_BY = 'created_by';
+    public const UPDATED_BY = 'updated_by';
+    public const DELETED_BY = 'deleted_by';
+
+    protected $primaryKey = 'id';
+
+    public $timestamps = true;
+
+    protected $casts = [
+        self::CREATED_AT => 'datetime',
+        self::UPDATED_AT => 'datetime',
+        self::DELETED_AT => 'datetime',
+        self::CREATED_BY => 'integer',
+        self::UPDATED_BY => 'integer',
+        self::DELETED_BY => 'integer',
+    ];
+
+    protected static function booted(): void
     {
-        return true;
+        static::creating(function (self $model): void {
+            $userId = static::currentUserId();
+
+            if ($userId !== null && empty($model->{self::CREATED_BY})) {
+                $model->{self::CREATED_BY} = $userId;
+            }
+        });
+
+        static::updating(function (self $model): void {
+            $userId = static::currentUserId();
+
+            if ($userId !== null) {
+                $model->{self::UPDATED_BY} = $userId;
+            }
+        });
+
+        static::deleting(function (self $model): void {
+            if ($model->isForceDeleting()) {
+                return;
+            }
+
+            $userId = static::currentUserId();
+
+            if ($userId !== null) {
+                $model->{self::DELETED_BY} = $userId;
+                $model->saveQuietly();
+            }
+        });
+    }
+
+    public function createdBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, self::CREATED_BY);
+    }
+
+    public function updatedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, self::UPDATED_BY);
+    }
+
+    public function deletedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, self::DELETED_BY);
     }
 
     public function getListFields()
@@ -25,5 +84,10 @@ class BaseModel extends Model
         $fields[] = $this->displayField;
         $fields[] = $this->primaryKey;
         return $fields;
+    }
+
+    protected static function currentUserId(): ?int
+    {
+        return auth()->id();
     }
 }
