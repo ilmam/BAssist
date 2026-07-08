@@ -1,0 +1,22 @@
+<?php
+
+namespace App\Data;
+
+use App\Attributes\FormFieldAttribute;
+use App\Attributes\ListPropertyAttribute;
+use App\Attributes\ValuePropertyAttribute;
+
+class DummyClassData extends BaseData
+{
+    public function __construct(
+        public ?int $id = null,
+DummyDataProperties
+    ) {
+    }
+
+    public static function rules()
+    {
+        // TODO: Add validation rules for this entity.
+        return [];
+    }
+}

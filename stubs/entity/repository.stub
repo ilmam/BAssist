@@ -1,0 +1,22 @@
+<?php
+
+namespace App\Repositories;
+
+use App\Data\DummyClassData;
+use App\Data\DummyClassViewData;
+use App\Models\DummyClass;
+use Illuminate\Database\Eloquent\Model;
+
+class DummyClassRepository extends BaseRepository
+{
+    public Model $model;
+    public $editDto = DummyClassData::class;
+    public $viewDto = DummyClassViewData::class;
+
+    public function __construct()
+    {
+        $this->model = new DummyClass();
+    }
+
+    // Add entity-specific query methods here when the generic repository is not enough.
+}

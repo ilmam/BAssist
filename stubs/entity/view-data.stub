@@ -1,0 +1,15 @@
+<?php
+
+namespace App\Data;
+
+use App\Attributes\ListPropertyAttribute;
+use App\Attributes\ValuePropertyAttribute;
+
+class DummyClassViewData extends BaseData
+{
+    public function __construct(
+        public ?int $id = null,
+DummyViewDataProperties
+    ) {
+    }
+}

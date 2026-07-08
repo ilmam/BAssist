@@ -1,0 +1,19 @@
+<?php
+
+namespace App\Models;
+
+use App\Attributes\RoutableAttribute;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+
+#[RoutableAttribute]
+class DummyClass extends BaseModel
+{
+    use HasFactory;
+
+    protected $primaryKey = 'id';
+    protected $displayField = 'DummyDisplayField';
+
+    protected $fillable = [
+DummyFillable
+    ];
+}
