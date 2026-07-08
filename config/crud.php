@@ -44,6 +44,15 @@ return [
             'nav_icon_v8' => 'category',
         ],
 
+        'Country' => [
+            'controller' => \App\Http\Controllers\CountryController::class,
+            'api_controller' => \App\Http\Controllers\Api\CountryController::class,
+            'nav' => true,
+            'nav_label' => 'Countries',
+            'nav_icon' => 'category',
+            'nav_icon_v8' => 'category',
+        ],
+
         // 'LegacyThing' => ['disabled' => true],
     ],
 

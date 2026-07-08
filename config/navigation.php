@@ -21,4 +21,10 @@ return [
         ],
     ],
 
+    'entities' => [
+        'label' => 'Entities',
+        'icon' => 'element-plus',
+        'icon_v8' => 'element-plus',
+    ],
+
 ];

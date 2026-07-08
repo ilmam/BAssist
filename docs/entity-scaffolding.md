@@ -5,14 +5,17 @@ Use `make:entity` to scaffold convention-based CRUD entities.
 ```bash
 php artisan make:entity Product --profile=generic --fields="name:string,description:text?" --display=name
 php artisan make:entity Product --profile=hybrid --fields="name:string,description:text?" --display=name
-php artisan make:entity Product --profile=custom --fields="name:string,category_id:foreignId:Category:select" --display=name --nav
+php artisan make:entity Product --profile=custom --fields="name:string,category_id:foreignId:Category:select" --display=name
 ```
 
 ## Profiles
 
-- `generic`: model, repository, edit DTO, view DTO, and migration.
+- `generic`: model, repository, edit DTO, view DTO, migration, and navigation config.
 - `hybrid`: generic files plus page and modal view overrides.
 - `custom`: hybrid files plus web/API controller overrides and `config/crud.php` wiring.
+
+New entities are added to CRUD navigation by default so the UI is ready after migration/cache steps. Use `--no-nav` for internal entities that should not appear in the menu.
+Navigation-ready CRUD entities appear under the `Entities` dropdown. Configure that group in `config/navigation.php`.
 
 ## Base Entity Convention
 

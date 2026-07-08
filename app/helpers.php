@@ -54,17 +54,27 @@ if (! function_exists('nav_items')) {
     function nav_items(): array
     {
         $items = config('navigation.items', []);
+        $entityItems = [];
 
         foreach (\App\Support\CrudEntityRegistry::all() as $model => $options) {
             if (! ($options['nav'] ?? false)) {
                 continue;
             }
 
-            $items[] = [
+            $entityItems[] = [
                 'label' => $options['nav_label'] ?? \Illuminate\Support\Str::plural($model),
                 'route' => model_route_name($model, 'index'),
                 'icon' => $options['nav_icon'] ?? 'element-11',
                 'icon_v8' => $options['nav_icon_v8'] ?? ($options['nav_icon'] ?? 'element-11'),
+            ];
+        }
+
+        if ($entityItems !== []) {
+            $items[] = [
+                'label' => config('navigation.entities.label', 'Entities'),
+                'icon' => config('navigation.entities.icon', 'element-plus'),
+                'icon_v8' => config('navigation.entities.icon_v8', config('navigation.entities.icon', 'element-plus')),
+                'children' => $entityItems,
             ];
         }
 
@@ -73,9 +83,34 @@ if (! function_exists('nav_items')) {
 }
 
 if (! function_exists('nav_is_active')) {
-    function nav_is_active(string $route): bool
+    function nav_is_active(string|array|null $route): bool
     {
+        if (is_array($route)) {
+            foreach ($route as $childRoute) {
+                if (nav_is_active($childRoute)) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        if ($route === null || $route === '') {
+            return false;
+        }
+
         return request()->routeIs($route) || request()->routeIs($route.'.*');
+    }
+}
+
+if (! function_exists('nav_item_is_active')) {
+    function nav_item_is_active(array $item): bool
+    {
+        if (! empty($item['children'])) {
+            return nav_is_active(array_column($item['children'], 'route'));
+        }
+
+        return nav_is_active($item['route'] ?? null);
     }
 }
 

@@ -14,6 +14,7 @@ class MakeEntityCommand extends Command
                             {--fields= : Comma-separated fields, e.g. name:string,description:text,category_id:foreignId:Category:select}
                             {--display= : Field used as display label in selects}
                             {--nav : Add the entity to CRUD navigation config}
+                            {--no-nav : Do not add the entity to CRUD navigation config}
                             {--force : Overwrite existing generated files}
                             {--dry-run : Show files that would be generated without writing them}';
 
@@ -339,7 +340,7 @@ class MakeEntityCommand extends Command
 
     private function needsCrudConfig(string $profile): bool
     {
-        return $profile === 'custom' || (bool) $this->option('nav');
+        return $profile === 'custom' || $this->shouldAddToNavigation();
     }
 
     private function updateCrudConfig(string $model, string $profile): void
@@ -382,7 +383,7 @@ class MakeEntityCommand extends Command
             $lines[] = "            'api_controller' => \\App\\Http\\Controllers\\Api\\{$model}Controller::class,";
         }
 
-        if ($this->option('nav')) {
+        if ($this->shouldAddToNavigation()) {
             $lines[] = "            'nav' => true,";
             $lines[] = "            'nav_label' => '".Str::headline(Str::plural($model))."',";
             $lines[] = "            'nav_icon' => 'category',";
@@ -392,6 +393,11 @@ class MakeEntityCommand extends Command
         $lines[] = '        ],';
 
         return implode(PHP_EOL, $lines).PHP_EOL;
+    }
+
+    private function shouldAddToNavigation(): bool
+    {
+        return ! (bool) $this->option('no-nav');
     }
 
     private function printNextSteps(string $model): void
