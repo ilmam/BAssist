@@ -27,4 +27,17 @@ return [
         'icon_v8' => 'element-plus',
     ],
 
+    'administration' => [
+        'label' => 'Administration',
+        'icon' => 'setting-2',
+        'icon_v8' => 'setting-2',
+        'super_admin_only' => true,
+        'children' => [
+            [
+                'label' => 'Roles',
+                'route' => 'admin.roles.index',
+            ],
+        ],
+    ],
+
 ];

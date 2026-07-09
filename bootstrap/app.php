@@ -21,6 +21,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'cache.headers' => \Illuminate\Http\Middleware\SetCacheHeaders::class,
             'can' => \Illuminate\Auth\Middleware\Authorize::class,
             'entity.access' => \App\Http\Middleware\AuthorizeEntityAccess::class,
+            'super.admin' => \App\Http\Middleware\EnsureSuperAdmin::class,
             'guest' => \App\Http\Middleware\RedirectIfAuthenticated::class,
             'password.confirm' => \Illuminate\Auth\Middleware\RequirePassword::class,
             'signed' => \App\Http\Middleware\ValidateSignature::class,

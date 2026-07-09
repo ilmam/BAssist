@@ -82,6 +82,17 @@ if (! function_exists('nav_items')) {
             ];
         }
 
+        $administration = config('navigation.administration');
+
+        if ($administration && \App\Support\EntityAccess::isSuperAdmin(auth()->user())) {
+            $items[] = [
+                'label' => $administration['label'],
+                'icon' => $administration['icon'] ?? 'setting-2',
+                'icon_v8' => $administration['icon_v8'] ?? ($administration['icon'] ?? 'setting-2'),
+                'children' => $administration['children'] ?? [],
+            ];
+        }
+
         return $items;
     }
 }
@@ -212,5 +223,12 @@ if (! function_exists('entity_can')) {
     function entity_can(string $entity, string $ability): bool
     {
         return \App\Support\EntityAccess::can(auth()->user(), $entity, $ability);
+    }
+}
+
+if (! function_exists('is_super_admin')) {
+    function is_super_admin(): bool
+    {
+        return \App\Support\EntityAccess::isSuperAdmin(auth()->user());
     }
 }

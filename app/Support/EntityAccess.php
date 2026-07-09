@@ -58,6 +58,13 @@ class EntityAccess
         return $user?->role?->slug === self::SUPER_ADMIN_SLUG;
     }
 
+    public static function authorizeSuperAdmin(?User $user): void
+    {
+        if (! self::isSuperAdmin($user)) {
+            throw new AuthorizationException('This action is unauthorized.');
+        }
+    }
+
     /**
      * @return list<string>
      */
