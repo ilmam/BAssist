@@ -45,8 +45,6 @@ return [
         ],
 
         'Country' => [
-            'controller' => \App\Http\Controllers\CountryController::class,
-            'api_controller' => \App\Http\Controllers\Api\CountryController::class,
             'nav' => true,
             'nav_label' => 'Countries',
             'nav_icon' => 'category',

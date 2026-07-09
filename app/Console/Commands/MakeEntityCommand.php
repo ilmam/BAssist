@@ -346,24 +346,47 @@ class MakeEntityCommand extends Command
     private function updateCrudConfig(string $model, string $profile): void
     {
         $path = config_path('crud.php');
-        $contents = File::get($path);
+
+        // Normalize to LF so regex patterns work regardless of OS line endings.
+        $contents = str_replace("\r\n", "\n", File::get($path));
+        $entry = $this->crudConfigEntry($model, $profile);
 
         if (str_contains($contents, "'{$model}' =>")) {
-            $this->warn("Skipped config/crud.php update because [{$model}] already has an entry.");
+            // Replace the existing entry block so stale keys (e.g. a leftover
+            // 'controller' from a previous custom-profile scaffold) cannot point
+            // to classes that no longer exist after the entity is recreated with
+            // a different profile.
+            $contents = preg_replace(
+                "/\n\n        '{$model}' => \[.*?\],\n/s",
+                "\n\n".$entry,
+                $contents
+            );
+
+            if ($this->option('dry-run')) {
+                $this->line('Would replace existing entry in: '.$path);
+
+                return;
+            }
+
+            File::put($path, $contents);
+            $this->line('Replaced existing entry in: '.$path);
+
             return;
         }
 
-        $entry = $this->crudConfigEntry($model, $profile);
+        // Needle already starts with \n (the line-start before the comment).
+        // Prepending \n to $entry gives one blank separator line before the new block.
         $needle = "\n        // 'LegacyThing' => ['disabled' => true],";
 
         if (str_contains($contents, $needle)) {
-            $contents = str_replace($needle, $entry.$needle, $contents);
+            $contents = str_replace($needle, "\n".$entry.$needle, $contents);
         } else {
-            $contents = preg_replace("/\n    ],\n\n];\n?$/", $entry."\n    ],\n\n];\n", $contents);
+            $contents = preg_replace("/\n    ],\n\n];\n?$/", "\n\n".$entry."\n    ],\n\n];\n", $contents);
         }
 
         if ($this->option('dry-run')) {
             $this->line('Would update: '.$path);
+
             return;
         }
 
@@ -374,7 +397,6 @@ class MakeEntityCommand extends Command
     private function crudConfigEntry(string $model, string $profile): string
     {
         $lines = [
-            '',
             "        '{$model}' => [",
         ];
 
@@ -392,7 +414,9 @@ class MakeEntityCommand extends Command
 
         $lines[] = '        ],';
 
-        return implode(PHP_EOL, $lines).PHP_EOL;
+        // Always use LF so the output is consistent with the LF-normalised file
+        // contents that updateCrudConfig works with.
+        return implode("\n", $lines)."\n";
     }
 
     private function shouldAddToNavigation(): bool
