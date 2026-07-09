@@ -37,6 +37,10 @@ return [
                 'label' => 'Roles',
                 'route' => 'admin.roles.index',
             ],
+            [
+                'label' => 'Users',
+                'route' => 'admin.users.index',
+            ],
         ],
     ],
 

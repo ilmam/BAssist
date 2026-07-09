@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\RoleController;
+use App\Http\Controllers\Admin\UserController;
 use App\Support\CrudRouteRegistrar;
 use Illuminate\Support\Facades\Route;
 
@@ -13,6 +14,7 @@ Route::middleware('auth')->group(function (): void {
 
     Route::middleware('super.admin')->prefix('admin')->name('admin.')->group(function (): void {
         Route::resource('roles', RoleController::class)->except(['show']);
+        Route::resource('users', UserController::class)->only(['index', 'edit', 'update']);
     });
 
     Route::middleware('entity.access')->group(function (): void {
