@@ -27,15 +27,22 @@ class CrudRouteRegistrar
 
     public static function homeRouteName(): ?string
     {
+        return self::homeRouteNameFor(auth()->user());
+    }
+
+    public static function homeRouteNameFor(?\App\Models\User $user): ?string
+    {
         foreach (CrudEntityRegistry::all() as $model => $options) {
-            if ($options['home'] ?? false) {
+            if (($options['home'] ?? false) && EntityAccess::can($user, $model, EntityAccess::VIEW)) {
                 return model_route_name($model, 'index');
             }
         }
 
-        $firstModel = array_key_first(CrudEntityRegistry::all());
+        foreach (EntityAccess::entitiesFor($user, EntityAccess::VIEW) as $model) {
+            return model_route_name($model, 'index');
+        }
 
-        return $firstModel ? model_route_name($firstModel, 'index') : null;
+        return null;
     }
 
     protected static function registerWebRoutesForModel(string $model, array $options): void

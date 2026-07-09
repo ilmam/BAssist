@@ -61,6 +61,10 @@ if (! function_exists('nav_items')) {
                 continue;
             }
 
+            if (! entity_can($model, \App\Support\EntityAccess::VIEW)) {
+                continue;
+            }
+
             $entityItems[] = [
                 'label' => $options['nav_label'] ?? \Illuminate\Support\Str::plural($model),
                 'route' => model_route_name($model, 'index'),
@@ -201,5 +205,12 @@ if (! function_exists('model_modal_path')) {
         $resource = \Illuminate\Support\Str::plural(\Illuminate\Support\Str::snake($model));
 
         return url($resource.'/modal/'.$id.'/'.$action);
+    }
+}
+
+if (! function_exists('entity_can')) {
+    function entity_can(string $entity, string $ability): bool
+    {
+        return \App\Support\EntityAccess::can(auth()->user(), $entity, $ability);
     }
 }

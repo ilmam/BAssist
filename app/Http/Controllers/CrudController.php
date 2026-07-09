@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Support\CrudEntityRegistry;
+use App\Support\EntityAccess;
 use Illuminate\Support\Str;
 
 class CrudController extends BaseController
@@ -11,6 +12,12 @@ class CrudController extends BaseController
     {
         $this->modelName = $this->resolveModelName();
         $this->modelRepository = CrudEntityRegistry::repository($this->modelName);
+
+        EntityAccess::authorize(
+            auth()->user(),
+            $this->modelName,
+            EntityAccess::abilityForControllerMethod($method)
+        );
 
         return parent::callAction($method, $parameters);
     }

@@ -2,6 +2,7 @@
 
 namespace App\View\Components;
 
+use App\Support\EntityAccess;
 use App\View\Concerns\ResolvesThemeView;
 use Illuminate\Support\Str;
 use Illuminate\View\Component;
@@ -73,13 +74,24 @@ class Datatable extends Component
         $this->options['columns'] = array_diff($this->options['columns'], $this->options['exclude']);
 
         if ($this->defaultButtons) {
-            $this->options['columns'][] = [
-                'custom' => true,
-                'name' => 'actions',
-                'title' => '',
-                'style' => 'width: 120px',
-                'buttons' => $this->buttons,
-            ];
+            $buttons = array_values(array_filter(
+                $this->buttons,
+                fn (array $button) => EntityAccess::can(
+                    auth()->user(),
+                    $model,
+                    EntityAccess::abilityForTableAction($button['action'] ?? 'show')
+                )
+            ));
+
+            if ($buttons !== []) {
+                $this->options['columns'][] = [
+                    'custom' => true,
+                    'name' => 'actions',
+                    'title' => '',
+                    'style' => 'width: 120px',
+                    'buttons' => $buttons,
+                ];
+            }
         }
     }
 }
