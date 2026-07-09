@@ -3,4 +3,5 @@
 return [
     App\Providers\AppServiceProvider::class,
     App\Providers\FormServiceProvider::class,
+    App\Providers\FortifyServiceProvider::class,
 ];
