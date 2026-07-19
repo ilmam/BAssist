@@ -10,8 +10,6 @@ use Illuminate\Database\Eloquent\Model;
  */
 class BaseRepository
 {
-    use \App\Traits\DataHelperTrait;
-
     public Model $model;
     public $editDto;
     public $viewDto;

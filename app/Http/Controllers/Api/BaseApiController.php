@@ -3,21 +3,19 @@
 namespace App\Http\Controllers\Api;
 
 use Illuminate\Http\Request;
-use App\Traits\DataHelperTrait;
+use App\Support\CollectionFlattener;
 use App\Support\RepositoryResolver;
 use Yajra\DataTables\Facades\DataTables;
 
 class BaseApiController extends \App\Http\Controllers\Controller
 {
-    use DataHelperTrait;
-
     public $modelName = 'GenericModel';
     public $modelRepository;
 
     public function index()
     {
         $result = $this->modelRepository->getAll();
-        $result = $this->flatten_collection($result);
+        $result = app(CollectionFlattener::class)->flatten($result);
 
         return DataTables::of($result)->make(true);
     }
