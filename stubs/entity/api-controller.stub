@@ -1,8 +1,0 @@
-<?php
-
-namespace App\Http\Controllers\Api;
-
-class DummyClassController extends CrudController
-{
-    // TODO: Override generic API actions here when DummyClass needs custom behavior.
-}

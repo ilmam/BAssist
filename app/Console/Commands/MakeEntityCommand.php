@@ -2,15 +2,119 @@
 
 namespace App\Console\Commands;
 
+use App\Console\Commands\Concerns\EntityScaffoldTrait;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 
+/**
+ * make:entity — scaffold a convention-based CRUD entity.
+ * =====================================================================
+ *
+ * Generates every artifact a CRUD entity needs so it is immediately
+ * discoverable and routable by the framework's convention layer
+ * (see App\Support\CrudEntityRegistry and CrudRouteRegistrar).
+ *
+ * ---------------------------------------------------------------------
+ * The scaffold ladder (profiles)
+ * ---------------------------------------------------------------------
+ * Profiles describe how much of the entity the framework still manages
+ * for you versus how much lives physically on disk and is owned by you:
+ *
+ *   virtual  ──►  hybrid  ──►  material
+ *   (least owned)            (fully owned)
+ *
+ *   virtual   Backend only: Model, Repository, {Model}Data (edit DTO),
+ *             {Model}ViewData (view DTO), and a migration. No blade
+ *             files exist — every page and modal is rendered by the
+ *             shared templates in resources/views/pages/generic/* and
+ *             resources/views/pages/modals/*. Best for simple lookup or
+ *             reference tables and for end users who will build their own
+ *             pages later. This is the DEFAULT profile.
+ *
+ *   hybrid    virtual + six per-entity blade files under
+ *             resources/views/pages/{resource}/ (list, form, details and
+ *             the view/form/delete modals). These start as copies of the
+ *             generic templates and can be freely customised. The shared
+ *             CrudController still handles requests — no controller is
+ *             generated.
+ *
+ *   material  hybrid + a dedicated {Model}Controller and
+ *             Api/{Model}Controller (both extend CrudController), wired
+ *             into config/crud.php via the 'controller' and
+ *             'api_controller' keys. Full ownership of every layer.
+ *
+ * ---------------------------------------------------------------------
+ * Arguments and options
+ * ---------------------------------------------------------------------
+ *   name              (required) Studly-cased model name, e.g. "Product".
+ *
+ *   --profile=        virtual | hybrid | material. Defaults to "virtual".
+ *
+ *   --fields=         Comma-separated field definitions. Each field is a
+ *                     colon-delimited spec:
+ *                         name:type
+ *                         name:type?                 (nullable shorthand)
+ *                         name:type:formType
+ *                         name:type:formType:nullable
+ *                         name:foreignId:RelatedModel:select
+ *                     If omitted, a single "name:string" field is used.
+ *                     Supported db types: string, text, integer,
+ *                     bigInteger, decimal, float, double, boolean, date,
+ *                     dateTime, timestamp, foreignId (plus int/bool/etc.
+ *                     aliases). Supported form types: text, textarea,
+ *                     select, checkbox, radio, file, image, dropzone,
+ *                     tree, date, datetime-local, number, email, password.
+ *
+ *   --display=        Field used as the display label in select inputs and
+ *                     as the list column. Defaults to the first field.
+ *                     Must be one of the fields in --fields.
+ *
+ *   --nav             Force-add the entity to CRUD navigation config.
+ *   --no-nav          Do NOT add the entity to navigation (for internal
+ *                     entities that should not appear in the menu).
+ *                     Navigation is added by default when neither flag is
+ *                     given.
+ *
+ *   --force           Overwrite generated files that already exist.
+ *   --dry-run         Print what would be generated without writing.
+ *
+ * ---------------------------------------------------------------------
+ * Examples
+ * ---------------------------------------------------------------------
+ *   php artisan make:entity Country
+ *   php artisan make:entity Product --fields="name:string,price:decimal,description:text?" --display=name
+ *   php artisan make:entity Order --profile=material --fields="reference:string,customer_id:foreignId:Customer:select"
+ *   php artisan make:entity Log --no-nav --dry-run
+ *
+ * ---------------------------------------------------------------------
+ * config/crud.php handling
+ * ---------------------------------------------------------------------
+ * When navigation is requested or the material profile is used, the
+ * command inserts (or REPLACES, if one already exists) the model's entry
+ * in config/crud.php. Replacing rather than skipping prevents stale keys
+ * — such as a leftover 'controller' from a previous material scaffold —
+ * from pointing at classes that no longer exist. See the
+ * EntityScaffoldTrait for the insert/replace mechanics.
+ *
+ * ---------------------------------------------------------------------
+ * After running
+ * ---------------------------------------------------------------------
+ * The command prints the recommended follow-up steps: run the migration,
+ * cache the two DTOs' metadata (dto:cache-metadata) and refresh the
+ * spatie/laravel-data structure cache (data:cache-structure).
+ *
+ * @see \App\Console\Commands\Concerns\EntityScaffoldTrait  Shared file/config helpers.
+ * @see \App\Console\Commands\EjectEntityCommand            Promote a virtual entity later.
+ * @see \App\Support\CrudEntityRegistry                     Runtime discovery of entities.
+ */
 class MakeEntityCommand extends Command
 {
+    use EntityScaffoldTrait;
+
     protected $signature = 'make:entity
                             {name : Entity model name, e.g. Product}
-                            {--profile=generic : Scaffold profile: generic, hybrid, or custom}
+                            {--profile=virtual : Scaffold profile: virtual, hybrid, or material}
                             {--fields= : Comma-separated fields, e.g. name:string,description:text,category_id:foreignId:Category:select}
                             {--display= : Field used as display label in selects}
                             {--nav : Add the entity to CRUD navigation config}
@@ -18,9 +122,9 @@ class MakeEntityCommand extends Command
                             {--force : Overwrite existing generated files}
                             {--dry-run : Show files that would be generated without writing them}';
 
-    protected $description = 'Scaffold a convention-based CRUD entity';
+    protected $description = 'Scaffold a convention-based CRUD entity (virtual | hybrid | material)';
 
-    private const PROFILES = ['generic', 'hybrid', 'custom'];
+    private const PROFILES = ['virtual', 'hybrid', 'material'];
 
     public function handle(): int
     {
@@ -45,8 +149,17 @@ class MakeEntityCommand extends Command
         $files = $this->buildFiles($model, $profile, $fields, $displayField);
         $this->writeFiles($files);
 
+        if ($profile === 'material') {
+            $this->makeControllers($model);
+        }
+
         if ($this->needsCrudConfig($profile)) {
-            $this->updateCrudConfig($model, $profile);
+            $entry = $this->buildCrudConfigEntry($model, [
+                'controllers' => $profile === 'material',
+                'nav'         => $this->shouldAddToNavigation(),
+                'nav_label'   => Str::headline(Str::plural($model)),
+            ]);
+            $this->updateCrudConfig($model, $entry);
         }
 
         $this->newLine();
@@ -108,13 +221,13 @@ class MakeEntityCommand extends Command
             $phpType = $this->phpTypeFor($dbType, $nullable);
 
             $fields[] = [
-                'name' => $name,
-                'dbType' => $dbType,
-                'phpType' => $phpType,
+                'name'     => $name,
+                'dbType'   => $dbType,
+                'phpType'  => $phpType,
                 'nullable' => $nullable,
                 'formType' => $formType,
                 'relation' => $relation,
-                'default' => $this->defaultFor($phpType),
+                'default'  => $this->defaultFor($phpType),
             ];
         }
 
@@ -127,12 +240,12 @@ class MakeEntityCommand extends Command
         $type = rtrim($type, '?');
 
         $normalized = match (strtolower($type)) {
-            'int' => 'integer',
-            'bool' => 'boolean',
-            'biginteger' => 'bigInteger',
-            'datetime' => 'dateTime',
-            'foreignid' => 'foreignId',
-            default => $type,
+            'int'         => 'integer',
+            'bool'        => 'boolean',
+            'biginteger'  => 'bigInteger',
+            'datetime'    => 'dateTime',
+            'foreignid'   => 'foreignId',
+            default       => $type,
         };
 
         $allowed = ['string', 'text', 'integer', 'bigInteger', 'decimal', 'float', 'double', 'boolean', 'date', 'dateTime', 'timestamp', 'foreignId'];
@@ -151,13 +264,13 @@ class MakeEntityCommand extends Command
     private function inferFormType(string $dbType): string
     {
         return match ($dbType) {
-            'text' => 'textarea',
+            'text'                                              => 'textarea',
             'integer', 'bigInteger', 'decimal', 'float', 'double' => 'number',
-            'boolean' => 'checkbox',
-            'date' => 'date',
-            'dateTime', 'timestamp' => 'datetime-local',
-            'foreignId' => 'select',
-            default => 'text',
+            'boolean'                                           => 'checkbox',
+            'date'                                              => 'date',
+            'dateTime', 'timestamp'                            => 'datetime-local',
+            'foreignId'                                         => 'select',
+            default                                             => 'text',
         };
     }
 
@@ -165,9 +278,9 @@ class MakeEntityCommand extends Command
     {
         $type = match ($dbType) {
             'integer', 'bigInteger', 'foreignId' => 'int',
-            'decimal', 'float', 'double' => 'float',
-            'boolean' => 'bool',
-            default => 'string',
+            'decimal', 'float', 'double'          => 'float',
+            'boolean'                              => 'bool',
+            default                                => 'string',
         };
 
         return $nullable ? '?'.$type : $type;
@@ -177,10 +290,10 @@ class MakeEntityCommand extends Command
     {
         return match ($phpType) {
             '?string', '?int', '?float', '?bool' => 'null',
-            'int' => '0',
-            'float' => '0.0',
-            'bool' => 'false',
-            default => "''",
+            'int'                                  => '0',
+            'float'                                => '0.0',
+            'bool'                                 => 'false',
+            default                                => "''",
         };
     }
 
@@ -192,29 +305,15 @@ class MakeEntityCommand extends Command
         $replace = $this->replacements($model, $fields, $displayField, $resource, $table);
 
         $files = [
-            app_path("Models/{$model}.php") => $this->stub('model', $replace),
-            app_path("Repositories/{$model}Repository.php") => $this->stub('repository', $replace),
-            app_path("Data/{$model}Data.php") => $this->stub('data', $replace),
-            app_path("Data/{$model}ViewData.php") => $this->stub('view-data', $replace),
-            $migrationPath => $this->stub('migration', $replace),
+            app_path("Models/{$model}.php")                     => $this->stub('model', $replace),
+            app_path("Repositories/{$model}Repository.php")     => $this->stub('repository', $replace),
+            app_path("Data/{$model}Data.php")                   => $this->stub('data', $replace),
+            app_path("Data/{$model}ViewData.php")               => $this->stub('view-data', $replace),
+            $migrationPath                                       => $this->stub('migration', $replace),
         ];
 
-        if (in_array($profile, ['hybrid', 'custom'], true)) {
-            $files += [
-                resource_path("views/pages/{$resource}/list.blade.php") => $this->stub('view-list', $replace),
-                resource_path("views/pages/{$resource}/form.blade.php") => $this->stub('view-form', $replace),
-                resource_path("views/pages/{$resource}/details.blade.php") => $this->stub('view-details', $replace),
-                resource_path("views/pages/{$resource}/modals/view.blade.php") => $this->stub('modal-view', $replace),
-                resource_path("views/pages/{$resource}/modals/form.blade.php") => $this->stub('modal-form', $replace),
-                resource_path("views/pages/{$resource}/modals/delete.blade.php") => $this->stub('modal-delete', $replace),
-            ];
-        }
-
-        if ($profile === 'custom') {
-            $files += [
-                app_path("Http/Controllers/{$model}Controller.php") => $this->stub('controller', $replace),
-                app_path("Http/Controllers/Api/{$model}Controller.php") => $this->stub('api-controller', $replace),
-            ];
+        if (in_array($profile, ['hybrid', 'material'], true)) {
+            $files += $this->viewFiles($resource, $replace);
         }
 
         return $files;
@@ -223,14 +322,14 @@ class MakeEntityCommand extends Command
     private function replacements(string $model, array $fields, string $displayField, string $resource, string $table): array
     {
         return [
-            'DummyClass' => $model,
-            'DummyResource' => $resource,
-            'DummyTable' => $table,
-            'DummyDisplayField' => $displayField,
-            'DummyFillable' => $this->fillableLines($fields),
-            'DummyDataProperties' => $this->dataProperties($fields, $displayField),
+            'DummyClass'              => $model,
+            'DummyResource'           => $resource,
+            'DummyTable'              => $table,
+            'DummyDisplayField'       => $displayField,
+            'DummyFillable'           => $this->fillableLines($fields),
+            'DummyDataProperties'     => $this->dataProperties($fields, $displayField),
             'DummyViewDataProperties' => $this->viewDataProperties($fields, $displayField),
-            'DummyMigrationColumns' => $this->migrationColumns($fields),
+            'DummyMigrationColumns'   => $this->migrationColumns($fields),
         ];
     }
 
@@ -244,9 +343,7 @@ class MakeEntityCommand extends Command
     private function dataProperties(array $fields, string $displayField): string
     {
         return collect($fields)->map(function (array $field) use ($displayField) {
-            $attributes = [
-                '        #[ValuePropertyAttribute]',
-            ];
+            $attributes = ['        #[ValuePropertyAttribute]'];
 
             if ($field['name'] === $displayField) {
                 array_unshift($attributes, '        #[ListPropertyAttribute]');
@@ -266,9 +363,7 @@ class MakeEntityCommand extends Command
     private function viewDataProperties(array $fields, string $displayField): string
     {
         return collect($fields)->map(function (array $field) use ($displayField) {
-            $attributes = [
-                '        #[ValuePropertyAttribute]',
-            ];
+            $attributes = ['        #[ValuePropertyAttribute]'];
 
             if ($field['name'] === $displayField) {
                 array_unshift($attributes, '        #[ListPropertyAttribute]');
@@ -283,9 +378,9 @@ class MakeEntityCommand extends Command
     {
         return collect($fields)->map(function (array $field) {
             $line = match ($field['dbType']) {
-                'decimal' => "\$table->decimal('{$field['name']}', 10, 2)",
+                'decimal'   => "\$table->decimal('{$field['name']}', 10, 2)",
                 'foreignId' => "\$table->foreignId('{$field['name']}')",
-                default => "\$table->{$field['dbType']}('{$field['name']}')",
+                default     => "\$table->{$field['dbType']}('{$field['name']}')",
             };
 
             if ($field['nullable']) {
@@ -300,14 +395,6 @@ class MakeEntityCommand extends Command
         })->implode(PHP_EOL);
     }
 
-    private function stub(string $name, array $replace): string
-    {
-        $path = base_path("stubs/entity/{$name}.stub");
-        $contents = File::get($path);
-
-        return str_replace(array_keys($replace), array_values($replace), $contents);
-    }
-
     private function migrationPath(string $table): string
     {
         $existing = glob(database_path("migrations/*_create_{$table}_table.php")) ?: [];
@@ -319,104 +406,9 @@ class MakeEntityCommand extends Command
         return database_path('migrations/'.date('Y_m_d_His')."_create_{$table}_table.php");
     }
 
-    private function writeFiles(array $files): void
-    {
-        foreach ($files as $path => $contents) {
-            if (File::exists($path) && ! $this->option('force')) {
-                $this->warn("Skipped existing file: {$path}");
-                continue;
-            }
-
-            if ($this->option('dry-run')) {
-                $this->line((File::exists($path) ? 'Would overwrite: ' : 'Would create: ').$path);
-                continue;
-            }
-
-            File::ensureDirectoryExists(dirname($path));
-            File::put($path, $contents);
-            $this->line((File::exists($path) ? 'Created: ' : 'Created: ').$path);
-        }
-    }
-
     private function needsCrudConfig(string $profile): bool
     {
-        return $profile === 'custom' || $this->shouldAddToNavigation();
-    }
-
-    private function updateCrudConfig(string $model, string $profile): void
-    {
-        $path = config_path('crud.php');
-
-        // Normalize to LF so regex patterns work regardless of OS line endings.
-        $contents = str_replace("\r\n", "\n", File::get($path));
-        $entry = $this->crudConfigEntry($model, $profile);
-
-        if (str_contains($contents, "'{$model}' =>")) {
-            // Replace the existing entry block so stale keys (e.g. a leftover
-            // 'controller' from a previous custom-profile scaffold) cannot point
-            // to classes that no longer exist after the entity is recreated with
-            // a different profile.
-            $contents = preg_replace(
-                "/\n\n        '{$model}' => \[.*?\],\n/s",
-                "\n\n".$entry,
-                $contents
-            );
-
-            if ($this->option('dry-run')) {
-                $this->line('Would replace existing entry in: '.$path);
-
-                return;
-            }
-
-            File::put($path, $contents);
-            $this->line('Replaced existing entry in: '.$path);
-
-            return;
-        }
-
-        // Needle already starts with \n (the line-start before the comment).
-        // Prepending \n to $entry gives one blank separator line before the new block.
-        $needle = "\n        // 'LegacyThing' => ['disabled' => true],";
-
-        if (str_contains($contents, $needle)) {
-            $contents = str_replace($needle, "\n".$entry.$needle, $contents);
-        } else {
-            $contents = preg_replace("/\n    ],\n\n];\n?$/", "\n\n".$entry."\n    ],\n\n];\n", $contents);
-        }
-
-        if ($this->option('dry-run')) {
-            $this->line('Would update: '.$path);
-
-            return;
-        }
-
-        File::put($path, $contents);
-        $this->line('Updated: '.$path);
-    }
-
-    private function crudConfigEntry(string $model, string $profile): string
-    {
-        $lines = [
-            "        '{$model}' => [",
-        ];
-
-        if ($profile === 'custom') {
-            $lines[] = "            'controller' => \\App\\Http\\Controllers\\{$model}Controller::class,";
-            $lines[] = "            'api_controller' => \\App\\Http\\Controllers\\Api\\{$model}Controller::class,";
-        }
-
-        if ($this->shouldAddToNavigation()) {
-            $lines[] = "            'nav' => true,";
-            $lines[] = "            'nav_label' => '".Str::headline(Str::plural($model))."',";
-            $lines[] = "            'nav_icon' => 'category',";
-            $lines[] = "            'nav_icon_v8' => 'category',";
-        }
-
-        $lines[] = '        ],';
-
-        // Always use LF so the output is consistent with the LF-normalised file
-        // contents that updateCrudConfig works with.
-        return implode("\n", $lines)."\n";
+        return $profile === 'material' || $this->shouldAddToNavigation();
     }
 
     private function shouldAddToNavigation(): bool
