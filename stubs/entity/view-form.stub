@@ -14,13 +14,6 @@
         <x-slot:toolbar>
             <x-button type="link" href="{{ $cancelRoute }}" icon="arrow-left" iconOnly="true" color="light" activeColor="primary"></x-button>
         </x-slot:toolbar>
-        <x-form
-            id="form1"
-            route="{{ $route }}"
-            verb="{{ $verb }}"
-            model="{{ $modelName }}"
-            :dto="$dto"
-            :fieldsArray="$formFields"
-        />
+DummyFormBody
     </x-form-card>
 @endsection

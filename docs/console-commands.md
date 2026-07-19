@@ -1,16 +1,17 @@
 # Custom Console Commands
 
-This project defines four custom Artisan commands. This page is the single
+This project defines five custom Artisan commands. This page is the single
 reference for all of them; deeper topic guides are linked where they exist.
 
 | Command | Purpose | Deep-dive |
 |---------|---------|-----------|
 | [`make:entity`](#makeentity) | Scaffold a convention-based CRUD entity | [entity-scaffolding.md](entity-scaffolding.md) |
 | [`entity:eject`](#entityeject) | Promote an existing entity up the scaffold ladder | [entity-scaffolding.md](entity-scaffolding.md) |
+| [`entity:materialize-form`](#entitymaterialize-form) | Regenerate per-entity form blades with explicit `Form::field` lines | [entity-scaffolding.md](entity-scaffolding.md) |
 | [`dto:cache-metadata`](#dtocache-metadata) | Warm the DTO attribute metadata cache | [dto-metadata.md](dto-metadata.md) |
 | [`dto:clear-metadata`](#dtoclear-metadata) | Clear the DTO attribute metadata cache | [dto-metadata.md](dto-metadata.md) |
 
-All command classes live in `app/Console/Commands/`. The two entity commands
+All command classes live in `app/Console/Commands/`. The entity commands
 share `app/Console/Commands/Concerns/EntityScaffoldTrait.php` (see
 [Shared internals](#shared-internals-entityscaffoldtrait)). Each class also
 carries a verbose PHPDoc block at the top of the file — that in-code docblock
@@ -40,7 +41,7 @@ virtual  ──►  hybrid  ──►  material
 | Profile | What is generated | Views | Controllers | Owns |
 |---------|-------------------|-------|-------------|------|
 | `virtual` *(default)* | Model, Repository, `{Model}Data`, `{Model}ViewData`, migration | Shared `pages/generic/*` + `pages/modals/*` | Shared `CrudController` | Backend only |
-| `hybrid` | virtual **+** 6 per-entity blades | `pages/{resource}/*` (own copies) | Shared `CrudController` | Backend + views |
+| `hybrid` | virtual **+** 6 per-entity blades | `pages/{resource}/*` (form blades contain explicit `Form::field` lines) | Shared `CrudController` | Backend + views |
 | `material` | hybrid **+** `{Model}Controller` + `Api/{Model}Controller`, wired in `config/crud.php` | own | own | Everything |
 
 ### Signature
@@ -137,7 +138,7 @@ The command inspects the filesystem to decide the current level:
 
 | Current | Default (one step) | With `--full` |
 |---------|--------------------|---------------|
-| `virtual` | → `hybrid` (creates 6 blades) | → `material` (blades + controllers) |
+| `virtual` | → `hybrid` (creates 6 blades; forms materialized) | → `material` (blades + controllers) |
 | `hybrid` | → `material` (controllers + config) | → `material` |
 | `material` | no-op | no-op |
 
@@ -171,6 +172,65 @@ php artisan entity:eject Country --full     # → material in one step
 php artisan entity:eject Country --dry-run  # preview only
 php artisan entity:eject Country --full --force
 ```
+
+Hybrid and material profiles generate **materialized** form blades: the same
+`form-card` / `modal-content` shell as the generic templates, but with one
+`Form::field(...)` line per `FormFieldAttribute` on the edit DTO instead of
+`<x-form :fieldsArray="$formFields">`. See [`entity:materialize-form`](#entitymaterialize-form)
+to refresh forms after DTO changes.
+
+---
+
+## `entity:materialize-form`
+
+Regenerate an entity's **form page** and **modal form** blades from DTO
+metadata. Each field marked with `FormFieldAttribute` on `{Model}Data` becomes
+an explicit `Form::field($type, $fieldName, $dto->{$fieldName} ?? null, $list, null)`
+line. Select fields also get a repository lookup for their option list.
+
+Use this when you changed the edit DTO and want owned form markup updated
+without re-ejecting list/details blades.
+
+This command is also invoked automatically when `entity:eject` or
+`make:entity --profile=hybrid|material` creates form blades — see
+[entity-scaffolding.md](entity-scaffolding.md#materialized-forms).
+
+### Signature
+
+```bash
+php artisan entity:materialize-form {name} [--force] [--dry-run]
+```
+
+| Option | Description |
+|--------|-------------|
+| `name` *(required)* | Studly-cased model name. Model, Repository, and `{Model}Data` must exist. |
+| `--force` | Overwrite existing form blades. |
+| `--dry-run` | Print the plan without writing. |
+
+### Examples
+
+```bash
+php artisan entity:materialize-form Category
+php artisan entity:materialize-form Category --force --dry-run
+```
+
+### Output files
+
+- `resources/views/pages/{resource}/form.blade.php`
+- `resources/views/pages/{resource}/modals/form.blade.php`
+
+### Implementation
+
+| Piece | Location |
+|-------|----------|
+| Command | `app/Console/Commands/MaterializeEntityFormCommand.php` |
+| Generator | `app/Support/EntityFormMaterializer.php` |
+| Page stub | `stubs/entity/view-form.stub` (`DummyFormBody` placeholder) |
+| Modal stub | `stubs/entity/modal-form.stub` (`DummyModalFormBody` placeholder) |
+
+The generator expands the `<x-form>` block into inline markup matching
+`themes/{theme}/components/form.blade.php`: `Form::open`, `@method`, hidden
+`id`, one `Form::field` per DTO field, footer buttons, `Form::close`.
 
 ---
 
@@ -235,8 +295,9 @@ php artisan dto:clear-metadata --class="App\Data\CountryData"
 ## Shared internals: `EntityScaffoldTrait`
 
 `app/Console/Commands/Concerns/EntityScaffoldTrait.php` holds the logic shared by
-`make:entity` and `entity:eject`, keeping the two commands in lock-step (same
-file layout, same `config/crud.php` mechanics, same controller generation).
+`make:entity`, `entity:eject`, and `entity:materialize-form`, keeping scaffold
+commands in lock-step (same file layout, same form materialization, same
+`config/crud.php` mechanics, same controller generation).
 
 **Host requirement:** the consuming command must define `--force` and `--dry-run`
 options, which the trait reads.
@@ -244,11 +305,20 @@ options, which the trait reads.
 | Helper | Responsibility |
 |--------|----------------|
 | `stub($name, $replace)` | Load `stubs/entity/{name}.stub` and apply a placeholder → value map. |
-| `viewFiles($resource, $replace)` | The six per-entity blades (list, form, details + view/form/delete modals). |
+| `viewFiles($resource, $replace, $model)` | The six per-entity blades (list, form, details + view/form/delete modals). Form blades use materialized field lines. |
+| `materializedFormFiles($resource, $replace, $model)` | Form page + modal form only (used by `entity:materialize-form`). |
+| `materializedFormReplacements($model)` | Builds `DummyFormBody` / `DummyModalFormBody` via `EntityFormMaterializer`. |
 | `makeControllers($model)` | Delegate to Laravel's `make:controller` for web + API controllers, then patch them to extend `CrudController` and drop the unused `Request` import. |
 | `writeFiles($files)` | Write files, honouring `--force` (skip existing unless forced) and `--dry-run` (report only). |
 | `buildCrudConfigEntry($model, $options)` | Build the PHP lines for one `config/crud.php` model entry (optional controller keys, home, nav label/icons). LF line endings. |
 | `updateCrudConfig($model, $entry)` | Insert a new entry, or **replace** an existing one in place. Line endings are normalised to LF so the regexes work on both Windows (CRLF) and Unix files. |
+
+### `EntityFormMaterializer`
+
+`app/Support/EntityFormMaterializer.php` reads `FormFieldAttribute` metadata
+from the entity's edit DTO (`{Model}Data`) and renders blade fragments with
+explicit `Form::field(...)` calls. Invoked when hybrid form stubs are built —
+not at request time.
 
 ### Why controllers are not stub files
 

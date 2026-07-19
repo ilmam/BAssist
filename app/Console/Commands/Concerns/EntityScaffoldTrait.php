@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands\Concerns;
 
+use App\Support\EntityFormMaterializer;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 
@@ -82,8 +83,10 @@ trait EntityScaffoldTrait
     // -------------------------------------------------------------------------
 
     /** @return array<string, string>  path => contents */
-    protected function viewFiles(string $resource, array $replace): array
+    protected function viewFiles(string $resource, array $replace, string $model): array
     {
+        $replace += $this->materializedFormReplacements($model);
+
         return [
             resource_path("views/pages/{$resource}/list.blade.php")         => $this->stub('view-list', $replace),
             resource_path("views/pages/{$resource}/form.blade.php")         => $this->stub('view-form', $replace),
@@ -91,6 +94,28 @@ trait EntityScaffoldTrait
             resource_path("views/pages/{$resource}/modals/view.blade.php")  => $this->stub('modal-view', $replace),
             resource_path("views/pages/{$resource}/modals/form.blade.php")  => $this->stub('modal-form', $replace),
             resource_path("views/pages/{$resource}/modals/delete.blade.php") => $this->stub('modal-delete', $replace),
+        ];
+    }
+
+    /** @return array<string, string>  path => contents */
+    protected function materializedFormFiles(string $resource, array $replace, string $model): array
+    {
+        $replace += $this->materializedFormReplacements($model);
+
+        return [
+            resource_path("views/pages/{$resource}/form.blade.php")        => $this->stub('view-form', $replace),
+            resource_path("views/pages/{$resource}/modals/form.blade.php") => $this->stub('modal-form', $replace),
+        ];
+    }
+
+    /** @return array<string, string> */
+    protected function materializedFormReplacements(string $model): array
+    {
+        $materializer = app(EntityFormMaterializer::class);
+
+        return [
+            'DummyFormBody'       => $materializer->pageFormBody($model),
+            'DummyModalFormBody'  => $materializer->modalFormBody($model),
         ];
     }
 

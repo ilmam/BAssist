@@ -135,6 +135,14 @@ Run `dto:clear-metadata` (or clear the specific class) whenever you:
 - Change `FormFieldAttribute` or `ValuePropertyAttribute` on a property
 - Add a new `*Data.php` / `*ViewData.php` class and need production to pick it up without waiting for lazy discovery
 
+For **hybrid** entities with materialized form blades, also regenerate owned form markup after changing `FormFieldAttribute`:
+
+```bash
+php artisan entity:materialize-form Category --force
+```
+
+Virtual entities pick up form changes automatically via `$formFields`; hybrid entities bake fields into the blade file. See [entity-scaffolding.md](entity-scaffolding.md#materialized-forms).
+
 You do **not** need to clear when only **data values** change (e.g. editing a category name in the database).
 
 ### Nuclear option
@@ -207,7 +215,8 @@ After changing DTOs, run **both** clear/warm commands in production, or use `cac
 
 1. `php artisan dto:clear-metadata`
 2. `php artisan dto:cache-metadata`
-3. If using `config:cache`, rebuild: `php artisan config:cache`
+3. If the entity is **hybrid**, refresh materialized form blades: `php artisan entity:materialize-form {Model} --force`
+4. If using `config:cache`, rebuild: `php artisan config:cache`
 
 **New DTO class not found by warm command**
 

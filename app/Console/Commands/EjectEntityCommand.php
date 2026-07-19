@@ -33,7 +33,7 @@ use Illuminate\Support\Str;
  * Promotion behaviour
  * ---------------------------------------------------------------------
  *   Default (one step):
- *     virtual  → hybrid    (creates the six blade files)
+ *     virtual  → hybrid    (creates the six blade files; forms are materialized)
  *     hybrid   → material  (creates the two controllers + config wiring)
  *     material → (no-op, already at the top)
  *
@@ -184,7 +184,7 @@ class EjectEntityCommand extends Command
         $files = [];
 
         if ($currentLevel === 'virtual') {
-            $files += $this->viewFiles($resource, $replace);
+            $files += $this->viewFiles($resource, $replace, $model);
         }
 
         return [$files, $targetLevel];

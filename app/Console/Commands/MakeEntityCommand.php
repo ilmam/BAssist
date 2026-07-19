@@ -34,10 +34,11 @@ use Illuminate\Support\Str;
  *
  *   hybrid    virtual + six per-entity blade files under
  *             resources/views/pages/{resource}/ (list, form, details and
- *             the view/form/delete modals). These start as copies of the
- *             generic templates and can be freely customised. The shared
- *             CrudController still handles requests — no controller is
- *             generated.
+ *             the view/form/delete modals). Form blades are materialized with
+ *             explicit Form::field() lines from DTO metadata; list/details
+ *             start as copies of the generic templates and can be freely
+ *             customised. The shared CrudController still handles requests —
+ *             no controller is generated.
  *
  *   material  hybrid + a dedicated {Model}Controller and
  *             Api/{Model}Controller (both extend CrudController), wired
@@ -313,7 +314,7 @@ class MakeEntityCommand extends Command
         ];
 
         if (in_array($profile, ['hybrid', 'material'], true)) {
-            $files += $this->viewFiles($resource, $replace);
+            $files += $this->viewFiles($resource, $replace, $model);
         }
 
         return $files;

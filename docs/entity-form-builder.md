@@ -57,7 +57,8 @@ The `formBuilder()` accessor on `BaseController` is a `protected` hook — overr
 | Concern | Owner |
 |---------|-------|
 | Which fields exist + their types | `DtoMetadata` (attribute schema) |
-| Populating `select` option lists | `EntityFormBuilder` |
+| Populating `select` option lists (runtime) | `EntityFormBuilder` |
+| Generating explicit `Form::field` lines (scaffold time) | `EntityFormMaterializer` |
 | Resolving a related repository | `RepositoryResolver` (injected) |
 | Rendering the form | Blade views / `FormBuilder` facade |
 
@@ -67,7 +68,14 @@ The `formBuilder()` accessor on `BaseController` is a `protected` hook — overr
 
 ### Where it is used
 
-| Feature | API |
-|---------|-----|
-| Create form | `EntityFormBuilder::fields($editDto)` |
-| Edit / modal-edit form | `EntityFormBuilder::fields($editDto)` (via `buildEditForm()`) |
+| Feature | API | Applies when |
+|---------|-----|--------------|
+| Create form | `EntityFormBuilder::fields($editDto)` | **Virtual** entities (generic `<x-form>`) |
+| Edit / modal-edit form | `EntityFormBuilder::fields($editDto)` (via `buildEditForm()`) | **Virtual** entities |
+| Materialized form blades | `EntityFormMaterializer` (via `entity:eject` / `entity:materialize-form`) | **Hybrid** entities with owned form blades |
+
+For **virtual** entities, the controller still passes `$formFields` to `<x-form>`, which loops fields at render time.
+
+For **hybrid** entities, form blades contain explicit `Form::field(...)` lines generated from the same DTO metadata. The controller may still pass `$formFields`, but materialized blades do not use it — re-run `entity:materialize-form` after DTO changes.
+
+See [entity-scaffolding.md](entity-scaffolding.md#materialized-forms) and [console-commands.md](console-commands.md#entitymaterialize-form).

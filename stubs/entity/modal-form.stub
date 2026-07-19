@@ -7,13 +7,5 @@
 @endphp
 
 <x-modal-content :title="$title">
-    <x-form
-        id="modalForm"
-        route="{{ $route }}"
-        verb="{{ $verb }}"
-        model="{{ $modelName }}"
-        :dto="$dto"
-        :fieldsArray="$formFields"
-        :inModal="true"
-    />
+    DummyModalFormBody
 </x-modal-content>
