@@ -44,13 +44,6 @@ return [
             'nav_icon_v8' => 'category',
         ],
 
-        'Country' => [
-            'nav' => true,
-            'nav_label' => 'Countries',
-            'nav_icon' => 'category',
-            'nav_icon_v8' => 'category',
-        ],
-
         // 'LegacyThing' => ['disabled' => true],
     ],
 
