@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Concerns\RespondsWithModal;
 use Illuminate\Http\Request;
-use App\Helpers\FormHelper;
 use App\Support\DtoMetadata;
+use App\Support\EntityFormBuilder;
 use App\Support\RepositoryResolver;
 
 class BaseController extends Controller
@@ -30,14 +30,11 @@ class BaseController extends Controller
     {
         $dtoClass = $this->modelRepository->editDto;
         $dto = $dtoClass::from($dtoClass::empty());
-        $formFields = FormHelper::getFormFields(
-            DtoMetadata::for($this->modelRepository->editDto)->formFields()
-        );
 
         return view(model_page_view($this->modelName, 'form'), [
             'dto' => $dto,
             'model' => $this->modelName,
-            'formFields' => $formFields,
+            'formFields' => $this->formBuilder()->fields($dtoClass),
             'operation' => 'create',
         ]);
     }
@@ -154,21 +151,15 @@ class BaseController extends Controller
 
     protected function buildEditForm($id): array
     {
-        $dto = $this->modelRepository->editById($id);
-        $fields = DtoMetadata::for($this->modelRepository->editDto)->formFields();
-
-        foreach ($fields as $title => &$options) {
-            $type = $options[0];
-            if (isset($options[1]) && $type === 'select') {
-                $repository = $this->initiateModelRepository($options[1]);
-                $options['list'] = $repository->getSelectOptions();
-            }
-        }
-
         return [
-            'dto' => $dto,
-            'formFields' => FormHelper::getFormFields($fields),
+            'dto' => $this->modelRepository->editById($id),
+            'formFields' => $this->formBuilder()->fields($this->modelRepository->editDto),
         ];
+    }
+
+    protected function formBuilder(): EntityFormBuilder
+    {
+        return app(EntityFormBuilder::class);
     }
 
     protected function initiateModelRepository($modelName)

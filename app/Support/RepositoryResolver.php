@@ -10,6 +10,14 @@ use InvalidArgumentException;
  */
 class RepositoryResolver
 {
+    /**
+     * Instance entry point (injectable/mockable) that delegates to make().
+     */
+    public function for(string $modelName): BaseRepository
+    {
+        return self::make($modelName);
+    }
+
     public static function make(string $modelName): BaseRepository
     {
         $repositoryClass = self::classFor($modelName);
