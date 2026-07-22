@@ -3,7 +3,7 @@
     data-kt-sticky-class="border-b border-border"
     data-kt-sticky-name="header"
     id="header">
-    <div class="kt-container-fixed flex justify-between items-stretch lg:gap-4" id="headerContainer">
+    <div class="kt-container-fluid flex justify-between items-stretch lg:gap-4" id="headerContainer">
         <div class="flex gap-2.5 lg:hidden items-center -ms-1">
             <a class="shrink-0" href="{{ url('/') }}">
                 <img class="max-h-[25px] w-full" src="{{ ui_asset('media/app/mini-logo.svg') }}" alt="{{ config('app.name') }}" />

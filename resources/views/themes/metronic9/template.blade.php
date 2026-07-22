@@ -39,7 +39,7 @@
             @include('themes.metronic9.partials.header')
 
             <main class="grow pt-5" id="content" role="content">
-                <div class="kt-container-fixed" id="contentContainer">
+                <div class="kt-container-fluid" id="contentContainer">
                     @yield('main')
                 </div>
             </main>
