@@ -5,6 +5,12 @@ namespace App\Support;
 use App\Models\Status;
 use Illuminate\Support\Facades\Cache;
 
+/**
+ * Canonical status codes used by the need spine.
+ *
+ * Seeded rows for these codes are system-locked (`is_system = true`) via
+ * StatusPrioritySeeder. Custom statuses may exist with other codes and are never system.
+ */
 final class EntityStatus
 {
     public const DRAFT = 'draft';
@@ -12,6 +18,8 @@ final class EntityStatus
     public const DEPRECATED = 'deprecated';
 
     /**
+     * System allowlist codes (also marked is_system when seeded).
+     *
      * @return list<string>
      */
     public static function values(): array

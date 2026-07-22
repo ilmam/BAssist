@@ -154,6 +154,8 @@ class Ui
         $icon = self::keyset($option, 'icon');
         $showText = self::keyset($option, 'showText', true);
         $modalUrl = self::keyset($option, 'modalUrl');
+        $action = self::keyset($option, 'action');
+        $actionAttr = $action ? ' data-action="'.e($action).'"' : '';
         $colValue = '';
 
         if ($theme === 'metronic9') {
@@ -161,9 +163,9 @@ class Ui
             $iconClass = self::tableActionIcon($icon, $theme);
 
             if ($modalUrl) {
-                $colValue .= '<a href="'.$link.'" class="'.$buttonClass.' js-open-modal" data-modal-url="'.e($modalUrl).'">';
+                $colValue .= '<a href="'.$link.'" class="'.$buttonClass.' js-open-modal" data-modal-url="'.e($modalUrl).'"'.$actionAttr.'>';
             } else {
-                $colValue .= '<a href="'.$link.'" class="'.$buttonClass.'">';
+                $colValue .= '<a href="'.$link.'" class="'.$buttonClass.'"'.$actionAttr.'>';
             }
             if ($iconClass) {
                 $colValue .= '<i class="'.$iconClass.'"></i>';
@@ -173,9 +175,9 @@ class Ui
             $iconClass = self::tableActionIcon($icon, $theme);
 
             if ($modalUrl) {
-                $colValue .= '<a href="'.$link.'" class="'.$buttonClass.' js-open-modal" data-modal-url="'.e($modalUrl).'">';
+                $colValue .= '<a href="'.$link.'" class="'.$buttonClass.' js-open-modal" data-modal-url="'.e($modalUrl).'"'.$actionAttr.'>';
             } else {
-                $colValue .= '<a href="'.$link.'" class="'.$buttonClass.'">';
+                $colValue .= '<a href="'.$link.'" class="'.$buttonClass.'"'.$actionAttr.'>';
             }
             if ($iconClass) {
                 $colValue .= '<i class="'.$iconClass.'"></i>';

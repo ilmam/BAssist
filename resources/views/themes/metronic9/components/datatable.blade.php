@@ -62,6 +62,13 @@
                                         @foreach (array_unique($options['keys'] ?? ['id']) as $key)
                                             str = str.split('{{ '{'.$key.'}' }}').join(String(row.{{ $key }}));
                                         @endforeach
+                                        var isSystem = row.is_system === true || row.is_system === 1 || row.is_system === '1' || row.is_system === 'true';
+                                        if (isSystem) {
+                                            var wrap = document.createElement('div');
+                                            wrap.innerHTML = str;
+                                            wrap.querySelectorAll('[data-action="delete"]').forEach(function(el) { el.remove(); });
+                                            str = wrap.innerHTML;
+                                        }
                                         return str;
                                     @elseif (array_key_exists('template', $col))
                                         var str = {!! json_encode($col['template']) !!};

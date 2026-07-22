@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Attributes\RoutableAttribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use RuntimeException;
 
 #[RoutableAttribute]
 class Status extends BaseModel
@@ -17,6 +18,7 @@ class Status extends BaseModel
         'code',
         'sort_order',
         'description',
+        'is_system',
     ];
 
     protected $casts = [
@@ -27,5 +29,17 @@ class Status extends BaseModel
         'updated_by' => 'integer',
         'deleted_by' => 'integer',
         'sort_order' => 'integer',
+        'is_system' => 'boolean',
     ];
+
+    protected static function booted(): void
+    {
+        parent::booted();
+
+        static::deleting(function (self $status): void {
+            if ($status->is_system) {
+                throw new RuntimeException('System statuses cannot be deleted.');
+            }
+        });
+    }
 }

@@ -13,9 +13,9 @@ class StatusPrioritySeeder extends Seeder
     public function run(): void
     {
         $statuses = [
-            ['code' => EntityStatus::DRAFT, 'name' => 'Draft', 'sort_order' => 10, 'description' => 'Work in progress; not yet agreed.'],
-            ['code' => EntityStatus::AGREED, 'name' => 'Agreed', 'sort_order' => 20, 'description' => 'Accepted and active in the spine.'],
-            ['code' => EntityStatus::DEPRECATED, 'name' => 'Deprecated', 'sort_order' => 30, 'description' => 'Superseded or no longer in use.'],
+            ['code' => EntityStatus::DRAFT, 'name' => 'Draft', 'sort_order' => 10, 'description' => 'Work in progress; not yet agreed.', 'is_system' => true],
+            ['code' => EntityStatus::AGREED, 'name' => 'Agreed', 'sort_order' => 20, 'description' => 'Accepted and active in the spine.', 'is_system' => true],
+            ['code' => EntityStatus::DEPRECATED, 'name' => 'Deprecated', 'sort_order' => 30, 'description' => 'Superseded or no longer in use.', 'is_system' => true],
         ];
 
         foreach ($statuses as $status) {
@@ -26,9 +26,9 @@ class StatusPrioritySeeder extends Seeder
         }
 
         $priorities = [
-            ['code' => EntityPriority::HIGH, 'name' => 'High', 'sort_order' => 10, 'description' => 'Must be addressed soon.'],
-            ['code' => EntityPriority::MEDIUM, 'name' => 'Medium', 'sort_order' => 20, 'description' => 'Important but not urgent.'],
-            ['code' => EntityPriority::LOW, 'name' => 'Low', 'sort_order' => 30, 'description' => 'Can wait relative to other work.'],
+            ['code' => EntityPriority::HIGH, 'name' => 'High', 'sort_order' => 10, 'description' => 'Must be addressed soon.', 'is_system' => true],
+            ['code' => EntityPriority::MEDIUM, 'name' => 'Medium', 'sort_order' => 20, 'description' => 'Important but not urgent.', 'is_system' => true],
+            ['code' => EntityPriority::LOW, 'name' => 'Low', 'sort_order' => 30, 'description' => 'Can wait relative to other work.', 'is_system' => true],
         ];
 
         foreach ($priorities as $priority) {

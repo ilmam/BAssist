@@ -26,7 +26,7 @@ return [
     'influence' => 'Influence',
     'interest' => 'Interest',
     'notes' => 'Notes',
-    'is_system' => 'System Stakeholder',
+    'is_system' => 'System',
     'system_key' => 'System Key',
     'sort_order' => 'Sort Order',
     'projects' => 'Projects',
