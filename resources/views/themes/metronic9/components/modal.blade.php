@@ -3,7 +3,7 @@
     those and fights our open/close class toggling used by data-modal-url buttons.
 
     Sizes (via $size, data-modal-size on content, or data-modal-size on trigger):
-      sm | md | lg (default) | xl  — centered dialogs
+      sm | md | lg (default) | xl | full  — centered dialogs
       end | sheet              — right-side sheet
 --}}
 @php

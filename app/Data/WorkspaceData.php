@@ -2,30 +2,28 @@
 
 namespace App\Data;
 
-use App\Attributes\FormFieldAttribute;
-use App\Attributes\ListPropertyAttribute;
-use App\Attributes\ValuePropertyAttribute;
+use App\Attributes\Form;
+use App\Attributes\ListForm;
+use App\Attributes\Value;
 
 class WorkspaceData extends BaseData
 {
     public function __construct(
         public ?int $id = null,
-        #[ListPropertyAttribute]
-        #[ValuePropertyAttribute]
-        #[FormFieldAttribute('text')]
+        #[ListForm('text')]
+        #[Value]
         public string $name = '',
-        #[ValuePropertyAttribute]
-        #[FormFieldAttribute('text')]
+        #[Form('text')]
+        #[Value]
         public string $slug = '',
-        #[ValuePropertyAttribute]
-        #[FormFieldAttribute('select', 'Tenant')]
+        #[Form('select', 'Tenant')]
+        #[Value]
         public int $tenant_id = 0,
-        #[ValuePropertyAttribute]
-        #[FormFieldAttribute('textarea')]
+        #[Form('textarea', hideQuick: true)]
+        #[Value]
         public ?string $description = null,
-        #[ListPropertyAttribute]
-        #[ValuePropertyAttribute]
-        #[FormFieldAttribute('select', 'Status')]
+        #[ListForm('select', 'Status', hideQuick: true)]
+        #[Value]
         public ?int $status_id = null,
     ) {
     }

@@ -14,6 +14,15 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->statefulApi();
 
+        $middleware->appendToGroup('web', [
+            \App\Http\Middleware\SyncWorkspaceContext::class,
+        ]);
+
+        // Datatable AJAX uses the stateful API; keep workspace sticky there too.
+        $middleware->appendToGroup('api', [
+            \App\Http\Middleware\SyncWorkspaceContext::class,
+        ]);
+
         $middleware->alias([
             'auth' => \App\Http\Middleware\Authenticate::class,
             'auth.basic' => \Illuminate\Auth\Middleware\AuthenticateWithBasicAuth::class,

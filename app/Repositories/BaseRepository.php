@@ -2,6 +2,9 @@
 
 namespace App\Repositories;
 
+use App\Helpers\ListUi;
+use App\Models\Project;
+use App\Models\Workspace;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
@@ -31,11 +34,35 @@ class BaseRepository
     protected array $listRelationFilters = [];
 
     /**
+     * Ancestor context filters applied via whereHas when the model has no column.
+     * Example: 'workspace_id' => ['project', 'workspace_id']
+     *
+     * @var array<string, array{0: string, 1: string}>
+     */
+    protected array $listContextFilters = [];
+
+    /**
+     * Implicit tenant scope for list queries (never from request/URL).
+     * null = no tenant scope; string = direct column (e.g. 'tenant_id');
+     * [relation, column] = whereHas path (e.g. ['workspace', 'tenant_id']).
+     *
+     * @var string|array{0: string, 1: string}|null
+     */
+    protected string|array|null $listTenantScope = null;
+
+    /**
      * Relations to withCount() on list queries (exposed as {relation}_count).
      *
      * @var list<string>
      */
     protected array $listWithCounts = [];
+
+    /**
+     * Nested BelongsTo paths to eager-load so parent context IDs can be copied onto rows.
+     *
+     * @var list<string>
+     */
+    protected array $listContextRelations = [];
 
     public function getSelectOptions($fields = null)
     {
@@ -98,8 +125,19 @@ class BaseRepository
         return array_values(array_unique(array_merge(
             $this->listFilters,
             array_keys($this->listRelationFilters),
+            array_keys($this->listContextFilters),
+            ListUi::CONTEXT_KEYS,
             ['orphans']
         )));
+    }
+
+    /**
+     * Whether list queries honor workspace_id (direct column or ancestor context).
+     */
+    public function usesWorkspaceListScope(): bool
+    {
+        return in_array('workspace_id', $this->listFilters, true)
+            || array_key_exists('workspace_id', $this->listContextFilters);
     }
 
     /**
@@ -112,21 +150,25 @@ class BaseRepository
         if ($all) {
             $query = $this->newListQuery($filters);
             $dataCollection = $query->get();
-            $this->enrichListCollection($dataCollection);
         } elseif ($id === null) {
             $dataCollection = $this->model::first();
         } else {
             $dataCollection = $this->model::findOrFail($id);
         }
 
-        if (isset($relations['BelongsTo'])) {
-            foreach ($relations['BelongsTo'] as $relation) {
-                if ($dataCollection instanceof Model) {
-                    $dataCollection->load($relation);
-                } elseif ($dataCollection instanceof Collection) {
-                    $dataCollection->load($relation);
-                }
+        $belongsTo = $relations['BelongsTo'] ?? [];
+        $eager = array_values(array_unique(array_merge($belongsTo, $this->listContextRelations)));
+
+        if ($eager !== []) {
+            if ($dataCollection instanceof Model) {
+                $dataCollection->load($eager);
+            } elseif ($dataCollection instanceof Collection) {
+                $dataCollection->load($eager);
             }
+        }
+
+        if ($all && $dataCollection instanceof Collection) {
+            $this->enrichListCollection($dataCollection);
         }
 
         return $dataCollection;
@@ -142,6 +184,8 @@ class BaseRepository
         if ($this->listWithCounts !== []) {
             $query->withCount($this->listWithCounts);
         }
+
+        $this->applyImplicitTenantScope($query);
 
         $filters = $filters ?? [];
 
@@ -167,11 +211,57 @@ class BaseRepository
             });
         }
 
+        foreach ($this->listContextFilters as $param => $path) {
+            if (! array_key_exists($param, $filters) || $filters[$param] === null || $filters[$param] === '') {
+                continue;
+            }
+
+            // Skip when the same key is already applied as a direct column filter.
+            if (in_array($param, $this->listFilters, true)) {
+                continue;
+            }
+
+            [$relation, $column] = $path;
+            $value = $filters[$param];
+            $query->whereHas($relation, function (Builder $relationQuery) use ($column, $value) {
+                $relationQuery->where($column, $value);
+            });
+        }
+
         if ($this->wantsOrphansOnly($filters)) {
             $this->applyOrphanConstraint($query);
         }
 
         return $query;
+    }
+
+    /**
+     * Scope list queries to the authenticated user's tenant.
+     * Tenant is fixed by auth/provisioning — never taken from request filters.
+     */
+    protected function applyImplicitTenantScope(Builder $query): void
+    {
+        if ($this->listTenantScope === null) {
+            return;
+        }
+
+        $tenantId = auth()->user()?->tenant_id;
+        if ($tenantId === null) {
+            $query->whereRaw('0 = 1');
+
+            return;
+        }
+
+        if (is_string($this->listTenantScope)) {
+            $query->where($this->listTenantScope, $tenantId);
+
+            return;
+        }
+
+        [$relation, $column] = $this->listTenantScope;
+        $query->whereHas($relation, function (Builder $relationQuery) use ($column, $tenantId) {
+            $relationQuery->where($column, $tenantId);
+        });
     }
 
     /**
@@ -205,8 +295,27 @@ class BaseRepository
     protected function enrichListCollection(Collection $collection): void
     {
         $collection->each(function (Model $model): void {
+            $this->attachParentContextIds($model);
             $model->setAttribute('is_orphan', $this->isOrphan($model));
         });
+    }
+
+    /**
+     * Copy workspace/project ids onto the row for sticky child-link URLs.
+     * Tenant is not attached — it is implicit from the authenticated user.
+     */
+    protected function attachParentContextIds(Model $model): void
+    {
+        if ($model instanceof Project || $model instanceof Workspace) {
+            return;
+        }
+
+        if ($model->relationLoaded('project') && $model->project) {
+            /** @var Project $project */
+            $project = $model->project;
+            $model->setAttribute('project_id', $project->id);
+            $model->setAttribute('workspace_id', $project->workspace_id);
+        }
     }
 
     protected function isOrphan(Model $model): bool

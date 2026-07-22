@@ -2,29 +2,30 @@
 
 namespace App\Data;
 
-use App\Attributes\ListPropertyAttribute;
-use App\Attributes\ValuePropertyAttribute;
+use App\Attributes\InList;
+use App\Attributes\Value;
 
 class ProjectViewData extends BaseData
 {
     public function __construct(
         public ?int $id = null,
-        #[ListPropertyAttribute]
-        #[ValuePropertyAttribute]
+        #[InList]
+        #[Value]
         public string $name = '',
-        #[ValuePropertyAttribute]
+        #[Value]
         public ?string $code = null,
-        #[ValuePropertyAttribute]
+        #[Value]
         public int $workspace_id = 0,
-        #[ListPropertyAttribute]
-        #[ValuePropertyAttribute]
+        public ?int $tenant_id = null,
+        #[InList]
+        #[Value]
         public ?WorkspaceViewData $workspace = null,
-        #[ValuePropertyAttribute]
+        #[Value]
         public ?string $description = null,
-        #[ValuePropertyAttribute]
+        #[Value]
         public ?int $status_id = null,
-        #[ListPropertyAttribute]
-        #[ValuePropertyAttribute]
+        #[InList]
+        #[Value]
         public ?StatusViewData $status = null,
         public ?int $business_objectives_count = null,
         public ?int $business_needs_count = null,

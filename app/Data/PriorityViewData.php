@@ -2,22 +2,22 @@
 
 namespace App\Data;
 
-use App\Attributes\ListPropertyAttribute;
-use App\Attributes\ValuePropertyAttribute;
+use App\Attributes\InList;
+use App\Attributes\Value;
 
 class PriorityViewData extends BaseData
 {
     public function __construct(
         public ?int $id = null,
-        #[ListPropertyAttribute]
-        #[ValuePropertyAttribute]
+        #[InList]
+        #[Value]
         public string $name = '',
-        #[ListPropertyAttribute]
-        #[ValuePropertyAttribute]
+        #[InList]
+        #[Value]
         public string $code = '',
-        #[ValuePropertyAttribute]
+        #[Value]
         public int $sort_order = 0,
-        #[ValuePropertyAttribute]
+        #[Value]
         public ?string $description = null,
     ) {
     }

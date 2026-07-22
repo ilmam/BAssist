@@ -2,24 +2,22 @@
 
 namespace App\Data;
 
-use App\Attributes\FormFieldAttribute;
-use App\Attributes\ListPropertyAttribute;
-use App\Attributes\ValuePropertyAttribute;
+use App\Attributes\Form;
+use App\Attributes\ListForm;
+use App\Attributes\Value;
 
 class TenantData extends BaseData
 {
     public function __construct(
         public ?int $id = null,
-        #[ListPropertyAttribute]
-        #[ValuePropertyAttribute]
-        #[FormFieldAttribute('text')]
+        #[ListForm('text')]
+        #[Value]
         public string $name = '',
-        #[ValuePropertyAttribute]
-        #[FormFieldAttribute('text')]
+        #[Form('text')]
+        #[Value]
         public string $slug = '',
-        #[ListPropertyAttribute]
-        #[ValuePropertyAttribute]
-        #[FormFieldAttribute('select', 'Status')]
+        #[ListForm('select', 'Status')]
+        #[Value]
         public ?int $status_id = null,
     ) {
     }

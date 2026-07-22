@@ -175,7 +175,7 @@ php artisan entity:eject Country --full --force
 
 Hybrid and material profiles generate **materialized** form blades: the same
 `form-card` / `modal-content` shell as the generic templates, but with one
-`Form::field(...)` line per `FormFieldAttribute` on the edit DTO instead of
+`Form::field(...)` line per `Form` on the edit DTO instead of
 `<x-form :fieldsArray="$formFields">`. See [`entity:materialize-form`](#entitymaterialize-form)
 to refresh forms after DTO changes.
 
@@ -184,7 +184,7 @@ to refresh forms after DTO changes.
 ## `entity:materialize-form`
 
 Regenerate an entity's **form page** and **modal form** blades from DTO
-metadata. Each field marked with `FormFieldAttribute` on `{Model}Data` becomes
+metadata. Each field marked with `Form` on `{Model}Data` becomes
 an explicit `Form::field($type, $fieldName, $dto->{$fieldName} ?? null, $list, null)`
 line. Select fields also get a repository lookup for their option list.
 
@@ -271,7 +271,7 @@ php artisan dto:cache-metadata --class="App\Data\CountryData"
 
 The inverse of `dto:cache-metadata`. Drops cached schema entries so they are
 rebuilt from the current attributes. Run it whenever a Data class's attributes
-change (new/renamed property, changed `FormFieldAttribute`, etc.).
+change (new/renamed property, changed `Form`, etc.).
 
 ### Signature
 
@@ -315,7 +315,7 @@ options, which the trait reads.
 
 ### `EntityFormMaterializer`
 
-`app/Support/EntityFormMaterializer.php` reads `FormFieldAttribute` metadata
+`app/Support/EntityFormMaterializer.php` reads `Form` metadata
 from the entity's edit DTO (`{Model}Data`) and renders blade fragments with
 explicit `Form::field(...)` calls. Invoked when hybrid form stubs are built —
 not at request time.

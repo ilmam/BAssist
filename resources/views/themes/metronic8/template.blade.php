@@ -148,6 +148,275 @@
             }
         }
 
+        const quickCreateSessions = new WeakMap();
+
+        function getQuickCreateRoot(fromEl) {
+            return fromEl?.closest?.('[data-quick-create]') || document.querySelector('#mianModal [data-quick-create]');
+        }
+
+        function getQuickCreateState(root) {
+            if (!root) {
+                return null;
+            }
+
+            if (!quickCreateSessions.has(root)) {
+                quickCreateSessions.set(root, { inserts: [], editingId: null });
+            }
+
+            return quickCreateSessions.get(root);
+        }
+
+        function quickCreateLabel(record, labelField) {
+            if (!record) {
+                return '';
+            }
+
+            if (record.label) {
+                return record.label;
+            }
+
+            const values = record.values || record;
+            return values[labelField] || values.title || values.name || values.code || ('#' + (values.id || ''));
+        }
+
+        function renderQuickCreateSession(root) {
+            const state = getQuickCreateState(root);
+            if (!state) {
+                return;
+            }
+
+            const list = root.querySelector('[data-qc-list]');
+            const empty = root.querySelector('[data-qc-empty]');
+            const count = root.querySelector('[data-qc-count]');
+            const canUpdate = root.getAttribute('data-can-update') === '1';
+            const canDelete = root.getAttribute('data-can-delete') === '1';
+            const editLabel = root.getAttribute('data-i18n-edit') || 'Edit';
+            const deleteLabel = root.getAttribute('data-i18n-delete') || 'Delete';
+            const justNow = root.getAttribute('data-i18n-just-now') || 'just now';
+
+            if (count) {
+                count.textContent = '(' + state.inserts.length + ')';
+            }
+
+            if (!list || !empty) {
+                return;
+            }
+
+            list.innerHTML = '';
+
+            if (state.inserts.length === 0) {
+                empty.hidden = false;
+                list.hidden = true;
+                return;
+            }
+
+            empty.hidden = true;
+            list.hidden = false;
+
+            state.inserts.forEach((record) => {
+                const li = document.createElement('li');
+                li.className = 'd-flex align-items-start justify-content-between gap-2 border rounded px-3 py-2';
+                li.dataset.qcId = String(record.id);
+
+                const main = document.createElement('div');
+                main.className = 'flex-grow-1';
+                main.innerHTML =
+                    '<div class="fw-semibold text-gray-800 text-truncate"></div>' +
+                    '<div class="text-muted fs-8">#' + String(record.id) + ' · ' + justNow + '</div>';
+                main.querySelector('.text-truncate').textContent = quickCreateLabel(record, root.getAttribute('data-label-field'));
+
+                const actions = document.createElement('div');
+                actions.className = 'd-flex align-items-center gap-1';
+
+                if (canUpdate) {
+                    const editBtn = document.createElement('button');
+                    editBtn.type = 'button';
+                    editBtn.className = 'btn btn-sm btn-light';
+                    editBtn.setAttribute('data-qc-edit', String(record.id));
+                    editBtn.textContent = editLabel;
+                    actions.appendChild(editBtn);
+                }
+
+                if (canDelete) {
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.type = 'button';
+                    deleteBtn.className = 'btn btn-sm btn-light-danger';
+                    deleteBtn.setAttribute('data-qc-delete', String(record.id));
+                    deleteBtn.textContent = deleteLabel;
+                    actions.appendChild(deleteBtn);
+                }
+
+                li.appendChild(main);
+                li.appendChild(actions);
+                list.appendChild(li);
+            });
+        }
+
+        function setQuickCreateFormMode(root, mode, record) {
+            const form = root.querySelector('form[data-quick-create-form]');
+            const state = getQuickCreateState(root);
+            if (!form || !state) {
+                return;
+            }
+
+            const submitBtn = form.querySelector('[data-qc-submit]');
+            const cancelEditBtn = form.querySelector('[data-qc-cancel-edit]');
+            const methodInput = form.querySelector('input[name="_method"]');
+            const storeUrl = root.getAttribute('data-store-url');
+            const updateTemplate = root.getAttribute('data-update-url-template');
+
+            if (mode === 'edit' && record) {
+                state.editingId = record.id;
+                form.action = updateTemplate.replace('~id~', String(record.id));
+
+                if (methodInput) {
+                    methodInput.value = 'PUT';
+                } else {
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = '_method';
+                    input.value = 'PUT';
+                    form.appendChild(input);
+                }
+
+                const values = record.values || {};
+                Array.from(form.elements).forEach((el) => {
+                    if (!el.name || el.name === '_token' || el.name === '_method') {
+                        return;
+                    }
+
+                    if (el.type === 'checkbox' || el.type === 'radio') {
+                        el.checked = String(values[el.name]) === String(el.value) || values[el.name] === true;
+                        return;
+                    }
+
+                    if (values[el.name] !== undefined && values[el.name] !== null) {
+                        el.value = values[el.name];
+                    }
+                });
+
+                if (submitBtn) {
+                    submitBtn.textContent = root.getAttribute('data-i18n-update') || 'Update';
+                }
+
+                if (cancelEditBtn) {
+                    cancelEditBtn.classList.remove('d-none', 'hidden');
+                }
+            } else {
+                state.editingId = null;
+                form.action = storeUrl;
+                form.reset();
+
+                if (methodInput) {
+                    methodInput.remove();
+                }
+
+                if (submitBtn) {
+                    submitBtn.textContent = root.getAttribute('data-i18n-add') || 'Add';
+                }
+
+                if (cancelEditBtn) {
+                    cancelEditBtn.classList.add('d-none');
+                    cancelEditBtn.classList.add('hidden');
+                }
+            }
+        }
+
+        function upsertQuickCreateRecord(root, record) {
+            const state = getQuickCreateState(root);
+            if (!state || !record?.id) {
+                return;
+            }
+
+            const index = state.inserts.findIndex((item) => String(item.id) === String(record.id));
+            if (index >= 0) {
+                state.inserts[index] = record;
+            } else {
+                state.inserts.unshift(record);
+            }
+
+            renderQuickCreateSession(root);
+        }
+
+        function removeQuickCreateRecord(root, id) {
+            const state = getQuickCreateState(root);
+            if (!state) {
+                return;
+            }
+
+            state.inserts = state.inserts.filter((item) => String(item.id) !== String(id));
+            if (String(state.editingId) === String(id)) {
+                setQuickCreateFormMode(root, 'create');
+            }
+            renderQuickCreateSession(root);
+        }
+
+        document.addEventListener('click', function (event) {
+            const root = getQuickCreateRoot(event.target);
+            if (!root) {
+                return;
+            }
+
+            const cancelEdit = event.target.closest('[data-qc-cancel-edit]');
+            if (cancelEdit) {
+                event.preventDefault();
+                setQuickCreateFormMode(root, 'create');
+                return;
+            }
+
+            const editBtn = event.target.closest('[data-qc-edit]');
+            if (editBtn) {
+                event.preventDefault();
+                const state = getQuickCreateState(root);
+                const record = state?.inserts.find((item) => String(item.id) === String(editBtn.getAttribute('data-qc-edit')));
+                if (record) {
+                    setQuickCreateFormMode(root, 'edit', record);
+                }
+                return;
+            }
+
+            const deleteBtn = event.target.closest('[data-qc-delete]');
+            if (deleteBtn) {
+                event.preventDefault();
+                const id = deleteBtn.getAttribute('data-qc-delete');
+                const confirmMessage = root.getAttribute('data-i18n-confirm-delete') || 'Delete this record?';
+                if (!window.confirm(confirmMessage)) {
+                    return;
+                }
+
+                const form = root.querySelector('form[data-quick-create-form]');
+                const token = form?.querySelector('input[name="_token"]')?.value;
+                const destroyUrl = root.getAttribute('data-destroy-url-template').replace('~id~', String(id));
+                const body = new FormData();
+                body.append('_method', 'DELETE');
+                if (token) {
+                    body.append('_token', token);
+                }
+
+                fetch(destroyUrl, {
+                    method: 'POST',
+                    body,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json',
+                    },
+                })
+                    .then(async (response) => {
+                        if (!response.ok) {
+                            throw await response.json().catch(() => ({}));
+                        }
+                        return response.json();
+                    })
+                    .then(() => {
+                        removeQuickCreateRecord(root, id);
+                        reloadDataTables();
+                    })
+                    .catch(() => {
+                        window.alert('Delete failed. Please try again.');
+                    });
+            }
+        });
+
         document.addEventListener('submit', function (event) {
             const form = event.target.closest('form[data-modal-form]');
             if (!form) {
@@ -160,6 +429,9 @@
             if (submitButton) {
                 submitButton.disabled = true;
             }
+
+            const isQuickCreate = form.hasAttribute('data-quick-create-form');
+            const quickRoot = isQuickCreate ? getQuickCreateRoot(form) : null;
 
             fetch(form.action, {
                 method: 'POST',
@@ -177,7 +449,19 @@
 
                     return response.json();
                 })
-                .then(() => {
+                .then((payload) => {
+                    if (isQuickCreate && quickRoot) {
+                        if (payload?.record) {
+                            upsertQuickCreateRecord(quickRoot, payload.record);
+                        }
+                        setQuickCreateFormMode(quickRoot, 'create');
+                        reloadDataTables();
+                        if (submitButton) {
+                            submitButton.disabled = false;
+                        }
+                        return;
+                    }
+
                     reloadDataTables();
                     closeModal();
                 })

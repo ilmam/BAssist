@@ -7,7 +7,7 @@ class AttributeHelper
 {
     public static function getPropertyAttributes($object, $attributeName, $includeArguments = true)
     {
-        if ($attributeName === 'FormFieldAttribute') {
+        if ($attributeName === 'Form') {
             $fields = DtoMetadata::for($object)->formFields();
 
             if ($includeArguments) {
@@ -18,7 +18,7 @@ class AttributeHelper
         }
 
         throw new \InvalidArgumentException(
-            "AttributeHelper only delegates FormFieldAttribute to DtoMetadata. Use DtoMetadata::for() for [{$attributeName}]."
+            "AttributeHelper only delegates Form to DtoMetadata. Use DtoMetadata::for() for [{$attributeName}]."
         );
     }
 }

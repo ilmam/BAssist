@@ -1,0 +1,269 @@
+<?php
+
+namespace App\Services;
+
+use App\Models\BusinessNeed;
+use App\Models\BusinessObjective;
+use App\Models\Project;
+use App\Models\StakeholderNeed;
+use App\Models\Workspace;
+use App\Support\WorkspaceContext;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Collection;
+
+/**
+ * Builds a derived traceability matrix from FK / pivot links.
+ * Phase 1 MVP chain: Objective ↔ Need ↔ Stakeholder Need.
+ */
+class TraceabilityMatrixService
+{
+    public function __construct(protected WorkspaceContext $workspaceContext)
+    {
+    }
+
+    /**
+     * @param  array{project_id?: int|string|null, orphans_only?: bool|string|null}  $filters
+     * @return array{
+     *   rows: list<array<string, mixed>>,
+     *   summary: array{total: int, gaps: int, orphan_objectives: int, orphan_needs: int, orphan_stakeholder_needs: int},
+     *   projects: Collection<int, Project>,
+     *   filters: array{project_id: int|null, workspace_id: int|null, workspace_name: string|null, orphans_only: bool}
+     * }
+     */
+    public function build(array $filters = []): array
+    {
+        $projectId = isset($filters['project_id']) && is_numeric($filters['project_id'])
+            ? (int) $filters['project_id']
+            : null;
+        $orphansOnly = filter_var($filters['orphans_only'] ?? false, FILTER_VALIDATE_BOOLEAN);
+        $workspaceId = $this->workspaceContext->id();
+        $workspaceName = $workspaceId
+            ? Workspace::query()->whereKey($workspaceId)->value('name')
+            : null;
+
+        $rows = collect()
+            ->merge($this->rowsFromNeeds($projectId, $workspaceId))
+            ->merge($this->orphanObjectiveRows($projectId, $workspaceId))
+            ->merge($this->orphanStakeholderNeedRows($projectId, $workspaceId))
+            ->values();
+
+        if ($orphansOnly) {
+            $rows = $rows->filter(fn (array $row) => $row['has_gap'])->values();
+        }
+
+        $rows = $rows
+            ->sortBy([
+                ['project_name', 'asc'],
+                ['objective_title', 'asc'],
+                ['need_title', 'asc'],
+                ['stakeholder_need_title', 'asc'],
+            ])
+            ->values();
+
+        return [
+            'rows' => $rows->all(),
+            'summary' => [
+                'total' => $rows->count(),
+                'gaps' => $rows->where('has_gap', true)->count(),
+                'orphan_objectives' => $rows->where('gap_type', 'orphan_objective')->count(),
+                'orphan_needs' => $rows->filter(fn (array $r) => in_array('missing_objective', $r['gaps'], true))->count(),
+                'orphan_stakeholder_needs' => $rows->where('gap_type', 'orphan_stakeholder_need')->count(),
+            ],
+            'projects' => $this->projectsForFilter($workspaceId),
+            'filters' => [
+                'project_id' => $projectId,
+                'workspace_id' => $workspaceId,
+                'workspace_name' => $workspaceName,
+                'orphans_only' => $orphansOnly,
+            ],
+        ];
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    protected function rowsFromNeeds(?int $projectId, ?int $workspaceId): array
+    {
+        $needs = $this->scopedQuery(BusinessNeed::query(), $projectId, $workspaceId)
+            ->with([
+                'project:id,name,code',
+                'businessObjectives:id,title',
+                'stakeholderNeeds:id,title',
+                'stakeholderNeeds.stakeholders:id,name',
+            ])
+            ->orderBy('title')
+            ->get();
+
+        $rows = [];
+
+        foreach ($needs as $need) {
+            $objectives = $need->businessObjectives->isEmpty()
+                ? [null]
+                : $need->businessObjectives->all();
+            $stakeholderNeeds = $need->stakeholderNeeds->isEmpty()
+                ? [null]
+                : $need->stakeholderNeeds->all();
+
+            foreach ($objectives as $objective) {
+                foreach ($stakeholderNeeds as $stakeholderNeed) {
+                    $rows[] = $this->makeRow(
+                        project: $need->project,
+                        objective: $objective,
+                        need: $need,
+                        stakeholderNeed: $stakeholderNeed,
+                        gapType: $objective === null || $stakeholderNeed === null ? 'incomplete_chain' : null,
+                    );
+                }
+            }
+        }
+
+        return $rows;
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    protected function orphanObjectiveRows(?int $projectId, ?int $workspaceId): array
+    {
+        $objectives = $this->scopedQuery(BusinessObjective::query(), $projectId, $workspaceId)
+            ->whereDoesntHave('businessNeeds')
+            ->with('project:id,name,code')
+            ->orderBy('title')
+            ->get();
+
+        return $objectives->map(fn (BusinessObjective $objective) => $this->makeRow(
+            project: $objective->project,
+            objective: $objective,
+            need: null,
+            stakeholderNeed: null,
+            gapType: 'orphan_objective',
+        ))->all();
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    protected function orphanStakeholderNeedRows(?int $projectId, ?int $workspaceId): array
+    {
+        $stakeholderNeeds = $this->scopedQuery(StakeholderNeed::query(), $projectId, $workspaceId)
+            ->whereDoesntHave('businessNeeds')
+            ->with([
+                'project:id,name,code',
+                'stakeholders:id,name',
+            ])
+            ->orderBy('title')
+            ->get();
+
+        return $stakeholderNeeds->map(fn (StakeholderNeed $stakeholderNeed) => $this->makeRow(
+            project: $stakeholderNeed->project,
+            objective: null,
+            need: null,
+            stakeholderNeed: $stakeholderNeed,
+            gapType: 'orphan_stakeholder_need',
+        ))->all();
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    protected function makeRow(
+        ?Project $project,
+        ?BusinessObjective $objective,
+        ?BusinessNeed $need,
+        ?StakeholderNeed $stakeholderNeed,
+        ?string $gapType,
+    ): array {
+        $gaps = [];
+
+        if ($objective === null && $need !== null) {
+            $gaps[] = 'missing_objective';
+        }
+        if ($need === null && $objective !== null && $gapType === 'orphan_objective') {
+            $gaps[] = 'missing_need';
+        }
+        if ($need === null && $stakeholderNeed !== null && $gapType === 'orphan_stakeholder_need') {
+            $gaps[] = 'missing_need';
+        }
+        if ($stakeholderNeed === null && $need !== null) {
+            $gaps[] = 'missing_stakeholder_need';
+        }
+        if ($gapType === 'orphan_objective') {
+            $gaps[] = 'orphan_objective';
+        }
+        if ($gapType === 'orphan_stakeholder_need') {
+            $gaps[] = 'orphan_stakeholder_need';
+        }
+
+        $gaps = array_values(array_unique($gaps));
+
+        $stakeholderNames = $stakeholderNeed?->relationLoaded('stakeholders')
+            ? $stakeholderNeed->stakeholders->pluck('name')->filter()->values()->all()
+            : [];
+
+        return [
+            'project_id' => $project?->id,
+            'project_name' => $project?->name,
+            'project_code' => $project?->code,
+            'objective_id' => $objective?->id,
+            'objective_title' => $objective?->title,
+            'need_id' => $need?->id,
+            'need_title' => $need?->title,
+            'stakeholder_need_id' => $stakeholderNeed?->id,
+            'stakeholder_need_title' => $stakeholderNeed?->title,
+            'stakeholder_names' => $stakeholderNames,
+            'gaps' => $gaps,
+            'has_gap' => $gaps !== [],
+            'gap_type' => $gapType,
+        ];
+    }
+
+    /**
+     * @template TModel of \Illuminate\Database\Eloquent\Model
+     *
+     * @param  Builder<TModel>  $query
+     * @return Builder<TModel>
+     */
+    protected function scopedQuery(Builder $query, ?int $projectId, ?int $workspaceId): Builder
+    {
+        $tenantId = auth()->user()?->tenant_id;
+
+        if ($tenantId !== null) {
+            $query->whereHas('project.workspace', function (Builder $workspaceQuery) use ($tenantId): void {
+                $workspaceQuery->where('tenant_id', $tenantId);
+            });
+        }
+
+        if ($workspaceId !== null) {
+            $query->whereHas('project', function (Builder $projectQuery) use ($workspaceId): void {
+                $projectQuery->where('workspace_id', $workspaceId);
+            });
+        }
+
+        if ($projectId !== null) {
+            $query->where('project_id', $projectId);
+        }
+
+        return $query;
+    }
+
+    /**
+     * @return Collection<int, Project>
+     */
+    protected function projectsForFilter(?int $workspaceId): Collection
+    {
+        $query = Project::query()->orderBy('name');
+
+        $tenantId = auth()->user()?->tenant_id;
+        if ($tenantId !== null) {
+            $query->whereHas('workspace', function (Builder $workspaceQuery) use ($tenantId): void {
+                $workspaceQuery->where('tenant_id', $tenantId);
+            });
+        }
+
+        if ($workspaceId !== null) {
+            $query->where('workspace_id', $workspaceId);
+        }
+
+        return $query->get(['id', 'name', 'code', 'workspace_id']);
+    }
+}

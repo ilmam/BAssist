@@ -16,7 +16,7 @@ use Illuminate\Support\Str;
  * modal-content, open/close, footer buttons) but with owned field markup.
  *
  * Useful when:
- *   - You added/changed FormFieldAttribute properties on the edit DTO
+ *   - You added/changed Form properties on the edit DTO
  *   - You ejected before and want to refresh forms without touching list/details
  *   - You want hybrid forms without running a full entity:eject
  *

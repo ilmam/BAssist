@@ -18,6 +18,12 @@ class ProjectRepository extends BaseRepository
         'status_id',
     ];
 
+    protected string|array|null $listTenantScope = ['workspace', 'tenant_id'];
+
+    protected array $listContextRelations = [
+        'workspace',
+    ];
+
     protected array $listWithCounts = [
         'businessObjectives',
         'businessNeeds',

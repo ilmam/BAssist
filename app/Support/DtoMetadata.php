@@ -2,11 +2,13 @@
 
 namespace App\Support;
 
-use App\Attributes\FormFieldAttribute;
-use App\Attributes\HidePropertyAttribute;
-use App\Attributes\ListPropertyAttribute;
-use App\Attributes\ValuePropertyAttribute;
+use App\Attributes\Form;
+use App\Attributes\Hide;
+use App\Attributes\InList;
+use App\Attributes\ListForm;
+use App\Attributes\Value;
 use Illuminate\Support\Facades\Cache;
+use ReflectionAttribute;
 use ReflectionClass;
 use ReflectionNamedType;
 use ReflectionProperty;
@@ -36,7 +38,7 @@ class DtoMetadata
     }
 
     /**
-     * Form fields keyed by property name, values are FormFieldAttribute constructor args.
+     * Form fields keyed by property name, values are Form/ListForm type args (e.g. ['text'] or ['select', 'Project']).
      *
      * @return array<string, array<int, mixed>>
      */
@@ -46,8 +48,64 @@ class DtoMetadata
     }
 
     /**
-     * Dot-notation paths for properties marked with ValuePropertyAttribute (detail/view pages).
-     * Properties marked with HidePropertyAttribute are excluded.
+     * Form fields that should appear as visible inputs on Quick Create.
+     *
+     * @return array<string, array<int, mixed>>
+     */
+    public function quickCreateVisibleFormFields(): array
+    {
+        $meta = $this->quickCreateMeta();
+        $fields = [];
+
+        foreach ($this->formFields() as $name => $args) {
+            if (($meta[$name]['hidden'] ?? false) === true) {
+                continue;
+            }
+
+            $fields[$name] = $args;
+        }
+
+        return $fields;
+    }
+
+    /**
+     * Hidden Quick Create fields mapped to their default values.
+     *
+     * @return array<string, mixed>
+     */
+    public function quickCreateHiddenDefaults(?object $emptyDto = null): array
+    {
+        $meta = $this->quickCreateMeta();
+        $defaults = [];
+        $emptyDto ??= $this->className::from($this->className::empty());
+
+        foreach ($this->formFields() as $name => $args) {
+            if (($meta[$name]['hidden'] ?? false) !== true) {
+                continue;
+            }
+
+            if (($meta[$name]['has_default'] ?? false) === true) {
+                $defaults[$name] = $meta[$name]['default'];
+                continue;
+            }
+
+            $defaults[$name] = $emptyDto->{$name} ?? null;
+        }
+
+        return $defaults;
+    }
+
+    /**
+     * @return array<string, array{hidden: bool, default: mixed, has_default: bool}>
+     */
+    public function quickCreateMeta(): array
+    {
+        return $this->schema()['quick_create'] ?? [];
+    }
+
+    /**
+     * Dot-notation paths for properties marked with Value (detail/view pages).
+     * Properties marked with Hide are excluded.
      *
      * @return list<string>
      */
@@ -66,9 +124,8 @@ class DtoMetadata
     }
 
     /**
-     * Dot-notation paths for properties marked with ListPropertyAttribute (datatable columns).
-     * Falls back to valueFieldPaths() when no ListPropertyAttribute is present on the DTO.
-     * Properties marked with HidePropertyAttribute are excluded.
+     * Dot-notation paths for properties marked with InList / ListForm (datatable columns).
+     * Falls back to valueFieldPaths() when no list markers are present on the DTO.
      *
      * @return list<string>
      */
@@ -92,7 +149,7 @@ class DtoMetadata
 
     /**
      * Column headers for list/datatable views (includes id when present).
-     * Uses ListPropertyAttribute fields; falls back to ValuePropertyAttribute fields.
+     * Uses InList/ListForm fields; falls back to Value fields.
      *
      * @return list<string>
      */
@@ -156,14 +213,19 @@ class DtoMetadata
     }
 
     /**
-     * @return array{form_fields: array<string, array<int, mixed>>, value_fields: list<string>, list_fields: list<string>}
+     * @return array{
+     *     form_fields: array<string, array<int, mixed>>,
+     *     value_fields: list<string>,
+     *     list_fields: list<string>,
+     *     quick_create: array<string, array{hidden: bool, default: mixed, has_default: bool}>
+     * }
      */
     public function schema(): array
     {
         if ($this->cacheEnabled()) {
             $cached = $this->cacheStore()->get($this->cacheKey());
 
-            if (is_array($cached)) {
+            if (is_array($cached) && array_key_exists('quick_create', $cached)) {
                 return $cached;
             }
         }
@@ -172,6 +234,7 @@ class DtoMetadata
             'form_fields' => self::discoverFormFields($this->className),
             'value_fields' => self::discoverValueFields($this->className),
             'list_fields'  => self::discoverListFields($this->className),
+            'quick_create' => self::discoverQuickCreateMeta($this->className),
         ];
 
         if ($this->cacheEnabled()) {
@@ -253,8 +316,16 @@ class DtoMetadata
         $reflect = new ReflectionClass($class);
 
         foreach ($reflect->getProperties(ReflectionProperty::IS_PUBLIC) as $property) {
-            foreach ($property->getAttributes(FormFieldAttribute::class) as $attribute) {
-                $fields[$property->getName()] = $attribute->getArguments();
+            $formAttrs = $property->getAttributes(Form::class);
+            $listFormAttrs = $property->getAttributes(ListForm::class);
+
+            if ($formAttrs !== []) {
+                $fields[$property->getName()] = self::normalizeFormArgs($formAttrs[0]);
+                continue;
+            }
+
+            if ($listFormAttrs !== []) {
+                $fields[$property->getName()] = self::normalizeFormArgs($listFormAttrs[0]);
             }
         }
 
@@ -262,11 +333,44 @@ class DtoMetadata
     }
 
     /**
-     * Discover properties for detail/view display (ValuePropertyAttribute).
-     * Properties with HidePropertyAttribute are excluded.
+     * @return array<string, array{hidden: bool, default: mixed, has_default: bool}>
+     */
+    protected static function discoverQuickCreateMeta(string $class): array
+    {
+        $meta = [];
+        $reflect = new ReflectionClass($class);
+
+        foreach ($reflect->getProperties(ReflectionProperty::IS_PUBLIC) as $property) {
+            $attribute = $property->getAttributes(Form::class)[0]
+                ?? $property->getAttributes(ListForm::class)[0]
+                ?? null;
+
+            if ($attribute === null) {
+                continue;
+            }
+
+            $instance = $attribute->newInstance();
+            if (! $instance->hideQuick) {
+                continue;
+            }
+
+            $args = $attribute->getArguments();
+            $meta[$property->getName()] = [
+                'hidden' => true,
+                'default' => $instance->quickDefault,
+                'has_default' => array_key_exists('quickDefault', $args),
+            ];
+        }
+
+        return $meta;
+    }
+
+    /**
+     * Discover properties for detail/view display (Value).
      *
-     * Nested Data relations contribute only their main display field
-     * (name/title/category/…). Matching *_id FK properties are skipped.
+     * Nested Data relations require #[Value] and contribute only
+     * `{relation}.{displayField}` (override via #[Value('code')]). Matching
+     * `*_id` FKs are skipped when the relation property exists.
      *
      * @return list<string>
      */
@@ -285,16 +389,22 @@ class DtoMetadata
         }
 
         foreach ($reflect->getProperties(ReflectionProperty::IS_PUBLIC) as $property) {
-            if ($property->getAttributes(HidePropertyAttribute::class) !== []) {
+            if ($property->getAttributes(Hide::class) !== []) {
+                continue;
+            }
+
+            $valueAttrs = $property->getAttributes(Value::class);
+            if ($valueAttrs === []) {
                 continue;
             }
 
             $fieldName = $property->getName();
             $fullFieldName = ltrim($prefix.'.'.$fieldName, '.');
             $nestedClass = self::nestedClassName($property);
+            $value = $valueAttrs[0]->newInstance();
 
             if ($nestedClass !== null && class_exists($nestedClass) && is_subclass_of($nestedClass, \Spatie\LaravelData\Data::class)) {
-                $mainField = self::mainDisplayFieldName($nestedClass);
+                $mainField = $value->field ?? self::mainDisplayFieldName($nestedClass);
 
                 if ($mainField !== null) {
                     $fields[] = $fullFieldName.'.'.$mainField;
@@ -311,9 +421,7 @@ class DtoMetadata
                 }
             }
 
-            foreach ($property->getAttributes(ValuePropertyAttribute::class) as $attribute) {
-                $fields[] = $fullFieldName;
-            }
+            $fields[] = $fullFieldName;
         }
 
         return $fields;
@@ -333,7 +441,7 @@ class DtoMetadata
         }
 
         foreach ($reflect->getProperties(ReflectionProperty::IS_PUBLIC) as $property) {
-            if ($property->getAttributes(ListPropertyAttribute::class) === []) {
+            if (! self::propertyIsListed($property)) {
                 continue;
             }
 
@@ -351,9 +459,8 @@ class DtoMetadata
     }
 
     /**
-     * Discover properties for list/datatable display (ListPropertyAttribute).
-     * Properties with HidePropertyAttribute are excluded.
-     * Returns empty array when no ListPropertyAttribute is found; listFieldPaths() handles the fallback.
+     * Discover properties for list/datatable display (InList or ListForm).
+     * Returns empty array when none found; listFieldPaths() falls back to Value paths.
      *
      * @return list<string>
      */
@@ -363,7 +470,11 @@ class DtoMetadata
         $reflect = new ReflectionClass($class);
 
         foreach ($reflect->getProperties(ReflectionProperty::IS_PUBLIC) as $property) {
-            if ($property->getAttributes(HidePropertyAttribute::class) !== []) {
+            if ($property->getAttributes(Hide::class) !== []) {
+                continue;
+            }
+
+            if (! self::propertyIsListed($property)) {
                 continue;
             }
 
@@ -372,17 +483,43 @@ class DtoMetadata
             $nestedClass = self::nestedClassName($property);
 
             if ($nestedClass !== null && class_exists($nestedClass) && is_subclass_of($nestedClass, \Spatie\LaravelData\Data::class)) {
-                $fields = array_merge($fields, self::discoverListFields($nestedClass, $fullFieldName));
+                $valueAttrs = $property->getAttributes(Value::class);
+                $override = $valueAttrs !== [] ? $valueAttrs[0]->newInstance()->field : null;
+                $mainField = $override ?? self::mainDisplayFieldName($nestedClass);
+
+                if ($mainField !== null) {
+                    $fields[] = $fullFieldName.'.'.$mainField;
+                }
 
                 continue;
             }
 
-            foreach ($property->getAttributes(ListPropertyAttribute::class) as $attribute) {
-                $fields[] = $fullFieldName;
-            }
+            $fields[] = $fullFieldName;
         }
 
         return $fields;
+    }
+
+    /**
+     * @param  ReflectionAttribute<Form|ListForm>  $attribute
+     * @return list<string>
+     */
+    protected static function normalizeFormArgs(ReflectionAttribute $attribute): array
+    {
+        $instance = $attribute->newInstance();
+        $args = [$instance->type];
+
+        if ($instance->model !== '') {
+            $args[] = $instance->model;
+        }
+
+        return $args;
+    }
+
+    protected static function propertyIsListed(ReflectionProperty $property): bool
+    {
+        return $property->getAttributes(InList::class) !== []
+            || $property->getAttributes(ListForm::class) !== [];
     }
 
     protected static function nestedClassName(ReflectionProperty $property): ?string

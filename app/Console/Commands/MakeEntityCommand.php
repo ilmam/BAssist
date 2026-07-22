@@ -354,17 +354,22 @@ class MakeEntityCommand extends Command
     private function dataProperties(string $model, array $fields, string $displayField): string
     {
         $properties = collect($fields)->map(function (array $field) use ($displayField) {
-            $attributes = ['        #[ValuePropertyAttribute]'];
-
-            if ($field['name'] === $displayField) {
-                array_unshift($attributes, '        #[ListPropertyAttribute]');
-            }
-
             $formArgs = "'{$field['formType']}'";
             if ($field['relation']) {
                 $formArgs .= ", '{$field['relation']}'";
             }
-            $attributes[] = "        #[FormFieldAttribute({$formArgs})]";
+
+            if ($field['name'] === $displayField) {
+                $attributes = [
+                    "        #[ListForm({$formArgs})]",
+                    '        #[Value]',
+                ];
+            } else {
+                $attributes = [
+                    '        #[Value]',
+                    "        #[Form({$formArgs})]",
+                ];
+            }
 
             return implode(PHP_EOL, $attributes).PHP_EOL
                 ."        public {$field['phpType']} \${$field['name']} = {$field['default']},";
@@ -375,9 +380,8 @@ class MakeEntityCommand extends Command
             && ! collect($fields)->contains(fn (array $field) => in_array($field['name'], ['status', 'status_id'], true))
         ) {
             $properties->push(
-                "        #[ListPropertyAttribute]\n"
-                ."        #[ValuePropertyAttribute]\n"
-                ."        #[FormFieldAttribute('select', 'Status')]\n"
+                "        #[ListForm('select', 'Status', hideQuick: true)]\n"
+                ."        #[Value]\n"
                 ."        public ?int \$status_id = null,"
             );
         }
@@ -388,10 +392,10 @@ class MakeEntityCommand extends Command
     private function viewDataProperties(string $model, array $fields, string $displayField): string
     {
         $properties = collect($fields)->flatMap(function (array $field) use ($displayField) {
-            $attributes = ['        #[ValuePropertyAttribute]'];
+            $attributes = ['        #[Value]'];
 
             if ($field['name'] === $displayField) {
-                array_unshift($attributes, '        #[ListPropertyAttribute]');
+                array_unshift($attributes, '        #[InList]');
             }
 
             $lines = [
@@ -404,8 +408,8 @@ class MakeEntityCommand extends Command
                     ? substr($field['name'], 0, -3)
                     : lcfirst($field['relation']);
 
-                $lines[] = "        #[ListPropertyAttribute]\n"
-                    ."        #[ValuePropertyAttribute]\n"
+                $lines[] = "        #[InList]\n"
+                    ."        #[Value]\n"
                     ."        public ?\\App\\Data\\{$field['relation']}ViewData \${$relationProp} = null,";
             }
 
@@ -417,10 +421,10 @@ class MakeEntityCommand extends Command
             && ! collect($fields)->contains(fn (array $field) => in_array($field['name'], ['status', 'status_id'], true))
         ) {
             $properties->push(
-                "        #[ValuePropertyAttribute]\n"
+                "        #[Value]\n"
                 ."        public ?int \$status_id = null,\n"
-                ."        #[ListPropertyAttribute]\n"
-                ."        #[ValuePropertyAttribute]\n"
+                ."        #[InList]\n"
+                ."        #[Value]\n"
                 ."        public ?\\App\\Data\\StatusViewData \$status = null,"
             );
         }

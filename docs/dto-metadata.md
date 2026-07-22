@@ -1,9 +1,10 @@
 # DTO metadata cache
 
-Forms, datatable column headers, and detail views need to know which properties on a Data class (DTO) are form fields or display columns. That information lives in PHP attributes:
+Forms, datatable column headers, and detail views need to know which properties on a Data class (DTO) are form fields or display columns. That information lives in PHP attributes (see [attributes.md](attributes.md) for the full reference):
 
-- `#[FormFieldAttribute('text')]` — form control type (create/edit)
-- `#[ValuePropertyAttribute]` — visible in lists and detail views
+- `#[Form('text')]` / `#[ListForm('text')]` — form control type (create/edit; `hideQuick` for Quick Create)
+- `#[Value]` — detail/view display values (nested relations → main display field)
+- `#[InList]` / `#[ListForm]` — datatable columns
 
 Previously, the app discovered those attributes with **PHP reflection on every request**. That is fine for small apps but adds avoidable overhead in production as entity count and traffic grow.
 
@@ -33,9 +34,9 @@ When cache is **disabled** (default in local dev), each request reflects on firs
 
 | Cached (schema) | Not cached (runtime) |
 |-----------------|----------------------|
-| Property names with `FormFieldAttribute` | Actual field values (`$dto->category`) |
+| Property names with `Form` | Actual field values (`$dto->category`) |
 | Attribute arguments (`'text'`, `'select'`, model name) | Select option lists from the database |
-| Dot-notation paths for `ValuePropertyAttribute` | API/datatable row data |
+| Dot-notation paths for `Value` | API/datatable row data |
 
 Schema is **app-wide** — the same for every user. It is stored in Laravel cache, not in session.
 
@@ -46,7 +47,7 @@ Schema is **app-wide** — the same for every user. It is stored in Laravel cach
 | Create/edit forms | `DtoMetadata::for($editDto)->formFields()` |
 | List column headers | `DtoMetadata::for($viewDto)->listColumns()` |
 | Detail / modal views | `$dto->getFields()` → delegates to `DtoMetadata` |
-| Legacy helper | `AttributeHelper::getPropertyAttributes(..., 'FormFieldAttribute')` → delegates to `DtoMetadata` |
+| Legacy helper | `AttributeHelper::getPropertyAttributes(..., 'Form')` → delegates to `DtoMetadata` |
 
 ---
 
@@ -132,10 +133,10 @@ php artisan dto:cache-metadata --class=App\\Data\\CategoryData
 Run `dto:clear-metadata` (or clear the specific class) whenever you:
 
 - Add, remove, or rename a DTO property
-- Change `FormFieldAttribute` or `ValuePropertyAttribute` on a property
+- Change `Form` or `Value` on a property
 - Add a new `*Data.php` / `*ViewData.php` class and need production to pick it up without waiting for lazy discovery
 
-For **hybrid** entities with materialized form blades, also regenerate owned form markup after changing `FormFieldAttribute`:
+For **hybrid** entities with materialized form blades, also regenerate owned form markup after changing `Form`:
 
 ```bash
 php artisan entity:materialize-form Category --force
@@ -183,8 +184,8 @@ DtoMetadata::clear(CategoryData::class);          // one class
 
 ## Adding a new entity
 
-1. Create `App\Data\{Model}Data` with `#[FormFieldAttribute]` on editable properties.
-2. Create `App\Data\{Model}ViewData` with `#[ValuePropertyAttribute]` on list/detail columns.
+1. Create `App\Data\{Model}Data` with `#[Form]` on editable properties.
+2. Create `App\Data\{Model}ViewData` with `#[Value]` on list/detail columns.
 3. In **local** (cache off): metadata is built on first use via reflection.
 4. In **production**: deploy, then run:
 

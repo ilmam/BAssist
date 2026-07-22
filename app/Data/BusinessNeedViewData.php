@@ -2,40 +2,42 @@
 
 namespace App\Data;
 
-use App\Attributes\ListPropertyAttribute;
-use App\Attributes\ValuePropertyAttribute;
+use App\Attributes\InList;
+use App\Attributes\Value;
 
 class BusinessNeedViewData extends BaseData
 {
     public function __construct(
         public ?int $id = null,
-        #[ListPropertyAttribute]
-        #[ValuePropertyAttribute]
+        #[InList]
+        #[Value]
         public string $title = '',
-        #[ValuePropertyAttribute]
+        #[Value]
         public ?string $need_type = null,
-        #[ValuePropertyAttribute]
+        #[Value]
         public int $project_id = 0,
-        #[ListPropertyAttribute]
-        #[ValuePropertyAttribute]
+        public ?int $workspace_id = null,
+        public ?int $tenant_id = null,
+        #[InList]
+        #[Value]
         public ?ProjectViewData $project = null,
-        #[ValuePropertyAttribute]
+        #[Value]
         public ?string $description = null,
-        #[ValuePropertyAttribute]
+        #[Value]
         public ?string $rationale = null,
-        #[ValuePropertyAttribute]
+        #[Value]
         public ?string $impact = null,
-        #[ValuePropertyAttribute]
+        #[Value]
         public ?string $do_nothing_consequence = null,
-        #[ValuePropertyAttribute]
+        #[Value]
         public ?int $priority_id = null,
-        #[ListPropertyAttribute]
-        #[ValuePropertyAttribute]
+        #[InList]
+        #[Value]
         public ?PriorityViewData $priority = null,
-        #[ValuePropertyAttribute]
+        #[Value]
         public ?int $status_id = null,
-        #[ListPropertyAttribute]
-        #[ValuePropertyAttribute]
+        #[InList]
+        #[Value]
         public ?StatusViewData $status = null,
         public ?int $business_objectives_count = null,
         public ?int $stakeholder_needs_count = null,

@@ -19,6 +19,13 @@ return [
             'icon' => 'element-11',
             'icon_v8' => 'element-11',
         ],
+        [
+            'label' => 'Traceability',
+            'route' => 'traceability.index',
+            'icon' => 'abstract-26',
+            'icon_v8' => 'abstract-26',
+            'entities' => ['BusinessNeed', 'BusinessObjective', 'StakeholderNeed'],
+        ],
     ],
 
     'entities' => [

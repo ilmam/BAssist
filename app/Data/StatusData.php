@@ -2,27 +2,25 @@
 
 namespace App\Data;
 
-use App\Attributes\FormFieldAttribute;
-use App\Attributes\ListPropertyAttribute;
-use App\Attributes\ValuePropertyAttribute;
+use App\Attributes\Form;
+use App\Attributes\ListForm;
+use App\Attributes\Value;
 
 class StatusData extends BaseData
 {
     public function __construct(
         public ?int $id = null,
-        #[ListPropertyAttribute]
-        #[ValuePropertyAttribute]
-        #[FormFieldAttribute('text')]
+        #[ListForm('text')]
+        #[Value]
         public string $name = '',
-        #[ListPropertyAttribute]
-        #[ValuePropertyAttribute]
-        #[FormFieldAttribute('text')]
+        #[ListForm('text')]
+        #[Value]
         public string $code = '',
-        #[ValuePropertyAttribute]
-        #[FormFieldAttribute('number')]
+        #[Form('number')]
+        #[Value]
         public int $sort_order = 0,
-        #[ValuePropertyAttribute]
-        #[FormFieldAttribute('textarea')]
+        #[Form('textarea', hideQuick: true)]
+        #[Value]
         public ?string $description = null,
     ) {
     }

@@ -38,7 +38,7 @@ class Datatable extends Component
 
     public function prepareDatatable()
     {
-        $model = $this->options['model'] ?: ($this->options['modelName'] ?? 'Category');
+        $model = $this->options['model'] ?: ($this->options['modelName'] ?? '');
         $resource = Str::plural(Str::snake($model));
         $baseUrl = url($resource);
 

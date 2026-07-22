@@ -2,22 +2,22 @@
 
 namespace App\Data;
 
-use App\Attributes\ListPropertyAttribute;
-use App\Attributes\ValuePropertyAttribute;
+use App\Attributes\InList;
+use App\Attributes\Value;
 
 class TenantViewData extends BaseData
 {
     public function __construct(
         public ?int $id = null,
-        #[ListPropertyAttribute]
-        #[ValuePropertyAttribute]
+        #[InList]
+        #[Value]
         public string $name = '',
-        #[ValuePropertyAttribute]
+        #[Value]
         public string $slug = '',
-        #[ValuePropertyAttribute]
+        #[Value]
         public ?int $status_id = null,
-        #[ListPropertyAttribute]
-        #[ValuePropertyAttribute]
+        #[InList]
+        #[Value]
         public ?StatusViewData $status = null,
     ) {
     }

@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use App\Attributes\RelationAttribute;
+use App\Attributes\Relation;
 use App\Attributes\RoutableAttribute;
 use App\Services\SystemStakeholderSeeder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -33,37 +33,37 @@ class Project extends BaseModel
         });
     }
 
-    #[RelationAttribute('BelongsTo')]
+    #[Relation('BelongsTo')]
     public function workspace(): BelongsTo
     {
         return $this->belongsTo(Workspace::class);
     }
 
-    #[RelationAttribute('BelongsTo')]
+    #[Relation('BelongsTo')]
     public function status(): BelongsTo
     {
         return $this->belongsTo(Status::class);
     }
 
-    #[RelationAttribute('HasMany')]
+    #[Relation('HasMany')]
     public function businessObjectives(): HasMany
     {
         return $this->hasMany(BusinessObjective::class);
     }
 
-    #[RelationAttribute('HasMany')]
+    #[Relation('HasMany')]
     public function businessNeeds(): HasMany
     {
         return $this->hasMany(BusinessNeed::class);
     }
 
-    #[RelationAttribute('HasMany')]
+    #[Relation('HasMany')]
     public function stakeholders(): HasMany
     {
         return $this->hasMany(Stakeholder::class);
     }
 
-    #[RelationAttribute('HasMany')]
+    #[Relation('HasMany')]
     public function stakeholderNeeds(): HasMany
     {
         return $this->hasMany(StakeholderNeed::class);

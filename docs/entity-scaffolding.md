@@ -75,7 +75,7 @@ Select fields also get a repository lookup for their option list:
 
 ### Regenerating form blades
 
-After changing `FormFieldAttribute` properties on `{Model}Data`, refresh the owned form markup without touching list/details:
+After changing `Form` properties on `{Model}Data`, refresh the owned form markup without touching list/details:
 
 ```bash
 php artisan entity:materialize-form Category

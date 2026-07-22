@@ -14,9 +14,13 @@ class WorkspaceRepository extends BaseRepository
     public $viewDto = WorkspaceViewData::class;
 
     protected array $listFilters = [
-        'tenant_id',
         'status_id',
     ];
+
+    /**
+     * Workspaces are always scoped to the authenticated user's tenant.
+     */
+    protected string|array|null $listTenantScope = 'tenant_id';
 
     protected array $listWithCounts = [
         'projects',

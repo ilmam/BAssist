@@ -8,14 +8,14 @@ return [
     |--------------------------------------------------------------------------
     |
     | Forms, datatables, and detail views discover field metadata from PHP
-    | attributes on Data classes (FormFieldAttribute, ValuePropertyAttribute).
+    | attributes on Data classes (Form, Value, InList, ListForm).
     | That discovery is cached here so production requests avoid reflection.
     |
     | Uses Laravel's cache store (file by default). Redis is not required.
     | Schema is app-wide — not stored in session (metadata is the same for
     | every user).
     |
-    | See docs/dto-metadata.md for usage and how to clear the cache.
+    | See docs/attributes.md and docs/dto-metadata.md.
     |
     */
 

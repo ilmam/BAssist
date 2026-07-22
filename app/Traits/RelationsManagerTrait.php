@@ -2,14 +2,15 @@
 
 namespace App\Traits;
 
-use App\Attributes\RelationAttribute;
+use App\Attributes\Relation;
 use ReflectionNamedType;
 
 trait RelationsManagerTrait
 {
+    /**
+     * @var array<class-string, array<string, list<string>>>
+     */
     protected static $relationsList = [];
-
-    protected static $relationsInitialized = false;
 
     protected static $relationClasses = [
         'HasOne',
@@ -20,18 +21,23 @@ trait RelationsManagerTrait
 
     public static function getAllRelations($type = null): array
     {
-        if (! self::$relationsInitialized) {
-            self::initAllRelations();
+        $class = static::class;
+
+        if (! isset(self::$relationsList[$class])) {
+            self::$relationsList[$class] = self::discoverRelations();
         }
 
-        return $type ? (self::$relationsList[$type] ?? []) : self::$relationsList;
+        $relations = self::$relationsList[$class];
+
+        return $type ? ($relations[$type] ?? []) : $relations;
     }
 
-    protected static function initAllRelations(): void
+    /**
+     * @return array<string, list<string>>
+     */
+    protected static function discoverRelations(): array
     {
-        self::$relationsInitialized = true;
-        self::$relationsList = [];
-
+        $relations = [];
         $reflect = new \ReflectionClass(static::class);
 
         foreach ($reflect->getMethods(\ReflectionMethod::IS_PUBLIC) as $method) {
@@ -49,11 +55,13 @@ trait RelationsManagerTrait
                 continue;
             }
 
-            $attributes = $method->getAttributes(RelationAttribute::class);
+            $attributes = $method->getAttributes(Relation::class);
             if (count($attributes) > 0) {
-                self::$relationsList[$foundRelation][] = $method->getName();
+                $relations[$foundRelation][] = $method->getName();
             }
         }
+
+        return $relations;
     }
 
     protected static function checkRelation(string $methodReturnType, string $relationNamespace = 'Illuminate\\Database\\Eloquent\\Relations\\'): string|false

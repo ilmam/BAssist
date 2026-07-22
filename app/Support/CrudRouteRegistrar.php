@@ -55,6 +55,8 @@ class CrudRouteRegistrar
         if (in_array('create', $modalActions, true)) {
             Route::get("{$resource}/modal/create", [$controller, 'modalCreate'])
                 ->name("{$resource}.modalcreate");
+            Route::get("{$resource}/modal/quick-create", [$controller, 'modalQuickCreate'])
+                ->name("{$resource}.modalquickcreate");
         }
 
         foreach ($modalActions as $action) {

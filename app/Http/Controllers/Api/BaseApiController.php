@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Concerns\ResolvesListFilters;
 use Illuminate\Http\Request;
 use App\Support\CollectionFlattener;
 use App\Support\RepositoryResolver;
@@ -9,12 +10,15 @@ use Yajra\DataTables\Facades\DataTables;
 
 class BaseApiController extends \App\Http\Controllers\Controller
 {
+    use ResolvesListFilters;
+
     public $modelName = 'GenericModel';
     public $modelRepository;
 
-    public function index()
+    public function index(Request $request)
     {
-        $result = $this->modelRepository->getAll();
+        $filters = $this->resolveListFilters($request);
+        $result = $this->modelRepository->getAll($filters);
         $result = app(CollectionFlattener::class)->flatten($result);
 
         return DataTables::of($result)->make(true);

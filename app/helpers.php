@@ -201,6 +201,7 @@ if (! function_exists('model_modal_view')) {
             'view' => 'pages.modals.view',
             'form' => 'pages.modals.form',
             'delete' => 'pages.modals.delete',
+            'quick-create' => 'pages.modals.quick-create',
         ];
 
         if (! array_key_exists($action, $defaults)) {
@@ -245,6 +246,10 @@ if (! function_exists('model_modal_path')) {
 
         if ($action === 'create') {
             return url($resource.'/modal/create');
+        }
+
+        if ($action === 'quick-create' || $action === 'quickcreate') {
+            return url($resource.'/modal/quick-create');
         }
 
         if ($id === null || $id === '') {

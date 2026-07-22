@@ -11,7 +11,7 @@ use Illuminate\Console\Command;
  *
  * The inverse of dto:cache-metadata. The DTO schema cache (list columns,
  * detail values and form fields resolved from PHP attributes) is stale
- * whenever a Data class's attributes change — a new #[FormFieldAttribute],
+ * whenever a Data class's attributes change — a new #[Form],
  * a renamed property, a changed form type, etc. Run this command to drop
  * the cached entries so the next request (or the next
  * dto:cache-metadata run) rebuilds them from the current attributes.

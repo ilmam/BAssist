@@ -127,7 +127,7 @@ class EntityAccess
     public static function abilityForRouteAction(string $action): string
     {
         return match (strtolower($action)) {
-            'create', 'store', 'modalcreate' => self::CREATE,
+            'create', 'store', 'modalcreate', 'modalquickcreate' => self::CREATE,
             'edit', 'update', 'modaledit' => self::UPDATE,
             'destroy', 'modaldelete', 'modalshow' => self::DELETE,
             default => self::VIEW,
@@ -137,7 +137,7 @@ class EntityAccess
     public static function abilityForControllerMethod(string $method): string
     {
         return match (strtolower($method)) {
-            'create', 'store', 'modalcreate' => self::CREATE,
+            'create', 'store', 'modalcreate', 'modalquickcreate' => self::CREATE,
             'edit', 'update', 'modaledit' => self::UPDATE,
             'destroy', 'modaldelete', 'modalshow' => self::DELETE,
             default => self::VIEW,

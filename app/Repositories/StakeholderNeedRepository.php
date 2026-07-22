@@ -27,6 +27,16 @@ class StakeholderNeedRepository extends BaseRepository
         'stakeholder_id' => 'stakeholders',
     ];
 
+    protected array $listContextFilters = [
+        'workspace_id' => ['project', 'workspace_id'],
+    ];
+
+    protected string|array|null $listTenantScope = ['project.workspace', 'tenant_id'];
+
+    protected array $listContextRelations = [
+        'project.workspace',
+    ];
+
     protected array $listWithCounts = [
         'businessNeeds',
         'stakeholders',

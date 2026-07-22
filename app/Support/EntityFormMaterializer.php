@@ -108,7 +108,7 @@ BLADE;
         }
 
         if ($fieldLines === []) {
-            $fieldLines[] = '                    {{-- No FormFieldAttribute properties found on the edit DTO. --}}';
+            $fieldLines[] = '                    {{-- No Form properties found on the edit DTO. --}}';
         }
 
         return [

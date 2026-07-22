@@ -61,12 +61,37 @@ class BaseController extends Controller
         );
     }
 
+    public function modalQuickCreate()
+    {
+        $form = $this->buildCreateForm(forQuickCreate: true);
+        $data = [
+            'dto' => $form['dto'],
+            'model' => $this->modelName,
+            'formFields' => $form['formFields'],
+            'hiddenDefaults' => $form['hiddenDefaults'],
+            'operation' => 'create',
+            'labelField' => $this->quickCreateLabelField($form['formFields']),
+        ];
+
+        return $this->respondModalOrPage(
+            model_modal_view($this->modelName, 'quick-create'),
+            $data,
+            model_page_view($this->modelName, 'form'),
+            [
+                'dto' => $form['dto'],
+                'model' => $this->modelName,
+                'formFields' => $form['formFields'],
+                'operation' => 'create',
+            ]
+        );
+    }
+
     public function store(Request $request)
     {
         $data = $this->getData($request);
-        $this->modelRepository->create($data->toArray());
+        $created = $this->modelRepository->create($data->toArray());
 
-        return $this->respondAfterMutation($request);
+        return $this->respondAfterMutation($request, $created);
     }
 
     public function show($id)
@@ -143,9 +168,14 @@ class BaseController extends Controller
     public function update(Request $request, $id)
     {
         $data = $this->getData($request);
-        $this->modelRepository->update($id, $data->toArray());
+        $updated = $this->modelRepository->update($id, $data->toArray());
 
-        return $this->respondAfterMutation($request);
+        // BaseRepository::update returns affected row count; some repos return the model.
+        if (! is_object($updated)) {
+            $updated = $this->modelRepository->editById($id);
+        }
+
+        return $this->respondAfterMutation($request, $updated);
     }
 
     public function destroy($id)
@@ -155,13 +185,60 @@ class BaseController extends Controller
         return $this->respondAfterMutation(request());
     }
 
-    protected function respondAfterMutation(Request $request)
+    protected function respondAfterMutation(Request $request, mixed $record = null)
     {
         if ($request->ajax() || $request->wantsJson()) {
-            return response()->json(['success' => true]);
+            $payload = ['success' => true];
+
+            if ($record !== null) {
+                $payload['record'] = $this->mutationRecordPayload($record);
+            }
+
+            return response()->json($payload);
         }
 
         return redirect()->route(model_route_name($this->modelName, 'index'));
+    }
+
+    /**
+     * @return array{id: mixed, label: string, values: array<string, mixed>}
+     */
+    protected function mutationRecordPayload(mixed $record): array
+    {
+        if (is_object($record) && method_exists($record, 'toArray')) {
+            $values = $record->toArray();
+        } elseif (is_array($record)) {
+            $values = $record;
+        } else {
+            $values = ['id' => $record];
+        }
+
+        $label = $values['title']
+            ?? $values['name']
+            ?? $values['code']
+            ?? ('#'.($values['id'] ?? ''));
+
+        return [
+            'id' => $values['id'] ?? null,
+            'label' => (string) $label,
+            'values' => $values,
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $formFields
+     */
+    protected function quickCreateLabelField(array $formFields): string
+    {
+        foreach (['title', 'name', 'code'] as $candidate) {
+            if (array_key_exists($candidate, $formFields)) {
+                return $candidate;
+            }
+        }
+
+        $keys = array_keys($formFields);
+
+        return $keys[0] ?? 'id';
     }
 
     private function getData(Request $request)
@@ -171,13 +248,18 @@ class BaseController extends Controller
         return $dtoClass::from($request);
     }
 
-    protected function buildCreateForm(): array
+    protected function buildCreateForm(bool $forQuickCreate = false): array
     {
         $dtoClass = $this->modelRepository->editDto;
+        $dto = $dtoClass::from($dtoClass::empty());
+        $builder = $this->formBuilder();
 
         return [
-            'dto' => $dtoClass::from($dtoClass::empty()),
-            'formFields' => $this->formBuilder()->fields($dtoClass),
+            'dto' => $dto,
+            'formFields' => $builder->fields($dtoClass, forQuickCreate: $forQuickCreate),
+            'hiddenDefaults' => $forQuickCreate
+                ? $builder->quickCreateHiddenDefaults($dtoClass, $dto)
+                : [],
         ];
     }
 

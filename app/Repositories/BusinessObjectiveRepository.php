@@ -23,6 +23,16 @@ class BusinessObjectiveRepository extends BaseRepository
         'business_need_id' => 'businessNeeds',
     ];
 
+    protected array $listContextFilters = [
+        'workspace_id' => ['project', 'workspace_id'],
+    ];
+
+    protected string|array|null $listTenantScope = ['project.workspace', 'tenant_id'];
+
+    protected array $listContextRelations = [
+        'project.workspace',
+    ];
+
     protected array $listWithCounts = [
         'businessNeeds',
     ];

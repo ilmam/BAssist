@@ -22,11 +22,22 @@ class EntityFormBuilder
      *
      * @return array<string, array<string, mixed>>
      */
-    public function fields(string $dtoClass): array
+    public function fields(string $dtoClass, bool $forQuickCreate = false): array
     {
-        $fields = DtoMetadata::for($dtoClass)->formFields();
+        $metadata = DtoMetadata::for($dtoClass);
+        $fields = $forQuickCreate
+            ? $metadata->quickCreateVisibleFormFields()
+            : $metadata->formFields();
 
         return FormHelper::getFormFields($this->populateSelectOptions($fields));
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function quickCreateHiddenDefaults(string $dtoClass, ?object $emptyDto = null): array
+    {
+        return DtoMetadata::for($dtoClass)->quickCreateHiddenDefaults($emptyDto);
     }
 
     /**

@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use App\Attributes\RelationAttribute;
+use App\Attributes\Relation;
 use App\Attributes\RoutableAttribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -21,19 +21,19 @@ class Tenant extends BaseModel
         'status_id',
     ];
 
-    #[RelationAttribute('BelongsTo')]
+    #[Relation('BelongsTo')]
     public function status(): BelongsTo
     {
         return $this->belongsTo(Status::class);
     }
 
-    #[RelationAttribute('HasMany')]
+    #[Relation('HasMany')]
     public function workspaces(): HasMany
     {
         return $this->hasMany(Workspace::class);
     }
 
-    #[RelationAttribute('HasMany')]
+    #[Relation('HasMany')]
     public function users(): HasMany
     {
         return $this->hasMany(User::class);

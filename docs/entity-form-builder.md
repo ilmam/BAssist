@@ -28,7 +28,7 @@ That coupled form-building to the generic controller, meaning:
 └──────────────────────────────────────────────────────────────┘
 ```
 
-For each field, `FormFieldAttribute($fieldType, $model)` provides the control type (`$options[0]`) and, for a `select`, the related model name (`$options[1]`). The builder resolves that model's repository and calls `getSelectOptions()` to fill `$options['list']`.
+For each field, `Form($fieldType, $model)` provides the control type (`$options[0]`) and, for a `select`, the related model name (`$options[1]`). The builder resolves that model's repository and calls `getSelectOptions()` to fill `$options['list']`.
 
 ---
 

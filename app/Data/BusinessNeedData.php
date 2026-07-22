@@ -2,46 +2,44 @@
 
 namespace App\Data;
 
-use App\Attributes\FormFieldAttribute;
-use App\Attributes\ListPropertyAttribute;
-use App\Attributes\ValuePropertyAttribute;
+use App\Attributes\Form;
+use App\Attributes\ListForm;
+use App\Attributes\Value;
 use Illuminate\Validation\Rule;
 
 class BusinessNeedData extends BaseData
 {
     public function __construct(
         public ?int $id = null,
-        #[ListPropertyAttribute]
-        #[ValuePropertyAttribute]
-        #[FormFieldAttribute('text')]
+        #[ListForm('text')]
+        #[Value]
         public string $title = '',
-        #[ValuePropertyAttribute]
-        #[FormFieldAttribute('text')]
+        #[Form('text')]
+        #[Value]
         public ?string $need_type = null,
-        #[ValuePropertyAttribute]
-        #[FormFieldAttribute('select', 'Project')]
+        #[Form('select', 'Project')]
+        #[Value]
         public int $project_id = 0,
-        #[ValuePropertyAttribute]
-        #[FormFieldAttribute('select', 'BusinessObjective')]
+        #[Form('select', 'BusinessObjective', hideQuick: true)]
+        #[Value]
         public ?int $primary_business_objective_id = null,
-        #[ValuePropertyAttribute]
-        #[FormFieldAttribute('textarea')]
+        #[Form('textarea', hideQuick: true)]
+        #[Value]
         public ?string $description = null,
-        #[ValuePropertyAttribute]
-        #[FormFieldAttribute('textarea')]
+        #[Form('textarea', hideQuick: true)]
+        #[Value]
         public ?string $rationale = null,
-        #[ValuePropertyAttribute]
-        #[FormFieldAttribute('textarea')]
+        #[Form('textarea', hideQuick: true)]
+        #[Value]
         public ?string $impact = null,
-        #[ValuePropertyAttribute]
-        #[FormFieldAttribute('textarea')]
+        #[Form('textarea', hideQuick: true)]
+        #[Value]
         public ?string $do_nothing_consequence = null,
-        #[ValuePropertyAttribute]
-        #[FormFieldAttribute('select', 'Priority')]
+        #[Form('select', 'Priority')]
+        #[Value]
         public ?int $priority_id = null,
-        #[ListPropertyAttribute]
-        #[ValuePropertyAttribute]
-        #[FormFieldAttribute('select', 'Status')]
+        #[ListForm('select', 'Status', hideQuick: true)]
+        #[Value]
         public ?int $status_id = null,
     ) {
     }

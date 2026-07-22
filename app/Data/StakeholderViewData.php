@@ -2,37 +2,39 @@
 
 namespace App\Data;
 
-use App\Attributes\ListPropertyAttribute;
-use App\Attributes\ValuePropertyAttribute;
+use App\Attributes\InList;
+use App\Attributes\Value;
 
 class StakeholderViewData extends BaseData
 {
     public function __construct(
         public ?int $id = null,
-        #[ListPropertyAttribute]
-        #[ValuePropertyAttribute]
+        #[InList]
+        #[Value]
         public string $name = '',
-        #[ValuePropertyAttribute]
+        #[Value]
         public int $project_id = 0,
-        #[ListPropertyAttribute]
-        #[ValuePropertyAttribute]
+        public ?int $workspace_id = null,
+        public ?int $tenant_id = null,
+        #[InList]
+        #[Value]
         public ?ProjectViewData $project = null,
-        #[ValuePropertyAttribute]
+        #[Value]
         public ?string $type = null,
-        #[ValuePropertyAttribute]
+        #[Value]
         public ?string $influence = null,
-        #[ValuePropertyAttribute]
+        #[Value]
         public ?string $interest = null,
-        #[ValuePropertyAttribute]
+        #[Value]
         public ?string $notes = null,
-        #[ValuePropertyAttribute]
+        #[Value]
         public ?bool $is_system = null,
-        #[ValuePropertyAttribute]
+        #[Value]
         public ?string $system_key = null,
-        #[ValuePropertyAttribute]
+        #[Value]
         public ?int $status_id = null,
-        #[ListPropertyAttribute]
-        #[ValuePropertyAttribute]
+        #[InList]
+        #[Value]
         public ?StatusViewData $status = null,
         public ?int $stakeholder_needs_count = null,
         public bool $is_orphan = false,

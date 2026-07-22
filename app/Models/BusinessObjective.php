@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use App\Attributes\RelationAttribute;
+use App\Attributes\Relation;
 use App\Attributes\RoutableAttribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -25,25 +25,25 @@ class BusinessObjective extends BaseModel
         'status_id',
     ];
 
-    #[RelationAttribute('BelongsTo')]
+    #[Relation('BelongsTo')]
     public function project(): BelongsTo
     {
         return $this->belongsTo(Project::class);
     }
 
-    #[RelationAttribute('BelongsTo')]
+    #[Relation('BelongsTo')]
     public function priority(): BelongsTo
     {
         return $this->belongsTo(Priority::class);
     }
 
-    #[RelationAttribute('BelongsTo')]
+    #[Relation('BelongsTo')]
     public function status(): BelongsTo
     {
         return $this->belongsTo(Status::class);
     }
 
-    #[RelationAttribute('BelongsToMany')]
+    #[Relation('BelongsToMany')]
     public function businessNeeds(): BelongsToMany
     {
         return $this->belongsToMany(BusinessNeed::class)
