@@ -6,11 +6,30 @@
     $destroyUrlTemplate = url($resource.'/~id~');
     $labelField = $labelField ?? 'title';
     $sessionColumns = $sessionColumns ?? ['id'];
+    $formFields = $formFields ?? [];
     $sessionColumnMeta = array_map(
-        static fn (string $key): array => [
-            'key' => $key,
-            'label' => \App\Helpers\Ui::fieldLabel($key),
-        ],
+        static function (string $key) use ($formFields): array {
+            $meta = [
+                'key' => $key,
+                'label' => \App\Helpers\Ui::fieldLabel($key),
+            ];
+
+            $field = $formFields[$key] ?? null;
+            $type = is_array($field) ? ($field['type'] ?? null) : null;
+            if (in_array($type, ['select', 'kt-select'], true) && ! empty($field['list'])) {
+                $list = $field['list'];
+                if ($list instanceof \Illuminate\Support\Collection) {
+                    $list = $list->all();
+                }
+                $options = [];
+                foreach ((array) $list as $id => $label) {
+                    $options[(string) $id] = (string) $label;
+                }
+                $meta['options'] = $options;
+            }
+
+            return $meta;
+        },
         $sessionColumns
     );
     $canUpdate = entity_can($model, 'update');

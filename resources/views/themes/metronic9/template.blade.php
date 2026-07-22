@@ -461,9 +461,13 @@
                     return parsed.map((col) => {
                         if (col && typeof col === 'object') {
                             const key = String(col.key || col.name || col.data || '');
+                            const options = (col.options && typeof col.options === 'object' && !Array.isArray(col.options))
+                                ? col.options
+                                : null;
                             return {
                                 key: key,
                                 label: String(col.label || col.title || key),
+                                options: options,
                             };
                         }
 
@@ -471,6 +475,7 @@
                         return {
                             key: key,
                             label: key.replace(/[._]/g, ' ').replace(/\b\w/g, (ch) => ch.toUpperCase()),
+                            options: null,
                         };
                     }).filter((col) => col.key);
                 }
@@ -478,22 +483,31 @@
                 // fall through
             }
 
-            return [{ key: 'id', label: 'Id' }];
+            return [{ key: 'id', label: 'Id', options: null }];
         }
 
         function quickCreateCellValue(record, column, labelField) {
+            const key = (column && typeof column === 'object') ? column.key : column;
+            const options = (column && typeof column === 'object') ? column.options : null;
             const values = record?.values || {};
-            let value = values[column];
+            let value = values[key];
 
             if (value !== undefined && value !== null && value !== '') {
                 if (typeof value === 'object') {
                     return value.name || value.title || value.label || value.code || '';
                 }
 
+                if (options) {
+                    const resolved = options[String(value)];
+                    if (resolved !== undefined && resolved !== null && resolved !== '') {
+                        return String(resolved);
+                    }
+                }
+
                 return String(value);
             }
 
-            if (column === 'title' || column === 'name' || column === labelField) {
+            if (key === 'title' || key === 'name' || key === labelField) {
                 return quickCreateLabel(record, labelField);
             }
 
@@ -565,7 +579,7 @@
 
                 columns.forEach((column) => {
                     const td = document.createElement('td');
-                    td.textContent = quickCreateCellValue(record, column.key, labelField);
+                    td.textContent = quickCreateCellValue(record, column, labelField);
                     tr.appendChild(td);
                 });
 

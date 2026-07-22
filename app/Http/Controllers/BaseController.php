@@ -243,23 +243,20 @@ class BaseController extends Controller
     }
 
     /**
-     * Scalar list-column keys for the Quick Create session table.
-     * Uses view DTO InList columns; drops relation paths (e.g. status.name)
-     * because create/update payloads only include model attributes / FKs.
+     * Column keys for the Quick Create session table — same visible fields as
+     * the Quick Create form (edit DTO, hideQuick = false), in form order,
+     * with `id` first when not already included.
      *
      * @return list<string>
      */
     protected function quickCreateSessionColumns(): array
     {
-        $paths = DtoMetadata::for($this->modelRepository->viewDto)->listColumns(withPrefix: true);
-        $columns = [];
+        $columns = array_keys(
+            DtoMetadata::for($this->modelRepository->editDto)->quickCreateVisibleFormFields()
+        );
 
-        foreach ($paths as $path) {
-            if (! is_string($path) || $path === '' || str_contains($path, '.')) {
-                continue;
-            }
-
-            $columns[] = $path;
+        if (! in_array('id', $columns, true)) {
+            array_unshift($columns, 'id');
         }
 
         if ($columns === []) {
