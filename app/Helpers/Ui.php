@@ -152,17 +152,19 @@ class Ui
         if ($theme === 'metronic9') {
             $buttonClass = self::keyset($option, 'buttonClass', 'kt-btn kt-btn-sm kt-btn-icon kt-btn-ghost');
 
+            // KTUI dropdown API (not Metronic 8 data-kt-menu). Rows are injected by
+            // DataTables, so template JS re-inits KTDropdown after each draw.
             return '<div class="inline-flex items-center">'
                 .'<a href="'.$link.'" class="'.$buttonClass.' js-open-modal" data-modal-url="'.e($modalUrl).'">'
                 .($iconClass ? '<i class="'.$iconClass.'"></i>' : '')
                 .'</a>'
-                .'<div class="inline-flex" data-kt-menu="true" data-kt-menu-placement="bottom-end">'
-                .'<button type="button" class="kt-btn kt-btn-sm kt-btn-icon kt-btn-ghost" data-kt-menu-trigger="click">'
+                .'<div class="inline-flex" data-kt-dropdown="true" data-kt-dropdown-trigger="click">'
+                .'<button type="button" class="kt-btn kt-btn-sm kt-btn-icon kt-btn-ghost" data-kt-dropdown-toggle="true" aria-label="More actions">'
                 .'<i class="ki-filled ki-down text-xs"></i>'
                 .'</button>'
-                .'<div class="kt-menu kt-menu-default kt-menu-dropdown min-w-[160px]">'
-                .'<div class="kt-menu-item"><a href="'.e($modalUrl).'" class="kt-menu-link js-open-modal" data-modal-url="'.e($modalUrl).'"><span class="kt-menu-title">Open</span></a></div>'
-                .'<div class="kt-menu-item"><a href="'.$link.'" class="kt-menu-link" target="_blank" rel="noopener"><span class="kt-menu-title">Open in new page</span></a></div>'
+                .'<div class="kt-dropdown-menu min-w-[160px]" data-kt-dropdown-menu="true">'
+                .'<a href="'.e($modalUrl).'" class="kt-dropdown-menu-link js-open-modal" data-modal-url="'.e($modalUrl).'">Open</a>'
+                .'<a href="'.$link.'" class="kt-dropdown-menu-link" target="_blank" rel="noopener">Open in new page</a>'
                 .'</div>'
                 .'</div>'
                 .'</div>';

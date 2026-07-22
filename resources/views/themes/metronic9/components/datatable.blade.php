@@ -76,6 +76,11 @@
                     $('._dtSearch').on('keyup', function() {
                         table.search($(this).val()).draw();
                     });
+                },
+                drawCallback: function() {
+                    if (typeof KTDropdown !== 'undefined' && typeof KTDropdown.createInstances === 'function') {
+                        KTDropdown.createInstances();
+                    }
                 }
             });
         });
