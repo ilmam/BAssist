@@ -5,6 +5,10 @@
     Sizes (via $size, data-modal-size on content, or data-modal-size on trigger):
       sm | md | lg (default) | xl | full  — centered dialogs
       end | sheet              — right-side sheet
+
+    Users can also switch Compact / Large / Side from the modal header switcher.
+    Side mode clears the blurry backdrop by default so the page stays visible;
+    the eye toggle can dim/clear the backdrop in any size.
 --}}
 @php
     $size = $size !== '' ? $size : 'lg';

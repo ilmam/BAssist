@@ -179,76 +179,152 @@
             return values[labelField] || values.title || values.name || values.code || ('#' + (values.id || ''));
         }
 
+        function quickCreateSessionColumns(root) {
+            try {
+                const parsed = JSON.parse(root.getAttribute('data-qc-columns') || '[]');
+                if (Array.isArray(parsed) && parsed.length) {
+                    return parsed.map((col) => {
+                        if (col && typeof col === 'object') {
+                            const key = String(col.key || col.name || col.data || '');
+                            return {
+                                key: key,
+                                label: String(col.label || col.title || key),
+                            };
+                        }
+
+                        const key = String(col);
+                        return {
+                            key: key,
+                            label: key.replace(/[._]/g, ' ').replace(/\b\w/g, (ch) => ch.toUpperCase()),
+                        };
+                    }).filter((col) => col.key);
+                }
+            } catch (e) {
+                // fall through
+            }
+
+            return [{ key: 'id', label: 'Id' }];
+        }
+
+        function quickCreateCellValue(record, column, labelField) {
+            const values = record?.values || {};
+            let value = values[column];
+
+            if (value !== undefined && value !== null && value !== '') {
+                if (typeof value === 'object') {
+                    return value.name || value.title || value.label || value.code || '';
+                }
+
+                return String(value);
+            }
+
+            if (column === 'title' || column === 'name' || column === labelField) {
+                return quickCreateLabel(record, labelField);
+            }
+
+            return '';
+        }
+
+        function ensureQuickCreateSessionHead(root, columns, canUpdate, canDelete) {
+            const headRow = root.querySelector('[data-qc-head]');
+            if (!headRow || headRow.dataset.qcReady === '1') {
+                return;
+            }
+
+            headRow.innerHTML = '';
+            columns.forEach((column) => {
+                const th = document.createElement('th');
+                th.className = 'text-start text-muted fw-bolder fs-7 text-uppercase gs-0';
+                th.textContent = column.label;
+                headRow.appendChild(th);
+            });
+
+            if (canUpdate || canDelete) {
+                const actionsTh = document.createElement('th');
+                actionsTh.className = 'text-end text-muted fw-bolder fs-7 text-uppercase gs-0';
+                actionsTh.textContent = '';
+                headRow.appendChild(actionsTh);
+            }
+
+            headRow.dataset.qcReady = '1';
+        }
+
         function renderQuickCreateSession(root) {
             const state = getQuickCreateState(root);
             if (!state) {
                 return;
             }
 
+            const session = root.querySelector('[data-qc-session]');
             const list = root.querySelector('[data-qc-list]');
-            const empty = root.querySelector('[data-qc-empty]');
             const count = root.querySelector('[data-qc-count]');
             const canUpdate = root.getAttribute('data-can-update') === '1';
             const canDelete = root.getAttribute('data-can-delete') === '1';
             const editLabel = root.getAttribute('data-i18n-edit') || 'Edit';
             const deleteLabel = root.getAttribute('data-i18n-delete') || 'Delete';
-            const justNow = root.getAttribute('data-i18n-just-now') || 'just now';
+            const labelField = root.getAttribute('data-label-field') || 'title';
+            const columns = quickCreateSessionColumns(root);
+            const hasRecords = state.inserts.length > 0;
 
             if (count) {
                 count.textContent = '(' + state.inserts.length + ')';
             }
 
-            if (!list || !empty) {
+            if (session) {
+                session.hidden = !hasRecords;
+            }
+
+            if (!list) {
                 return;
             }
 
+            ensureQuickCreateSessionHead(root, columns, canUpdate, canDelete);
             list.innerHTML = '';
 
-            if (state.inserts.length === 0) {
-                empty.hidden = false;
-                list.hidden = true;
+            if (!hasRecords) {
                 return;
             }
 
-            empty.hidden = true;
-            list.hidden = false;
-
             state.inserts.forEach((record) => {
-                const li = document.createElement('li');
-                li.className = 'd-flex align-items-start justify-content-between gap-2 border rounded px-3 py-2';
-                li.dataset.qcId = String(record.id);
+                const tr = document.createElement('tr');
+                tr.dataset.qcId = String(record.id);
 
-                const main = document.createElement('div');
-                main.className = 'flex-grow-1';
-                main.innerHTML =
-                    '<div class="fw-semibold text-gray-800 text-truncate"></div>' +
-                    '<div class="text-muted fs-8">#' + String(record.id) + ' · ' + justNow + '</div>';
-                main.querySelector('.text-truncate').textContent = quickCreateLabel(record, root.getAttribute('data-label-field'));
+                columns.forEach((column) => {
+                    const td = document.createElement('td');
+                    td.textContent = quickCreateCellValue(record, column.key, labelField);
+                    tr.appendChild(td);
+                });
 
-                const actions = document.createElement('div');
-                actions.className = 'd-flex align-items-center gap-1';
+                if (canUpdate || canDelete) {
+                    const actionsTd = document.createElement('td');
+                    actionsTd.className = 'text-end text-nowrap';
 
-                if (canUpdate) {
-                    const editBtn = document.createElement('button');
-                    editBtn.type = 'button';
-                    editBtn.className = 'btn btn-sm btn-light';
-                    editBtn.setAttribute('data-qc-edit', String(record.id));
-                    editBtn.textContent = editLabel;
-                    actions.appendChild(editBtn);
+                    const actions = document.createElement('div');
+                    actions.className = 'd-inline-flex align-items-center gap-1';
+
+                    if (canUpdate) {
+                        const editBtn = document.createElement('button');
+                        editBtn.type = 'button';
+                        editBtn.className = 'btn btn-sm btn-light';
+                        editBtn.setAttribute('data-qc-edit', String(record.id));
+                        editBtn.textContent = editLabel;
+                        actions.appendChild(editBtn);
+                    }
+
+                    if (canDelete) {
+                        const deleteBtn = document.createElement('button');
+                        deleteBtn.type = 'button';
+                        deleteBtn.className = 'btn btn-sm btn-light-danger';
+                        deleteBtn.setAttribute('data-qc-delete', String(record.id));
+                        deleteBtn.textContent = deleteLabel;
+                        actions.appendChild(deleteBtn);
+                    }
+
+                    actionsTd.appendChild(actions);
+                    tr.appendChild(actionsTd);
                 }
 
-                if (canDelete) {
-                    const deleteBtn = document.createElement('button');
-                    deleteBtn.type = 'button';
-                    deleteBtn.className = 'btn btn-sm btn-light-danger';
-                    deleteBtn.setAttribute('data-qc-delete', String(record.id));
-                    deleteBtn.textContent = deleteLabel;
-                    actions.appendChild(deleteBtn);
-                }
-
-                li.appendChild(main);
-                li.appendChild(actions);
-                list.appendChild(li);
+                list.appendChild(tr);
             });
         }
 

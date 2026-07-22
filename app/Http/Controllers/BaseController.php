@@ -71,6 +71,7 @@ class BaseController extends Controller
             'hiddenDefaults' => $form['hiddenDefaults'],
             'operation' => 'create',
             'labelField' => $this->quickCreateLabelField($form['formFields']),
+            'sessionColumns' => $this->quickCreateSessionColumns(),
         ];
 
         return $this->respondModalOrPage(
@@ -239,6 +240,33 @@ class BaseController extends Controller
         $keys = array_keys($formFields);
 
         return $keys[0] ?? 'id';
+    }
+
+    /**
+     * Scalar list-column keys for the Quick Create session table.
+     * Uses view DTO InList columns; drops relation paths (e.g. status.name)
+     * because create/update payloads only include model attributes / FKs.
+     *
+     * @return list<string>
+     */
+    protected function quickCreateSessionColumns(): array
+    {
+        $paths = DtoMetadata::for($this->modelRepository->viewDto)->listColumns(withPrefix: true);
+        $columns = [];
+
+        foreach ($paths as $path) {
+            if (! is_string($path) || $path === '' || str_contains($path, '.')) {
+                continue;
+            }
+
+            $columns[] = $path;
+        }
+
+        if ($columns === []) {
+            $columns = ['id'];
+        }
+
+        return array_values(array_unique($columns));
     }
 
     private function getData(Request $request)

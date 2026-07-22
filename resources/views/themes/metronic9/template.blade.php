@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
     <link href="{{ ui_asset('vendors/keenicons/styles.bundle.css') }}" rel="stylesheet" />
     <link href="{{ ui_asset('css/styles.css') }}" rel="stylesheet" />
+    <link href="{{ ui_asset('css/bassist.css') }}" rel="stylesheet" />
     @stack('styles')
 </head>
 <body class="antialiased flex h-full text-base text-foreground bg-background demo1 kt-sidebar-fixed kt-header-fixed">
@@ -71,6 +72,137 @@
             return size === 'end' || size === 'sheet';
         }
 
+        function isLargeModalSize(size) {
+            return ['md', 'lg', 'xl', 'full'].includes(size);
+        }
+
+        function isModalBackdropClear(modal) {
+            return modal?.getAttribute('data-modal-clear-backdrop') === '1';
+        }
+
+        function syncModalBackdropToggle(container, clear) {
+            const toggle = container?.querySelector('[data-modal-backdrop-toggle]');
+            if (!toggle) {
+                return;
+            }
+
+            const icon = toggle.querySelector('[data-modal-backdrop-icon]');
+            const label = clear
+                ? @json(__('ui.modal_backdrop_dim_page'))
+                : @json(__('ui.modal_backdrop_show_page'));
+
+            toggle.setAttribute('aria-pressed', clear ? 'true' : 'false');
+            toggle.setAttribute('title', label);
+            toggle.setAttribute('aria-label', label);
+            toggle.classList.toggle('kt-btn-light', clear);
+            toggle.classList.toggle('kt-btn-ghost', !clear);
+
+            if (icon) {
+                icon.classList.toggle('ki-eye', !clear);
+                icon.classList.toggle('ki-eye-slash', clear);
+            }
+        }
+
+        function applyModalBackdrop(modal, container, { clear = null, size = null } = {}) {
+            if (!modal) {
+                return;
+            }
+
+            const resolvedSize = size || modal.getAttribute('data-modal-size') || 'lg';
+            const shouldClear = clear === null ? isEndModalSize(resolvedSize) : !!clear;
+            const backdrop = modal.querySelector('.kt-modal-backdrop');
+
+            modal.setAttribute('data-modal-clear-backdrop', shouldClear ? '1' : '0');
+
+            if (backdrop) {
+                if (shouldClear) {
+                    backdrop.removeAttribute('data-kt-modal-dismiss');
+                } else {
+                    backdrop.setAttribute('data-kt-modal-dismiss', 'true');
+                }
+            }
+
+            if (modal.classList.contains('open')) {
+                document.body.classList.toggle('overflow-hidden', !shouldClear);
+            }
+
+            syncModalBackdropToggle(container, shouldClear);
+        }
+
+        function syncModalSizeSwitcher(container, size) {
+            const switcher = container?.querySelector('[data-modal-size-switcher]');
+            if (!switcher) {
+                return;
+            }
+
+            switcher.querySelectorAll('[data-modal-size-set]').forEach((button) => {
+                const mode = button.getAttribute('data-modal-size-set');
+                const isActive = mode === 'full'
+                    ? isLargeModalSize(size)
+                    : mode === 'end'
+                        ? isEndModalSize(size)
+                        : size === mode;
+
+                button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+                button.classList.toggle('kt-btn-light', isActive);
+                button.classList.toggle('kt-btn-ghost', !isActive);
+            });
+        }
+
+        function applySheetContentLayout(container, enabled) {
+            const sheetRoot = container?.firstElementChild;
+            const sheetContent = container?.querySelector('[data-modal-size]');
+            const sheetBody = sheetContent?.querySelector('.kt-modal-body');
+            const sheetHeader = sheetContent?.querySelector('.kt-modal-header');
+            const sheetFooter = sheetContent?.querySelector('.kt-modal-footer');
+
+            [sheetRoot, sheetContent].forEach((el) => {
+                if (!el) {
+                    return;
+                }
+
+                if (enabled) {
+                    el.classList.add('flex', 'flex-col', 'min-h-0', 'h-full');
+                    el.style.height = '100%';
+                    el.style.minHeight = '0';
+                    el.style.display = 'flex';
+                    el.style.flexDirection = 'column';
+                    el.style.overflow = 'hidden';
+                } else {
+                    el.classList.remove('flex', 'flex-col', 'min-h-0', 'h-full');
+                    el.style.height = '';
+                    el.style.minHeight = '';
+                    el.style.display = '';
+                    el.style.flexDirection = '';
+                    el.style.overflow = '';
+                }
+            });
+
+            if (sheetBody) {
+                if (enabled) {
+                    sheetBody.classList.add('flex-1', 'min-h-0', 'overflow-y-auto', 'overscroll-contain');
+                    sheetBody.style.flex = '1 1 auto';
+                    sheetBody.style.minHeight = '0';
+                    sheetBody.style.overflowY = 'auto';
+                    sheetBody.style.webkitOverflowScrolling = 'touch';
+                } else {
+                    sheetBody.classList.remove('flex-1', 'min-h-0', 'overflow-y-auto', 'overscroll-contain');
+                    sheetBody.style.flex = '';
+                    sheetBody.style.minHeight = '';
+                    sheetBody.style.overflowY = '';
+                    sheetBody.style.webkitOverflowScrolling = '';
+                }
+            }
+
+            [sheetHeader, sheetFooter].forEach((el) => {
+                if (!el) {
+                    return;
+                }
+
+                el.classList.toggle('shrink-0', enabled);
+            });
+        }
+
         function applyModalSize(modal, container, size) {
             const resolved = size || modal?.getAttribute('data-modal-size') || 'lg';
 
@@ -80,6 +212,11 @@
 
             container.className = 'kt-modal-content';
             container.removeAttribute('style');
+
+            const contentSizeEl = container.querySelector('[data-modal-size]');
+            if (contentSizeEl) {
+                contentSizeEl.setAttribute('data-modal-size', resolved);
+            }
 
             if (isEndModalSize(resolved)) {
                 modal.style.padding = '0';
@@ -98,14 +235,21 @@
                     'flex-direction: column',
                     'overflow: hidden',
                 ].join('; ');
+                applySheetContentLayout(container, true);
+                applyModalBackdrop(modal, container, { clear: true, size: resolved });
+                syncModalSizeSwitcher(container, resolved);
                 return;
             }
+
+            applySheetContentLayout(container, false);
 
             const width = modalSizeStyles[resolved] || modalSizeStyles.lg;
             container.style.maxWidth = width.maxWidth;
             container.style.marginBlock = '1.5rem';
             container.style.maxHeight = 'calc(100vh - 3rem)';
             container.style.overflowY = 'auto';
+            applyModalBackdrop(modal, container, { clear: false, size: resolved });
+            syncModalSizeSwitcher(container, resolved);
         }
 
         document.addEventListener('click', function (event) {
@@ -150,7 +294,13 @@
 
             modal.classList.remove('open');
             modal.setAttribute('aria-hidden', 'true');
+            modal.setAttribute('data-modal-clear-backdrop', '0');
             document.body.classList.remove('overflow-hidden');
+
+            const backdrop = modal.querySelector('.kt-modal-backdrop');
+            if (backdrop) {
+                backdrop.setAttribute('data-kt-modal-dismiss', 'true');
+            }
 
             const container = modal.querySelector('[data-modal-container]');
             if (container) {
@@ -200,37 +350,13 @@
                     const resolvedSize = sizeFromTrigger || sizeFromContent || modal.getAttribute('data-modal-default-size') || 'lg';
                     applyModalSize(modal, container, resolvedSize);
 
-                    if (isEndModalSize(resolvedSize)) {
-                        const sheetRoot = container.firstElementChild;
-                        if (sheetRoot) {
-                            sheetRoot.style.height = '100%';
-                            sheetRoot.style.minHeight = '0';
-                            sheetRoot.style.display = 'flex';
-                            sheetRoot.style.flexDirection = 'column';
-                            sheetRoot.style.overflow = 'hidden';
-                        }
-
-                        const sheetContent = container.querySelector('[data-modal-size="sheet"], [data-modal-size="end"]');
-                        if (sheetContent) {
-                            sheetContent.style.height = '100%';
-                            sheetContent.style.minHeight = '0';
-                            sheetContent.style.display = 'flex';
-                            sheetContent.style.flexDirection = 'column';
-                            sheetContent.style.overflow = 'hidden';
-                        }
-
-                        const sheetBody = sheetContent?.querySelector('.kt-modal-body');
-                        if (sheetBody) {
-                            sheetBody.style.flex = '1 1 auto';
-                            sheetBody.style.minHeight = '0';
-                            sheetBody.style.overflowY = 'auto';
-                            sheetBody.style.webkitOverflowScrolling = 'touch';
-                        }
-                    }
-
                     modal.classList.add('open');
                     modal.setAttribute('aria-hidden', 'false');
-                    document.body.classList.add('overflow-hidden');
+                    if (!isModalBackdropClear(modal)) {
+                        document.body.classList.add('overflow-hidden');
+                    } else {
+                        document.body.classList.remove('overflow-hidden');
+                    }
                     history.pushState({ modal: true, returnUrl: modalReturnUrl }, '', url);
 
                     if (typeof KTSelect !== 'undefined' && typeof KTSelect.createInstances === 'function') {
@@ -244,6 +370,40 @@
         }
 
         document.getElementById('mianModal')?.addEventListener('click', function (event) {
+            const sizeButton = event.target.closest('[data-modal-size-set]');
+            if (sizeButton) {
+                event.preventDefault();
+                event.stopPropagation();
+
+                const modal = document.getElementById('mianModal');
+                const container = modal?.querySelector('[data-modal-container]');
+                const nextSize = sizeButton.getAttribute('data-modal-size-set');
+
+                if (modal && container && nextSize) {
+                    applyModalSize(modal, container, nextSize);
+                }
+
+                return;
+            }
+
+            const backdropToggle = event.target.closest('[data-modal-backdrop-toggle]');
+            if (backdropToggle) {
+                event.preventDefault();
+                event.stopPropagation();
+
+                const modal = document.getElementById('mianModal');
+                const container = modal?.querySelector('[data-modal-container]');
+
+                if (modal && container) {
+                    applyModalBackdrop(modal, container, {
+                        clear: !isModalBackdropClear(modal),
+                        size: modal.getAttribute('data-modal-size'),
+                    });
+                }
+
+                return;
+            }
+
             if (event.target.closest('[data-kt-modal-dismiss]')) {
                 closeModal();
             }
@@ -294,76 +454,151 @@
             return values[labelField] || values.title || values.name || values.code || ('#' + (values.id || ''));
         }
 
+        function quickCreateSessionColumns(root) {
+            try {
+                const parsed = JSON.parse(root.getAttribute('data-qc-columns') || '[]');
+                if (Array.isArray(parsed) && parsed.length) {
+                    return parsed.map((col) => {
+                        if (col && typeof col === 'object') {
+                            const key = String(col.key || col.name || col.data || '');
+                            return {
+                                key: key,
+                                label: String(col.label || col.title || key),
+                            };
+                        }
+
+                        const key = String(col);
+                        return {
+                            key: key,
+                            label: key.replace(/[._]/g, ' ').replace(/\b\w/g, (ch) => ch.toUpperCase()),
+                        };
+                    }).filter((col) => col.key);
+                }
+            } catch (e) {
+                // fall through
+            }
+
+            return [{ key: 'id', label: 'Id' }];
+        }
+
+        function quickCreateCellValue(record, column, labelField) {
+            const values = record?.values || {};
+            let value = values[column];
+
+            if (value !== undefined && value !== null && value !== '') {
+                if (typeof value === 'object') {
+                    return value.name || value.title || value.label || value.code || '';
+                }
+
+                return String(value);
+            }
+
+            if (column === 'title' || column === 'name' || column === labelField) {
+                return quickCreateLabel(record, labelField);
+            }
+
+            return '';
+        }
+
+        function ensureQuickCreateSessionHead(root, columns, canUpdate, canDelete) {
+            const headRow = root.querySelector('[data-qc-head]');
+            if (!headRow || headRow.dataset.qcReady === '1') {
+                return;
+            }
+
+            headRow.innerHTML = '';
+            columns.forEach((column) => {
+                const th = document.createElement('th');
+                th.textContent = column.label;
+                headRow.appendChild(th);
+            });
+
+            if (canUpdate || canDelete) {
+                const actionsTh = document.createElement('th');
+                actionsTh.className = 'text-end';
+                actionsTh.textContent = '';
+                headRow.appendChild(actionsTh);
+            }
+
+            headRow.dataset.qcReady = '1';
+        }
+
         function renderQuickCreateSession(root) {
             const state = getQuickCreateState(root);
             if (!state) {
                 return;
             }
 
+            const session = root.querySelector('[data-qc-session]');
             const list = root.querySelector('[data-qc-list]');
-            const empty = root.querySelector('[data-qc-empty]');
             const count = root.querySelector('[data-qc-count]');
             const canUpdate = root.getAttribute('data-can-update') === '1';
             const canDelete = root.getAttribute('data-can-delete') === '1';
             const editLabel = root.getAttribute('data-i18n-edit') || 'Edit';
             const deleteLabel = root.getAttribute('data-i18n-delete') || 'Delete';
-            const justNow = root.getAttribute('data-i18n-just-now') || 'just now';
+            const labelField = root.getAttribute('data-label-field') || 'title';
+            const columns = quickCreateSessionColumns(root);
+            const hasRecords = state.inserts.length > 0;
 
             if (count) {
                 count.textContent = '(' + state.inserts.length + ')';
             }
 
-            if (!list || !empty) {
+            if (session) {
+                session.hidden = !hasRecords;
+            }
+
+            if (!list) {
                 return;
             }
 
+            ensureQuickCreateSessionHead(root, columns, canUpdate, canDelete);
             list.innerHTML = '';
 
-            if (state.inserts.length === 0) {
-                empty.hidden = false;
-                list.hidden = true;
+            if (!hasRecords) {
                 return;
             }
 
-            empty.hidden = true;
-            list.hidden = false;
-
             state.inserts.forEach((record) => {
-                const li = document.createElement('li');
-                li.className = 'flex items-start justify-between gap-2 rounded-md border border-border px-3 py-2';
-                li.dataset.qcId = String(record.id);
+                const tr = document.createElement('tr');
+                tr.dataset.qcId = String(record.id);
 
-                const main = document.createElement('div');
-                main.className = 'min-w-0 flex-1';
-                main.innerHTML =
-                    '<div class="text-sm font-medium text-foreground truncate"></div>' +
-                    '<div class="text-xs text-secondary-foreground">#' + String(record.id) + ' · ' + justNow + '</div>';
-                main.querySelector('.truncate').textContent = quickCreateLabel(record, root.getAttribute('data-label-field'));
+                columns.forEach((column) => {
+                    const td = document.createElement('td');
+                    td.textContent = quickCreateCellValue(record, column.key, labelField);
+                    tr.appendChild(td);
+                });
 
-                const actions = document.createElement('div');
-                actions.className = 'flex items-center gap-1 shrink-0';
+                if (canUpdate || canDelete) {
+                    const actionsTd = document.createElement('td');
+                    actionsTd.className = 'text-end whitespace-nowrap';
 
-                if (canUpdate) {
-                    const editBtn = document.createElement('button');
-                    editBtn.type = 'button';
-                    editBtn.className = 'kt-btn kt-btn-sm kt-btn-ghost';
-                    editBtn.setAttribute('data-qc-edit', String(record.id));
-                    editBtn.textContent = editLabel;
-                    actions.appendChild(editBtn);
+                    const actions = document.createElement('div');
+                    actions.className = 'inline-flex items-center gap-1';
+
+                    if (canUpdate) {
+                        const editBtn = document.createElement('button');
+                        editBtn.type = 'button';
+                        editBtn.className = 'kt-btn kt-btn-sm kt-btn-ghost';
+                        editBtn.setAttribute('data-qc-edit', String(record.id));
+                        editBtn.textContent = editLabel;
+                        actions.appendChild(editBtn);
+                    }
+
+                    if (canDelete) {
+                        const deleteBtn = document.createElement('button');
+                        deleteBtn.type = 'button';
+                        deleteBtn.className = 'kt-btn kt-btn-sm kt-btn-ghost text-danger';
+                        deleteBtn.setAttribute('data-qc-delete', String(record.id));
+                        deleteBtn.textContent = deleteLabel;
+                        actions.appendChild(deleteBtn);
+                    }
+
+                    actionsTd.appendChild(actions);
+                    tr.appendChild(actionsTd);
                 }
 
-                if (canDelete) {
-                    const deleteBtn = document.createElement('button');
-                    deleteBtn.type = 'button';
-                    deleteBtn.className = 'kt-btn kt-btn-sm kt-btn-ghost text-danger';
-                    deleteBtn.setAttribute('data-qc-delete', String(record.id));
-                    deleteBtn.textContent = deleteLabel;
-                    actions.appendChild(deleteBtn);
-                }
-
-                li.appendChild(main);
-                li.appendChild(actions);
-                list.appendChild(li);
+                list.appendChild(tr);
             });
         }
 

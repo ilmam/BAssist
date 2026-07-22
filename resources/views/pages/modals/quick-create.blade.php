@@ -5,9 +5,24 @@
     $updateUrlTemplate = url($resource.'/~id~');
     $destroyUrlTemplate = url($resource.'/~id~');
     $labelField = $labelField ?? 'title';
+    $sessionColumns = $sessionColumns ?? ['id'];
+    $sessionColumnMeta = array_map(
+        static fn (string $key): array => [
+            'key' => $key,
+            'label' => \App\Helpers\Ui::fieldLabel($key),
+        ],
+        $sessionColumns
+    );
     $canUpdate = entity_can($model, 'update');
     $canDelete = entity_can($model, 'delete');
     $modalTitle = __('ui.quick_create').' · '.$modelName;
+    $isMetronic9 = ui_theme() === 'metronic9';
+    $sessionTableClass = $isMetronic9
+        ? 'kt-table kt-table-border table-hover w-full text-sm'
+        : 'table table-row-dashed table-hover align-middle gs-0 gy-2 fs-7 mb-0';
+    $sessionTableWrapClass = $isMetronic9
+        ? 'kt-table-wrapper overflow-x-auto'
+        : 'table-responsive';
 @endphp
 
 <div
@@ -16,6 +31,7 @@
     data-update-url-template="{{ $updateUrlTemplate }}"
     data-destroy-url-template="{{ $destroyUrlTemplate }}"
     data-label-field="{{ $labelField }}"
+    data-qc-columns='@json($sessionColumnMeta)'
     data-can-update="{{ $canUpdate ? '1' : '0' }}"
     data-can-delete="{{ $canDelete ? '1' : '0' }}"
     data-i18n-add="{{ __('ui.add_another') }}"
@@ -39,16 +55,22 @@
                 :hiddenDefaults="$hiddenDefaults ?? []"
             />
 
-            <div class="border-t border-border pt-4" data-qc-session>
-                <div class="flex items-center justify-between gap-2 mb-3">
+            <div class="border-t border-border pt-4" data-qc-session hidden>
+                <div class="flex items-center justify-between gap-2 mb-3" data-qc-session-header>
                     <h4 class="text-sm font-medium text-foreground m-0">
                         {{ __('ui.added_this_session') }}
                         <span class="text-muted-foreground" data-qc-count>(0)</span>
                     </h4>
                 </div>
 
-                <p class="text-sm text-secondary-foreground m-0" data-qc-empty>{{ __('ui.no_session_records') }}</p>
-                <ul class="list-none m-0 p-0 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2" data-qc-list hidden></ul>
+                <div class="{{ $sessionTableWrapClass }}">
+                    <table class="{{ $sessionTableClass }}" data-qc-table>
+                        <thead>
+                            <tr data-qc-head></tr>
+                        </thead>
+                        <tbody data-qc-list></tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </x-modal-content>

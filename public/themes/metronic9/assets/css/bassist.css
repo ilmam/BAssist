@@ -1,0 +1,103 @@
+/**
+ * Clear-backdrop side sheets: keep the page visible/interactive behind the panel.
+ */
+.kt-modal[data-modal-clear-backdrop="1"] {
+  pointer-events: none;
+}
+
+.kt-modal[data-modal-clear-backdrop="1"] .kt-modal-backdrop {
+  opacity: 0;
+  pointer-events: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  background-color: transparent;
+}
+
+.kt-modal[data-modal-clear-backdrop="1"] .kt-modal-content,
+.kt-modal[data-modal-clear-backdrop="1"] [data-modal-container] {
+  pointer-events: auto;
+}
+
+/**
+ * App utilities missing from Metronic's prebuilt Tailwind bundle.
+ * Quick Create uses a 12-col grid (grid-cols-12 + col-span-N / sm:col-span-N).
+ */
+@layer utilities {
+  .grid-cols-12 {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+  }
+
+  .gap-y-3 {
+    row-gap: calc(var(--spacing) * 3);
+  }
+
+  .col-span-3 {
+    grid-column: span 3 / span 3;
+  }
+  .col-span-4 {
+    grid-column: span 4 / span 4;
+  }
+  .col-span-5 {
+    grid-column: span 5 / span 5;
+  }
+  .col-span-6 {
+    grid-column: span 6 / span 6;
+  }
+  .col-span-7 {
+    grid-column: span 7 / span 7;
+  }
+  .col-span-8 {
+    grid-column: span 8 / span 8;
+  }
+  .col-span-9 {
+    grid-column: span 9 / span 9;
+  }
+  .col-span-10 {
+    grid-column: span 10 / span 10;
+  }
+  .col-span-11 {
+    grid-column: span 11 / span 11;
+  }
+  .col-span-12 {
+    grid-column: span 12 / span 12;
+  }
+
+  @media (width >= 40rem) {
+    .sm\:col-span-1 {
+      grid-column: span 1 / span 1;
+    }
+    .sm\:col-span-2 {
+      grid-column: span 2 / span 2;
+    }
+    .sm\:col-span-3 {
+      grid-column: span 3 / span 3;
+    }
+    .sm\:col-span-4 {
+      grid-column: span 4 / span 4;
+    }
+    .sm\:col-span-5 {
+      grid-column: span 5 / span 5;
+    }
+    .sm\:col-span-6 {
+      grid-column: span 6 / span 6;
+    }
+    .sm\:col-span-7 {
+      grid-column: span 7 / span 7;
+    }
+    .sm\:col-span-8 {
+      grid-column: span 8 / span 8;
+    }
+    .sm\:col-span-9 {
+      grid-column: span 9 / span 9;
+    }
+    .sm\:col-span-10 {
+      grid-column: span 10 / span 10;
+    }
+    .sm\:col-span-11 {
+      grid-column: span 11 / span 11;
+    }
+    .sm\:col-span-12 {
+      grid-column: span 12 / span 12;
+    }
+  }
+}

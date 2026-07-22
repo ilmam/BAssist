@@ -65,4 +65,10 @@ return [
     'delete' => 'Delete',
     'just_now' => 'just now',
     'confirm_delete_session_record' => 'Delete this record?',
+    'modal_size' => 'Modal size',
+    'modal_size_compact' => 'Compact',
+    'modal_size_large' => 'Large',
+    'modal_size_side' => 'Side panel',
+    'modal_backdrop_show_page' => 'Show page behind',
+    'modal_backdrop_dim_page' => 'Dim page behind',
 ];
