@@ -259,7 +259,7 @@ class MakeEntityCommand extends Command
 
     private function isKnownFormType(string $type): bool
     {
-        return in_array($type, ['text', 'textarea', 'select', 'checkbox', 'radio', 'file', 'image', 'dropzone', 'tree', 'date', 'datetime-local', 'number', 'email', 'password'], true);
+        return in_array($type, ['text', 'textarea', 'select', 'kt-select', 'checkbox', 'radio', 'file', 'image', 'dropzone', 'tree', 'date', 'datetime-local', 'number', 'email', 'password'], true);
     }
 
     private function inferFormType(string $dbType): string
@@ -327,23 +327,33 @@ class MakeEntityCommand extends Command
             'DummyResource'           => $resource,
             'DummyTable'              => $table,
             'DummyDisplayField'       => $displayField,
-            'DummyFillable'           => $this->fillableLines($fields),
-            'DummyDataProperties'     => $this->dataProperties($fields, $displayField),
-            'DummyViewDataProperties' => $this->viewDataProperties($fields, $displayField),
-            'DummyMigrationColumns'   => $this->migrationColumns($fields),
+            'DummyFillable'           => $this->fillableLines($model, $fields),
+            'DummyDataProperties'     => $this->dataProperties($model, $fields, $displayField),
+            'DummyViewDataProperties' => $this->viewDataProperties($model, $fields, $displayField),
+            'DummyMigrationColumns'   => $this->migrationColumns($model, $fields),
         ];
     }
 
-    private function fillableLines(array $fields): string
+    private function fillableLines(string $model, array $fields): string
     {
-        return collect($fields)
-            ->map(fn (array $field) => "        '{$field['name']}',")
-            ->implode(PHP_EOL);
+        $lines = collect($fields)
+            ->map(fn (array $field) => "        '{$field['name']}',");
+
+        // Master-data entities manage their own rows; do not auto-attach status_id.
+        if (in_array($model, ['Status', 'Priority'], true)) {
+            return $lines->implode(PHP_EOL);
+        }
+
+        if (! collect($fields)->contains(fn (array $field) => in_array($field['name'], ['status', 'status_id'], true))) {
+            $lines->push("        'status_id',");
+        }
+
+        return $lines->implode(PHP_EOL);
     }
 
-    private function dataProperties(array $fields, string $displayField): string
+    private function dataProperties(string $model, array $fields, string $displayField): string
     {
-        return collect($fields)->map(function (array $field) use ($displayField) {
+        $properties = collect($fields)->map(function (array $field) use ($displayField) {
             $attributes = ['        #[ValuePropertyAttribute]'];
 
             if ($field['name'] === $displayField) {
@@ -358,26 +368,69 @@ class MakeEntityCommand extends Command
 
             return implode(PHP_EOL, $attributes).PHP_EOL
                 ."        public {$field['phpType']} \${$field['name']} = {$field['default']},";
-        })->implode(PHP_EOL);
+        });
+
+        if (
+            ! in_array($model, ['Status', 'Priority'], true)
+            && ! collect($fields)->contains(fn (array $field) => in_array($field['name'], ['status', 'status_id'], true))
+        ) {
+            $properties->push(
+                "        #[ListPropertyAttribute]\n"
+                ."        #[ValuePropertyAttribute]\n"
+                ."        #[FormFieldAttribute('select', 'Status')]\n"
+                ."        public ?int \$status_id = null,"
+            );
+        }
+
+        return $properties->implode(PHP_EOL);
     }
 
-    private function viewDataProperties(array $fields, string $displayField): string
+    private function viewDataProperties(string $model, array $fields, string $displayField): string
     {
-        return collect($fields)->map(function (array $field) use ($displayField) {
+        $properties = collect($fields)->flatMap(function (array $field) use ($displayField) {
             $attributes = ['        #[ValuePropertyAttribute]'];
 
             if ($field['name'] === $displayField) {
                 array_unshift($attributes, '        #[ListPropertyAttribute]');
             }
 
-            return implode(PHP_EOL, $attributes).PHP_EOL
-                ."        public {$field['phpType']} \${$field['name']} = {$field['default']},";
-        })->implode(PHP_EOL);
+            $lines = [
+                implode(PHP_EOL, $attributes).PHP_EOL
+                ."        public {$field['phpType']} \${$field['name']} = {$field['default']},",
+            ];
+
+            if ($field['dbType'] === 'foreignId' && $field['relation']) {
+                $relationProp = str_ends_with($field['name'], '_id')
+                    ? substr($field['name'], 0, -3)
+                    : lcfirst($field['relation']);
+
+                $lines[] = "        #[ListPropertyAttribute]\n"
+                    ."        #[ValuePropertyAttribute]\n"
+                    ."        public ?\\App\\Data\\{$field['relation']}ViewData \${$relationProp} = null,";
+            }
+
+            return $lines;
+        });
+
+        if (
+            ! in_array($model, ['Status', 'Priority'], true)
+            && ! collect($fields)->contains(fn (array $field) => in_array($field['name'], ['status', 'status_id'], true))
+        ) {
+            $properties->push(
+                "        #[ValuePropertyAttribute]\n"
+                ."        public ?int \$status_id = null,\n"
+                ."        #[ListPropertyAttribute]\n"
+                ."        #[ValuePropertyAttribute]\n"
+                ."        public ?\\App\\Data\\StatusViewData \$status = null,"
+            );
+        }
+
+        return $properties->implode(PHP_EOL);
     }
 
-    private function migrationColumns(array $fields): string
+    private function migrationColumns(string $model, array $fields): string
     {
-        return collect($fields)->map(function (array $field) {
+        $columns = collect($fields)->map(function (array $field) {
             $line = match ($field['dbType']) {
                 'decimal'   => "\$table->decimal('{$field['name']}', 10, 2)",
                 'foreignId' => "\$table->foreignId('{$field['name']}')",
@@ -393,7 +446,16 @@ class MakeEntityCommand extends Command
             }
 
             return '            '.$line.';';
-        })->implode(PHP_EOL);
+        });
+
+        if (
+            ! in_array($model, ['Status', 'Priority'], true)
+            && ! collect($fields)->contains(fn (array $field) => in_array($field['name'], ['status', 'status_id'], true))
+        ) {
+            $columns->push("            \$table->foreignId('status_id')->nullable()->constrained('statuses');");
+        }
+
+        return $columns->implode(PHP_EOL);
     }
 
     private function migrationPath(string $table): string

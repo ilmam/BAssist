@@ -117,17 +117,42 @@ class DtoMetadata
         $paths = $this->valueFieldPaths(withPrefix: true);
 
         if ($onlyHeaders) {
-            return $this->valueFieldPaths($withPrefix);
+            return array_map(
+                fn (string $path) => $this->displayKeyForPath($path, $withPrefix),
+                $this->valueFieldPaths(withPrefix: true)
+            );
         }
 
         $fields = [];
 
         foreach ($paths as $path) {
-            $key = $withPrefix ? $path : (str_contains($path, '.') ? substr($path, strrpos($path, '.') + 1) : $path);
+            $key = $this->displayKeyForPath($path, $withPrefix);
             $fields[$key] = $this->valueAtPath($dto, $path);
         }
 
         return $fields;
+    }
+
+    /**
+     * Collapse relation.displayField paths (status.name) to the relation key (status)
+     * so labels resolve to friendly names like "Status".
+     */
+    protected function displayKeyForPath(string $path, bool $withPrefix): string
+    {
+        if (str_contains($path, '.')) {
+            $parts = explode('.', $path);
+            $last = end($parts);
+
+            if (self::isDisplayFieldName($last) && count($parts) >= 2) {
+                return $withPrefix
+                    ? implode('.', array_slice($parts, 0, -1))
+                    : $parts[count($parts) - 2];
+            }
+
+            return $withPrefix ? $path : $last;
+        }
+
+        return $path;
     }
 
     /**
@@ -240,12 +265,24 @@ class DtoMetadata
      * Discover properties for detail/view display (ValuePropertyAttribute).
      * Properties with HidePropertyAttribute are excluded.
      *
+     * Nested Data relations contribute only their main display field
+     * (name/title/category/…). Matching *_id FK properties are skipped.
+     *
      * @return list<string>
      */
     protected static function discoverValueFields(string $class, string $prefix = ''): array
     {
         $fields = [];
         $reflect = new ReflectionClass($class);
+        $relationNames = [];
+
+        foreach ($reflect->getProperties(ReflectionProperty::IS_PUBLIC) as $property) {
+            $nestedClass = self::nestedClassName($property);
+
+            if ($nestedClass !== null && class_exists($nestedClass) && is_subclass_of($nestedClass, \Spatie\LaravelData\Data::class)) {
+                $relationNames[] = $property->getName();
+            }
+        }
 
         foreach ($reflect->getProperties(ReflectionProperty::IS_PUBLIC) as $property) {
             if ($property->getAttributes(HidePropertyAttribute::class) !== []) {
@@ -257,9 +294,21 @@ class DtoMetadata
             $nestedClass = self::nestedClassName($property);
 
             if ($nestedClass !== null && class_exists($nestedClass) && is_subclass_of($nestedClass, \Spatie\LaravelData\Data::class)) {
-                $fields = array_merge($fields, self::discoverValueFields($nestedClass, $fullFieldName));
+                $mainField = self::mainDisplayFieldName($nestedClass);
+
+                if ($mainField !== null) {
+                    $fields[] = $fullFieldName.'.'.$mainField;
+                }
 
                 continue;
+            }
+
+            if (str_ends_with($fieldName, '_id')) {
+                $relationName = substr($fieldName, 0, -3);
+
+                if (in_array($relationName, $relationNames, true)) {
+                    continue;
+                }
             }
 
             foreach ($property->getAttributes(ValuePropertyAttribute::class) as $attribute) {
@@ -268,6 +317,37 @@ class DtoMetadata
         }
 
         return $fields;
+    }
+
+    /**
+     * Prefer the entity "main" display field on a nested ViewData.
+     */
+    protected static function mainDisplayFieldName(string $class): ?string
+    {
+        $reflect = new ReflectionClass($class);
+
+        foreach (['name', 'title', 'category', 'label'] as $candidate) {
+            if ($reflect->hasProperty($candidate)) {
+                return $candidate;
+            }
+        }
+
+        foreach ($reflect->getProperties(ReflectionProperty::IS_PUBLIC) as $property) {
+            if ($property->getAttributes(ListPropertyAttribute::class) === []) {
+                continue;
+            }
+
+            if (self::nestedClassName($property) === null) {
+                return $property->getName();
+            }
+        }
+
+        return null;
+    }
+
+    protected static function isDisplayFieldName(string $name): bool
+    {
+        return in_array($name, ['name', 'title', 'category', 'label'], true);
     }
 
     /**

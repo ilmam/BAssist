@@ -42,6 +42,53 @@ class Ui
         return $string;
     }
 
+    /**
+     * Resolve a friendly field label via lang/ui.php, with sensible fallbacks.
+     *
+     * Examples:
+     *  - project_id  → ui.project → "Project"
+     *  - status.name → ui.status → "Status"
+     *  - need_type   → ui.need_type or "Need Type"
+     */
+    public static function fieldLabel(string $name): string
+    {
+        $key = self::labelKey($name);
+
+        if (\Illuminate\Support\Facades\Lang::has('ui.'.$key)) {
+            return (string) __('ui.'.$key);
+        }
+
+        $pretty = self::prettify('ui.'.$key);
+
+        return ucwords(str_replace(['_', '-'], ' ', $pretty));
+    }
+
+    /**
+     * Normalize a field/path name into a lang/ui.php lookup key.
+     */
+    public static function labelKey(string $name): string
+    {
+        $key = $name;
+
+        if (str_contains($key, '.')) {
+            $parts = explode('.', $key);
+            $last = end($parts);
+
+            // Relation display paths like status.name → label the relation.
+            if (in_array($last, ['name', 'title', 'category', 'label'], true) && count($parts) >= 2) {
+                $key = $parts[count($parts) - 2];
+            } else {
+                $key = $last;
+            }
+        }
+
+        if (str_ends_with($key, '_id')) {
+            $key = substr($key, 0, -3);
+        }
+
+        return $key;
+    }
+
 
     public static function cleanText($string)
     {

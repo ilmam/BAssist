@@ -16,6 +16,10 @@
         {{ Form::bsSelect($name, $value, $list, $attributes) }}
         @break
 
+    @case('kt-select')
+        {{ Form::bsKtSelect($name, $value, $list, $attributes) }}
+        @break
+
     @case('checkbox')
         {{ Form::bsCheckbox($name, $value, $list, $attributes) }}
         @break

@@ -1,4 +1,3 @@
-
 @php
     use App\Facades\Form;
     $formRoute = in_array($verb, ['POST', 'post'], true)
@@ -13,28 +12,30 @@
 
 {{ Form::open($formOpenOptions) }}
     <div class="{{ $inModal ? '' : 'kt-card-body border-t border-border p-5 lg:p-7.5' }}">
-        @if (! in_array($verb, ['POST', 'post'], true))
-            @method($verb)
-        @endif
+        <div class="space-y-6">
+            @if (! in_array($verb, ['POST', 'post'], true))
+                @method($verb)
+            @endif
 
-        @if ($dto->id ?? null)
-            {{ Form::hidden('id', $dto->id) }}
-        @endif
+            @if ($dto->id ?? null)
+                {{ Form::hidden('id', $dto->id) }}
+            @endif
 
-        @foreach ($fieldsArray as $name => $field)
-            @php
-                $fieldName = is_numeric($name) ? $field : $name;
-                $type = \App\Helpers\FormHelper::getFieldType($field);
+            @foreach ($fieldsArray as $name => $field)
+                @php
+                    $fieldName = is_numeric($name) ? $field : $name;
+                    $type = \App\Helpers\FormHelper::getFieldType($field);
 
-                $list = null;
-                $options = null;
+                    $list = null;
+                    $options = null;
 
-                if (isset($field['list'])) {
-                    $list = $field['list'];
-                }
-            @endphp
-            {{ Form::field($type, $fieldName, $dto->{$fieldName} ?? null, $list, $options) }}
-        @endforeach
+                    if (isset($field['list'])) {
+                        $list = $field['list'];
+                    }
+                @endphp
+                {{ Form::field($type, $fieldName, $dto->{$fieldName} ?? null, $list, $options) }}
+            @endforeach
+        </div>
     </div>
     <div class="{{ $inModal ? 'flex justify-end gap-2.5 mt-5' : 'kt-card-footer flex justify-end gap-2.5 border-t border-border p-5 lg:p-7.5' }}">
         @if ($inModal)

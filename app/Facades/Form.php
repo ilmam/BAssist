@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Facade;
  * @method static \Illuminate\Support\HtmlString label(string $name, ?string $value = null, array $options = [])
  * @method static \Illuminate\Support\HtmlString text(string $name, $value = null, array $options = [])
  * @method static \Illuminate\Support\HtmlString textarea(string $name, $value = null, array $options = [])
- * @method static \Illuminate\Support\HtmlString select(string $name, array $list, $selected = null, array $options = [])
+ * @method static \Illuminate\Support\HtmlString select(string $name, \Illuminate\Contracts\Support\Arrayable|iterable $list, $selected = null, array $options = [])
  * @method static \Illuminate\Support\HtmlString checkbox(string $name, $value = 1, $checked = null, array $options = [])
  * @method static \Illuminate\Support\HtmlString radio(string $name, $value = null, $checked = null, array $options = [])
  * @method static \Illuminate\Support\HtmlString hidden(string $name, $value = null, array $options = [])

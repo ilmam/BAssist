@@ -3,11 +3,13 @@
 @endphp
 
 <x-modal-content :title="$modelName.' Details'">
-    <x-details-view
-        model="{{ $modelName }}"
-        :dto="$dto"
-        :fields="$fields"
-    />
+    <div class="space-y-6">
+        <x-details-view
+            model="{{ $modelName }}"
+            :dto="$dto"
+            :fields="$fields"
+        />
+    </div>
 
     <x-slot:footer>
         <x-modal-dismiss text="Close" />

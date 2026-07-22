@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\HtmlString;
 
@@ -68,8 +69,12 @@ class FormBuilder
         return new HtmlString('<textarea'.$this->attributes($options).'>'.$value.'</textarea>');
     }
 
-    public function select(string $name, array $list, $selected = null, array $options = []): HtmlString
+    /**
+     * @param  array<array-key, mixed>|Arrayable|iterable  $list
+     */
+    public function select(string $name, Arrayable|iterable $list, $selected = null, array $options = []): HtmlString
     {
+        $list = $this->normalizeList($list);
         $options = $this->mergeName($name, $options);
         $html = '<select'.$this->attributes($options).'>';
 
@@ -142,8 +147,8 @@ class FormBuilder
         $attributes = $data['attributes'] ?? [];
 
         return [
-            'horizontal' => \App\Helpers\Ui::keyset($attributes, 'layout') === null || ($attributes['layout'] ?? 'h') === 'h',
-            'labelText' => \App\Helpers\Ui::prettify(__('ui.'.$name)),
+            'horizontal' => ($attributes['layout'] ?? 'v') === 'h',
+            'labelText' => \App\Helpers\Ui::fieldLabel($name),
         ];
     }
 
@@ -212,6 +217,23 @@ class FormBuilder
     protected function selected($value, $selected): string
     {
         return (string) $value === (string) $selected ? ' selected' : '';
+    }
+
+    /**
+     * @param  array<array-key, mixed>|Arrayable|iterable  $list
+     * @return array<array-key, mixed>
+     */
+    protected function normalizeList(Arrayable|iterable $list): array
+    {
+        if ($list instanceof Arrayable) {
+            return $list->toArray();
+        }
+
+        if (is_array($list)) {
+            return $list;
+        }
+
+        return iterator_to_array($list);
     }
 
     protected function escape($value): string

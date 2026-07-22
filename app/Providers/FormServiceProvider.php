@@ -18,6 +18,7 @@ class FormServiceProvider extends ServiceProvider
 
         $form->component('bsText', 'text', ['name', 'value', 'attributes']);
         $form->component('bsSelect', 'select', ['name', 'value', 'list', 'attributes']);
+        $form->component('bsKtSelect', 'kt-select', ['name', 'value', 'list', 'attributes']);
         $form->component('bsCheckbox', 'checkbox', ['name', 'value', 'list', 'attributes']);
         $form->component('bsRadio', 'radio', ['name', 'value', 'list', 'attributes']);
         $form->component('bsTextarea', 'textarea', ['name', 'value', 'attributes']);

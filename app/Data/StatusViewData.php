@@ -5,20 +5,20 @@ namespace App\Data;
 use App\Attributes\ListPropertyAttribute;
 use App\Attributes\ValuePropertyAttribute;
 
-class CategoryViewData extends BaseData
+class StatusViewData extends BaseData
 {
     public function __construct(
         public ?int $id = null,
         #[ListPropertyAttribute]
         #[ValuePropertyAttribute]
-        public string $category = '',
-        #[ValuePropertyAttribute]
-        public ?string $description = null,
-        #[ValuePropertyAttribute]
-        public ?int $status_id = null,
+        public string $name = '',
         #[ListPropertyAttribute]
         #[ValuePropertyAttribute]
-        public ?StatusViewData $status = null,
+        public string $code = '',
+        #[ValuePropertyAttribute]
+        public int $sort_order = 0,
+        #[ValuePropertyAttribute]
+        public ?string $description = null,
     ) {
     }
 }

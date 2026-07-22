@@ -56,15 +56,17 @@ class EntityFormMaterializer
 
         {{ Form::open(\$formOpenOptions) }}
             <div class="{$bodyClass}">
-                @if (! in_array(\$verb, ['POST', 'post'], true))
-                    @method(\$verb)
-                @endif
+                <div class="space-y-6">
+                    @if (! in_array(\$verb, ['POST', 'post'], true))
+                        @method(\$verb)
+                    @endif
 
-                @if (\$dto->id ?? null)
-                    {{ Form::hidden('id', \$dto->id) }}
-                @endif
+                    @if (\$dto->id ?? null)
+                        {{ Form::hidden('id', \$dto->id) }}
+                    @endif
 
 {$blocks['field_lines']}
+                </div>
             </div>
             <div class="{$footerClass}">
 {$cancelButton}
@@ -90,7 +92,7 @@ BLADE;
 
             $listExpression = 'null';
 
-            if (in_array($type, ['select', 'checkbox', 'radio'], true)) {
+            if (in_array($type, ['select', 'kt-select', 'checkbox', 'radio'], true)) {
                 $listVar = '$'.str_replace('_id', 'List', $fieldName);
 
                 if ($relatedModel !== '') {
@@ -102,11 +104,11 @@ BLADE;
                 $listExpression = $listVar;
             }
 
-            $fieldLines[] = "                {{ Form::field('{$type}', '{$fieldName}', \$dto->{$fieldName} ?? null, {$listExpression}, null) }}";
+            $fieldLines[] = "                    {{ Form::field('{$type}', '{$fieldName}', \$dto->{$fieldName} ?? null, {$listExpression}, null) }}";
         }
 
         if ($fieldLines === []) {
-            $fieldLines[] = '                {{-- No FormFieldAttribute properties found on the edit DTO. --}}';
+            $fieldLines[] = '                    {{-- No FormFieldAttribute properties found on the edit DTO. --}}';
         }
 
         return [

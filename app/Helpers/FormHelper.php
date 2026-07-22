@@ -14,6 +14,7 @@ class FormHelper
                 case 'text':
                 case 'textarea':
                 case 'select':
+                case 'kt-select':
                 case 'checkbox':
                 case 'radio':
                 case 'file':
@@ -34,7 +35,7 @@ class FormHelper
         switch($type)
         {
             case 'select':
-            case 'checkbox':
+            case 'kt-select':
             case 'checkbox':
                 $list = "$".str_replace("_id", "List", $fieldName);
                 break;

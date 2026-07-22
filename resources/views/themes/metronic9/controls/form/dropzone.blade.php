@@ -1,8 +1,8 @@
 @include(ui_form_view('_vars'))
 
 @if ($horizontal)
-    <div class="flex flex-col lg:flex-row lg:items-start gap-2.5 mb-5">
-        <label class="lg:w-1/4 text-sm font-medium text-foreground lg:pt-2.5">{{ $labelText }}</label>
+    <div class="flex flex-col lg:flex-row lg:items-start gap-2.5">
+        <label class="kt-form-label lg:w-1/4 lg:pt-2.5">{{ $labelText }}</label>
         <div class="lg:flex-1">
             <div class="dropzone border border-dashed border-border rounded-lg p-5 bg-muted/30" id="dropzone_{{ $name }}">
                 <div class="dz-message needsclick text-center">
@@ -14,8 +14,8 @@
         </div>
     </div>
 @else
-    <div class="flex flex-col gap-1 mb-5">
-        <label class="text-sm font-medium text-foreground">{{ $labelText }}</label>
+    <div class="kt-form-item">
+        <label class="kt-form-label">{{ $labelText }}</label>
         <div class="dropzone border border-dashed border-border rounded-lg p-5 bg-muted/30" id="dropzone_{{ $name }}">
             <div class="dz-message needsclick text-center">
                 <i class="ki-filled ki-file-up text-2xl text-primary"></i>

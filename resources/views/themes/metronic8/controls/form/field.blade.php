@@ -13,6 +13,7 @@
         @break
 
     @case('select')
+    @case('kt-select')
         {{ Form::bsSelect($name, $value, $list, $attributes) }}
         @break
 

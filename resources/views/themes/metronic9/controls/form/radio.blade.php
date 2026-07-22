@@ -7,8 +7,8 @@
 @endphp
 
 @if ($horizontal)
-    <div class="flex flex-col lg:flex-row lg:items-start gap-2.5 mb-5">
-        <label class="lg:w-1/4 text-sm font-medium text-foreground lg:pt-2.5">{{ $labelText }}</label>
+    <div class="flex flex-col lg:flex-row lg:items-start gap-2.5">
+        <label class="kt-form-label lg:w-1/4 lg:pt-2.5">{{ $labelText }}</label>
         <div class="lg:flex-1 {{ $listClass }}">
             @foreach ($list as $id => $text)
                 <label class="flex items-center gap-2">
@@ -19,8 +19,8 @@
         </div>
     </div>
 @else
-    <div class="flex flex-col gap-2 mb-5">
-        <label class="text-sm font-medium text-foreground">{{ $labelText }}</label>
+    <div class="kt-form-item">
+        <label class="kt-form-label">{{ $labelText }}</label>
         <div class="{{ $listClass }}">
             @foreach ($list as $id => $text)
                 <label class="flex items-center gap-2">

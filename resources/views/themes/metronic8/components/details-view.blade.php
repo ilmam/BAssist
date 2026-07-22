@@ -1,18 +1,12 @@
-@foreach ($fields as $name=>$value)
-    @php
-        $fieldName = is_numeric($name) ? $field : $name;
-        $options = null;
-        // dd($fields);
-        // print_r($dto->{$fieldName});
-    @endphp
+@php
+    use App\Helpers\Ui;
+@endphp
+
+@foreach ($fields as $name => $value)
     <div class="row mb-7">
-        <!--begin::Label-->
-        <label class="col-lg-4 fw-semibold text-muted">{{ $fieldName }}</label>
-        <!--end::Label-->
-        <!--begin::Col-->
+        <label class="col-lg-4 fw-bold text-gray-800">{{ Ui::fieldLabel((string) $name) }}</label>
         <div class="col-lg-8">
-            <span class="fw-bold fs-6 text-gray-800">{{ $value }}</span>
+            <span class="fw-normal fs-6 text-gray-800">{{ $value }}</span>
         </div>
-        <!--end::Col-->
     </div>
 @endforeach

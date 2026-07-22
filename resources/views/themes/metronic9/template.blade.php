@@ -59,6 +59,42 @@
     <script>
         let modalReturnUrl = null;
 
+        const modalSizeStyles = {
+            sm: { maxWidth: '400px' },
+            md: { maxWidth: '560px' },
+            lg: { maxWidth: '720px' },
+            xl: { maxWidth: '960px' },
+        };
+
+        function isEndModalSize(size) {
+            return size === 'end' || size === 'sheet';
+        }
+
+        function applyModalSize(modal, container, size) {
+            const resolved = size || modal?.getAttribute('data-modal-size') || 'lg';
+
+            modal.setAttribute('data-modal-size', resolved);
+            modal.style.padding = '';
+            modal.classList.remove('overflow-hidden');
+
+            container.className = 'kt-modal-content';
+            container.removeAttribute('style');
+
+            if (isEndModalSize(resolved)) {
+                modal.style.padding = '0';
+                modal.classList.add('overflow-hidden');
+                container.className = 'kt-modal-content flex flex-col w-full rounded-lg overflow-hidden';
+                container.style.cssText = 'position: fixed; inset-block: 1.25rem; inset-inline-end: 1.25rem; inset-inline-start: auto; margin-inline: 0; max-width: 600px;';
+                return;
+            }
+
+            const width = modalSizeStyles[resolved] || modalSizeStyles.lg;
+            container.style.maxWidth = width.maxWidth;
+            container.style.marginBlock = '1.5rem';
+            container.style.maxHeight = 'calc(100vh - 3rem)';
+            container.style.overflowY = 'auto';
+        }
+
         document.addEventListener('click', function (event) {
             const trigger = event.target.closest('[data-modal-url]');
             if (!trigger) {
@@ -66,7 +102,10 @@
             }
 
             event.preventDefault();
-            openModal(trigger.getAttribute('data-modal-url'));
+            openModal(
+                trigger.getAttribute('data-modal-url'),
+                trigger.getAttribute('data-modal-size')
+            );
         });
 
         window.addEventListener('popstate', function () {
@@ -96,13 +135,14 @@
                 return;
             }
 
-            modal.classList.add('hidden');
             modal.classList.remove('open');
+            modal.setAttribute('aria-hidden', 'true');
             document.body.classList.remove('overflow-hidden');
 
             const container = modal.querySelector('[data-modal-container]');
             if (container) {
                 container.innerHTML = '';
+                applyModalSize(modal, container, modal.getAttribute('data-modal-default-size') || 'lg');
             }
         }
 
@@ -111,7 +151,7 @@
             hideModalUi();
         }
 
-        function openModal(url) {
+        function openModal(url, sizeFromTrigger) {
             const modal = document.getElementById('mianModal');
             const container = modal?.querySelector('[data-modal-container]');
 
@@ -119,20 +159,49 @@
                 return;
             }
 
+            if (!modal.hasAttribute('data-modal-default-size')) {
+                modal.setAttribute('data-modal-default-size', modal.getAttribute('data-modal-size') || 'lg');
+            }
+
             modalReturnUrl = window.location.href;
 
             fetch(url, {
                 headers: {
                     'X-Modal-Request': '1',
+                    'Accept': 'text/html',
                 },
             })
-                .then(response => response.text())
+                .then(async (response) => {
+                    const html = await response.text();
+
+                    if (!response.ok) {
+                        throw new Error('Modal request failed (' + response.status + ')');
+                    }
+
+                    return html;
+                })
                 .then(html => {
                     container.innerHTML = html;
-                    modal.classList.remove('hidden');
+
+                    const sizeFromContent = container.querySelector('[data-modal-size]')?.getAttribute('data-modal-size');
+                    applyModalSize(
+                        modal,
+                        container,
+                        sizeFromTrigger || sizeFromContent || modal.getAttribute('data-modal-default-size') || 'lg'
+                    );
+
                     modal.classList.add('open');
+                    modal.setAttribute('aria-hidden', 'false');
                     document.body.classList.add('overflow-hidden');
                     history.pushState({ modal: true, returnUrl: modalReturnUrl }, '', url);
+
+                    if (typeof KTSelect !== 'undefined' && typeof KTSelect.createInstances === 'function') {
+                        KTSelect.createInstances();
+                    }
+                })
+                .catch((error) => {
+                    console.error(error);
+                    window.alert('Could not open the editor. Please try again.');
                 });
         }
 
@@ -141,6 +210,14 @@
                 closeModal();
             }
         });
+
+        (function initModalHost() {
+            const modal = document.getElementById('mianModal');
+            const container = modal?.querySelector('[data-modal-container]');
+            if (modal && container) {
+                applyModalSize(modal, container, modal.getAttribute('data-modal-size') || 'lg');
+            }
+        })();
 
         function reloadDataTables() {
             if (typeof $ !== 'undefined' && $.fn.dataTable) {
