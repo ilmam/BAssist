@@ -117,6 +117,21 @@ class CrudEntityRegistry
             $entities[$model] = array_replace_recursive($entities[$model], $options);
         }
 
-        return $entities;
+        // Prefer config/crud.php model order for nav/home/registry consumers.
+        // Any discovered entities missing from config stay at the end (A–Z).
+        $ordered = [];
+
+        foreach (array_keys(config('crud.models', [])) as $model) {
+            if (! isset($entities[$model])) {
+                continue;
+            }
+
+            $ordered[$model] = $entities[$model];
+            unset($entities[$model]);
+        }
+
+        ksort($entities);
+
+        return $ordered + $entities;
     }
 }
