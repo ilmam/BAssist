@@ -35,8 +35,8 @@ class RoleSeeder extends Seeder
                 ],
                 [
                     'can_view' => true,
-                    'can_create' => $entity === 'Category',
-                    'can_update' => $entity === 'Category',
+                    'can_create' => true,
+                    'can_update' => true,
                     'can_delete' => false,
                 ],
             );

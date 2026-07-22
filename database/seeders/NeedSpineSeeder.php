@@ -1,0 +1,144 @@
+<?php
+
+namespace Database\Seeders;
+
+use App\Models\BusinessNeed;
+use App\Models\BusinessObjective;
+use App\Models\Project;
+use App\Models\Stakeholder;
+use App\Models\StakeholderNeed;
+use App\Models\User;
+use App\Services\SystemStakeholderSeeder;
+use App\Services\TenancyProvisioner;
+use App\Support\EntityPriority;
+use App\Support\EntityStatus;
+use Illuminate\Database\Seeder;
+
+class NeedSpineSeeder extends Seeder
+{
+    public function run(): void
+    {
+        $provisioner = app(TenancyProvisioner::class);
+        $tenant = $provisioner->ensureSharedTenant();
+        $workspace = $provisioner->ensureSharedWorkspace($tenant);
+
+        User::query()->whereNull('tenant_id')->each(function (User $user) use ($provisioner) {
+            $provisioner->provisionFor($user);
+        });
+
+        $agreedId = EntityStatus::id(EntityStatus::AGREED);
+        $draftId = EntityStatus::id(EntityStatus::DRAFT);
+        $highId = EntityPriority::id(EntityPriority::HIGH);
+        $mediumId = EntityPriority::id(EntityPriority::MEDIUM);
+
+        $project = Project::query()->updateOrCreate(
+            [
+                'workspace_id' => $workspace->id,
+                'code' => 'NS-DEMO',
+            ],
+            [
+                'name' => 'Need Spine Dogfood',
+                'description' => 'Internal sample project for exercising the BA spine.',
+                'status_id' => $agreedId,
+            ],
+        );
+
+        app(SystemStakeholderSeeder::class)->seedForProject($project);
+
+        $objective = BusinessObjective::query()->updateOrCreate(
+            [
+                'project_id' => $project->id,
+                'title' => 'Improve delivery traceability',
+            ],
+            [
+                'description' => 'Make need-to-delivery provenance visible across teams.',
+                'success_measure' => 'Every active story traces to a business need and objective.',
+                'potential_value' => 'Fewer orphan tickets and clearer provenance for audits.',
+                'priority_id' => $highId,
+                'status_id' => $agreedId,
+            ],
+        );
+
+        $need = BusinessNeed::query()->updateOrCreate(
+            [
+                'project_id' => $project->id,
+                'title' => 'Living spine from objectives to stakeholder needs',
+            ],
+            [
+                'need_type' => 'opportunity',
+                'description' => 'Capture objectives, needs, and stakeholder needs in one cascade.',
+                'rationale' => 'Wikis and tickets lose provenance over time.',
+                'impact' => 'Delivery work loses strategic alignment.',
+                'do_nothing_consequence' => 'Teams keep optimizing tickets without a living need spine.',
+                'priority_id' => $highId,
+                'status_id' => $agreedId,
+            ],
+        );
+
+        $need->businessObjectives()->sync([
+            $objective->id => ['is_primary' => true],
+        ]);
+
+        $draftNeed = BusinessNeed::query()->updateOrCreate(
+            [
+                'project_id' => $project->id,
+                'title' => 'Unscoped intake from operations (draft)',
+            ],
+            [
+                'need_type' => 'problem',
+                'description' => 'Example of need-first drafting before an objective is chosen.',
+                'rationale' => 'Bottom-up discovery is valid in BABOK Strategy Analysis.',
+                'priority_id' => $mediumId,
+                'status_id' => $draftId,
+            ],
+        );
+        $draftNeed->businessObjectives()->sync([]);
+
+        $endUser = Stakeholder::query()
+            ->where('project_id', $project->id)
+            ->where('system_key', 'end_user')
+            ->firstOrFail();
+
+        $customStakeholder = Stakeholder::query()->updateOrCreate(
+            [
+                'project_id' => $project->id,
+                'name' => 'Product Owner',
+                'is_system' => false,
+            ],
+            [
+                'type' => 'role',
+                'status_id' => $agreedId,
+                'notes' => 'Example custom stakeholder (Agile). Not a BABOK system default.',
+            ],
+        );
+
+        $stakeholderNeed = StakeholderNeed::query()->updateOrCreate(
+            [
+                'project_id' => $project->id,
+                'title' => 'See which business need my ask supports',
+            ],
+            [
+                'description' => 'Stakeholders need confidence their requests hang under a real business need.',
+                'priority_id' => $mediumId,
+                'status_id' => $draftId,
+            ],
+        );
+
+        $stakeholderNeed->businessNeeds()->sync([$need->id]);
+        $stakeholderNeed->stakeholders()->sync([$endUser->id, $customStakeholder->id]);
+
+        $orphanStakeholderNeed = StakeholderNeed::query()->updateOrCreate(
+            [
+                'project_id' => $project->id,
+                'title' => 'Unlinked ask from the floor (orphan)',
+            ],
+            [
+                'description' => 'Example orphan stakeholder need with no business need or stakeholder yet.',
+                'priority_id' => $mediumId,
+                'status_id' => $draftId,
+            ],
+        );
+        $orphanStakeholderNeed->businessNeeds()->sync([]);
+        $orphanStakeholderNeed->stakeholders()->sync([]);
+    }
+}

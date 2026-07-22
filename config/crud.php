@@ -14,6 +14,8 @@ return [
     | Use this file to override presentation settings or disable routing at
     | runtime without removing the attribute from the model.
     |
+    | Model key order in this file controls nav/home listing order.
+    |
     | Per-model page views resolve automatically when a blade file exists:
     |   pages/{resource}/list.blade.php    → overrides pages/generic/list.blade.php
     |   pages/{resource}/form.blade.php
@@ -36,13 +38,68 @@ return [
     ],
 
     'models' => [
-        'Category' => [
-            'home' => true,
+        // 'Status' => [
+        //     'nav' => true,
+        //     'nav_label' => 'Statuses',
+        //     'nav_icon' => 'category',
+        //     'nav_icon_v8' => 'category',
+        // ],
+
+        // 'Priority' => [
+        //     'nav' => true,
+        //     'nav_label' => 'Priorities',
+        //     'nav_icon' => 'category',
+        //     'nav_icon_v8' => 'category',
+        // ],
+
+        'Workspace' => [
             'nav' => true,
-            'nav_label' => 'Categories',
+            'nav_label' => 'Workspaces',
             'nav_icon' => 'category',
             'nav_icon_v8' => 'category',
         ],
+
+        'Project' => [
+            'home' => true,
+            'nav' => true,
+            'nav_label' => 'Projects',
+            'nav_icon' => 'category',
+            'nav_icon_v8' => 'category',
+        ],
+
+        'BusinessObjective' => [
+            'home' => true,
+            'nav' => true,
+            'nav_label' => 'Business Objectives',
+            'nav_icon' => 'category',
+            'nav_icon_v8' => 'category',
+        ],
+
+        'BusinessNeed' => [
+            'home' => true,
+            'nav' => true,
+            'nav_label' => 'Business Needs',
+            'nav_icon' => 'category',
+            'nav_icon_v8' => 'category',
+        ],
+
+        'Stakeholder' => [
+            'home' => true,
+            'nav' => true,
+            'nav_label' => 'Stakeholders',
+            'nav_icon' => 'category',
+            'nav_icon_v8' => 'category',
+        ],
+
+        'StakeholderNeed' => [
+            'home' => true,
+            'nav' => true,
+            'nav_label' => 'Stakeholder Needs',
+            'nav_icon' => 'category',
+            'nav_icon_v8' => 'category',
+        ],
+
+
 
         // 'LegacyThing' => ['disabled' => true],
     ],
