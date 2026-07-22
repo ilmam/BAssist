@@ -2,12 +2,13 @@
 
 namespace App\Data;
 
+use App\Attributes\Hide;
 use App\Attributes\InList;
-use App\Attributes\Value;
 
 class DummyClassViewData extends BaseData
 {
     public function __construct(
+        #[Hide]
         public ?int $id = null,
 DummyViewDataProperties
     ) {

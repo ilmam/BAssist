@@ -2,8 +2,8 @@
 
 Forms, datatable column headers, and detail views need to know which properties on a Data class (DTO) are form fields or display columns. That information lives in PHP attributes (see [attributes.md](attributes.md) for the full reference):
 
-- `#[Form('text')]` / `#[ListForm('text')]` — form control type (create/edit; `hideQuick` for Quick Create)
-- `#[Value]` — detail/view display values (nested relations → main display field)
+- `#[Form('text')]` / `#[ListForm('text')]` — form control type (create/edit; `hideQuick` / `quickSpan` for Quick Create)
+- Detail/value projection — all public props on `*ViewData` except `#[Hide]` (optional `#[Value('…')]` nested display override)
 - `#[InList]` / `#[ListForm]` — datatable columns
 
 Previously, the app discovered those attributes with **PHP reflection on every request**. That is fine for small apps but adds avoidable overhead in production as entity count and traffic grow.
@@ -36,7 +36,7 @@ When cache is **disabled** (default in local dev), each request reflects on firs
 |-----------------|----------------------|
 | Property names with `Form` | Actual field values (`$dto->category`) |
 | Attribute arguments (`'text'`, `'select'`, model name) | Select option lists from the database |
-| Dot-notation paths for `Value` | API/datatable row data |
+| Dot-notation paths for detail/value fields | API/datatable row data |
 
 Schema is **app-wide** — the same for every user. It is stored in Laravel cache, not in session.
 
@@ -133,7 +133,7 @@ php artisan dto:cache-metadata --class=App\\Data\\CategoryData
 Run `dto:clear-metadata` (or clear the specific class) whenever you:
 
 - Add, remove, or rename a DTO property
-- Change `Form` or `Value` on a property
+- Change `Form`, `Hide`, or `Value` on a property
 - Add a new `*Data.php` / `*ViewData.php` class and need production to pick it up without waiting for lazy discovery
 
 For **hybrid** entities with materialized form blades, also regenerate owned form markup after changing `Form`:
@@ -185,7 +185,7 @@ DtoMetadata::clear(CategoryData::class);          // one class
 ## Adding a new entity
 
 1. Create `App\Data\{Model}Data` with `#[Form]` on editable properties.
-2. Create `App\Data\{Model}ViewData` with `#[Value]` on list/detail columns.
+2. Create `App\Data\{Model}ViewData` with `#[InList]` for list columns and `#[Hide]` on plumbing to exclude from detail projection.
 3. In **local** (cache off): metadata is built on first use via reflection.
 4. In **production**: deploy, then run:
 

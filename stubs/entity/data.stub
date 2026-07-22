@@ -2,8 +2,8 @@
 
 namespace App\Data;
 
+use App\Attributes\Form;
 use App\Attributes\ListForm;
-use App\Attributes\Value;
 
 class DummyClassData extends BaseData
 {

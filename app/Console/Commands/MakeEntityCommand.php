@@ -362,11 +362,9 @@ class MakeEntityCommand extends Command
             if ($field['name'] === $displayField) {
                 $attributes = [
                     "        #[ListForm({$formArgs})]",
-                    '        #[Value]',
                 ];
             } else {
                 $attributes = [
-                    '        #[Value]',
                     "        #[Form({$formArgs})]",
                 ];
             }
@@ -381,7 +379,6 @@ class MakeEntityCommand extends Command
         ) {
             $properties->push(
                 "        #[ListForm('select', 'Status', hideQuick: true)]\n"
-                ."        #[Value]\n"
                 ."        public ?int \$status_id = null,"
             );
         }
@@ -392,14 +389,15 @@ class MakeEntityCommand extends Command
     private function viewDataProperties(string $model, array $fields, string $displayField): string
     {
         $properties = collect($fields)->flatMap(function (array $field) use ($displayField) {
-            $attributes = ['        #[Value]'];
+            // Detail projection includes all non-Hide props; only InList is opt-in.
+            $attributes = [];
 
             if ($field['name'] === $displayField) {
-                array_unshift($attributes, '        #[InList]');
+                $attributes[] = '        #[InList]';
             }
 
             $lines = [
-                implode(PHP_EOL, $attributes).PHP_EOL
+                ($attributes !== [] ? implode(PHP_EOL, $attributes).PHP_EOL : '')
                 ."        public {$field['phpType']} \${$field['name']} = {$field['default']},",
             ];
 
@@ -409,7 +407,6 @@ class MakeEntityCommand extends Command
                     : lcfirst($field['relation']);
 
                 $lines[] = "        #[InList]\n"
-                    ."        #[Value]\n"
                     ."        public ?\\App\\Data\\{$field['relation']}ViewData \${$relationProp} = null,";
             }
 
@@ -421,10 +418,8 @@ class MakeEntityCommand extends Command
             && ! collect($fields)->contains(fn (array $field) => in_array($field['name'], ['status', 'status_id'], true))
         ) {
             $properties->push(
-                "        #[Value]\n"
-                ."        public ?int \$status_id = null,\n"
+                "        public ?int \$status_id = null,\n"
                 ."        #[InList]\n"
-                ."        #[Value]\n"
                 ."        public ?\\App\\Data\\StatusViewData \$status = null,"
             );
         }

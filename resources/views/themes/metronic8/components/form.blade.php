@@ -57,9 +57,24 @@
                         $options['rows'] = 2;
                     }
 
-                    $colClass = ($quickCreate && in_array($type, ['textarea', 'dropzone'], true))
-                        ? 'col-12'
-                        : ($quickCreate ? 'col-md-6 col-xl-4' : '');
+                    // Explicit full class strings (Bootstrap 12-col grid).
+                    $quickSpan = (int) ($field['quick_span'] ?? (
+                        in_array($type, ['textarea', 'dropzone'], true) ? 12 : 4
+                    ));
+                    $colClass = match (max(1, min(12, $quickSpan))) {
+                        1 => 'col-12 col-md-1',
+                        2 => 'col-12 col-md-2',
+                        3 => 'col-12 col-md-3',
+                        4 => 'col-12 col-md-4',
+                        5 => 'col-12 col-md-5',
+                        6 => 'col-12 col-md-6',
+                        7 => 'col-12 col-md-7',
+                        8 => 'col-12 col-md-8',
+                        9 => 'col-12 col-md-9',
+                        10 => 'col-12 col-md-10',
+                        11 => 'col-12 col-md-11',
+                        default => 'col-12',
+                    };
                 @endphp
 
                 @if ($quickCreate)

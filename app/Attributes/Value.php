@@ -5,29 +5,28 @@ namespace App\Attributes;
 use Attribute;
 
 /**
- * Marks a property as part of the DTO display-value projection.
+ * Optional override for which nested display field to use on detail/view projection.
  *
- * Intent:
- * - Scalar: include this property in detail/view field sets (`getFields()`).
- * - Nested Spatie Data relation: show the related record via a display field
- *   instead of the matching `*_id` foreign key. The FK is skipped when the
- *   relation property exists.
+ * Detail/value projection includes all public properties except those marked
+ * #[Hide]. Bare #[Value] is not required for inclusion.
  *
- * Optional `$field` overrides which nested property to show (default heuristic:
- * name → title → category → label → first InList-marked scalar on the nested DTO).
+ * On a nested Spatie Data relation, optional `$field` overrides the default
+ * display heuristic (name → title → category → label → first InList scalar).
+ * Matching `*_id` FKs are skipped when the relation property exists.
  *
  * Examples:
- *   #[Value]
+ *   // Included by default (no Value needed):
  *   public string $title = '';
- *
- *   #[Value]
  *   public ?ProjectViewData $project = null;   // → project.name
  *
  *   #[Value('code')]
  *   public ?ProjectViewData $project = null;   // → project.code
  *
+ *   #[Value(field: 'code')]
+ *   public ?ProjectViewData $project = null;   // same override
+ *
+ * @see Hide to exclude a property from detail/list discovery
  * @see InList for datatable columns
- * @see Hide to exclude a property from display discovery
  */
 #[Attribute(Attribute::TARGET_PROPERTY)]
 class Value

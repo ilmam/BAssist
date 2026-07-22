@@ -20,7 +20,7 @@
     }
 
     $fieldsWrapperClass = $quickCreate
-        ? 'grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-x-4 gap-y-3'
+        ? 'grid grid-cols-12 gap-x-4 gap-y-3'
         : 'space-y-6';
 @endphp
 
@@ -57,9 +57,24 @@
                         $options['rows'] = 2;
                     }
 
-                    $fieldSpanClass = ($quickCreate && in_array($type, ['textarea', 'dropzone'], true))
-                        ? 'sm:col-span-2 xl:col-span-3'
-                        : '';
+                    // Full class strings so Tailwind JIT/Purge keeps them.
+                    $quickSpan = (int) ($field['quick_span'] ?? (
+                        in_array($type, ['textarea', 'dropzone'], true) ? 12 : 4
+                    ));
+                    $fieldSpanClass = match (max(1, min(12, $quickSpan))) {
+                        1 => 'col-span-12 sm:col-span-1',
+                        2 => 'col-span-12 sm:col-span-2',
+                        3 => 'col-span-12 sm:col-span-3',
+                        4 => 'col-span-12 sm:col-span-4',
+                        5 => 'col-span-12 sm:col-span-5',
+                        6 => 'col-span-12 sm:col-span-6',
+                        7 => 'col-span-12 sm:col-span-7',
+                        8 => 'col-span-12 sm:col-span-8',
+                        9 => 'col-span-12 sm:col-span-9',
+                        10 => 'col-span-12 sm:col-span-10',
+                        11 => 'col-span-12 sm:col-span-11',
+                        default => 'col-span-12',
+                    };
                 @endphp
 
                 @if ($quickCreate)

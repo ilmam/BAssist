@@ -8,19 +8,22 @@ use Attribute;
  * Convenience: mark a property as both a list column and a form field.
  *
  * Equivalent to stacking #[InList] and #[Form(...)] with the same arguments.
- * Does not imply #[Value] — add Value separately when the property belongs
- * in detail/view projections.
+ * On *ViewData, detail projection includes all non-Hide props by default —
+ * ListForm does not require (or imply) #[Value].
  *
  * Examples:
  *   #[ListForm('text')]
- *   #[Value]
  *   public string $title = '';
  *
  *   #[ListForm('select', 'Status', hideQuick: true)]
  *   public ?int $status_id = null;
  *
+ *   #[ListForm('textarea', quickSpan: 12)]
+ *   public string $summary = '';
+ *
  * @see InList
  * @see Form
+ * @see Hide
  */
 #[Attribute(Attribute::TARGET_PROPERTY)]
 class ListForm
@@ -29,6 +32,6 @@ class ListForm
         public string $type,
         public string $model = '',
         public bool $hideQuick = false,
-        public mixed $quickDefault = null,
+        public int $quickSpan = 4,
     ) {}
 }

@@ -40,7 +40,7 @@ class DtoMetadata
     /**
      * Form fields keyed by property name, values are Form/ListForm type args (e.g. ['text'] or ['select', 'Project']).
      *
-     * @return array<string, array<int, mixed>>
+     * @return array<string, array{0: string, 1?: string, quick_span: int}>
      */
     public function formFields(): array
     {
@@ -50,7 +50,7 @@ class DtoMetadata
     /**
      * Form fields that should appear as visible inputs on Quick Create.
      *
-     * @return array<string, array<int, mixed>>
+     * @return array<string, array{0: string, 1?: string, quick_span: int}>
      */
     public function quickCreateVisibleFormFields(): array
     {
@@ -69,7 +69,7 @@ class DtoMetadata
     }
 
     /**
-     * Hidden Quick Create fields mapped to their default values.
+     * Hidden Quick Create fields mapped to their DTO property defaults.
      *
      * @return array<string, mixed>
      */
@@ -84,11 +84,6 @@ class DtoMetadata
                 continue;
             }
 
-            if (($meta[$name]['has_default'] ?? false) === true) {
-                $defaults[$name] = $meta[$name]['default'];
-                continue;
-            }
-
             $defaults[$name] = $emptyDto->{$name} ?? null;
         }
 
@@ -96,7 +91,7 @@ class DtoMetadata
     }
 
     /**
-     * @return array<string, array{hidden: bool, default: mixed, has_default: bool}>
+     * @return array<string, array{hidden: bool}>
      */
     public function quickCreateMeta(): array
     {
@@ -104,8 +99,10 @@ class DtoMetadata
     }
 
     /**
-     * Dot-notation paths for properties marked with Value (detail/view pages).
-     * Properties marked with Hide are excluded.
+     * Dot-notation paths for detail/view display (all public props except Hide).
+     * Nested Data collapses to `{relation}.{displayField}`; matching `*_id` FKs
+     * are skipped when the relation property exists. Optional #[Value('…')]
+     * overrides the nested display field only.
      *
      * @return list<string>
      */
@@ -214,7 +211,7 @@ class DtoMetadata
 
     /**
      * @return array{
-     *     form_fields: array<string, array<int, mixed>>,
+     *     form_fields: array<string, array{0: string, 1?: string, quick_span: int}>,
      *     value_fields: list<string>,
      *     list_fields: list<string>,
      *     quick_create: array<string, array{hidden: bool, default: mixed, has_default: bool}>
@@ -308,7 +305,7 @@ class DtoMetadata
     }
 
     /**
-     * @return array<string, array<int, mixed>>
+     * @return array<string, array{0: string, 1?: string, quick_span: int}>
      */
     protected static function discoverFormFields(string $class): array
     {
@@ -333,7 +330,7 @@ class DtoMetadata
     }
 
     /**
-     * @return array<string, array{hidden: bool, default: mixed, has_default: bool}>
+     * @return array<string, array{hidden: bool}>
      */
     protected static function discoverQuickCreateMeta(string $class): array
     {
@@ -354,11 +351,8 @@ class DtoMetadata
                 continue;
             }
 
-            $args = $attribute->getArguments();
             $meta[$property->getName()] = [
                 'hidden' => true,
-                'default' => $instance->quickDefault,
-                'has_default' => array_key_exists('quickDefault', $args),
             ];
         }
 
@@ -366,11 +360,12 @@ class DtoMetadata
     }
 
     /**
-     * Discover properties for detail/view display (Value).
+     * Discover properties for detail/view display (opt-out via Hide).
      *
-     * Nested Data relations require #[Value] and contribute only
-     * `{relation}.{displayField}` (override via #[Value('code')]). Matching
-     * `*_id` FKs are skipped when the relation property exists.
+     * Includes all public properties except those marked #[Hide]. Nested Data
+     * relations contribute `{relation}.{displayField}` (override via optional
+     * #[Value('code')] / #[Value(field: 'code')]). Matching `*_id` FKs are
+     * skipped when the relation property exists.
      *
      * @return list<string>
      */
@@ -393,18 +388,14 @@ class DtoMetadata
                 continue;
             }
 
-            $valueAttrs = $property->getAttributes(Value::class);
-            if ($valueAttrs === []) {
-                continue;
-            }
-
             $fieldName = $property->getName();
             $fullFieldName = ltrim($prefix.'.'.$fieldName, '.');
             $nestedClass = self::nestedClassName($property);
-            $value = $valueAttrs[0]->newInstance();
+            $valueAttrs = $property->getAttributes(Value::class);
+            $value = $valueAttrs !== [] ? $valueAttrs[0]->newInstance() : null;
 
             if ($nestedClass !== null && class_exists($nestedClass) && is_subclass_of($nestedClass, \Spatie\LaravelData\Data::class)) {
-                $mainField = $value->field ?? self::mainDisplayFieldName($nestedClass);
+                $mainField = $value?->field ?? self::mainDisplayFieldName($nestedClass);
 
                 if ($mainField !== null) {
                     $fields[] = $fullFieldName.'.'.$mainField;
@@ -502,7 +493,7 @@ class DtoMetadata
 
     /**
      * @param  ReflectionAttribute<Form|ListForm>  $attribute
-     * @return list<string>
+     * @return array{0: string, 1?: string, quick_span: int}
      */
     protected static function normalizeFormArgs(ReflectionAttribute $attribute): array
     {
@@ -513,7 +504,17 @@ class DtoMetadata
             $args[] = $instance->model;
         }
 
+        $args['quick_span'] = self::clampQuickSpan($instance->quickSpan);
+
         return $args;
+    }
+
+    /**
+     * Clamp Quick Create grid span to the 12-column range.
+     */
+    public static function clampQuickSpan(int $span): int
+    {
+        return max(1, min(12, $span));
     }
 
     protected static function propertyIsListed(ReflectionProperty $property): bool

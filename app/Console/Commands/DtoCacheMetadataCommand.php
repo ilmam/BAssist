@@ -10,8 +10,8 @@ use Illuminate\Console\Command;
  *
  * Schema is driven by PHP attributes on Data / ViewData classes:
  *   - #[InList] / #[ListForm] -> datatable / list columns
- *   - #[Value]                -> detail & modal field values (relations -> display field)
- *   - #[Form] / #[ListForm]   -> form controls (hideQuick opts out of Quick Create)
+ *   - detail/value            -> all public props except #[Hide] (optional #[Value('…')] nested override)
+ *   - #[Form] / #[ListForm]   -> form controls (hideQuick / quickSpan for Quick Create)
  *
  * @see docs/attributes.md
  * @see \App\Support\DtoMetadata
