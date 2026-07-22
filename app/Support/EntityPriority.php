@@ -5,6 +5,12 @@ namespace App\Support;
 use App\Models\Priority;
 use Illuminate\Support\Facades\Cache;
 
+/**
+ * Canonical priority codes used by the need spine.
+ *
+ * Seeded rows for these codes are system-locked (`is_system = true`) via
+ * StatusPrioritySeeder. Custom priorities may exist with other codes and are never system.
+ */
 final class EntityPriority
 {
     public const HIGH = 'high';
@@ -12,6 +18,8 @@ final class EntityPriority
     public const LOW = 'low';
 
     /**
+     * System allowlist codes (also marked is_system when seeded).
+     *
      * @return list<string>
      */
     public static function values(): array
@@ -21,6 +29,16 @@ final class EntityPriority
             self::MEDIUM,
             self::LOW,
         ];
+    }
+
+    public static function default(): string
+    {
+        return self::MEDIUM;
+    }
+
+    public static function defaultId(): ?int
+    {
+        return self::id(self::default());
     }
 
     public static function id(string $code): ?int
