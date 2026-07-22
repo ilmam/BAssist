@@ -49,9 +49,19 @@ class CrudRouteRegistrar
     {
         $resource = CrudEntityRegistry::resourceName($model);
         $controller = $options['controller'] ?? CrudController::class;
-        $modalActions = $options['modal_actions'] ?? ['view', 'edit', 'delete'];
+        $modalActions = $options['modal_actions'] ?? ['view', 'edit', 'delete', 'create'];
+
+        // Create has no record id — register before the {id} modal routes.
+        if (in_array('create', $modalActions, true)) {
+            Route::get("{$resource}/modal/create", [$controller, 'modalCreate'])
+                ->name("{$resource}.modalcreate");
+        }
 
         foreach ($modalActions as $action) {
+            if ($action === 'create') {
+                continue;
+            }
+
             $method = self::modalMethod($action);
 
             if ($method === null) {
@@ -84,6 +94,7 @@ class CrudRouteRegistrar
             'view' => 'modalView',
             'edit' => 'modalEdit',
             'delete' => 'modalDelete',
+            'create' => 'modalCreate',
             default => null,
         };
     }

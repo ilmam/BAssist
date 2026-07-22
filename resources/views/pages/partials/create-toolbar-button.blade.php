@@ -1,0 +1,55 @@
+@php
+    $createRoute = model_route_name($model, 'create');
+    $createPageUrl = model_route($model, 'create');
+    $createModalUrl = model_modal_path($model, 'create');
+    $useModalCreate = config('ui.modal_create', true);
+    $theme = ui_theme();
+@endphp
+
+@if (entity_can($model, 'create'))
+    @if ($useModalCreate)
+        @if ($theme === 'metronic9')
+            <div class="inline-flex items-center">
+                <x-button
+                    type="link"
+                    href="{{ $createRoute }}"
+                    icon="plus"
+                    iconOnly="true"
+                    color="primary"
+                    activeColor="primary"
+                    class="js-open-modal"
+                    data-modal-url="{{ $createModalUrl }}"
+                ></x-button>
+                <div class="inline-flex" data-kt-dropdown="true" data-kt-dropdown-trigger="click">
+                    <button type="button" class="kt-btn kt-btn-icon kt-btn-primary" data-kt-dropdown-toggle="true" aria-label="More create options">
+                        <i class="ki-filled ki-down text-xs"></i>
+                    </button>
+                    <div class="kt-dropdown-menu min-w-[160px]" data-kt-dropdown-menu="true">
+                        <a href="{{ $createModalUrl }}" class="kt-dropdown-menu-link js-open-modal" data-modal-url="{{ $createModalUrl }}">Open</a>
+                        <a href="{{ $createPageUrl }}" class="kt-dropdown-menu-link" target="_blank" rel="noopener">Open in new page</a>
+                    </div>
+                </div>
+            </div>
+        @else
+            <div class="btn-group">
+                <x-button
+                    type="link"
+                    href="{{ $createRoute }}"
+                    icon="plus"
+                    iconOnly="true"
+                    color="primary"
+                    activeColor="primary"
+                    class="js-open-modal"
+                    data-modal-url="{{ $createModalUrl }}"
+                ></x-button>
+                <button type="button" class="btn btn-md btn-icon btn-primary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false"></button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item js-open-modal" data-modal-url="{{ $createModalUrl }}" href="{{ $createModalUrl }}">Open</a></li>
+                    <li><a class="dropdown-item" href="{{ $createPageUrl }}" target="_blank" rel="noopener">Open in new page</a></li>
+                </ul>
+            </div>
+        @endif
+    @else
+        <x-button type="link" href="{{ $createRoute }}" icon="plus" iconOnly="true" color="primary" activeColor="primary"></x-button>
+    @endif
+@endif

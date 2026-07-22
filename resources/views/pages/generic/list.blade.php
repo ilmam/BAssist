@@ -2,6 +2,14 @@
 
 @section('main')
     @php
+        use Illuminate\Support\Str;
+
+        $listFilters = $listFilters ?? [];
+        $ajaxUrl = route('api.'.Str::snake($model).'.index', ['modelName' => $model]);
+        if ($listFilters !== []) {
+            $ajaxUrl .= (str_contains($ajaxUrl, '?') ? '&' : '?').http_build_query($listFilters);
+        }
+
         $options = [
             'columns' => $columns,
             'keys' => ['id'],
@@ -9,14 +17,13 @@
             'dataRoute' => 'api.'.Str::snake($model).'.index',
             'model' => $model,
             'dataRoutParameters' => ['modelName' => $model],
+            'ajaxUrl' => $ajaxUrl,
         ];
     @endphp
 
     <x-card title="{{ $model }} List">
         <x-slot:toolbar>
-            @if (entity_can($model, 'create'))
-                <x-button type="link" href="{{ model_route_name($model, 'create') }}" icon="plus" iconOnly="true" color="primary" activeColor="primary"></x-button>
-            @endif
+            @include('pages.partials.create-toolbar-button', ['model' => $model])
         </x-slot>
         <x-datatable :options="$options" :defaultButtons="true" />
     </x-card>

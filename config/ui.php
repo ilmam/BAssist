@@ -26,6 +26,7 @@ return [
 
     'modal_view' => env('UI_MODAL_VIEW', true),
     'modal_edit' => env('UI_MODAL_EDIT', true),
+    'modal_create' => env('UI_MODAL_CREATE', true),
 
     'themes' => [
         'metronic8' => [

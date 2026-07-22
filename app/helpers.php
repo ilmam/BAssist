@@ -53,7 +53,16 @@ if (! function_exists('ui_component_view')) {
 if (! function_exists('nav_items')) {
     function nav_items(): array
     {
-        $items = config('navigation.items', []);
+        $items = [];
+
+        foreach (config('navigation.items', []) as $item) {
+            if (! nav_item_is_visible($item)) {
+                continue;
+            }
+
+            $items[] = $item;
+        }
+
         $entityItems = [];
 
         foreach (\App\Support\CrudEntityRegistry::all() as $model => $options) {
@@ -94,6 +103,25 @@ if (! function_exists('nav_items')) {
         }
 
         return $items;
+    }
+}
+
+if (! function_exists('nav_item_is_visible')) {
+    function nav_item_is_visible(array $item): bool
+    {
+        $entities = $item['entities'] ?? null;
+
+        if (! is_array($entities) || $entities === []) {
+            return true;
+        }
+
+        foreach ($entities as $entity) {
+            if (entity_can((string) $entity, \App\Support\EntityAccess::VIEW)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
 
@@ -211,9 +239,17 @@ if (! function_exists('model_route')) {
 }
 
 if (! function_exists('model_modal_path')) {
-    function model_modal_path(string $model, string $action, int|string $id): string
+    function model_modal_path(string $model, string $action, int|string|null $id = null): string
     {
         $resource = \Illuminate\Support\Str::plural(\Illuminate\Support\Str::snake($model));
+
+        if ($action === 'create') {
+            return url($resource.'/modal/create');
+        }
+
+        if ($id === null || $id === '') {
+            throw new InvalidArgumentException("Modal action [{$action}] requires an id.");
+        }
 
         return url($resource.'/modal/'.$id.'/'.$action);
     }

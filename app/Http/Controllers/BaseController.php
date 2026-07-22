@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\ResolvesListFilters;
 use App\Http\Controllers\Concerns\RespondsWithModal;
 use Illuminate\Http\Request;
 use App\Support\DtoMetadata;
@@ -10,33 +11,54 @@ use App\Support\RepositoryResolver;
 
 class BaseController extends Controller
 {
+    use ResolvesListFilters;
     use RespondsWithModal;
     public $modelName = '';
     public $modelRepository;
 
-    public function index()
+    public function index(Request $request)
     {
         $result = $this->modelRepository->getFirst();
         $columns = DtoMetadata::for($this->modelRepository->viewDto)->listColumns(withPrefix: true);
+        $allowedFilters = $this->allowedListFilters();
 
         return view(model_page_view($this->modelName, 'list'), [
             'dto' => $result,
             'model' => $this->modelName,
             'columns' => $columns,
+            'listFilters' => $this->resolveListFilters($request),
+            'allowedListFilters' => $allowedFilters,
         ]);
     }
 
     public function create()
     {
-        $dtoClass = $this->modelRepository->editDto;
-        $dto = $dtoClass::from($dtoClass::empty());
+        $form = $this->buildCreateForm();
 
         return view(model_page_view($this->modelName, 'form'), [
-            'dto' => $dto,
+            'dto' => $form['dto'],
             'model' => $this->modelName,
-            'formFields' => $this->formBuilder()->fields($dtoClass),
+            'formFields' => $form['formFields'],
             'operation' => 'create',
         ]);
+    }
+
+    public function modalCreate()
+    {
+        $form = $this->buildCreateForm();
+        $data = [
+            'dto' => $form['dto'],
+            'model' => $this->modelName,
+            'formFields' => $form['formFields'],
+            'operation' => 'create',
+        ];
+
+        return $this->respondModalOrPage(
+            model_modal_view($this->modelName, 'form'),
+            $data,
+            model_page_view($this->modelName, 'form'),
+            $data
+        );
     }
 
     public function store(Request $request)
@@ -147,6 +169,16 @@ class BaseController extends Controller
         $dtoClass = "\\App\\Data\\".$this->modelName.'Data';
 
         return $dtoClass::from($request);
+    }
+
+    protected function buildCreateForm(): array
+    {
+        $dtoClass = $this->modelRepository->editDto;
+
+        return [
+            'dto' => $dtoClass::from($dtoClass::empty()),
+            'formFields' => $this->formBuilder()->fields($dtoClass),
+        ];
     }
 
     protected function buildEditForm($id): array

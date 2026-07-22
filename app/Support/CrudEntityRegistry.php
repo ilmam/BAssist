@@ -91,7 +91,7 @@ class CrudEntityRegistry
     protected static function defaults(): array
     {
         return [
-            'modal_actions' => ['view', 'edit', 'delete'],
+            'modal_actions' => ['view', 'edit', 'delete', 'create'],
             'nav' => false,
             'home' => false,
         ];
