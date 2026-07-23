@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
     <link href="{{ ui_asset('vendors/keenicons/styles.bundle.css') }}" rel="stylesheet" />
     <link href="{{ ui_asset('css/styles.css') }}" rel="stylesheet" />
+    <link href="{{ ui_asset('css/ui-layout.css') }}" rel="stylesheet" />
     @stack('styles')
 </head>
 <body class="antialiased flex h-full text-base text-foreground bg-background">
@@ -35,7 +36,7 @@
     <div class="flex grow">
         <div class="hidden lg:flex lg:w-1/2 xl:w-2/5 flex-col justify-between bg-primary p-10 xl:p-16 text-primary-foreground">
             <a href="{{ url('/') }}" class="inline-flex items-center gap-2.5">
-                <img class="h-8" src="{{ ui_asset('media/app/default-logo.svg') }}" alt="{{ config('app.name') }}" />
+                <img class="h-5 w-auto" style="height:22px;width:auto;max-width:140px" src="{{ ui_asset('media/app/default-logo-dark.png') }}" alt="{{ config('app.name') }}" />
             </a>
 
             <div class="max-w-md">
@@ -56,7 +57,7 @@
             <div class="w-full max-w-md">
                 <div class="mb-8 lg:hidden">
                     <a href="{{ url('/') }}" class="inline-flex items-center gap-2.5">
-                        <img class="h-8" src="{{ ui_asset('media/app/default-logo.svg') }}" alt="{{ config('app.name') }}" />
+                        <img class="h-5 w-auto" style="height:22px;width:auto;max-width:140px" src="{{ ui_asset('media/app/default-logo.png') }}" alt="{{ config('app.name') }}" />
                     </a>
                 </div>
 

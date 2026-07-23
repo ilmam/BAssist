@@ -19,10 +19,10 @@
 		<!--end::Heaeder menu toggle-->
 		<!--begin::Header Logo-->
 		<div class="header-logo me-5 me-md-10 flex-grow-1 flex-lg-grow-0">
-			<a href="?page=index">
-				<img alt="Logo" src="{{ ui_asset('media/logos/default.svg') }}" class="theme-light-show d-none d-lg-block h-30px"/>
-				<img alt="Logo" src="{{ ui_asset('media/logos/default-dark.svg') }}" class="theme-dark-show d-none d-lg-block h-30px"/>
-				<img alt="Logo" src="{{ ui_asset('media/logos/default-small.svg') }}" class="d-lg-none h-25px"/>
+			<a href="{{ url('/') }}">
+				<img alt="Logo" src="{{ ui_asset('media/logos/default.png') }}" class="theme-light-show d-none d-lg-block h-20px" style="height:22px;width:auto;max-width:140px"/>
+				<img alt="Logo" src="{{ ui_asset('media/logos/default-dark.png') }}" class="theme-dark-show d-none d-lg-block h-20px" style="height:22px;width:auto;max-width:140px"/>
+				<img alt="Logo" src="{{ ui_asset('media/logos/default-small.png') }}" class="d-lg-none h-20px" style="height:22px;width:auto;max-width:140px"/>
 			</a>
 		</div>
 		<!--end::Header Logo-->

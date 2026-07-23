@@ -222,3 +222,14 @@
 [data-ui-size="spread"] .row > [data-ui-span="11"]:not([data-ui-span-lg]) { flex: 0 0 91.666% !important; max-width: 91.666% !important; }
 [data-ui-size="spread"] .row > [data-ui-span-lg="12"],
 [data-ui-size="spread"] .row > [data-ui-span="12"]:not([data-ui-span-lg]) { flex: 0 0 100% !important; max-width: 100% !important; }
+
+/* Brand logo — Metronic prebuilt CSS ignores arbitrary h-[Npx] utilities */
+.kt-sidebar .default-logo,
+.kt-sidebar .small-logo,
+#header img[src*="logo"],
+.header-logo img {
+  height: 22px !important;
+  width: auto !important;
+  max-width: 140px;
+  object-fit: contain;
+}
