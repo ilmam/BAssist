@@ -11,6 +11,9 @@ class BusinessNeedData extends BaseData
     public function __construct(
         public ?int $id = null,
 
+        #[Form('text', readonly: true)]
+        public ?string $code = null,
+
         #[ListForm('text')]
         public string $title = '',
         

@@ -56,8 +56,11 @@ class FormHelper
             if (isset($args["list"])) {
                 $fieldOptions["list"] = $args["list"];
             }
-            if (isset($args['quick_span'])) {
-                $fieldOptions['quick_span'] = (int) $args['quick_span'];
+            if (isset($args['ui_span'])) {
+                $fieldOptions['ui_span'] = $args['ui_span'];
+            }
+            if (! empty($args['readonly'])) {
+                $fieldOptions['readonly'] = true;
             }
             $formFields[$fild] = $fieldOptions;
 

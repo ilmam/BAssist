@@ -10,6 +10,7 @@
     <link href="{{ ui_asset('plugins/custom/datatables/datatables.bundle.css') }}" rel="stylesheet" type="text/css" />
     <link href="{{ ui_asset('plugins/global/plugins.bundle.css') }}" rel="stylesheet" type="text/css" />
     <link href="{{ ui_asset('css/style.bundle.css') }}" rel="stylesheet" type="text/css" />
+    <link href="{{ ui_asset('css/ui-layout.css') }}" rel="stylesheet" type="text/css" />
     @stack('styles')
 </head>
 

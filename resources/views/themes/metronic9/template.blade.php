@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
     <link href="{{ ui_asset('vendors/keenicons/styles.bundle.css') }}" rel="stylesheet" />
     <link href="{{ ui_asset('css/styles.css') }}" rel="stylesheet" />
+    <link href="{{ ui_asset('css/ui-layout.css') }}" rel="stylesheet" />
     <link href="{{ ui_asset('css/bassist.css') }}" rel="stylesheet" />
     @stack('styles')
 </head>
@@ -73,7 +74,37 @@
         }
 
         function isLargeModalSize(size) {
-            return ['md', 'lg', 'xl', 'full'].includes(size);
+            return size === 'full' || size === 'xl';
+        }
+
+        function isMediumModalSize(size) {
+            return size === 'lg' || size === 'md';
+        }
+
+        function syncModalSizeSwitcher(container, size) {
+            const switcher = container?.querySelector('[data-modal-size-switcher]');
+            if (!switcher) {
+                return;
+            }
+
+            switcher.querySelectorAll('[data-modal-size-set]').forEach((button) => {
+                const mode = button.getAttribute('data-modal-size-set');
+                let isActive = false;
+
+                if (mode === 'end') {
+                    isActive = isEndModalSize(size);
+                } else if (mode === 'full') {
+                    isActive = isLargeModalSize(size);
+                } else if (mode === 'lg') {
+                    isActive = isMediumModalSize(size);
+                } else {
+                    isActive = size === mode;
+                }
+
+                button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+                button.classList.toggle('kt-btn-light', isActive);
+                button.classList.toggle('kt-btn-ghost', !isActive);
+            });
         }
 
         function isModalBackdropClear(modal) {
@@ -108,7 +139,7 @@
                 return;
             }
 
-            const resolvedSize = size || modal.getAttribute('data-modal-size') || 'lg';
+            const resolvedSize = size || modal.getAttribute('data-modal-size') || 'full';
             const shouldClear = clear === null ? isEndModalSize(resolvedSize) : !!clear;
             const backdrop = modal.querySelector('.kt-modal-backdrop');
 
@@ -127,26 +158,6 @@
             }
 
             syncModalBackdropToggle(container, shouldClear);
-        }
-
-        function syncModalSizeSwitcher(container, size) {
-            const switcher = container?.querySelector('[data-modal-size-switcher]');
-            if (!switcher) {
-                return;
-            }
-
-            switcher.querySelectorAll('[data-modal-size-set]').forEach((button) => {
-                const mode = button.getAttribute('data-modal-size-set');
-                const isActive = mode === 'full'
-                    ? isLargeModalSize(size)
-                    : mode === 'end'
-                        ? isEndModalSize(size)
-                        : size === mode;
-
-                button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
-                button.classList.toggle('kt-btn-light', isActive);
-                button.classList.toggle('kt-btn-ghost', !isActive);
-            });
         }
 
         function applySheetContentLayout(container, enabled) {
@@ -204,7 +215,7 @@
         }
 
         function applyModalSize(modal, container, size) {
-            const resolved = size || modal?.getAttribute('data-modal-size') || 'lg';
+            const resolved = size || modal?.getAttribute('data-modal-size') || 'full';
 
             modal.setAttribute('data-modal-size', resolved);
             modal.style.padding = '';
@@ -221,13 +232,16 @@
             if (isEndModalSize(resolved)) {
                 modal.style.padding = '0';
                 modal.classList.add('overflow-hidden');
-                container.className = 'kt-modal-content flex flex-col w-full rounded-lg overflow-hidden';
+                /* Explicit width (not w-full + max-width) so container queries
+                   measure the side panel (~600px), not the viewport. */
+                container.className = 'kt-modal-content flex flex-col rounded-lg overflow-hidden';
                 container.style.cssText = [
                     'position: fixed',
                     'inset-block: 1.25rem',
                     'inset-inline-end: 1.25rem',
                     'inset-inline-start: auto',
                     'margin-inline: 0',
+                    'width: min(600px, calc(100vw - 2.5rem))',
                     'max-width: min(600px, calc(100vw - 2.5rem))',
                     'height: calc(100vh - 2.5rem)',
                     'max-height: calc(100vh - 2.5rem)',
@@ -244,6 +258,9 @@
             applySheetContentLayout(container, false);
 
             const width = modalSizeStyles[resolved] || modalSizeStyles.lg;
+            /* Explicit width + maxWidth so container queries measure the dialog
+               box (sm/md stack <640; lg/full spread), not an indefinite shrink. */
+            container.style.width = '100%';
             container.style.maxWidth = width.maxWidth;
             container.style.marginBlock = '1.5rem';
             container.style.maxHeight = 'calc(100vh - 3rem)';
@@ -305,7 +322,7 @@
             const container = modal.querySelector('[data-modal-container]');
             if (container) {
                 container.innerHTML = '';
-                applyModalSize(modal, container, modal.getAttribute('data-modal-default-size') || 'lg');
+                applyModalSize(modal, container, modal.getAttribute('data-modal-default-size') || 'full');
             }
         }
 
@@ -323,7 +340,7 @@
             }
 
             if (!modal.hasAttribute('data-modal-default-size')) {
-                modal.setAttribute('data-modal-default-size', modal.getAttribute('data-modal-size') || 'lg');
+                modal.setAttribute('data-modal-default-size', modal.getAttribute('data-modal-size') || 'full');
             }
 
             modalReturnUrl = window.location.href;
@@ -347,7 +364,7 @@
                     container.innerHTML = html;
 
                     const sizeFromContent = container.querySelector('[data-modal-size]')?.getAttribute('data-modal-size');
-                    const resolvedSize = sizeFromTrigger || sizeFromContent || modal.getAttribute('data-modal-default-size') || 'lg';
+                    const resolvedSize = sizeFromTrigger || sizeFromContent || modal.getAttribute('data-modal-default-size') || 'full';
                     applyModalSize(modal, container, resolvedSize);
 
                     modal.classList.add('open');
@@ -413,7 +430,7 @@
             const modal = document.getElementById('mianModal');
             const container = modal?.querySelector('[data-modal-container]');
             if (modal && container) {
-                applyModalSize(modal, container, modal.getAttribute('data-modal-size') || 'lg');
+                applyModalSize(modal, container, modal.getAttribute('data-modal-size') || 'full');
             }
         })();
 

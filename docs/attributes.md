@@ -21,13 +21,13 @@ Short PHP attributes drive list columns, detail values, forms, Quick Create, and
 #[Form('text')]
 #[Form('select', 'Project')]
 #[Form('textarea', hideQuick: true)]
-#[Form('textarea', quickSpan: 12)]
-#[Form('select', 'Priority', quickSpan: 6)]
+#[Form('text', readonly: true)]
 ```
 
 - Every `Form` / `ListForm` field **appears in Quick Create by default**.
-- `hideQuick: true` opts out: the field is not shown in the Quick Create UI and is submitted as a hidden input using the DTO property default. Do **not** use `quickSpan: 0` to hide — hiding stays `hideQuick: true`.
-- `quickSpan` (default `4`) is the 12-column grid span on Quick Create (typically `3`, `4`, `6`, or `12`; values are clamped to `1`–`12`). Ignored when `hideQuick: true`. Use `12` for full-width visible fields (e.g. textareas).
+- `hideQuick: true` opts out: the field is not shown in the Quick Create UI and is submitted as a hidden input using the DTO property default.
+- Quick Create column spans are **not** Form / ListForm arguments (no `span` / `quickSpan`). Theme type defaults apply (`sm:12` / `md:6` / `lg:4`; `textarea` / `dropzone` stay `12`). Rare `$field['ui_span']` overrides — see [ui-views.md](ui-views.md#override-spans).
+- `readonly: true` renders the control disabled/readonly (not submitted). Empty readonly values are omitted from create forms.
 - Full create/edit modals still show all form fields (span does not apply there).
 - **Status / priority:** leave `status_id` / `priority_id` as `null` on the DTO (with `hideQuick: true` if hidden). On create, `BaseModel` sets draft status; models with `priority_id` use `AppliesDefaultPriority` (medium via `EntityPriority::defaultId()`).
 
@@ -39,9 +39,6 @@ public string $title = '';
 
 #[ListForm('select', 'Status', hideQuick: true)]
 public ?int $status_id = null;
-
-#[ListForm('textarea', quickSpan: 12)]
-public string $summary = '';
 ```
 
 Edit DTOs use `Form` / `ListForm` / `InList` only — no `Value` / `Hide` needed for editing. Detail projection lives on `*ViewData`.
@@ -111,7 +108,7 @@ Used by `RelationsManagerTrait` to inventory Eloquent relations. Unrelated to DT
 
 ```
 Edit DTO (*Data)
-  Form / ListForm  → formFields (+ hideQuick / quickSpan → Quick Create)
+  Form / ListForm  → formFields (+ hideQuick / readonly → Quick Create)
   InList / ListForm → (optional; often mirrored on ViewData)
   (no Value / Hide needed for forms)
 

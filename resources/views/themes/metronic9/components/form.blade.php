@@ -45,6 +45,7 @@
                 @php
                     $fieldName = is_numeric($name) ? $field : $name;
                     $type = \App\Helpers\FormHelper::getFieldType($field);
+                    $fieldValue = $dto->{$fieldName} ?? null;
 
                     $list = null;
                     $options = [];
@@ -53,36 +54,51 @@
                         $list = $field['list'];
                     }
 
+                    if (! empty($field['readonly'])) {
+                        $options['readonly'] = 'readonly';
+                        $options['disabled'] = 'disabled';
+                        if (blank($fieldValue)) {
+                            $options['placeholder'] = __('ui.code_assigned_on_save');
+                        }
+                    }
+
                     if ($quickCreate && $type === 'textarea') {
                         $options['rows'] = 2;
                     }
 
-                    // Full class strings so Tailwind JIT/Purge keeps them.
-                    $quickSpan = (int) ($field['quick_span'] ?? (
-                        in_array($type, ['textarea', 'dropzone'], true) ? 12 : 4
-                    ));
-                    $fieldSpanClass = match (max(1, min(12, $quickSpan))) {
-                        1 => 'col-span-12 sm:col-span-1',
-                        2 => 'col-span-12 sm:col-span-2',
-                        3 => 'col-span-12 sm:col-span-3',
-                        4 => 'col-span-12 sm:col-span-4',
-                        5 => 'col-span-12 sm:col-span-5',
-                        6 => 'col-span-12 sm:col-span-6',
-                        7 => 'col-span-12 sm:col-span-7',
-                        8 => 'col-span-12 sm:col-span-8',
-                        9 => 'col-span-12 sm:col-span-9',
-                        10 => 'col-span-12 sm:col-span-10',
-                        11 => 'col-span-12 sm:col-span-11',
-                        default => 'col-span-12',
-                    };
+                    // Multi-stop spans via container queries (ui-layout.css).
+                    // Defaults: sm:12 md:6 lg:4 — textarea/dropzone stay 12 at all stops.
+                    $clamp = static fn (int $n): int => max(1, min(12, $n));
+                    $isWide = in_array($type, ['textarea', 'dropzone'], true);
+                    $defaults = $isWide
+                        ? ['sm' => 12, 'md' => 12, 'lg' => 12]
+                        : ['sm' => 12, 'md' => 6, 'lg' => 4];
+                    $raw = $field['ui_span'] ?? null;
+                    if (is_int($raw) || (is_string($raw) && ctype_digit($raw))) {
+                        $n = $clamp((int) $raw);
+                        $span = ['sm' => $n, 'md' => $n, 'lg' => $n];
+                    } elseif (is_array($raw)) {
+                        $span = $defaults;
+                        foreach (['sm', 'md', 'lg'] as $k) {
+                            if (isset($raw[$k])) {
+                                $span[$k] = $clamp((int) $raw[$k]);
+                            }
+                        }
+                    } else {
+                        $span = $defaults;
+                    }
                 @endphp
 
                 @if ($quickCreate)
-                    <div class="{{ $fieldSpanClass }}">
-                        {{ Form::field($type, $fieldName, $dto->{$fieldName} ?? null, $list, $options) }}
+                    <div
+                        data-ui-span="{{ $span['sm'] }}"
+                        data-ui-span-md="{{ $span['md'] }}"
+                        data-ui-span-lg="{{ $span['lg'] }}"
+                    >
+                        {{ Form::field($type, $fieldName, $fieldValue, $list, $options) }}
                     </div>
                 @else
-                    {{ Form::field($type, $fieldName, $dto->{$fieldName} ?? null, $list, $options ?: null) }}
+                    {{ Form::field($type, $fieldName, $fieldValue, $list, $options ?: null) }}
                 @endif
             @endforeach
         </div>

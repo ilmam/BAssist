@@ -29,18 +29,7 @@ class EntityFormBuilder
             ? $metadata->quickCreateVisibleFormFields()
             : $metadata->formFields();
 
-        $formFields = FormHelper::getFormFields($this->populateSelectOptions($fields));
-
-        // Ensure every Quick Create field carries a clamped span for the grid layout.
-        if ($forQuickCreate) {
-            foreach ($formFields as $name => &$fieldOptions) {
-                $span = $fields[$name]['quick_span'] ?? $fieldOptions['quick_span'] ?? 4;
-                $fieldOptions['quick_span'] = DtoMetadata::clampQuickSpan((int) $span);
-            }
-            unset($fieldOptions);
-        }
-
-        return $formFields;
+        return FormHelper::getFormFields($this->populateSelectOptions($fields));
     }
 
     /**

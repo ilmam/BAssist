@@ -357,6 +357,91 @@ Need a shared view used by multiple models?
 
 ---
 
+## Container-relative layout (framework)
+
+Portable CSS in **`themes/{theme}/assets/css/ui-layout.css`** (framework-level — not BAssist-specific). Loaded by theme templates before any app override CSS (`bassist.css`).
+
+This is how nested panels (including modals) let children size to the **parent box**, not the browser viewport.
+
+### Default: container queries
+
+| Piece | Attribute / hook | Role |
+|-------|------------------|------|
+| Host | `data-ui-container` | Declares a sizing context (`container-type: inline-size`) |
+| Metronic modal host | `.kt-modal-content` | Named container for dialogs; nested `[data-ui-container]` inside it is neutralized so queries measure this box |
+| Child (sm) | `data-ui-span="1"` … `"12"` | Base 12-col span (narrow containers) |
+| Child (md) | `data-ui-span-md="…"` | Override when container **≥ 640px** |
+| Child (lg) | `data-ui-span-lg="…"` | Override when container **≥ 960px** |
+
+**Behavior (container-relative, not viewport)**
+
+| Stop | Container width | Typical field default | Textarea / dropzone |
+|------|-----------------|------------------------|---------------------|
+| **sm** | &lt; 640px | 12 | 12 |
+| **md** | 640–959px | 6 | 12 |
+| **lg** | ≥ 960px | 4 | 12 |
+
+- Thresholds are **px** so theme root `font-size` cannot shift the breaks  
+- Vs `modalSizeStyles`: **sm 400 / md 560 / side ~600** stay on sm:12; **lg 720** → md:6 (2-up); **full ~1400** → lg:4 (3-up)
+
+**Layout engines (do not mix `%` width into grid)**
+
+| Parent | How spans size |
+|--------|----------------|
+| CSS Grid (e.g. Metronic 9 `grid grid-cols-12`) | **`grid-column` only** — never `flex` / `%` `max-width` (those are relative to the *grid area* and crush span-N cells) |
+| Bootstrap `.row` (e.g. Metronic 8) | `flex` + `max-width` scoped to `.row > [data-ui-span…]` |
+
+Base and `@container` span rules must share equal specificity (or `@container` higher) so md/lg overrides can win.
+
+**Example (any panel)**
+
+```html
+<div data-ui-container>
+  <div class="grid grid-cols-12 gap-x-4 gap-y-3">
+    <div data-ui-span="12" data-ui-span-md="6" data-ui-span-lg="4">…</div>
+    <div data-ui-span="12" data-ui-span-md="6" data-ui-span-lg="4">…</div>
+    <div data-ui-span="12" data-ui-span-md="12" data-ui-span-lg="12">…</div>
+  </div>
+</div>
+```
+
+Quick Create fields emit `data-ui-span` / `-md` / `-lg` from theme `form` components (type defaults above). Modal content may mark `data-ui-container` (Metronic 9) / modal body (Metronic 8); inside a modal the effective query host is `.kt-modal-content`. Centered dialogs set `width: 100%` + `maxWidth`; side sheets set an explicit ~600px width so the named container measures the panel, not the viewport.
+
+#### Override spans
+
+`#[Form]` / `#[ListForm]` do **not** take span / `quickSpan`. Spans use the type defaults above. Rare overrides set `$field['ui_span']` at form-assembly time (after `EntityFormBuilder` / `getFormFields()`, or in a per-model form override blade). **Only Quick Create** honors spans; full create/edit ignores them.
+
+```php
+// Same at every stop
+$fields['title']['ui_span'] = 6;
+
+// Per stop (partial keys merge onto type defaults)
+$fields['status_id']['ui_span'] = ['sm' => 12, 'md' => 6, 'lg' => 6];
+```
+
+### Force override: `data-ui-size` (explicit only)
+
+Use when you must force density **regardless of container width**. Never auto-synced from modal chrome.
+
+| Value | Effect |
+|-------|--------|
+| `stack` | Children always full width |
+| `spread` | Children always honor the **lg** span (`data-ui-span-lg`, else base `data-ui-span`) even if the host is narrow |
+
+```html
+<div data-ui-container data-ui-size="stack">
+  …
+</div>
+```
+
+### Modal window size is separate
+
+`data-modal-size` (`sm` / `lg` / `full` / `end`, …) controls **dialog chrome** only (max-width, side sheet, etc.). It does **not** drive field spans. Resizing the modal changes the container’s width; container queries reflow the fields.
+
+App-specific modal quirks (e.g. clear-backdrop side sheets) stay in `bassist.css`.
+
+---
+
 ## Related files
 
 | File | Role |
@@ -370,6 +455,8 @@ Need a shared view used by multiple models?
 | `app/Support/CrudEntityRegistry.php` | Auto-discovery of routable models |
 | `app/Support/EntityFormBuilder.php` | Runtime form field assembly (virtual entities) |
 | `app/Support/EntityFormMaterializer.php` | Generates explicit `Form::field` lines for hybrid form blades |
+| `public/themes/*/assets/css/ui-layout.css` | Framework container-query layout (`data-ui-*`) |
+| `public/themes/metronic9/assets/css/bassist.css` | BAssist-only UI tweaks |
 
 ---
 
@@ -381,3 +468,4 @@ Need a shared view used by multiple models?
 - **Overrides** = optional files under `pages/{resource}/`; config only for edge cases.
 - **Expansion** = new models plug into generics; custom blades are the exception, not the rule.
 - **Materialized forms** = hybrid entities get owned `Form::field` lines via `entity:eject` or `entity:materialize-form`.
+- **Layout** = container queries in `ui-layout.css` (`data-ui-container` / `.kt-modal-content` / `data-ui-span` + `-md` @640 / `-lg` @960); nested `[data-ui-container]` inside `.kt-modal-content` is neutralized; grid uses `grid-column` only, Bootstrap `.row` uses flex/`max-width`; `data-ui-size` is an explicit force only; `data-modal-size` is chrome-only.

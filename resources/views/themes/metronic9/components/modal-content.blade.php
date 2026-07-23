@@ -1,14 +1,33 @@
 @php
-    $resolvedSize = $size !== '' ? $size : 'lg';
+    $resolvedSize = $size !== '' ? $size : 'full';
     $isSheet = in_array($resolvedSize, ['end', 'sheet'], true);
+    // Unified size glyphs: same frame icon at S / M / L scale; side stays distinct.
     $sizeModes = [
-        'sm' => ['icon' => 'ki-frame', 'label' => __('ui.modal_size_compact')],
-        'full' => ['icon' => 'ki-maximize', 'label' => __('ui.modal_size_large')],
-        'end' => ['icon' => 'ki-exit-right', 'label' => __('ui.modal_size_side')],
+        'sm' => [
+            'icon' => 'ki-frame',
+            'icon_class' => 'text-[10px]',
+            'label' => __('ui.modal_size_small'),
+        ],
+        'lg' => [
+            'icon' => 'ki-frame',
+            'icon_class' => 'text-xs',
+            'label' => __('ui.modal_size_medium'),
+        ],
+        'full' => [
+            'icon' => 'ki-frame',
+            'icon_class' => 'text-base',
+            'label' => __('ui.modal_size_large'),
+        ],
+        'end' => [
+            'icon' => 'ki-exit-right',
+            'icon_class' => '',
+            'label' => __('ui.modal_size_side'),
+        ],
     ];
 @endphp
 <div
     data-modal-size="{{ $resolvedSize }}"
+    data-ui-container
     @class([
         'flex flex-col min-h-0 h-full' => $isSheet,
     ])
@@ -24,11 +43,9 @@
             >
                 @foreach ($sizeModes as $mode => $meta)
                     @php
-                        $isActive = $mode === 'full'
-                            ? in_array($resolvedSize, ['md', 'lg', 'xl', 'full'], true)
-                            : ($mode === 'end'
-                                ? $isSheet
-                                : $resolvedSize === $mode);
+                        $isActive = $mode === 'end'
+                            ? $isSheet
+                            : $resolvedSize === $mode;
                     @endphp
                     <button
                         type="button"
@@ -38,7 +55,7 @@
                         title="{{ $meta['label'] }}"
                         aria-label="{{ $meta['label'] }}"
                     >
-                        <i class="ki-filled {{ $meta['icon'] }}"></i>
+                        <i class="ki-filled {{ $meta['icon'] }} {{ $meta['icon_class'] }}"></i>
                     </button>
                 @endforeach
             </div>

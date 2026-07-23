@@ -5,7 +5,7 @@
     </button>
 </div>
 
-<div class="modal-body">
+<div class="modal-body" data-ui-container>
     {{ $slot }}
 </div>
 

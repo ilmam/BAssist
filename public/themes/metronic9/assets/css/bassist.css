@@ -1,4 +1,9 @@
 /**
+ * BAssist app-specific UI tweaks (not portable framework CSS).
+ * Framework container layout lives in css/ui-layout.css.
+ */
+
+/**
  * Clear-backdrop side sheets: keep the page visible/interactive behind the panel.
  */
 .kt-modal[data-modal-clear-backdrop="1"] {
@@ -20,7 +25,7 @@
 
 /**
  * App utilities missing from Metronic's prebuilt Tailwind bundle.
- * Quick Create uses a 12-col grid (grid-cols-12 + col-span-N / sm:col-span-N).
+ * Quick Create uses a 12-col grid (grid-cols-12 + gap utilities).
  */
 @layer utilities {
   .grid-cols-12 {

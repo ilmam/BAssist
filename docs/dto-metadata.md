@@ -2,7 +2,7 @@
 
 Forms, datatable column headers, and detail views need to know which properties on a Data class (DTO) are form fields or display columns. That information lives in PHP attributes (see [attributes.md](attributes.md) for the full reference):
 
-- `#[Form('text')]` / `#[ListForm('text')]` — form control type (create/edit; `hideQuick` / `quickSpan` for Quick Create)
+- `#[Form('text')]` / `#[ListForm('text')]` — form control type (create/edit; `hideQuick` / `readonly` for Quick Create). Layout spans are not Form attributes — see [ui-views.md](ui-views.md#override-spans)
 - Detail/value projection — all public props on `*ViewData` except `#[Hide]` (optional `#[Value('…')]` nested display override)
 - `#[InList]` / `#[ListForm]` — datatable columns
 

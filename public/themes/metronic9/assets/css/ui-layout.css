@@ -1,0 +1,224 @@
+/**
+ * UI layout framework — container-relative grids (portable across apps/themes).
+ *
+ * Not app-specific. Copy this file (or equivalent) into any project that uses the
+ * data-ui-* conventions below.
+ *
+ * ---------------------------------------------------------------------------
+ * Default: CSS container queries
+ * ---------------------------------------------------------------------------
+ * Host (any panel, card, modal body, …):
+ *   <div data-ui-container> … </div>
+ *
+ * Metronic modal host (.kt-modal-content) is also a named container so modal
+ * fragments reflow without extra markup on every dialog. Nested
+ * [data-ui-container] inside .kt-modal-content is neutralized so queries
+ * measure the sized dialog box (max-width / side-panel width), not an inner
+ * wrapper.
+ *
+ * Children (mobile-first, container — not viewport):
+ *   <div data-ui-span="12" data-ui-span-md="6" data-ui-span-lg="4">
+ *     sm = data-ui-span (base)
+ *     md = data-ui-span-md @ ≥640px
+ *     lg = data-ui-span-lg @ ≥960px
+ *
+ * Typical Quick Create defaults: sm:12, md:6, lg:4
+ * (textarea/dropzone: 12 / 12 / 12)
+ *
+ * Thresholds are px (not rem) so theme root font-size cannot shift the breaks.
+ * Aligns with modalSizeStyles: sm 400 / md 560 → sm:12; lg 720 → md:6;
+ * full ~1400 → lg:4; side sheets ~600 stay under the md stop.
+ *
+ * This is NOT viewport `sm:` / `md:` — it follows the parent box width.
+ *
+ * Layout engines (do not mix):
+ *   - CSS Grid children → only `grid-column` (never flex / % max-width)
+ *   - Bootstrap `.row` children → flex + max-width only (scoped under `.row >`)
+ *
+ * Percentage max-width on a grid item is relative to its *grid area*. Applying
+ * `max-width: 33%` to a span-4 cell crushes the field to ~1/9 of the row.
+ *
+ * Specificity: base span rules and @container override rules must be equal
+ * (or @container higher). A more-specific base `grid-column: 1 / -1` would
+ * always win and keep fields full-width even when the container is wide.
+ *
+ * ---------------------------------------------------------------------------
+ * Force override: data-ui-size (explicit only)
+ * ---------------------------------------------------------------------------
+ * Never auto-synced from modal chrome. Set on a host when you must force layout
+ * regardless of container width:
+ *   data-ui-size="stack"  → always full-width children
+ *   data-ui-size="spread" → always honor lg span (data-ui-span-lg, else data-ui-span)
+ *
+ * ---------------------------------------------------------------------------
+ * data-modal-size
+ * ---------------------------------------------------------------------------
+ * Separate concern: modal window chrome (sm / lg / full / end). Does not drive
+ * field layout; resizing the modal changes the container width, and container
+ * queries do the rest.
+ */
+
+[data-ui-container],
+.kt-modal-content {
+  container-type: inline-size;
+  container-name: ui;
+}
+
+/* Prefer the dialog box as the query host when both would be named `ui`. */
+.kt-modal-content [data-ui-container] {
+  container-type: normal;
+  container-name: none;
+}
+
+/* ---- CSS Grid: sm (base) → md @640 → lg @960 ---- */
+[data-ui-span] {
+  min-width: 0;
+}
+
+[data-ui-span="1"] { grid-column: span 1 / span 1; }
+[data-ui-span="2"] { grid-column: span 2 / span 2; }
+[data-ui-span="3"] { grid-column: span 3 / span 3; }
+[data-ui-span="4"] { grid-column: span 4 / span 4; }
+[data-ui-span="5"] { grid-column: span 5 / span 5; }
+[data-ui-span="6"] { grid-column: span 6 / span 6; }
+[data-ui-span="7"] { grid-column: span 7 / span 7; }
+[data-ui-span="8"] { grid-column: span 8 / span 8; }
+[data-ui-span="9"] { grid-column: span 9 / span 9; }
+[data-ui-span="10"] { grid-column: span 10 / span 10; }
+[data-ui-span="11"] { grid-column: span 11 / span 11; }
+[data-ui-span="12"] { grid-column: span 12 / span 12; }
+
+@container ui (min-width: 640px) {
+  [data-ui-span-md="1"] { grid-column: span 1 / span 1; }
+  [data-ui-span-md="2"] { grid-column: span 2 / span 2; }
+  [data-ui-span-md="3"] { grid-column: span 3 / span 3; }
+  [data-ui-span-md="4"] { grid-column: span 4 / span 4; }
+  [data-ui-span-md="5"] { grid-column: span 5 / span 5; }
+  [data-ui-span-md="6"] { grid-column: span 6 / span 6; }
+  [data-ui-span-md="7"] { grid-column: span 7 / span 7; }
+  [data-ui-span-md="8"] { grid-column: span 8 / span 8; }
+  [data-ui-span-md="9"] { grid-column: span 9 / span 9; }
+  [data-ui-span-md="10"] { grid-column: span 10 / span 10; }
+  [data-ui-span-md="11"] { grid-column: span 11 / span 11; }
+  [data-ui-span-md="12"] { grid-column: span 12 / span 12; }
+}
+
+@container ui (min-width: 960px) {
+  [data-ui-span-lg="1"] { grid-column: span 1 / span 1; }
+  [data-ui-span-lg="2"] { grid-column: span 2 / span 2; }
+  [data-ui-span-lg="3"] { grid-column: span 3 / span 3; }
+  [data-ui-span-lg="4"] { grid-column: span 4 / span 4; }
+  [data-ui-span-lg="5"] { grid-column: span 5 / span 5; }
+  [data-ui-span-lg="6"] { grid-column: span 6 / span 6; }
+  [data-ui-span-lg="7"] { grid-column: span 7 / span 7; }
+  [data-ui-span-lg="8"] { grid-column: span 8 / span 8; }
+  [data-ui-span-lg="9"] { grid-column: span 9 / span 9; }
+  [data-ui-span-lg="10"] { grid-column: span 10 / span 10; }
+  [data-ui-span-lg="11"] { grid-column: span 11 / span 11; }
+  [data-ui-span-lg="12"] { grid-column: span 12 / span 12; }
+}
+
+/* ---- Bootstrap flex row: sm (base) → md @640 → lg @960 ---- */
+.row > [data-ui-span="1"] { flex: 0 0 8.333%; max-width: 8.333%; width: 100%; }
+.row > [data-ui-span="2"] { flex: 0 0 16.666%; max-width: 16.666%; width: 100%; }
+.row > [data-ui-span="3"] { flex: 0 0 25%; max-width: 25%; width: 100%; }
+.row > [data-ui-span="4"] { flex: 0 0 33.333%; max-width: 33.333%; width: 100%; }
+.row > [data-ui-span="5"] { flex: 0 0 41.666%; max-width: 41.666%; width: 100%; }
+.row > [data-ui-span="6"] { flex: 0 0 50%; max-width: 50%; width: 100%; }
+.row > [data-ui-span="7"] { flex: 0 0 58.333%; max-width: 58.333%; width: 100%; }
+.row > [data-ui-span="8"] { flex: 0 0 66.666%; max-width: 66.666%; width: 100%; }
+.row > [data-ui-span="9"] { flex: 0 0 75%; max-width: 75%; width: 100%; }
+.row > [data-ui-span="10"] { flex: 0 0 83.333%; max-width: 83.333%; width: 100%; }
+.row > [data-ui-span="11"] { flex: 0 0 91.666%; max-width: 91.666%; width: 100%; }
+.row > [data-ui-span="12"] { flex: 0 0 100%; max-width: 100%; width: 100%; }
+
+@container ui (min-width: 640px) {
+  .row > [data-ui-span-md="1"] { flex: 0 0 8.333%; max-width: 8.333%; }
+  .row > [data-ui-span-md="2"] { flex: 0 0 16.666%; max-width: 16.666%; }
+  .row > [data-ui-span-md="3"] { flex: 0 0 25%; max-width: 25%; }
+  .row > [data-ui-span-md="4"] { flex: 0 0 33.333%; max-width: 33.333%; }
+  .row > [data-ui-span-md="5"] { flex: 0 0 41.666%; max-width: 41.666%; }
+  .row > [data-ui-span-md="6"] { flex: 0 0 50%; max-width: 50%; }
+  .row > [data-ui-span-md="7"] { flex: 0 0 58.333%; max-width: 58.333%; }
+  .row > [data-ui-span-md="8"] { flex: 0 0 66.666%; max-width: 66.666%; }
+  .row > [data-ui-span-md="9"] { flex: 0 0 75%; max-width: 75%; }
+  .row > [data-ui-span-md="10"] { flex: 0 0 83.333%; max-width: 83.333%; }
+  .row > [data-ui-span-md="11"] { flex: 0 0 91.666%; max-width: 91.666%; }
+  .row > [data-ui-span-md="12"] { flex: 0 0 100%; max-width: 100%; }
+}
+
+@container ui (min-width: 960px) {
+  .row > [data-ui-span-lg="1"] { flex: 0 0 8.333%; max-width: 8.333%; }
+  .row > [data-ui-span-lg="2"] { flex: 0 0 16.666%; max-width: 16.666%; }
+  .row > [data-ui-span-lg="3"] { flex: 0 0 25%; max-width: 25%; }
+  .row > [data-ui-span-lg="4"] { flex: 0 0 33.333%; max-width: 33.333%; }
+  .row > [data-ui-span-lg="5"] { flex: 0 0 41.666%; max-width: 41.666%; }
+  .row > [data-ui-span-lg="6"] { flex: 0 0 50%; max-width: 50%; }
+  .row > [data-ui-span-lg="7"] { flex: 0 0 58.333%; max-width: 58.333%; }
+  .row > [data-ui-span-lg="8"] { flex: 0 0 66.666%; max-width: 66.666%; }
+  .row > [data-ui-span-lg="9"] { flex: 0 0 75%; max-width: 75%; }
+  .row > [data-ui-span-lg="10"] { flex: 0 0 83.333%; max-width: 83.333%; }
+  .row > [data-ui-span-lg="11"] { flex: 0 0 91.666%; max-width: 91.666%; }
+  .row > [data-ui-span-lg="12"] { flex: 0 0 100%; max-width: 100%; }
+}
+
+/* Explicit force: stack (ignore container width) */
+[data-ui-size="stack"] [data-ui-span] {
+  grid-column: 1 / -1 !important;
+}
+[data-ui-size="stack"] .row > [data-ui-span] {
+  flex: 0 0 100% !important;
+  max-width: 100% !important;
+  width: 100% !important;
+}
+
+/* Explicit force: spread — honor lg (fallback to base if -lg omitted) */
+[data-ui-size="spread"] [data-ui-span-lg="1"],
+[data-ui-size="spread"] [data-ui-span="1"]:not([data-ui-span-lg]) { grid-column: span 1 / span 1 !important; }
+[data-ui-size="spread"] [data-ui-span-lg="2"],
+[data-ui-size="spread"] [data-ui-span="2"]:not([data-ui-span-lg]) { grid-column: span 2 / span 2 !important; }
+[data-ui-size="spread"] [data-ui-span-lg="3"],
+[data-ui-size="spread"] [data-ui-span="3"]:not([data-ui-span-lg]) { grid-column: span 3 / span 3 !important; }
+[data-ui-size="spread"] [data-ui-span-lg="4"],
+[data-ui-size="spread"] [data-ui-span="4"]:not([data-ui-span-lg]) { grid-column: span 4 / span 4 !important; }
+[data-ui-size="spread"] [data-ui-span-lg="5"],
+[data-ui-size="spread"] [data-ui-span="5"]:not([data-ui-span-lg]) { grid-column: span 5 / span 5 !important; }
+[data-ui-size="spread"] [data-ui-span-lg="6"],
+[data-ui-size="spread"] [data-ui-span="6"]:not([data-ui-span-lg]) { grid-column: span 6 / span 6 !important; }
+[data-ui-size="spread"] [data-ui-span-lg="7"],
+[data-ui-size="spread"] [data-ui-span="7"]:not([data-ui-span-lg]) { grid-column: span 7 / span 7 !important; }
+[data-ui-size="spread"] [data-ui-span-lg="8"],
+[data-ui-size="spread"] [data-ui-span="8"]:not([data-ui-span-lg]) { grid-column: span 8 / span 8 !important; }
+[data-ui-size="spread"] [data-ui-span-lg="9"],
+[data-ui-size="spread"] [data-ui-span="9"]:not([data-ui-span-lg]) { grid-column: span 9 / span 9 !important; }
+[data-ui-size="spread"] [data-ui-span-lg="10"],
+[data-ui-size="spread"] [data-ui-span="10"]:not([data-ui-span-lg]) { grid-column: span 10 / span 10 !important; }
+[data-ui-size="spread"] [data-ui-span-lg="11"],
+[data-ui-size="spread"] [data-ui-span="11"]:not([data-ui-span-lg]) { grid-column: span 11 / span 11 !important; }
+[data-ui-size="spread"] [data-ui-span-lg="12"],
+[data-ui-size="spread"] [data-ui-span="12"]:not([data-ui-span-lg]) { grid-column: span 12 / span 12 !important; }
+
+[data-ui-size="spread"] .row > [data-ui-span-lg="1"],
+[data-ui-size="spread"] .row > [data-ui-span="1"]:not([data-ui-span-lg]) { flex: 0 0 8.333% !important; max-width: 8.333% !important; }
+[data-ui-size="spread"] .row > [data-ui-span-lg="2"],
+[data-ui-size="spread"] .row > [data-ui-span="2"]:not([data-ui-span-lg]) { flex: 0 0 16.666% !important; max-width: 16.666% !important; }
+[data-ui-size="spread"] .row > [data-ui-span-lg="3"],
+[data-ui-size="spread"] .row > [data-ui-span="3"]:not([data-ui-span-lg]) { flex: 0 0 25% !important; max-width: 25% !important; }
+[data-ui-size="spread"] .row > [data-ui-span-lg="4"],
+[data-ui-size="spread"] .row > [data-ui-span="4"]:not([data-ui-span-lg]) { flex: 0 0 33.333% !important; max-width: 33.333% !important; }
+[data-ui-size="spread"] .row > [data-ui-span-lg="5"],
+[data-ui-size="spread"] .row > [data-ui-span="5"]:not([data-ui-span-lg]) { flex: 0 0 41.666% !important; max-width: 41.666% !important; }
+[data-ui-size="spread"] .row > [data-ui-span-lg="6"],
+[data-ui-size="spread"] .row > [data-ui-span="6"]:not([data-ui-span-lg]) { flex: 0 0 50% !important; max-width: 50% !important; }
+[data-ui-size="spread"] .row > [data-ui-span-lg="7"],
+[data-ui-size="spread"] .row > [data-ui-span="7"]:not([data-ui-span-lg]) { flex: 0 0 58.333% !important; max-width: 58.333% !important; }
+[data-ui-size="spread"] .row > [data-ui-span-lg="8"],
+[data-ui-size="spread"] .row > [data-ui-span="8"]:not([data-ui-span-lg]) { flex: 0 0 66.666% !important; max-width: 66.666% !important; }
+[data-ui-size="spread"] .row > [data-ui-span-lg="9"],
+[data-ui-size="spread"] .row > [data-ui-span="9"]:not([data-ui-span-lg]) { flex: 0 0 75% !important; max-width: 75% !important; }
+[data-ui-size="spread"] .row > [data-ui-span-lg="10"],
+[data-ui-size="spread"] .row > [data-ui-span="10"]:not([data-ui-span-lg]) { flex: 0 0 83.333% !important; max-width: 83.333% !important; }
+[data-ui-size="spread"] .row > [data-ui-span-lg="11"],
+[data-ui-size="spread"] .row > [data-ui-span="11"]:not([data-ui-span-lg]) { flex: 0 0 91.666% !important; max-width: 91.666% !important; }
+[data-ui-size="spread"] .row > [data-ui-span-lg="12"],
+[data-ui-size="spread"] .row > [data-ui-span="12"]:not([data-ui-span-lg]) { flex: 0 0 100% !important; max-width: 100% !important; }

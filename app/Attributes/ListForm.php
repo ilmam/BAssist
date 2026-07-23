@@ -18,9 +18,6 @@ use Attribute;
  *   #[ListForm('select', 'Status', hideQuick: true)]
  *   public ?int $status_id = null;
  *
- *   #[ListForm('textarea', quickSpan: 12)]
- *   public string $summary = '';
- *
  * @see InList
  * @see Form
  * @see Hide
@@ -32,6 +29,6 @@ class ListForm
         public string $type,
         public string $model = '',
         public bool $hideQuick = false,
-        public int $quickSpan = 4,
+        public bool $readonly = false,
     ) {}
 }
