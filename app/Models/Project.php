@@ -68,4 +68,16 @@ class Project extends BaseModel
     {
         return $this->hasMany(StakeholderNeed::class);
     }
+
+    #[Relation('HasMany')]
+    public function stateFlows(): HasMany
+    {
+        return $this->hasMany(StateFlow::class);
+    }
+
+    #[Relation('HasMany')]
+    public function swimlaneFlows(): HasMany
+    {
+        return $this->hasMany(SwimlaneFlow::class);
+    }
 }

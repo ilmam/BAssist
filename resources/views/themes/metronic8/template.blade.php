@@ -48,6 +48,7 @@
     <script src="{{ ui_asset('plugins/global/plugins.bundle.js') }}"></script>
     <script src="{{ ui_asset('js/scripts.bundle.js') }}"></script>
     <script src="{{ ui_asset('plugins/custom/datatables/datatables.bundle.js') }}"></script>
+    @vite(['resources/js/state-flow-diagram.js', 'resources/js/swimlane-flow-diagram.js'])
     @stack('scripts')
     <script>
         let modalReturnUrl = null;
@@ -135,6 +136,9 @@
                         bootstrap.Modal.getOrCreateInstance(modalEl).show();
                     }
                     history.pushState({ modal: true, returnUrl: modalReturnUrl }, '', url);
+                    document.dispatchEvent(new CustomEvent('bassist:modal-loaded', {
+                        detail: { container },
+                    }));
                 });
         }
 

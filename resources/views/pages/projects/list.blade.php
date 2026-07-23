@@ -27,6 +27,16 @@
                 'icon' => 'questionnaire-tablet',
                 'preserve' => $preserve,
             ]),
+            ListUi::childLinkColumn('StateFlow', 'project_id', 'state_flows_count', [
+                'title' => __('ui.state_flows'),
+                'icon' => 'abstract-39',
+                'preserve' => $preserve,
+            ]),
+            ListUi::childLinkColumn('SwimlaneFlow', 'project_id', 'swimlane_flows_count', [
+                'title' => __('ui.swimlane_flows'),
+                'icon' => 'abstract-44',
+                'preserve' => $preserve,
+            ]),
         ];
     @endphp
 

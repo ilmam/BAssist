@@ -29,6 +29,8 @@ class ProjectRepository extends BaseRepository
         'businessNeeds',
         'stakeholders',
         'stakeholderNeeds',
+        'stateFlows',
+        'swimlaneFlows',
     ];
 
     public function __construct()

@@ -101,6 +101,22 @@ return [
 
 
 
+        'StateFlow' => [
+            'home' => true,
+            'nav' => true,
+            'nav_label' => 'State Flows',
+            'nav_icon' => 'category',
+            'nav_icon_v8' => 'category',
+        ],
+
+        'SwimlaneFlow' => [
+            'home' => true,
+            'nav' => true,
+            'nav_label' => 'Swimlane Flows',
+            'nav_icon' => 'category',
+            'nav_icon_v8' => 'category',
+        ],
+
         // 'LegacyThing' => ['disabled' => true],
     ],
 

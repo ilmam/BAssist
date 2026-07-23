@@ -57,6 +57,7 @@
     <script src="{{ ui_asset('vendors/jquery/jquery.min.js') }}"></script>
     <script src="{{ ui_asset('vendors/datatables-net/dataTables.min.js') }}"></script>
     <script src="{{ ui_asset('js/layouts/demo1.js') }}"></script>
+    @vite(['resources/js/state-flow-diagram.js', 'resources/js/swimlane-flow-diagram.js'])
     @stack('scripts')
     <script>
         let modalReturnUrl = null;
@@ -379,6 +380,10 @@
                     if (typeof KTSelect !== 'undefined' && typeof KTSelect.createInstances === 'function') {
                         KTSelect.createInstances();
                     }
+
+                    document.dispatchEvent(new CustomEvent('bassist:modal-loaded', {
+                        detail: { container },
+                    }));
                 })
                 .catch((error) => {
                     console.error(error);
