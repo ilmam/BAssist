@@ -11,7 +11,7 @@
 @if (entity_can($model, 'create'))
     @if ($useModalCreate)
         @if ($theme === 'metronic9')
-            <div class="inline-flex items-center">
+            <div class="create-split-btn inline-flex items-stretch">
                 <x-button
                     type="link"
                     href="{{ $createRoute }}"
@@ -19,11 +19,11 @@
                     iconOnly="true"
                     color="primary"
                     activeColor="primary"
-                    class="js-open-modal"
+                    class="js-open-modal create-split-btn__main"
                     data-modal-url="{{ $createModalUrl }}"
                 ></x-button>
                 <div class="inline-flex" data-kt-dropdown="true" data-kt-dropdown-trigger="click">
-                    <button type="button" class="kt-btn kt-btn-icon kt-btn-primary" data-kt-dropdown-toggle="true" aria-label="More create options">
+                    <button type="button" class="kt-btn kt-btn-icon kt-btn-primary create-split-btn__toggle" data-kt-dropdown-toggle="true" aria-label="More create options">
                         <i class="ki-filled ki-down text-xs"></i>
                     </button>
                     <div class="kt-dropdown-menu min-w-[180px]" data-kt-dropdown-menu="true">

@@ -24,6 +24,37 @@
 }
 
 /**
+ * Side sheet push: reserve the right edge so page content is not hidden under the panel.
+ * --modal-sheet-reserve is set from JS (sheet width + end gutter).
+ */
+body.modal-sheet-push {
+  --modal-sheet-reserve: min(600px, calc(100vw - 2.5rem));
+}
+
+body.modal-sheet-push .kt-wrapper,
+body.modal-sheet-push .kt-header {
+  padding-inline-end: var(--modal-sheet-reserve);
+  transition: padding-inline-end 0.2s ease;
+}
+
+/**
+ * Create toolbar split button: square the shared edge so + and chevron read as one control.
+ */
+.create-split-btn > .kt-btn,
+.create-split-btn > a.kt-btn,
+.create-split-btn .create-split-btn__main {
+  border-start-end-radius: 0 !important;
+  border-end-end-radius: 0 !important;
+}
+
+.create-split-btn .create-split-btn__toggle,
+.create-split-btn [data-kt-dropdown-toggle] {
+  border-start-start-radius: 0 !important;
+  border-end-start-radius: 0 !important;
+  border-inline-start: 1px solid color-mix(in oklab, #fff 28%, transparent);
+}
+
+/**
  * App utilities missing from Metronic's prebuilt Tailwind bundle.
  * Quick Create uses a 12-col grid (grid-cols-12 + gap utilities).
  */

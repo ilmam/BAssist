@@ -74,6 +74,24 @@
             return size === 'end' || size === 'sheet';
         }
 
+        function syncPageSheetPush(modal, container) {
+            const body = document.body;
+            const open = !!modal?.classList.contains('open');
+            const end = isEndModalSize(modal?.getAttribute('data-modal-size'));
+
+            if (!open || !end) {
+                body.classList.remove('modal-sheet-push');
+                body.style.removeProperty('--modal-sheet-reserve');
+                return;
+            }
+
+            // Match side-sheet layout: width + inset-inline-end gutter (1.25rem).
+            const sheetWidth = container?.offsetWidth || Math.min(600, window.innerWidth - 40);
+            const reserve = Math.ceil(sheetWidth + 20);
+            body.style.setProperty('--modal-sheet-reserve', reserve + 'px');
+            body.classList.add('modal-sheet-push');
+        }
+
         function isLargeModalSize(size) {
             return size === 'full' || size === 'xl';
         }
@@ -253,6 +271,7 @@
                 applySheetContentLayout(container, true);
                 applyModalBackdrop(modal, container, { clear: true, size: resolved });
                 syncModalSizeSwitcher(container, resolved);
+                syncPageSheetPush(modal, container);
                 return;
             }
 
@@ -268,6 +287,7 @@
             container.style.overflowY = 'auto';
             applyModalBackdrop(modal, container, { clear: false, size: resolved });
             syncModalSizeSwitcher(container, resolved);
+            syncPageSheetPush(modal, container);
         }
 
         document.addEventListener('click', function (event) {
@@ -314,6 +334,8 @@
             modal.setAttribute('aria-hidden', 'true');
             modal.setAttribute('data-modal-clear-backdrop', '0');
             document.body.classList.remove('overflow-hidden');
+            document.body.classList.remove('modal-sheet-push');
+            document.body.style.removeProperty('--modal-sheet-reserve');
 
             const backdrop = modal.querySelector('.kt-modal-backdrop');
             if (backdrop) {
@@ -375,6 +397,7 @@
                     } else {
                         document.body.classList.remove('overflow-hidden');
                     }
+                    syncPageSheetPush(modal, container);
                     history.pushState({ modal: true, returnUrl: modalReturnUrl }, '', url);
 
                     if (typeof KTSelect !== 'undefined' && typeof KTSelect.createInstances === 'function') {
@@ -437,6 +460,14 @@
             if (modal && container) {
                 applyModalSize(modal, container, modal.getAttribute('data-modal-size') || 'full');
             }
+
+            window.addEventListener('resize', function () {
+                const host = document.getElementById('mianModal');
+                const hostContainer = host?.querySelector('[data-modal-container]');
+                if (host?.classList.contains('open') && isEndModalSize(host.getAttribute('data-modal-size'))) {
+                    syncPageSheetPush(host, hostContainer);
+                }
+            });
         })();
 
         function reloadDataTables() {
