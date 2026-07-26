@@ -290,6 +290,20 @@
             syncPageSheetPush(modal, container);
         }
 
+        function hideOpenDropdowns(fromEl) {
+            const host = fromEl?.closest?.('[data-kt-dropdown], [data-kt-dropdown-initialized]');
+            if (host && typeof KTDropdown !== 'undefined' && typeof KTDropdown.getInstance === 'function') {
+                KTDropdown.getInstance(host)?.hide();
+                return;
+            }
+
+            document.querySelectorAll('.open[data-kt-dropdown-initialized]').forEach((el) => {
+                if (typeof KTDropdown !== 'undefined' && typeof KTDropdown.getInstance === 'function') {
+                    KTDropdown.getInstance(el)?.hide();
+                }
+            });
+        }
+
         document.addEventListener('click', function (event) {
             const trigger = event.target.closest('[data-modal-url]');
             if (!trigger) {
@@ -297,6 +311,7 @@
             }
 
             event.preventDefault();
+            hideOpenDropdowns(trigger);
             openModal(
                 trigger.getAttribute('data-modal-url'),
                 trigger.getAttribute('data-modal-size')

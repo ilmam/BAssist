@@ -27,16 +27,17 @@
                         <i class="ki-filled ki-down text-xs"></i>
                     </button>
                     <div class="kt-dropdown-menu min-w-[180px]" data-kt-dropdown-menu="true">
-                        <a href="{{ $createModalUrl }}" class="kt-dropdown-menu-link js-open-modal" data-modal-url="{{ $createModalUrl }}">Open</a>
+                        <a href="{{ $createModalUrl }}" class="kt-dropdown-menu-link js-open-modal" data-modal-url="{{ $createModalUrl }}" data-kt-dropdown-dismiss="true">Open</a>
                         @if ($useQuickCreate)
                             <a
                                 href="{{ $quickCreateModalUrl }}"
                                 class="kt-dropdown-menu-link js-open-modal"
                                 data-modal-url="{{ $quickCreateModalUrl }}"
                                 data-modal-size="full"
+                                data-kt-dropdown-dismiss="true"
                             >{{ __('ui.quick_create') }}</a>
                         @endif
-                        <a href="{{ $createPageUrl }}" class="kt-dropdown-menu-link" target="_blank" rel="noopener">Open in new page</a>
+                        <a href="{{ $createPageUrl }}" class="kt-dropdown-menu-link" target="_blank" rel="noopener" data-kt-dropdown-dismiss="true">Open in new page</a>
                     </div>
                 </div>
             </div>

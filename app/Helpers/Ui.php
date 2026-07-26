@@ -216,8 +216,8 @@ class Ui
                 .'<i class="ki-filled ki-down text-xs"></i>'
                 .'</button>'
                 .'<div class="kt-dropdown-menu min-w-[160px]" data-kt-dropdown-menu="true">'
-                .'<a href="'.e($modalUrl).'" class="kt-dropdown-menu-link js-open-modal" data-modal-url="'.e($modalUrl).'">Open</a>'
-                .'<a href="'.$link.'" class="kt-dropdown-menu-link" target="_blank" rel="noopener">Open in new page</a>'
+                .'<a href="'.e($modalUrl).'" class="kt-dropdown-menu-link js-open-modal" data-modal-url="'.e($modalUrl).'" data-kt-dropdown-dismiss="true">Open</a>'
+                .'<a href="'.$link.'" class="kt-dropdown-menu-link" target="_blank" rel="noopener" data-kt-dropdown-dismiss="true">Open in new page</a>'
                 .'</div>'
                 .'</div>'
                 .'</div>';
