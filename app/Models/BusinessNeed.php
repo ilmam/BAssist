@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Attributes\Relation;
 use App\Attributes\RoutableAttribute;
 use App\Models\Concerns\AppliesDefaultPriority;
+use App\Models\Concerns\HasEntityNumber;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -13,6 +14,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 class BusinessNeed extends BaseModel
 {
     use AppliesDefaultPriority;
+    use HasEntityNumber;
     use HasFactory;
 
     protected $displayField = 'title';
@@ -28,6 +30,11 @@ class BusinessNeed extends BaseModel
         'priority_id',
         'status_id',
     ];
+
+    protected static function entityNumberPrefix(): string
+    {
+        return 'BN';
+    }
 
     #[Relation('BelongsTo')]
     public function project(): BelongsTo

@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Support\ProjectContext;
 use App\Support\WorkspaceContext;
 use Closure;
 use Illuminate\Http\Request;
@@ -9,21 +10,25 @@ use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Persist workspace_id from list/deep-link URLs into the session, and honor clear_workspace.
+ * Clearing a workspace also clears the sticky project.
  */
 class SyncWorkspaceContext
 {
-    public function __construct(protected WorkspaceContext $workspaceContext)
-    {
+    public function __construct(
+        protected WorkspaceContext $workspaceContext,
+        protected ProjectContext $projectContext,
+    ) {
     }
 
     public function handle(Request $request, Closure $next): Response
     {
         if ($request->boolean('clear_workspace')) {
             $this->workspaceContext->clear();
+            $this->projectContext->clear();
 
             if ($request->isMethod('GET') && ! $request->ajax() && ! $request->wantsJson()) {
                 $query = $request->query();
-                unset($query['clear_workspace'], $query['workspace_id']);
+                unset($query['clear_workspace'], $query['workspace_id'], $query['project_id'], $query['clear_project']);
 
                 $url = $request->url();
                 if ($query !== []) {
@@ -37,7 +42,9 @@ class SyncWorkspaceContext
         }
 
         if ($request->filled('workspace_id') && is_numeric($request->input('workspace_id'))) {
-            $this->workspaceContext->set((int) $request->input('workspace_id'));
+            $workspaceId = (int) $request->input('workspace_id');
+            $this->workspaceContext->set($workspaceId);
+            $this->projectContext->clearIfNotInWorkspace($this->workspaceContext->id());
         }
 
         return $next($request);

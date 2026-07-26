@@ -54,17 +54,19 @@ return [
 
         'Workspace' => [
             'nav' => true,
+            'nav_container' => true,
             'nav_label' => 'Workspaces',
-            'nav_icon' => 'category',
-            'nav_icon_v8' => 'category',
+            'nav_icon' => 'folder',
+            'nav_icon_v8' => 'folder',
         ],
 
         'Project' => [
             'home' => true,
             'nav' => true,
+            'nav_container' => true,
             'nav_label' => 'Projects',
-            'nav_icon' => 'category',
-            'nav_icon_v8' => 'category',
+            'nav_icon' => 'abstract-26',
+            'nav_icon_v8' => 'abstract-26',
         ],
 
         'BusinessObjective' => [

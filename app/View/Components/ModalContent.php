@@ -11,7 +11,7 @@ class ModalContent extends Component
 
     public function __construct(
         public string $title = '',
-        public string $size = 'lg'
+        public string $size = 'full'
     ) {}
 
     public function render()

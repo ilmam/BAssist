@@ -16,11 +16,13 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->appendToGroup('web', [
             \App\Http\Middleware\SyncWorkspaceContext::class,
+            \App\Http\Middleware\SyncProjectContext::class,
         ]);
 
-        // Datatable AJAX uses the stateful API; keep workspace sticky there too.
+        // Datatable AJAX uses the stateful API; keep workspace/project sticky there too.
         $middleware->appendToGroup('api', [
             \App\Http\Middleware\SyncWorkspaceContext::class,
+            \App\Http\Middleware\SyncProjectContext::class,
         ]);
 
         $middleware->alias([

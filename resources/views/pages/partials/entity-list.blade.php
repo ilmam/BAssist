@@ -19,7 +19,7 @@
         $ajaxUrl .= (str_contains($ajaxUrl, '?') ? '&' : '?').http_build_query($listFilters);
     }
 
-    $options = [
+    $options = array_merge([
         'columns' => array_merge($columns, $relationColumns),
         'keys' => ['id'],
         'tableClass' => 'table-hover table-striped',
@@ -29,7 +29,7 @@
         'ajaxUrl' => $ajaxUrl,
         'rowClassField' => 'is_orphan',
         'rowClass' => 'is-orphan-row',
-    ];
+    ], $datatableOptions ?? []);
 @endphp
 
 <x-card title="{{ $model }} List">

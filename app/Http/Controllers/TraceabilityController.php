@@ -41,8 +41,11 @@ class TraceabilityController extends Controller
             fputcsv($handle, [
                 'Project',
                 'Project Code',
+                'Objective Code',
                 'Business Objective',
+                'Need Code',
                 'Business Need',
+                'Stakeholder Need Code',
                 'Stakeholder Need',
                 'Stakeholders',
                 'Gaps',
@@ -52,8 +55,11 @@ class TraceabilityController extends Controller
                 fputcsv($handle, [
                     $row['project_name'] ?? '',
                     $row['project_code'] ?? '',
+                    $row['objective_code'] ?? '',
                     $row['objective_title'] ?? '',
+                    $row['need_code'] ?? '',
                     $row['need_title'] ?? '',
+                    $row['stakeholder_need_code'] ?? '',
                     $row['stakeholder_need_title'] ?? '',
                     implode('; ', $row['stakeholder_names'] ?? []),
                     implode('; ', $row['gaps'] ?? []),

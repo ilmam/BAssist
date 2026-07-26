@@ -1,26 +1,37 @@
 @push('styles')
 <style>
+    /* Metronic-style: fixed layout + explicit rem widths on short columns. */
+    table.dataTable {
+        table-layout: fixed;
+        width: 100%;
+    }
+
     table.dataTable thead th {
-        white-space: normal !important;
-        overflow-wrap: anywhere;
-        word-break: break-word;
         vertical-align: bottom;
+    }
+
+    table.dataTable th.dt-nowrap,
+    table.dataTable td.dt-nowrap {
+        white-space: nowrap;
     }
 </style>
 @endpush
 
 <div class="kt-card-table">
     <div class="kt-table-wrapper">
-        <table class="kt-table kt-table-border w-full dataTable no-footer {{ $class }}"
+        <table class="kt-table kt-table-border table-fixed w-full dataTable no-footer {{ $class }}"
             id="{{ \App\Helpers\Ui::keyset($id, 'id', 'datatable') }}">
             <thead>
                 <tr>
                     @foreach ($options['columns'] as $col)
                         @php
-                            $colStyle = (string) Ui::keyset($col, 'style');
+                            $colStyle = \App\Helpers\DatatableUi::columnStyle($col);
                             $bodyNowrap = (bool) preg_match('/white-space\s*:\s*nowrap/i', $colStyle);
                         @endphp
-                        <th class="sorting" tabindex="0" data-style="{{ $colStyle }}" @if ($bodyNowrap) data-body-nowrap="1" @endif>
+                        <th class="sorting{{ $bodyNowrap ? ' dt-nowrap' : '' }}" tabindex="0"
+                            data-style="{{ $colStyle }}"
+                            @if ($bodyNowrap) data-body-nowrap="1" @endif
+                            @if ($colStyle !== '') style="{{ $colStyle }}" @endif>
                             @if (! is_array($col))
                                 {{ Ui::fieldLabel((string) $col) }}
                             @else
@@ -42,9 +53,11 @@
             var ajaxUrl = {!! json_encode($options['ajaxUrl'] ?? route($options['dataRoute'], $options['dataRoutParameters'])) !!};
             var rowClassField = {!! json_encode($options['rowClassField'] ?? null) !!};
             var rowClass = {!! json_encode($options['rowClass'] ?? 'is-orphan-row') !!};
+            var autoWidth = {!! json_encode((bool) ($options['autoWidth'] ?? false)) !!};
             var table = $(dtid).DataTable({
                 processing: true,
                 serverSide: true,
+                autoWidth: autoWidth,
                 ajax: ajaxUrl,
                 columns: [
                     @foreach ($options['columns'] as $col)
@@ -103,15 +116,6 @@
                     }
                 },
                 initComplete: function() {
-                    $(dtid + ' thead th[data-style!=""]').each(function() {
-                        var $th = $(this);
-                        var style = String($th.data('style') || '');
-                        var headerStyle = style.replace(/white-space\s*:\s*nowrap\s*;?/gi, '').trim();
-                        if (headerStyle) {
-                            $th.attr('style', headerStyle);
-                        }
-                    });
-
                     $('._dtSearch').on('keyup', function() {
                         table.search($(this).val()).draw();
                     });
@@ -119,7 +123,7 @@
                 drawCallback: function() {
                     var api = this.api();
                     $(dtid + ' thead th[data-body-nowrap="1"]').each(function() {
-                        api.column($(this).index()).nodes().to$().css('white-space', 'nowrap');
+                        api.column($(this).index()).nodes().to$().addClass('dt-nowrap');
                     });
                     if (typeof KTDropdown !== 'undefined' && typeof KTDropdown.createInstances === 'function') {
                         KTDropdown.createInstances();

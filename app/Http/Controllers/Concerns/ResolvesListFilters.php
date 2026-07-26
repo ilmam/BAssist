@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Concerns;
 
+use App\Support\ProjectContext;
 use App\Support\WorkspaceContext;
 use Illuminate\Http\Request;
 
@@ -21,8 +22,9 @@ trait ResolvesListFilters
         }
 
         $filters = $request->only($allowed);
+        $filters = app(WorkspaceContext::class)->mergeIntoFilters($filters, $this->modelRepository);
 
-        return app(WorkspaceContext::class)->mergeIntoFilters($filters, $this->modelRepository);
+        return app(ProjectContext::class)->mergeIntoFilters($filters, $this->modelRepository);
     }
 
     /**

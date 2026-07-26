@@ -60,35 +60,11 @@ if (! function_exists('nav_items')) {
                 continue;
             }
 
-            $items[] = $item;
+            $items[] = nav_item_with_sticky_query($item);
         }
 
-        $entityItems = [];
-
-        foreach (\App\Support\CrudEntityRegistry::all() as $model => $options) {
-            if (! ($options['nav'] ?? false)) {
-                continue;
-            }
-
-            if (! entity_can($model, \App\Support\EntityAccess::VIEW)) {
-                continue;
-            }
-
-            $entityItems[] = [
-                'label' => $options['nav_label'] ?? \Illuminate\Support\Str::plural($model),
-                'route' => model_route_name($model, 'index'),
-                'icon' => $options['nav_icon'] ?? 'element-11',
-                'icon_v8' => $options['nav_icon_v8'] ?? ($options['nav_icon'] ?? 'element-11'),
-            ];
-        }
-
-        if ($entityItems !== []) {
-            $items[] = [
-                'label' => config('navigation.entities.label', 'Entities'),
-                'icon' => config('navigation.entities.icon', 'element-plus'),
-                'icon_v8' => config('navigation.entities.icon_v8', config('navigation.entities.icon', 'element-plus')),
-                'children' => $entityItems,
-            ];
+        foreach (app(\App\Support\NavTreeBuilder::class)->build() as $hierarchyItem) {
+            $items[] = $hierarchyItem;
         }
 
         $administration = config('navigation.administration');
@@ -103,6 +79,59 @@ if (! function_exists('nav_items')) {
         }
 
         return $items;
+    }
+}
+
+if (! function_exists('nav_item_with_sticky_query')) {
+    /**
+     * Attach sticky workspace/project query params to top-level links that benefit from scope.
+     *
+     * @param  array<string, mixed>  $item
+     * @return array<string, mixed>
+     */
+    function nav_item_with_sticky_query(array $item): array
+    {
+        $route = $item['route'] ?? null;
+        if ($route === 'traceability.index') {
+            $query = [];
+            $workspaceId = app(\App\Support\WorkspaceContext::class)->id();
+            $projectId = app(\App\Support\ProjectContext::class)->id();
+
+            if ($workspaceId !== null) {
+                $query['workspace_id'] = $workspaceId;
+            }
+            if ($projectId !== null) {
+                $query['project_id'] = $projectId;
+            }
+
+            if ($query !== []) {
+                $item['query'] = array_merge($item['query'] ?? [], $query);
+            }
+        }
+
+        return $item;
+    }
+}
+
+if (! function_exists('nav_url')) {
+    /**
+     * @param  array<string, mixed>  $item
+     */
+    function nav_url(array $item): string
+    {
+        $route = $item['route'] ?? null;
+        if ($route === null || $route === '') {
+            return '#';
+        }
+
+        $url = route($route, $item['route_params'] ?? []);
+        $query = $item['query'] ?? [];
+
+        if ($query !== []) {
+            $url .= (str_contains($url, '?') ? '&' : '?').http_build_query($query);
+        }
+
+        return $url;
     }
 }
 
@@ -150,10 +179,73 @@ if (! function_exists('nav_item_is_active')) {
     function nav_item_is_active(array $item): bool
     {
         if (! empty($item['children'])) {
-            return nav_is_active(array_column($item['children'], 'route'));
+            foreach ($item['children'] as $child) {
+                if (nav_item_is_active($child)) {
+                    return true;
+                }
+            }
         }
 
-        return nav_is_active($item['route'] ?? null);
+        if (! nav_is_active($item['route'] ?? null)) {
+            return false;
+        }
+
+        return nav_item_context_matches($item);
+    }
+}
+
+if (! function_exists('nav_item_is_open')) {
+    /**
+     * Whether an accordion should expand (active route or sticky context).
+     *
+     * @param  array<string, mixed>  $item
+     */
+    function nav_item_is_open(array $item): bool
+    {
+        if (! empty($item['force_open'])) {
+            return true;
+        }
+
+        if (! empty($item['children'])) {
+            foreach ($item['children'] as $child) {
+                if (nav_item_is_open($child)) {
+                    return true;
+                }
+            }
+        }
+
+        return nav_item_is_active($item);
+    }
+}
+
+if (! function_exists('nav_item_context_matches')) {
+    /**
+     * When a nav item carries workspace/project context, require it to match sticky/request scope.
+     *
+     * @param  array<string, mixed>  $item
+     */
+    function nav_item_context_matches(array $item): bool
+    {
+        $context = $item['context'] ?? [];
+        if ($context === []) {
+            return true;
+        }
+
+        if (array_key_exists('project_id', $context)) {
+            $activeProject = app(\App\Support\ProjectContext::class)->id()
+                ?? (is_numeric(request('project_id')) ? (int) request('project_id') : null);
+
+            return $activeProject !== null && (int) $context['project_id'] === $activeProject;
+        }
+
+        if (array_key_exists('workspace_id', $context)) {
+            $activeWorkspace = app(\App\Support\WorkspaceContext::class)->id()
+                ?? (is_numeric(request('workspace_id')) ? (int) request('workspace_id') : null);
+
+            return $activeWorkspace !== null && (int) $context['workspace_id'] === $activeWorkspace;
+        }
+
+        return true;
     }
 }
 

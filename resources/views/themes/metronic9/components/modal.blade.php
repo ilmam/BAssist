@@ -3,15 +3,16 @@
     those and fights our open/close class toggling used by data-modal-url buttons.
 
     Sizes (via $size, data-modal-size on content, or data-modal-size on trigger):
-      sm | md | lg (default) | xl | full  — centered dialogs
-      end | sheet              — right-side sheet
+      sm | md | lg | xl | full (default)  — centered dialogs
+      end | sheet                          — right-side sheet
 
-    Users can also switch Compact / Large / Side from the modal header switcher.
-    Side mode clears the blurry backdrop by default so the page stays visible;
+    Header switcher: Small (sm) / Medium (lg) / Large (full) / Side (end).
+    Side mode clears the blurry backdrop by default and pushes page content left
+    (body.modal-sheet-push) so the list stays fully visible beside the panel;
     the eye toggle can dim/clear the backdrop in any size.
 --}}
 @php
-    $size = $size !== '' ? $size : 'lg';
+    $size = $size !== '' ? $size : 'full';
 @endphp
 <div class="kt-modal z-50" id="{{ $id }}" aria-hidden="true" data-modal-host data-modal-size="{{ $size }}">
     <div class="kt-modal-backdrop" data-kt-modal-dismiss="true"></div>

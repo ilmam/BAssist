@@ -38,6 +38,20 @@
                 'preserve' => $preserve,
             ]),
         ];
+
+        $datatableOptions = [
+            'extraButtons' => [
+                [
+                    'action' => 'show',
+                    'text' => '',
+                    'icon' => 'file-down',
+                    'link' => url('projects/{id}/export'),
+                    'target' => '_blank',
+                    'title' => __('ui.export_pack'),
+                    'showText' => false,
+                ],
+            ],
+        ];
     @endphp
 
     @include('pages.partials.entity-list')

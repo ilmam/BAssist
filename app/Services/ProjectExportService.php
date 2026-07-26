@@ -1,0 +1,89 @@
+<?php
+
+namespace App\Services;
+
+use App\Models\Project;
+
+/**
+ * Assembles a printable project artifact pack (HTML / browser print-to-PDF).
+ */
+class ProjectExportService
+{
+    public function __construct(
+        protected TraceabilityMatrixService $matrix,
+        protected StateDiagramMermaidGenerator $stateDiagrams,
+        protected SwimlaneMermaidGenerator $swimlanes,
+    ) {
+    }
+
+    /**
+     * @return array{
+     *   project: Project,
+     *   generated_at: \Illuminate\Support\Carbon,
+     *   objectives: \Illuminate\Database\Eloquent\Collection,
+     *   needs: \Illuminate\Database\Eloquent\Collection,
+     *   stakeholders: \Illuminate\Database\Eloquent\Collection,
+     *   stakeholder_needs: \Illuminate\Database\Eloquent\Collection,
+     *   state_flows: list<array{model: \App\Models\StateFlow, mermaid: string}>,
+     *   swimlane_flows: list<array{model: \App\Models\SwimlaneFlow, mermaid: string}>,
+     *   matrix: array{rows: list<array<string, mixed>>, summary: array<string, int>}
+     * }
+     */
+    public function build(Project $project): array
+    {
+        $project->loadMissing([
+            'workspace',
+            'status',
+            'businessObjectives.priority',
+            'businessObjectives.status',
+            'businessNeeds.priority',
+            'businessNeeds.status',
+            'businessNeeds.businessObjectives',
+            'stakeholders.status',
+            'stakeholderNeeds.priority',
+            'stakeholderNeeds.status',
+            'stakeholderNeeds.stakeholders',
+            'stakeholderNeeds.businessNeeds',
+            'stateFlows.status',
+            'swimlaneFlows.status',
+        ]);
+
+        $matrix = $this->matrix->build(['project_id' => $project->id]);
+
+        return [
+            'project' => $project,
+            'generated_at' => now(),
+            'objectives' => $project->businessObjectives->sortBy('number')->values(),
+            'needs' => $project->businessNeeds->sortBy('number')->values(),
+            'stakeholders' => $project->stakeholders->sortBy('name')->values(),
+            'stakeholder_needs' => $project->stakeholderNeeds->sortBy('number')->values(),
+            'state_flows' => $project->stateFlows
+                ->sortBy('title')
+                ->values()
+                ->map(fn ($flow) => [
+                    'model' => $flow,
+                    'mermaid' => $this->stateDiagrams->generate(
+                        $flow->title,
+                        $flow->normalizedTransitions()
+                    ),
+                ])
+                ->all(),
+            'swimlane_flows' => $project->swimlaneFlows
+                ->sortBy('title')
+                ->values()
+                ->map(fn ($flow) => [
+                    'model' => $flow,
+                    'mermaid' => $this->swimlanes->generate(
+                        $flow->title,
+                        $flow->normalizedElements(),
+                        (string) ($flow->direction ?? 'TB')
+                    ),
+                ])
+                ->all(),
+            'matrix' => [
+                'rows' => $matrix['rows'],
+                'summary' => $matrix['summary'],
+            ],
+        ];
+    }
+}

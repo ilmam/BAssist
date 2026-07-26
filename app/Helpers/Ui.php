@@ -155,7 +155,11 @@ class Ui
         $showText = self::keyset($option, 'showText', true);
         $modalUrl = self::keyset($option, 'modalUrl');
         $action = self::keyset($option, 'action');
+        $target = self::keyset($option, 'target');
+        $title = self::keyset($option, 'title');
         $actionAttr = $action ? ' data-action="'.e($action).'"' : '';
+        $targetAttr = $target ? ' target="'.e($target).'" rel="noopener"' : '';
+        $titleAttr = $title ? ' title="'.e($title).'"' : '';
         $colValue = '';
 
         if ($theme === 'metronic9') {
@@ -163,9 +167,9 @@ class Ui
             $iconClass = self::tableActionIcon($icon, $theme);
 
             if ($modalUrl) {
-                $colValue .= '<a href="'.$link.'" class="'.$buttonClass.' js-open-modal" data-modal-url="'.e($modalUrl).'"'.$actionAttr.'>';
+                $colValue .= '<a href="'.$link.'" class="'.$buttonClass.' js-open-modal" data-modal-url="'.e($modalUrl).'"'.$actionAttr.$targetAttr.$titleAttr.'>';
             } else {
-                $colValue .= '<a href="'.$link.'" class="'.$buttonClass.'"'.$actionAttr.'>';
+                $colValue .= '<a href="'.$link.'" class="'.$buttonClass.'"'.$actionAttr.$targetAttr.$titleAttr.'>';
             }
             if ($iconClass) {
                 $colValue .= '<i class="'.$iconClass.'"></i>';
@@ -175,9 +179,9 @@ class Ui
             $iconClass = self::tableActionIcon($icon, $theme);
 
             if ($modalUrl) {
-                $colValue .= '<a href="'.$link.'" class="'.$buttonClass.' js-open-modal" data-modal-url="'.e($modalUrl).'"'.$actionAttr.'>';
+                $colValue .= '<a href="'.$link.'" class="'.$buttonClass.' js-open-modal" data-modal-url="'.e($modalUrl).'"'.$actionAttr.$targetAttr.$titleAttr.'>';
             } else {
-                $colValue .= '<a href="'.$link.'" class="'.$buttonClass.'"'.$actionAttr.'>';
+                $colValue .= '<a href="'.$link.'" class="'.$buttonClass.'"'.$actionAttr.$targetAttr.$titleAttr.'>';
             }
             if ($iconClass) {
                 $colValue .= '<i class="'.$iconClass.'"></i>';
@@ -245,6 +249,8 @@ class Ui
                 'trash' => 'ki-filled ki-trash',
                 'eye' => 'ki-filled ki-eye',
                 'plus' => 'ki-filled ki-plus',
+                'file-down' => 'ki-filled ki-file-down',
+                'printer' => 'ki-filled ki-printer',
             ];
 
             foreach ($map as $needle => $class) {

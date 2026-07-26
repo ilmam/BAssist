@@ -2,7 +2,7 @@
     $modelName = class_basename($model);
 @endphp
 
-<x-modal-content :title="'Delete '.$modelName">
+<x-modal-content :title="'Delete '.$modelName" size="sm">
     <div class="space-y-6">
         <p class="text-sm text-secondary-foreground">Are you sure you want to delete this record?</p>
 

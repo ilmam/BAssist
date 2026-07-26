@@ -10,7 +10,7 @@
             $ajaxUrl .= (str_contains($ajaxUrl, '?') ? '&' : '?').http_build_query($listFilters);
         }
 
-        $options = [
+        $options = array_merge([
             'columns' => $columns,
             'keys' => ['id'],
             'tableClass' => 'table-hover table-striped',
@@ -18,7 +18,7 @@
             'model' => $model,
             'dataRoutParameters' => ['modelName' => $model],
             'ajaxUrl' => $ajaxUrl,
-        ];
+        ], $datatableOptions ?? []);
     @endphp
 
     <x-card title="{{ $model }} List">

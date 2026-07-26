@@ -50,7 +50,7 @@ class ListUi
         $icon = $options['icon'] ?? 'abstract-26';
         $title = $options['title'] ?? $label;
         $header = $options['header'] ?? '';
-        $style = $options['style'] ?? 'width: 1%; white-space: nowrap';
+        $style = $options['style'] ?? DatatableUi::compactStyle();
         $carry = $options['carry'] ?? self::carryKeysForFilter($filterParam);
         $preserve = self::contextFilters($options['preserve'] ?? []);
         $theme = function_exists('ui_theme') ? ui_theme() : 'metronic8';
@@ -190,9 +190,11 @@ class ListUi
                 'param' => $param,
                 'label' => self::filterLabel($param),
                 'value' => self::resolveFilterValue($param, $raw),
-                'clear_url' => $param === 'workspace_id'
-                    ? self::clearWorkspaceUrl($indexUrl, $query)
-                    : self::urlWithout($indexUrl, $query, [$param]),
+                'clear_url' => match ($param) {
+                    'workspace_id' => self::clearWorkspaceUrl($indexUrl, $query),
+                    'project_id' => self::clearProjectUrl($indexUrl, $query),
+                    default => self::urlWithout($indexUrl, $query, [$param]),
+                },
             ];
         }
 
@@ -200,14 +202,27 @@ class ListUi
     }
 
     /**
-     * Clear sticky workspace (session) and drop workspace_id from the URL.
+     * Clear sticky workspace (and project) and drop those ids from the URL.
      *
      * @param  array<string, mixed>  $query
      */
     protected static function clearWorkspaceUrl(string $indexUrl, array $query): string
     {
-        unset($query['workspace_id']);
+        unset($query['workspace_id'], $query['project_id'], $query['clear_project']);
         $query['clear_workspace'] = 1;
+
+        return $indexUrl.'?'.http_build_query($query);
+    }
+
+    /**
+     * Clear sticky project and drop project_id from the URL (workspace stays).
+     *
+     * @param  array<string, mixed>  $query
+     */
+    protected static function clearProjectUrl(string $indexUrl, array $query): string
+    {
+        unset($query['project_id']);
+        $query['clear_project'] = 1;
 
         return $indexUrl.'?'.http_build_query($query);
     }

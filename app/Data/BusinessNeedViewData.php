@@ -10,6 +10,10 @@ class BusinessNeedViewData extends BaseData
     public function __construct(
         #[Hide]
         public ?int $id = null,
+        #[Hide]
+        public ?int $number = null,
+        #[InList]
+        public ?string $code = null,
         #[InList]
         public string $title = '',
         public ?string $need_type = null,

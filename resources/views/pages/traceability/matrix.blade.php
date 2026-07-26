@@ -96,6 +96,9 @@
                                     @if ($row['objective_id'])
                                         <a href="{{ model_route('BusinessObjective', 'show', $row['objective_id']) }}"
                                            class="text-primary hover:underline">
+                                            @if (! empty($row['objective_code']))
+                                                <span class="text-muted-foreground text-xs me-1">{{ $row['objective_code'] }}</span>
+                                            @endif
                                             {{ $row['objective_title'] }}
                                         </a>
                                     @else
@@ -106,6 +109,9 @@
                                     @if ($row['need_id'])
                                         <a href="{{ model_route('BusinessNeed', 'show', $row['need_id']) }}"
                                            class="text-primary hover:underline">
+                                            @if (! empty($row['need_code']))
+                                                <span class="text-muted-foreground text-xs me-1">{{ $row['need_code'] }}</span>
+                                            @endif
                                             {{ $row['need_title'] }}
                                         </a>
                                     @else
@@ -116,6 +122,9 @@
                                     @if ($row['stakeholder_need_id'])
                                         <a href="{{ model_route('StakeholderNeed', 'show', $row['stakeholder_need_id']) }}"
                                            class="text-primary hover:underline">
+                                            @if (! empty($row['stakeholder_need_code']))
+                                                <span class="text-muted-foreground text-xs me-1">{{ $row['stakeholder_need_code'] }}</span>
+                                            @endif
                                             {{ $row['stakeholder_need_title'] }}
                                         </a>
                                     @else

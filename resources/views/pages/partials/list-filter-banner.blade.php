@@ -4,7 +4,11 @@
         @foreach ($filterChips as $chip)
             <a href="{{ $chip['clear_url'] }}"
                class="kt-badge kt-badge-outline kt-badge-warning gap-1"
-               title="{{ ($chip['param'] ?? '') === 'workspace_id' ? __('ui.clear_workspace') : __('ui.clear_filter') }}">
+               title="{{ match ($chip['param'] ?? '') {
+                   'workspace_id' => __('ui.clear_workspace'),
+                   'project_id' => __('ui.clear_project'),
+                   default => __('ui.clear_filter'),
+               } }}">
                 <span>{{ $chip['label'] }}: {{ $chip['value'] }}</span>
                 <i class="ki-filled ki-cross text-xs"></i>
             </a>

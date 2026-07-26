@@ -19,12 +19,36 @@ return [
             'icon' => 'element-11',
             'icon_v8' => 'element-11',
         ],
-        [
-            'label' => 'Traceability',
-            'route' => 'traceability.index',
-            'icon' => 'abstract-26',
-            'icon_v8' => 'abstract-26',
-            'entities' => ['BusinessNeed', 'BusinessObjective', 'StakeholderNeed'],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Workspace → Project → Artifact hierarchy
+    |--------------------------------------------------------------------------
+    |
+    | Replaces the flat "Entities" accordion. Artifact models come from
+    | config/crud.php (nav: true) excluding Workspace and Project containers.
+    | Extra non-CRUD project links (e.g. Traceability) use project_artifacts.
+    |
+    */
+    'hierarchy' => [
+        'label' => 'Workspaces',
+        'icon' => 'folder',
+        'icon_v8' => 'folder',
+        'workspace_icon' => 'folder',
+        'workspace_icon_v8' => 'folder',
+        'project_icon' => 'abstract-26',
+        'project_icon_v8' => 'abstract-26',
+        'all_workspaces_label' => 'All Workspaces',
+        'all_projects_label' => 'All Projects',
+        'project_artifacts' => [
+            [
+                'label' => 'Traceability',
+                'route' => 'traceability.index',
+                'icon' => 'abstract-26',
+                'icon_v8' => 'abstract-26',
+                'entities' => ['BusinessNeed', 'BusinessObjective', 'StakeholderNeed'],
+            ],
         ],
     ],
 

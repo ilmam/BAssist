@@ -7,6 +7,7 @@ use App\Models\BusinessObjective;
 use App\Models\Project;
 use App\Models\StakeholderNeed;
 use App\Models\Workspace;
+use App\Support\ProjectContext;
 use App\Support\WorkspaceContext;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
@@ -17,8 +18,10 @@ use Illuminate\Support\Collection;
  */
 class TraceabilityMatrixService
 {
-    public function __construct(protected WorkspaceContext $workspaceContext)
-    {
+    public function __construct(
+        protected WorkspaceContext $workspaceContext,
+        protected ProjectContext $projectContext,
+    ) {
     }
 
     /**
@@ -34,7 +37,7 @@ class TraceabilityMatrixService
     {
         $projectId = isset($filters['project_id']) && is_numeric($filters['project_id'])
             ? (int) $filters['project_id']
-            : null;
+            : $this->projectContext->id();
         $orphansOnly = filter_var($filters['orphans_only'] ?? false, FILTER_VALIDATE_BOOLEAN);
         $workspaceId = $this->workspaceContext->id();
         $workspaceName = $workspaceId
@@ -54,9 +57,9 @@ class TraceabilityMatrixService
         $rows = $rows
             ->sortBy([
                 ['project_name', 'asc'],
-                ['objective_title', 'asc'],
-                ['need_title', 'asc'],
-                ['stakeholder_need_title', 'asc'],
+                ['objective_number', 'asc'],
+                ['need_number', 'asc'],
+                ['stakeholder_need_number', 'asc'],
             ])
             ->values();
 
@@ -87,10 +90,11 @@ class TraceabilityMatrixService
         $needs = $this->scopedQuery(BusinessNeed::query(), $projectId, $workspaceId)
             ->with([
                 'project:id,name,code',
-                'businessObjectives:id,title',
-                'stakeholderNeeds:id,title',
+                'businessObjectives:id,number,title',
+                'stakeholderNeeds:id,number,title',
                 'stakeholderNeeds.stakeholders:id,name',
             ])
+            ->orderBy('number')
             ->orderBy('title')
             ->get();
 
@@ -128,6 +132,7 @@ class TraceabilityMatrixService
         $objectives = $this->scopedQuery(BusinessObjective::query(), $projectId, $workspaceId)
             ->whereDoesntHave('businessNeeds')
             ->with('project:id,name,code')
+            ->orderBy('number')
             ->orderBy('title')
             ->get();
 
@@ -151,6 +156,7 @@ class TraceabilityMatrixService
                 'project:id,name,code',
                 'stakeholders:id,name',
             ])
+            ->orderBy('number')
             ->orderBy('title')
             ->get();
 
@@ -205,10 +211,16 @@ class TraceabilityMatrixService
             'project_name' => $project?->name,
             'project_code' => $project?->code,
             'objective_id' => $objective?->id,
+            'objective_number' => $objective?->number,
+            'objective_code' => $objective?->code,
             'objective_title' => $objective?->title,
             'need_id' => $need?->id,
+            'need_number' => $need?->number,
+            'need_code' => $need?->code,
             'need_title' => $need?->title,
             'stakeholder_need_id' => $stakeholderNeed?->id,
+            'stakeholder_need_number' => $stakeholderNeed?->number,
+            'stakeholder_need_code' => $stakeholderNeed?->code,
             'stakeholder_need_title' => $stakeholderNeed?->title,
             'stakeholder_names' => $stakeholderNames,
             'gaps' => $gaps,

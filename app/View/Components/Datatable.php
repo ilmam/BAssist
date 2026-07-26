@@ -17,6 +17,8 @@ class Datatable extends Component
         'dataRoutParameters' => [],
         'columns' => [],
         'model' => '',
+        // DataTables autoWidth (default off — avoids equal-width <colgroup> sizing).
+        'autoWidth' => false,
     ];
 
     private $buttons = [];
@@ -83,12 +85,32 @@ class Datatable extends Component
                 )
             ));
 
+            $extraButtons = is_array($this->options['extraButtons'] ?? null)
+                ? $this->options['extraButtons']
+                : [];
+
+            foreach ($extraButtons as $extraButton) {
+                if (! is_array($extraButton)) {
+                    continue;
+                }
+
+                if (! EntityAccess::can(
+                    auth()->user(),
+                    $model,
+                    EntityAccess::abilityForTableAction($extraButton['action'] ?? 'show')
+                )) {
+                    continue;
+                }
+
+                $buttons[] = $extraButton;
+            }
+
             if ($buttons !== []) {
                 $this->options['columns'][] = [
                     'custom' => true,
                     'name' => 'actions',
                     'title' => '',
-                    'style' => 'width: 120px',
+                    'style' => \App\Helpers\DatatableUi::actionsStyle($buttons),
                     'buttons' => $buttons,
                 ];
             }

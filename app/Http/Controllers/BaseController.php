@@ -5,9 +5,12 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Concerns\ResolvesListFilters;
 use App\Http\Controllers\Concerns\RespondsWithModal;
 use Illuminate\Http\Request;
+use App\Models\Concerns\HasEntityNumber;
 use App\Support\DtoMetadata;
 use App\Support\EntityFormBuilder;
+use App\Support\ProjectContext;
 use App\Support\RepositoryResolver;
+use App\Support\WorkspaceContext;
 
 class BaseController extends Controller
 {
@@ -219,6 +222,12 @@ class BaseController extends Controller
             ?? $values['code']
             ?? ('#'.($values['id'] ?? ''));
 
+        if (! empty($values['code']) && ! empty($values['title'])) {
+            $label = $values['code'].' — '.$values['title'];
+        } elseif (! empty($values['code']) && empty($values['title']) && empty($values['name'])) {
+            $label = (string) $values['code'];
+        }
+
         return [
             'id' => $values['id'] ?? null,
             'label' => (string) $label,
@@ -244,8 +253,8 @@ class BaseController extends Controller
 
     /**
      * Column keys for the Quick Create session table — same visible fields as
-     * the Quick Create form (edit DTO, hideQuick = false), in form order,
-     * with `id` first when not already included.
+     * the Quick Create form (edit DTO, hideQuick = false), in form order.
+     * Prefers entity `code` (BO-1 / BN-1 / …) over raw `id` when available.
      *
      * @return list<string>
      */
@@ -255,12 +264,15 @@ class BaseController extends Controller
             DtoMetadata::for($this->modelRepository->editDto)->quickCreateVisibleFormFields()
         );
 
-        if (! in_array('id', $columns, true)) {
-            array_unshift($columns, 'id');
+        $model = $this->modelRepository->model;
+        $usesEntityNumber = in_array(HasEntityNumber::class, class_uses_recursive($model), true);
+
+        if ($usesEntityNumber && ! in_array('code', $columns, true)) {
+            array_unshift($columns, 'code');
         }
 
         if ($columns === []) {
-            $columns = ['id'];
+            $columns = $usesEntityNumber ? ['code'] : ['title'];
         }
 
         return array_values(array_unique($columns));
@@ -277,6 +289,7 @@ class BaseController extends Controller
     {
         $dtoClass = $this->modelRepository->editDto;
         $dto = $dtoClass::from($dtoClass::empty());
+        $dto = $this->applyStickyContextDefaults($dto);
         $builder = $this->formBuilder();
 
         return [
@@ -286,6 +299,30 @@ class BaseController extends Controller
                 ? $builder->quickCreateHiddenDefaults($dtoClass, $dto)
                 : [],
         ];
+    }
+
+    /**
+     * Prefill create forms from sticky workspace/project when those fields exist.
+     */
+    protected function applyStickyContextDefaults(object $dto): object
+    {
+        $payload = method_exists($dto, 'toArray') ? $dto->toArray() : [];
+
+        if (array_key_exists('project_id', $payload)) {
+            $projectId = app(ProjectContext::class)->id();
+            if ($projectId !== null && empty($payload['project_id'])) {
+                $payload['project_id'] = $projectId;
+            }
+        }
+
+        if (array_key_exists('workspace_id', $payload)) {
+            $workspaceId = app(WorkspaceContext::class)->id();
+            if ($workspaceId !== null && empty($payload['workspace_id'])) {
+                $payload['workspace_id'] = $workspaceId;
+            }
+        }
+
+        return $dto::from($payload);
     }
 
     protected function buildEditForm($id): array

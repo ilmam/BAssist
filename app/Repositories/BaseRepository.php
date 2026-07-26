@@ -109,12 +109,21 @@ class BaseRepository
 
     public function create(array $data)
     {
-        return $this->model::create($data);
+        return $this->model::create($this->filterFillable($data));
     }
 
     public function update($id, array $newData)
     {
-        return $this->model::whereId($id)->update($newData);
+        return $this->model::whereId($id)->update($this->filterFillable($newData));
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    protected function filterFillable(array $data): array
+    {
+        return array_intersect_key($data, array_flip($this->model->getFillable()));
     }
 
     /**
@@ -138,6 +147,15 @@ class BaseRepository
     {
         return in_array('workspace_id', $this->listFilters, true)
             || array_key_exists('workspace_id', $this->listContextFilters);
+    }
+
+    /**
+     * Whether list queries honor project_id (direct column or ancestor context).
+     */
+    public function usesProjectListScope(): bool
+    {
+        return in_array('project_id', $this->listFilters, true)
+            || array_key_exists('project_id', $this->listContextFilters);
     }
 
     /**
