@@ -31,6 +31,8 @@ class ProjectViewData extends BaseData
         #[Hide]
         public ?int $stakeholder_needs_count = null,
         #[Hide]
+        public ?int $features_count = null,
+        #[Hide]
         public ?int $state_flows_count = null,
         #[Hide]
         public ?int $swimlane_flows_count = null,

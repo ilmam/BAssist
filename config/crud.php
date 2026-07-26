@@ -101,7 +101,24 @@ return [
             'nav_icon_v8' => 'category',
         ],
 
+        'Feature' => [
+            'home' => true,
+            'nav' => true,
+            'nav_label' => 'Features',
+            'nav_icon' => 'category',
+            'nav_icon_v8' => 'category',
+            'controller' => \App\Http\Controllers\FeatureController::class,
+        ],
 
+        // Routes kept for edit/delete; create/view UX is Feature-centric.
+        'Scenario' => [
+            'home' => false,
+            'nav' => false,
+            'nav_label' => 'Scenarios',
+            'nav_icon' => 'category',
+            'nav_icon_v8' => 'category',
+            'controller' => \App\Http\Controllers\ScenarioController::class,
+        ],
 
         'StateFlow' => [
             'home' => true,

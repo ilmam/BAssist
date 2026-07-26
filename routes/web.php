@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\FeatureController;
 use App\Http\Controllers\ProjectExportController;
 use App\Http\Controllers\TraceabilityController;
 use App\Support\CrudRouteRegistrar;
@@ -24,6 +25,8 @@ Route::middleware('auth')->group(function (): void {
     });
 
     Route::middleware('entity.access')->group(function (): void {
+        Route::get('features/{id}/export', [FeatureController::class, 'export'])->name('features.export');
+        Route::get('features/{id}/print', [FeatureController::class, 'print'])->name('features.print');
         CrudRouteRegistrar::registerWebRoutes();
     });
 });

@@ -21,6 +21,7 @@
             'missing_stakeholder_need' => __('ui.gap_missing_stakeholder_need'),
             'orphan_objective' => __('ui.gap_orphan_objective'),
             'orphan_stakeholder_need' => __('ui.gap_orphan_stakeholder_need'),
+            'orphan_feature' => __('ui.gap_orphan_feature'),
         ];
     @endphp
 
@@ -79,6 +80,7 @@
                             <th>{{ __('ui.business_objective') }}</th>
                             <th>{{ __('ui.business_need') }}</th>
                             <th>{{ __('ui.stakeholder_need') }}</th>
+                            <th>{{ __('ui.feature') }}</th>
                             <th>{{ __('ui.stakeholders') }}</th>
                             <th>{{ __('ui.gaps') }}</th>
                         </tr>
@@ -132,6 +134,19 @@
                                     @endif
                                 </td>
                                 <td>
+                                    @if (! empty($row['feature_id']))
+                                        <a href="{{ model_route('Feature', 'show', $row['feature_id']) }}"
+                                           class="text-primary hover:underline">
+                                            @if (! empty($row['feature_code']))
+                                                <span class="text-muted-foreground text-xs me-1">{{ $row['feature_code'] }}</span>
+                                            @endif
+                                            {{ $row['feature_title'] }}
+                                        </a>
+                                    @else
+                                        <span class="text-muted-foreground">—</span>
+                                    @endif
+                                </td>
+                                <td>
                                     @if (! empty($row['stakeholder_names']))
                                         {{ implode(', ', $row['stakeholder_names']) }}
                                     @else
@@ -154,7 +169,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" class="text-secondary-foreground">{{ __('ui.matrix_empty') }}</td>
+                                <td colspan="7" class="text-secondary-foreground">{{ __('ui.matrix_empty') }}</td>
                             </tr>
                         @endforelse
                     </tbody>

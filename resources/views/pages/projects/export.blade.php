@@ -272,6 +272,7 @@
                     <th>{{ __('ui.business_objective') }}</th>
                     <th>{{ __('ui.business_need') }}</th>
                     <th>{{ __('ui.stakeholder_need') }}</th>
+                    <th>{{ __('ui.feature') }}</th>
                     <th>{{ __('ui.stakeholders') }}</th>
                     <th>{{ __('ui.gaps') }}</th>
                 </tr>
@@ -303,6 +304,14 @@
                                 —
                             @endif
                         </td>
+                        <td>
+                            @if (! empty($row['feature_code']) || ! empty($row['feature_title']))
+                                <div class="artifact__code">{{ $row['feature_code'] ?? '' }}</div>
+                                {{ $row['feature_title'] ?? '' }}
+                            @else
+                                —
+                            @endif
+                        </td>
                         <td>{{ ! empty($row['stakeholder_names']) ? implode('; ', $row['stakeholder_names']) : '—' }}</td>
                         <td>
                             @php
@@ -313,6 +322,7 @@
                                         'missing_stakeholder_need' => __('ui.gap_missing_stakeholder_need'),
                                         'orphan_objective' => __('ui.gap_orphan_objective'),
                                         'orphan_stakeholder_need' => __('ui.gap_orphan_stakeholder_need'),
+                                        'orphan_feature' => __('ui.gap_orphan_feature'),
                                         default => $gap,
                                     };
                                 })->all();

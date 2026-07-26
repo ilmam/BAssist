@@ -47,6 +47,20 @@ class StakeholderNeedRepository extends BaseRepository
         $this->model = new StakeholderNeed();
     }
 
+    public function getSelectOptions($fields = null)
+    {
+        return $this->model::query()
+            ->orderBy('number')
+            ->orderBy('title')
+            ->get(['id', 'number', 'title'])
+            ->mapWithKeys(function (StakeholderNeed $need) {
+                $label = trim(($need->code ? $need->code.' — ' : '').$need->title);
+
+                return [$need->id => $label !== '' ? $label : (string) $need->id];
+            })
+            ->all();
+    }
+
     protected function applyOrphanConstraint(Builder $query): void
     {
         $query->where(function (Builder $inner) {

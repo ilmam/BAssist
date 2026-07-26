@@ -29,6 +29,7 @@ class ProjectRepository extends BaseRepository
         'businessNeeds',
         'stakeholders',
         'stakeholderNeeds',
+        'features',
         'stateFlows',
         'swimlaneFlows',
     ];

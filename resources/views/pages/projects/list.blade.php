@@ -27,6 +27,11 @@
                 'icon' => 'questionnaire-tablet',
                 'preserve' => $preserve,
             ]),
+            ListUi::childLinkColumn('Feature', 'project_id', 'features_count', [
+                'title' => __('ui.features'),
+                'icon' => 'abstract-26',
+                'preserve' => $preserve,
+            ]),
             ListUi::childLinkColumn('StateFlow', 'project_id', 'state_flows_count', [
                 'title' => __('ui.state_flows'),
                 'icon' => 'abstract-39',

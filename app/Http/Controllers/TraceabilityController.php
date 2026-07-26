@@ -47,6 +47,8 @@ class TraceabilityController extends Controller
                 'Business Need',
                 'Stakeholder Need Code',
                 'Stakeholder Need',
+                'Feature Code',
+                'Feature',
                 'Stakeholders',
                 'Gaps',
             ]);
@@ -61,6 +63,8 @@ class TraceabilityController extends Controller
                     $row['need_title'] ?? '',
                     $row['stakeholder_need_code'] ?? '',
                     $row['stakeholder_need_title'] ?? '',
+                    $row['feature_code'] ?? '',
+                    $row['feature_title'] ?? '',
                     implode('; ', $row['stakeholder_names'] ?? []),
                     implode('; ', $row['gaps'] ?? []),
                 ]);
@@ -78,7 +82,8 @@ class TraceabilityController extends Controller
 
         $canView = EntityAccess::can($user, 'BusinessNeed', EntityAccess::VIEW)
             || EntityAccess::can($user, 'BusinessObjective', EntityAccess::VIEW)
-            || EntityAccess::can($user, 'StakeholderNeed', EntityAccess::VIEW);
+            || EntityAccess::can($user, 'StakeholderNeed', EntityAccess::VIEW)
+            || EntityAccess::can($user, 'Feature', EntityAccess::VIEW);
 
         if (! $canView) {
             EntityAccess::authorize($user, 'BusinessNeed', EntityAccess::VIEW);

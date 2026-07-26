@@ -70,6 +70,12 @@ class Project extends BaseModel
     }
 
     #[Relation('HasMany')]
+    public function features(): HasMany
+    {
+        return $this->hasMany(Feature::class);
+    }
+
+    #[Relation('HasMany')]
     public function stateFlows(): HasMany
     {
         return $this->hasMany(StateFlow::class);
