@@ -139,34 +139,28 @@
 
     @if ($hasStakeholders)
         <h2 class="section-title">{{ __('ui.stakeholders') }}</h2>
-        @foreach ($stakeholders as $stakeholder)
-            <article class="artifact">
-                <h3 class="item-title">{{ $stakeholder->name }}</h3>
-                <dl class="kv">
-                    <dt>{{ __('ui.status') }}</dt>
-                    <dd>{{ $stakeholder->status?->name ?: '—' }}</dd>
-                    @if ($stakeholder->type)
-                        <dt>{{ __('ui.type') }}</dt>
-                        <dd>{{ $stakeholder->type }}</dd>
-                    @endif
-                    @if ($stakeholder->influence)
-                        <dt>{{ __('ui.influence') }}</dt>
-                        <dd>{{ $stakeholder->influence }}</dd>
-                    @endif
-                    @if ($stakeholder->interest)
-                        <dt>{{ __('ui.interest') }}</dt>
-                        <dd>{{ $stakeholder->interest }}</dd>
-                    @endif
-                    @if ($stakeholder->is_system)
-                        <dt>{{ __('ui.is_system') }}</dt>
-                        <dd>{{ __('ui.yes') }}</dd>
-                    @endif
-                </dl>
-                @if ($stakeholder->notes)
-                    <p class="prose">{{ $stakeholder->notes }}</p>
-                @endif
-            </article>
-        @endforeach
+        <table class="matrix">
+            <thead>
+                <tr>
+                    <th>{{ __('ui.stakeholder') }}</th>
+                    <th>{{ __('ui.type') }}</th>
+                    <th>{{ __('ui.responsibility') }}</th>
+                    <th>{{ __('ui.influence') }}</th>
+                    <th>{{ __('ui.interest') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach ($stakeholders as $stakeholder)
+                    <tr>
+                        <td>{{ $stakeholder->name ?: '—' }}</td>
+                        <td>{{ $stakeholder->type ?: '—' }}</td>
+                        <td>{{ $stakeholder->notes ?: '—' }}</td>
+                        <td>{{ $stakeholder->influence ?: '—' }}</td>
+                        <td>{{ $stakeholder->interest ?: '—' }}</td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
     @endif
 
     @if ($hasStakeholderNeeds)

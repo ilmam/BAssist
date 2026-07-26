@@ -142,10 +142,9 @@ class NavTreeBuilder
 
             $children[] = [
                 'label' => $project->name,
-                'route' => $artifactChildren[0]['route'] ?? model_route_name('Project', 'index'),
-                'query' => $artifactChildren !== []
-                    ? $projectQuery
-                    : ['workspace_id' => $workspace->id, 'project_id' => $project->id],
+                'route' => 'projects.dashboard',
+                'route_params' => ['project' => $project->id],
+                'query' => $projectQuery,
                 'icon' => config('navigation.hierarchy.project_icon', 'abstract-26'),
                 'icon_v8' => config('navigation.hierarchy.project_icon_v8', config('navigation.hierarchy.project_icon', 'abstract-26')),
                 'context' => [

@@ -39,7 +39,8 @@ class ProjectExportService
             'businessNeeds.priority',
             'businessNeeds.status',
             'businessNeeds.businessObjectives',
-            'stakeholders.status',
+            // Export stakeholders matrix: only rows linked to ≥1 StakeholderNeed (project "requirements").
+            'stakeholders.stakeholderNeeds',
             'stakeholderNeeds.priority',
             'stakeholderNeeds.status',
             'stakeholderNeeds.stakeholders',
@@ -50,12 +51,19 @@ class ProjectExportService
 
         $matrix = $this->matrix->build(['project_id' => $project->id]);
 
+        // Stakeholders section rule: include only stakeholders that have at least one
+        // related StakeholderNeed (pivot). Unlinked role seeds / profiles are omitted.
+        $stakeholdersWithNeeds = $project->stakeholders
+            ->filter(fn ($stakeholder) => $stakeholder->stakeholderNeeds->isNotEmpty())
+            ->sortBy('name')
+            ->values();
+
         return [
             'project' => $project,
             'generated_at' => now(),
             'objectives' => $project->businessObjectives->sortBy('number')->values(),
             'needs' => $project->businessNeeds->sortBy('number')->values(),
-            'stakeholders' => $project->stakeholders->sortBy('name')->values(),
+            'stakeholders' => $stakeholdersWithNeeds,
             'stakeholder_needs' => $project->stakeholderNeeds->sortBy('number')->values(),
             'state_flows' => $project->stateFlows
                 ->sortBy('title')

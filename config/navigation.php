@@ -49,6 +49,13 @@ return [
                 'icon_v8' => 'abstract-26',
                 'entities' => ['BusinessNeed', 'BusinessObjective', 'StakeholderNeed'],
             ],
+            [
+                'label' => 'Acceptance Plan',
+                'route' => 'acceptance-plan.index',
+                'icon' => 'check-square',
+                'icon_v8' => 'check-square',
+                'entities' => ['Feature', 'Scenario'],
+            ],
         ],
     ],
 

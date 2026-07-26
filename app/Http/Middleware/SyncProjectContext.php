@@ -38,6 +38,12 @@ class SyncProjectContext
 
         if ($request->filled('project_id') && is_numeric($request->input('project_id'))) {
             $this->projectContext->set((int) $request->input('project_id'));
+        } elseif ($request->route('project') !== null) {
+            $project = $request->route('project');
+            $projectId = is_object($project) ? (int) ($project->id ?? 0) : (int) $project;
+            if ($projectId > 0) {
+                $this->projectContext->set($projectId);
+            }
         }
 
         return $next($request);
