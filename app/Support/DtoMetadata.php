@@ -40,7 +40,7 @@ class DtoMetadata
     /**
      * Form fields keyed by property name, values are Form/ListForm type args (e.g. ['text'] or ['select', 'Project']).
      *
-     * @return array<string, array{0: string, 1?: string, readonly?: bool}>
+     * @return array<string, array{0: string, 1?: string, readonly?: bool, language?: string, help?: string}>
      */
     public function formFields(): array
     {
@@ -50,7 +50,7 @@ class DtoMetadata
     /**
      * Form fields that should appear as visible inputs on Quick Create.
      *
-     * @return array<string, array{0: string, 1?: string, readonly?: bool}>
+     * @return array<string, array{0: string, 1?: string, readonly?: bool, language?: string, help?: string}>
      */
     public function quickCreateVisibleFormFields(): array
     {
@@ -206,7 +206,7 @@ class DtoMetadata
 
     /**
      * @return array{
-     *     form_fields: array<string, array{0: string, 1?: string, readonly?: bool}>,
+     *     form_fields: array<string, array{0: string, 1?: string, readonly?: bool, language?: string, help?: string}>,
      *     value_fields: list<string>,
      *     list_fields: list<string>,
      *     quick_create: array<string, array{hidden: bool, default: mixed, has_default: bool}>
@@ -300,7 +300,7 @@ class DtoMetadata
     }
 
     /**
-     * @return array<string, array{0: string, 1?: string, readonly?: bool}>
+     * @return array<string, array{0: string, 1?: string, readonly?: bool, language?: string, help?: string}>
      */
     protected static function discoverFormFields(string $class): array
     {
@@ -488,7 +488,7 @@ class DtoMetadata
 
     /**
      * @param  ReflectionAttribute<Form|ListForm>  $attribute
-     * @return array{0: string, 1?: string, readonly?: bool}
+     * @return array{0: string, 1?: string, readonly?: bool, language?: string, help?: string}
      */
     protected static function normalizeFormArgs(ReflectionAttribute $attribute): array
     {
@@ -501,6 +501,14 @@ class DtoMetadata
 
         if ($instance->readonly) {
             $args['readonly'] = true;
+        }
+
+        if ($instance->type === 'code') {
+            $args['language'] = $instance->language !== '' ? $instance->language : 'plaintext';
+        }
+
+        if ($instance->help !== '') {
+            $args['help'] = $instance->help;
         }
 
         return $args;

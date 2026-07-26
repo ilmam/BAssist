@@ -66,10 +66,18 @@
                         $options['rows'] = 2;
                     }
 
+                    if ($type === 'code' && ! empty($field['language'])) {
+                        $options['data-language'] = $field['language'];
+                    }
+
+                    if (! empty($field['help'])) {
+                        $options['data-field-help'] = $field['help'];
+                    }
+
                     // Multi-stop spans via container queries (ui-layout.css).
-                    // Defaults: sm:12 md:6 lg:4 — textarea/dropzone stay 12 at all stops.
+                    // Defaults: sm:12 md:6 lg:4 — textarea/code/dropzone stay 12 at all stops.
                     $clamp = static fn (int $n): int => max(1, min(12, $n));
-                    $isWide = in_array($type, ['textarea', 'dropzone'], true);
+                    $isWide = in_array($type, ['textarea', 'code', 'dropzone'], true);
                     $defaults = $isWide
                         ? ['sm' => 12, 'md' => 12, 'lg' => 12]
                         : ['sm' => 12, 'md' => 6, 'lg' => 4];

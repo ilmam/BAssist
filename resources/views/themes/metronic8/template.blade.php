@@ -48,7 +48,7 @@
     <script src="{{ ui_asset('plugins/global/plugins.bundle.js') }}"></script>
     <script src="{{ ui_asset('js/scripts.bundle.js') }}"></script>
     <script src="{{ ui_asset('plugins/custom/datatables/datatables.bundle.js') }}"></script>
-    @vite(['resources/js/state-flow-diagram.js', 'resources/js/swimlane-flow-diagram.js'])
+    @vite(['resources/js/state-flow-diagram.js', 'resources/js/swimlane-flow-diagram.js', 'resources/js/code-editor.js'])
     @stack('scripts')
     <script>
         let modalReturnUrl = null;
@@ -559,6 +559,13 @@
 
                     reloadDataTables();
                     closeModal();
+
+                    const hasLiveTable = typeof $ !== 'undefined'
+                        && $.fn.dataTable
+                        && $.fn.dataTable.tables({ visible: true }).length > 0;
+                    if (!hasLiveTable) {
+                        window.location.reload();
+                    }
                 })
                 .catch(() => {
                     if (submitButton) {

@@ -1,0 +1,137 @@
+.feature-raw-dialog {
+    margin: auto;
+    width: min(960px, 94vw);
+    max-height: 90vh;
+    padding: 0;
+    border: 1px solid var(--border, #e5e7eb);
+    border-radius: 0.5rem;
+    background: var(--background, #fff);
+    box-shadow: 0 20px 40px rgb(15 23 42 / 0.18);
+}
+
+.feature-raw-dialog::backdrop {
+    background: rgb(15 23 42 / 0.45);
+}
+
+.feature-raw-dialog[open] {
+    display: flex;
+    flex-direction: column;
+}
+
+.feature-raw-dialog .code-editor--readonly .code-editor__mount {
+    min-height: min(55vh, 480px);
+}
+
+.code-editor {
+    position: relative;
+    border: 1px solid var(--border, #e5e7eb);
+    border-radius: 0.5rem;
+    overflow: hidden;
+    background: var(--background, #fff);
+}
+
+.code-editor__chrome {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.35rem 0.65rem;
+    border-bottom: 1px solid var(--border, #e5e7eb);
+    background: color-mix(in srgb, var(--muted, #f3f4f6) 70%, transparent);
+}
+
+.code-editor__actions {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.code-editor__lang {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: var(--muted-foreground, #6b7280);
+    text-transform: uppercase;
+}
+
+.code-editor__mount {
+    min-height: 220px;
+}
+
+.code-editor--readonly .code-editor__mount {
+    min-height: 120px;
+}
+
+.code-editor .cm-editor {
+    border: 0 !important;
+    border-radius: 0 !important;
+}
+
+/* CodeMirror sync field — must stay invisible (never show resize chrome) */
+.code-editor__input {
+    position: absolute !important;
+    inset: 0 auto auto 0 !important;
+    width: 1px !important;
+    height: 1px !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    max-width: 1px !important;
+    max-height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    clip-path: inset(50%) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    resize: none !important;
+    appearance: none !important;
+    -webkit-appearance: none !important;
+}
+
+.gherkin-tags-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.gherkin-tags-preview {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    min-height: 0;
+}
+
+.gherkin-tags-preview--body {
+    padding: 0.45rem 0.65rem;
+    border-top: 1px solid var(--border, #e5e7eb);
+    background: color-mix(in srgb, var(--muted, #f3f4f6) 35%, transparent);
+}
+
+.gherkin-tags-preview[hidden] {
+    display: none !important;
+}
+
+.gherkin-tag-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.15rem 0.55rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+    color: #047857;
+    background: color-mix(in srgb, #047857 12%, transparent);
+    border: 1px solid color-mix(in srgb, #047857 28%, transparent);
+}
+
+.gherkin-tags-hint,
+.gherkin-editor-hint,
+.field-help {
+    margin: 0.35rem 0 0;
+    font-size: 0.75rem;
+    color: var(--muted-foreground, #6b7280);
+    line-height: 1.4;
+}

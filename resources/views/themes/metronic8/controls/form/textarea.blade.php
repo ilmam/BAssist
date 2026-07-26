@@ -1,15 +1,26 @@
 @include(ui_form_view('_vars'))
 
+@php
+    $fieldHelp = (string) ($attributes['data-field-help'] ?? $attributes['help'] ?? '');
+    unset($attributes['data-field-help'], $attributes['help']);
+@endphp
+
 @if ($horizontal)
     <div class="row mb-6">
         <label class="col-lg-4 col-form-label fw-semibold fs-6" for="{{ $name }}">{{ $labelText }}</label>
         <div class="col-lg-8 fv-row">
             {{ Form::textarea($name, $value, array_merge(['class' => 'form-control form-control-solid', 'rows' => 3], $attributes)) }}
+            @if ($fieldHelp !== '')
+                <p class="field-help text-muted fs-7 mt-1 mb-0">{{ $fieldHelp }}</p>
+            @endif
         </div>
     </div>
 @else
     <div class="mb-6">
         <label class="form-label fw-semibold fs-6" for="{{ $name }}">{{ $labelText }}</label>
         {{ Form::textarea($name, $value, array_merge(['class' => 'form-control form-control-solid', 'rows' => 3], $attributes)) }}
+        @if ($fieldHelp !== '')
+            <p class="field-help text-muted fs-7 mt-1 mb-0">{{ $fieldHelp }}</p>
+        @endif
     </div>
 @endif

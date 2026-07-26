@@ -18,6 +18,9 @@ use Attribute;
  *   #[ListForm('select', 'Status', hideQuick: true)]
  *   public ?int $status_id = null;
  *
+ *   #[ListForm('code', language: 'gherkin', hideQuick: true)]
+ *   public ?string $body = null;
+ *
  * @see InList
  * @see Form
  * @see Hide
@@ -30,5 +33,7 @@ class ListForm
         public string $model = '',
         public bool $hideQuick = false,
         public bool $readonly = false,
+        public string $language = 'plaintext',
+        public string $help = '',
     ) {}
 }

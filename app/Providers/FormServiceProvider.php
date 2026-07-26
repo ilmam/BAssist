@@ -22,6 +22,7 @@ class FormServiceProvider extends ServiceProvider
         $form->component('bsCheckbox', 'checkbox', ['name', 'value', 'list', 'attributes']);
         $form->component('bsRadio', 'radio', ['name', 'value', 'list', 'attributes']);
         $form->component('bsTextarea', 'textarea', ['name', 'value', 'attributes']);
+        $form->component('bsCode', 'code', ['name', 'value', 'attributes']);
         $form->component('bsFile', 'file', ['name', 'value', 'attributes']);
         $form->component('bsTree', 'tree', ['name', 'value', 'textValue', 'attributes']);
         $form->component('bsImage', 'image', ['name', 'path', 'file', 'attributes']);

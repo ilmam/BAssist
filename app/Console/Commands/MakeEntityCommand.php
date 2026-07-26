@@ -58,14 +58,18 @@ use Illuminate\Support\Str;
  *                         name:type?                 (nullable shorthand)
  *                         name:type:formType
  *                         name:type:formType:nullable
+ *                         name:type:code:language   (e.g. body:text:code:gherkin)
  *                         name:foreignId:RelatedModel:select
  *                     If omitted, a single "name:string" field is used.
  *                     Supported db types: string, text, integer,
  *                     bigInteger, decimal, float, double, boolean, date,
  *                     dateTime, timestamp, foreignId (plus int/bool/etc.
  *                     aliases). Supported form types: text, textarea,
- *                     select, checkbox, radio, file, image, dropzone,
- *                     tree, date, datetime-local, number, email, password.
+ *                     code, select, checkbox, radio, file, image,
+ *                     dropzone, tree, date, datetime-local, number, email,
+ *                     password. For code, an optional language token
+ *                     (gherkin, javascript, sql, …) becomes
+ *                     #[Form('code', language: '…')].
  *
  *   --display=        Field used as the display label in select inputs and
  *                     as the list column. Defaults to the first field.
@@ -86,6 +90,7 @@ use Illuminate\Support\Str;
  *   php artisan make:entity Country
  *   php artisan make:entity Product --fields="name:string,price:decimal,description:text?" --display=name
  *   php artisan make:entity Order --profile=material --fields="reference:string,customer_id:foreignId:Customer:select"
+ *   php artisan make:entity Scenario --fields="title:string,body:text:code:gherkin"
  *   php artisan make:entity Log --no-nav --dry-run
  *
  * ---------------------------------------------------------------------
@@ -171,7 +176,7 @@ class MakeEntityCommand extends Command
     }
 
     /**
-     * @return list<array{name: string, dbType: string, phpType: string, nullable: bool, formType: string, relation: ?string, default: string}>
+     * @return list<array{name: string, dbType: string, phpType: string, nullable: bool, formType: string, relation: ?string, language: ?string, default: string}>
      */
     private function parseFields(string $model): array
     {
@@ -191,6 +196,7 @@ class MakeEntityCommand extends Command
             $dbType = rtrim($dbType, '?');
             $formType = null;
             $relation = null;
+            $language = null;
 
             foreach ($parts as $part) {
                 if ($part === 'nullable') {
@@ -200,6 +206,12 @@ class MakeEntityCommand extends Command
 
                 if ($formType === null && $this->isKnownFormType($part)) {
                     $formType = $part;
+                    continue;
+                }
+
+                // body:text:code:gherkin → language, not a related model
+                if ($formType === 'code' && $language === null) {
+                    $language = strtolower($part);
                     continue;
                 }
 
@@ -218,7 +230,13 @@ class MakeEntityCommand extends Command
             }
 
             $formType ??= $this->inferFormType($dbType);
-            $relation = $dbType === 'foreignId' ? ($relation ?: Str::studly(Str::beforeLast($name, '_id'))) : $relation;
+            if ($formType === 'code') {
+                $relation = null;
+            } else {
+                $relation = $dbType === 'foreignId'
+                    ? ($relation ?: Str::studly(Str::beforeLast($name, '_id')))
+                    : $relation;
+            }
             $phpType = $this->phpTypeFor($dbType, $nullable);
 
             $fields[] = [
@@ -228,6 +246,7 @@ class MakeEntityCommand extends Command
                 'nullable' => $nullable,
                 'formType' => $formType,
                 'relation' => $relation,
+                'language' => $formType === 'code' ? $language : null,
                 'default'  => $this->defaultFor($phpType),
             ];
         }
@@ -259,7 +278,7 @@ class MakeEntityCommand extends Command
 
     private function isKnownFormType(string $type): bool
     {
-        return in_array($type, ['text', 'textarea', 'select', 'kt-select', 'checkbox', 'radio', 'file', 'image', 'dropzone', 'tree', 'date', 'datetime-local', 'number', 'email', 'password'], true);
+        return in_array($type, ['text', 'textarea', 'code', 'select', 'kt-select', 'checkbox', 'radio', 'file', 'image', 'dropzone', 'tree', 'date', 'datetime-local', 'number', 'email', 'password'], true);
     }
 
     private function inferFormType(string $dbType): string
@@ -357,6 +376,10 @@ class MakeEntityCommand extends Command
             $formArgs = "'{$field['formType']}'";
             if ($field['relation']) {
                 $formArgs .= ", '{$field['relation']}'";
+            }
+            if (! empty($field['language'])) {
+                $escapedLanguage = str_replace("'", "\\'", (string) $field['language']);
+                $formArgs .= ", language: '{$escapedLanguage}'";
             }
 
             if ($field['name'] === $displayField) {

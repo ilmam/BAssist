@@ -13,6 +13,7 @@ class FormHelper
             {
                 case 'text':
                 case 'textarea':
+                case 'code':
                 case 'select':
                 case 'kt-select':
                 case 'checkbox':
@@ -61,6 +62,12 @@ class FormHelper
             }
             if (! empty($args['readonly'])) {
                 $fieldOptions['readonly'] = true;
+            }
+            if (! empty($args['language'])) {
+                $fieldOptions['language'] = (string) $args['language'];
+            }
+            if (! empty($args['help'])) {
+                $fieldOptions['help'] = (string) $args['help'];
             }
             $formFields[$fild] = $fieldOptions;
 

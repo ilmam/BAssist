@@ -12,6 +12,10 @@
         {{ Form::bsTextarea($name, $value, $attributes) }}
         @break
 
+    @case('code')
+        {{ Form::bsCode($name, $value, $attributes) }}
+        @break
+
     @case('select')
     @case('kt-select')
         {{ Form::bsSelect($name, $value, $list, $attributes) }}

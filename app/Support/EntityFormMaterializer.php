@@ -89,6 +89,8 @@ BLADE;
         foreach ($fields as $fieldName => $args) {
             $type = is_array($args) ? (string) ($args[0] ?? 'text') : 'text';
             $relatedModel = is_array($args) ? (string) ($args[1] ?? '') : '';
+            $language = is_array($args) ? (string) ($args['language'] ?? '') : '';
+            $help = is_array($args) ? (string) ($args['help'] ?? '') : '';
 
             $listExpression = 'null';
 
@@ -104,7 +106,21 @@ BLADE;
                 $listExpression = $listVar;
             }
 
-            $fieldLines[] = "                    {{ Form::field('{$type}', '{$fieldName}', \$dto->{$fieldName} ?? null, {$listExpression}, null) }}";
+            $attributeParts = [];
+            if ($type === 'code' && $language !== '') {
+                $escapedLanguage = str_replace("'", "\\'", $language);
+                $attributeParts[] = "'data-language' => '{$escapedLanguage}'";
+            }
+            if ($help !== '') {
+                $escapedHelp = str_replace("'", "\\'", $help);
+                $attributeParts[] = "'data-field-help' => '{$escapedHelp}'";
+            }
+
+            $attributesExpression = $attributeParts === []
+                ? 'null'
+                : '['.implode(', ', $attributeParts).']';
+
+            $fieldLines[] = "                    {{ Form::field('{$type}', '{$fieldName}', \$dto->{$fieldName} ?? null, {$listExpression}, {$attributesExpression}) }}";
         }
 
         if ($fieldLines === []) {

@@ -57,7 +57,7 @@
     <script src="{{ ui_asset('vendors/jquery/jquery.min.js') }}"></script>
     <script src="{{ ui_asset('vendors/datatables-net/dataTables.min.js') }}"></script>
     <script src="{{ ui_asset('js/layouts/demo1.js') }}"></script>
-    @vite(['resources/js/state-flow-diagram.js', 'resources/js/swimlane-flow-diagram.js'])
+    @vite(['resources/js/state-flow-diagram.js', 'resources/js/swimlane-flow-diagram.js', 'resources/js/code-editor.js'])
     @stack('scripts')
     <script>
         let modalReturnUrl = null;
@@ -900,6 +900,14 @@
 
                     reloadDataTables();
                     closeModal();
+
+                    // Details pages (e.g. Feature) need a full refresh; lists already ajax-reload.
+                    const hasLiveTable = typeof $ !== 'undefined'
+                        && $.fn.dataTable
+                        && $.fn.dataTable.tables({ visible: true }).length > 0;
+                    if (!hasLiveTable) {
+                        window.location.reload();
+                    }
                 })
                 .catch(() => {
                     if (submitButton) {
