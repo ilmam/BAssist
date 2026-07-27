@@ -52,7 +52,7 @@ class ProjectDashboardController extends Controller
             'model' => 'SwimlaneFlow',
             'count' => 'swimlane_flows_count',
             'label' => 'swimlane_flows',
-            'icon' => 'abstract-44',
+            'icon' => 'row-horizontal',
         ],
     ];
 
@@ -124,7 +124,18 @@ class ProjectDashboardController extends Controller
             $links[] = [
                 'label' => __('ui.acceptance_plan'),
                 'url' => route('acceptance-plan.index', $scopeQuery),
-                'icon' => 'check-square',
+                'icon' => 'check-squared',
+            ];
+        }
+
+        if (nav_item_is_visible([
+            'entities' => ['StateFlow', 'SwimlaneFlow'],
+            'route' => 'diagrams.index',
+        ])) {
+            $links[] = [
+                'label' => __('ui.diagrams'),
+                'url' => route('diagrams.index', $scopeQuery),
+                'icon' => 'share',
             ];
         }
 

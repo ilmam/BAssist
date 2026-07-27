@@ -77,7 +77,7 @@
                         icon="{{ $link['icon'] }}"
                         color="light"
                         activeColor="primary"
-                        @if (! empty($link['external'])) target="_blank" @endif
+                        :target="! empty($link['external']) ? '_blank' : null"
                     >
                         {{ $link['label'] }}
                     </x-button>

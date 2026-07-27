@@ -20,6 +20,18 @@ class AcceptancePlanBuilderTest extends TestCase
         );
     }
 
+    /**
+     * KTSelect fires change on init; onchange→form.submit() caused an infinite reload loop.
+     */
+    public function test_acceptance_plan_filters_do_not_auto_submit_on_change(): void
+    {
+        $blade = file_get_contents(dirname(__DIR__, 2).'/resources/views/pages/acceptance-plan/index.blade.php');
+
+        $this->assertIsString($blade);
+        $this->assertStringNotContainsString('this.form.submit()', $blade);
+        $this->assertStringContainsString("__('ui.apply_filters')", $blade);
+    }
+
     public function test_type_edge_case_from_scenario_tag(): void
     {
         $builder = $this->builder();

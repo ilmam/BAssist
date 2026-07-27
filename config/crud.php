@@ -104,7 +104,7 @@ return [
         'Feature' => [
             'home' => true,
             'nav' => true,
-            'nav_label' => 'Features',
+            'nav_label' => 'BDD Features',
             'nav_icon' => 'category',
             'nav_icon_v8' => 'category',
             'controller' => \App\Http\Controllers\FeatureController::class,
@@ -121,19 +121,19 @@ return [
         ],
 
         'StateFlow' => [
-            'home' => true,
-            'nav' => true,
+            'home' => false,
+            'nav' => false,
             'nav_label' => 'State Flows',
-            'nav_icon' => 'category',
-            'nav_icon_v8' => 'category',
+            'nav_icon' => 'abstract-39',
+            'nav_icon_v8' => 'abstract-39',
         ],
 
         'SwimlaneFlow' => [
-            'home' => true,
-            'nav' => true,
+            'home' => false,
+            'nav' => false,
             'nav_label' => 'Swimlane Flows',
-            'nav_icon' => 'category',
-            'nav_icon_v8' => 'category',
+            'nav_icon' => 'row-horizontal',
+            'nav_icon_v8' => 'row-horizontal',
         ],
 
         // 'LegacyThing' => ['disabled' => true],

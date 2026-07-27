@@ -92,7 +92,7 @@ if (! function_exists('nav_item_with_sticky_query')) {
     function nav_item_with_sticky_query(array $item): array
     {
         $route = $item['route'] ?? null;
-        if (in_array($route, ['traceability.index', 'acceptance-plan.index'], true)) {
+        if (in_array($route, ['traceability.index', 'acceptance-plan.index', 'diagrams.index'], true)) {
             $query = [];
             $workspaceId = app(\App\Support\WorkspaceContext::class)->id();
             $projectId = app(\App\Support\ProjectContext::class)->id();

@@ -25,11 +25,11 @@
             </div>
         </x-slot>
 
+        {{-- Explicit Filter submit: KTSelect fires change on init, so onchange→submit loops forever. --}}
         <form method="GET" action="{{ route('acceptance-plan.index') }}" class="mb-5 flex flex-wrap items-end gap-3">
             <div class="flex flex-col gap-1 min-w-[220px]">
                 <label for="project_id" class="text-sm text-muted-foreground">{{ __('ui.project') }}</label>
-                <select name="project_id" id="project_id" class="kt-select" data-kt-select="true"
-                        onchange="const f=document.getElementById('feature_id'); if (f) f.value=''; this.form.submit()">
+                <select name="project_id" id="project_id" class="kt-select" data-kt-select="true">
                     <option value="">{{ __('ui.all_projects') }}</option>
                     @foreach ($projects as $project)
                         <option value="{{ $project->id }}" @selected((int) ($filters['project_id'] ?? 0) === (int) $project->id)>
@@ -41,7 +41,7 @@
 
             <div class="flex flex-col gap-1 min-w-[220px]">
                 <label for="feature_id" class="text-sm text-muted-foreground">{{ __('ui.feature') }}</label>
-                <select name="feature_id" id="feature_id" class="kt-select" data-kt-select="true" onchange="this.form.submit()"
+                <select name="feature_id" id="feature_id" class="kt-select" data-kt-select="true"
                         @disabled(empty($features) || $features->isEmpty())>
                     <option value="">{{ __('ui.all_features') }}</option>
                     @foreach ($features as $feature)
@@ -57,7 +57,7 @@
 
             <div class="flex flex-col gap-1 min-w-[180px]">
                 <label for="type" class="text-sm text-muted-foreground">{{ __('ui.type') }}</label>
-                <select name="type" id="type" class="kt-select" data-kt-select="true" onchange="this.form.submit()">
+                <select name="type" id="type" class="kt-select" data-kt-select="true">
                     <option value="">{{ __('ui.all_types') }}</option>
                     <option value="happy_path" @selected(($filters['type'] ?? null) === 'Happy Path')>
                         {{ __('ui.happy_path') }}
@@ -68,8 +68,12 @@
                 </select>
             </div>
 
+            <x-button type="submit" color="primary" activeColor="primary">
+                {{ __('ui.apply_filters') }}
+            </x-button>
+
             @if (($filters['project_id'] ?? null) || ($filters['feature_id'] ?? null) || ($filters['type'] ?? null))
-                <a href="{{ route('acceptance-plan.index') }}"
+                <a href="{{ route('acceptance-plan.index', ['clear_project' => 1]) }}"
                    class="text-sm text-primary underline-offset-2 hover:underline">
                     {{ __('ui.clear_filter') }}
                 </a>
