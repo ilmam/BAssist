@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Architecture;
 use App\Models\Project;
 use App\Models\StateFlow;
 use App\Models\SwimlaneFlow;
@@ -33,6 +34,10 @@ class DiagramsController extends Controller
             ->get(['id', 'name', 'code', 'workspace_id']);
 
         $sections = [];
+
+        if (entity_can('Architecture', EntityAccess::VIEW)) {
+            $sections[] = $this->architectureSection($projectId, $workspaceId, $tenantId, $projects);
+        }
 
         if (entity_can('StateFlow', EntityAccess::VIEW)) {
             $sections[] = $this->section(
@@ -66,6 +71,48 @@ class DiagramsController extends Controller
                 'workspace_id' => $workspaceId,
             ],
         ]);
+    }
+
+    /**
+     * @param  Collection<int, Project>  $projects
+     * @return array<string, mixed>
+     */
+    protected function architectureSection(?int $projectId, ?int $workspaceId, mixed $tenantId, Collection $projects): array
+    {
+        $query = Architecture::query()->with(['project', 'status'])
+            ->when($tenantId !== null, fn ($q) => $q->whereHas(
+                'project.workspace',
+                fn ($w) => $w->where('tenant_id', $tenantId)
+            ))
+            ->when($workspaceId !== null, fn ($q) => $q->whereHas(
+                'project',
+                fn ($p) => $p->where('workspace_id', $workspaceId)
+            ))
+            ->when($projectId !== null, fn ($q) => $q->where('project_id', $projectId));
+
+        $items = (clone $query)->orderBy('title')->limit(50)->get();
+        $canUpdate = entity_can('Architecture', EntityAccess::UPDATE);
+        $canCreate = entity_can('Architecture', EntityAccess::CREATE);
+
+        $openUrl = null;
+        if ($projectId !== null) {
+            $openUrl = route('architectures.for-project', $projectId);
+        }
+
+        return [
+            'model' => 'Architecture',
+            'label' => __('ui.architecture_c4'),
+            'description' => __('ui.diagrams_architecture_help'),
+            'icon' => 'abstract-26',
+            'count' => $items->count(),
+            'items' => $items,
+            'index_url' => $openUrl ?? model_route('Architecture', 'index'),
+            'create_modal_url' => null,
+            'can_create' => false,
+            'architecture_open_url' => $openUrl,
+            'architecture_can_open' => $projectId !== null && ($canUpdate || $canCreate || entity_can('Architecture', EntityAccess::VIEW)),
+            'is_architecture' => true,
+        ];
     }
 
     /**
@@ -134,6 +181,7 @@ class DiagramsController extends Controller
                 ? model_modal_path($model, 'create')
                 : null,
             'can_create' => entity_can($model, EntityAccess::CREATE),
+            'is_architecture' => false,
         ];
     }
 
@@ -161,7 +209,8 @@ class DiagramsController extends Controller
     {
         $user = auth()->user();
 
-        $canView = EntityAccess::can($user, 'StateFlow', EntityAccess::VIEW)
+        $canView = EntityAccess::can($user, 'Architecture', EntityAccess::VIEW)
+            || EntityAccess::can($user, 'StateFlow', EntityAccess::VIEW)
             || EntityAccess::can($user, 'SwimlaneFlow', EntityAccess::VIEW);
 
         if (! $canView) {

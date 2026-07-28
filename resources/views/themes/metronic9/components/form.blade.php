@@ -6,22 +6,30 @@
     $formOpenOptions = array_merge($formRoute, ['id' => $id, 'files' => true, 'method' => 'post']);
 
     if ($inModal) {
-        $formOpenOptions['attributes'] = ['data-modal-form' => 'true'];
+        $formOpenOptions['attributes'] = [
+            'data-modal-form' => 'true',
+        ];
     }
 
+    // Compact density is reserved for quick-create forms only.
+    // Regular full-page and modal create/edit forms stay comfortable (default).
     if ($quickCreate) {
         $formOpenOptions['attributes'] = array_merge(
             $formOpenOptions['attributes'] ?? [],
             [
                 'data-modal-form' => 'true',
                 'data-quick-create-form' => 'true',
+                'data-form-density' => 'compact',
             ]
         );
     }
 
+    // Quick-create uses a 12-col grid; compact spacing is owned by
+    // .form-fields-grid under [data-form-density=compact] in ui-layout.css
+    // (do not also apply gap-y-* — that stacks with .kt-form-item margins).
     $fieldsWrapperClass = $quickCreate
-        ? 'grid grid-cols-12 gap-x-4 gap-y-3'
-        : 'space-y-6';
+        ? 'form-fields-grid grid grid-cols-12'
+        : 'form-fields';
 @endphp
 
 {{ Form::open($formOpenOptions) }}

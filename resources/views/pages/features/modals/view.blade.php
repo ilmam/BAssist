@@ -14,6 +14,7 @@
         'tagList' => $tagList ?? [],
         'exportUrl' => $exportUrl ?? null,
         'printUrl' => $printUrl ?? null,
+        'importUrl' => $importUrl ?? null,
     ])
 
     <x-slot:footer>

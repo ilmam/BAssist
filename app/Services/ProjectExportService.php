@@ -13,6 +13,7 @@ class ProjectExportService
         protected TraceabilityMatrixService $matrix,
         protected StateDiagramMermaidGenerator $stateDiagrams,
         protected SwimlaneMermaidGenerator $swimlanes,
+        protected ProjectReadinessService $readiness,
     ) {
     }
 
@@ -20,12 +21,16 @@ class ProjectExportService
      * @return array{
      *   project: Project,
      *   generated_at: \Illuminate\Support\Carbon,
+     *   readiness: array{total_gaps: int, items: list<array{key: string, label: string, count: int, severity: string, url: string|null}>},
      *   objectives: \Illuminate\Database\Eloquent\Collection,
      *   needs: \Illuminate\Database\Eloquent\Collection,
      *   stakeholders: \Illuminate\Database\Eloquent\Collection,
      *   stakeholder_needs: \Illuminate\Database\Eloquent\Collection,
      *   state_flows: list<array{model: \App\Models\StateFlow, mermaid: string}>,
      *   swimlane_flows: list<array{model: \App\Models\SwimlaneFlow, mermaid: string}>,
+     *   assumptions: \Illuminate\Database\Eloquent\Collection,
+     *   constraints: \Illuminate\Database\Eloquent\Collection,
+     *   business_rules: \Illuminate\Database\Eloquent\Collection,
      *   matrix: array{rows: list<array<string, mixed>>, summary: array<string, int>}
      * }
      */
@@ -47,6 +52,9 @@ class ProjectExportService
             'stakeholderNeeds.businessNeeds',
             'stateFlows.status',
             'swimlaneFlows.status',
+            'assumptions',
+            'constraints',
+            'businessRules',
         ]);
 
         $matrix = $this->matrix->build(['project_id' => $project->id]);
@@ -61,6 +69,7 @@ class ProjectExportService
         return [
             'project' => $project,
             'generated_at' => now(),
+            'readiness' => $this->readiness->forProject($project),
             'objectives' => $project->businessObjectives->sortBy('number')->values(),
             'needs' => $project->businessNeeds->sortBy('number')->values(),
             'stakeholders' => $stakeholdersWithNeeds,
@@ -88,6 +97,9 @@ class ProjectExportService
                     ),
                 ])
                 ->all(),
+            'assumptions' => $project->assumptions->sortBy('title')->values(),
+            'constraints' => $project->constraints->sortBy('title')->values(),
+            'business_rules' => $project->businessRules->sortBy('title')->values(),
             'matrix' => [
                 'rows' => $matrix['rows'],
                 'summary' => $matrix['summary'],

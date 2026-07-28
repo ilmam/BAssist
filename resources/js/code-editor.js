@@ -1,5 +1,5 @@
-import { basicSetup } from 'codemirror';
-import { EditorView, keymap } from '@codemirror/view';
+import { minimalSetup } from 'codemirror';
+import { EditorView, keymap, highlightActiveLine } from '@codemirror/view';
 import { EditorState } from '@codemirror/state';
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
 import {
@@ -21,7 +21,7 @@ const TAGS_READY_ATTR = 'data-tags-ready';
 
 /**
  * Explicit token colors so Metronic / theme inheritance cannot wash out
- * StreamLanguage highlighting. Not a fallback — must win over basicSetup.
+ * StreamLanguage highlighting. Not a fallback — must win over default styles.
  */
 const codeHighlightStyle = HighlightStyle.define([
     { tag: t.keyword, color: '#6d28d9', fontWeight: '700' },
@@ -62,30 +62,23 @@ const LANGUAGE_EXTENSIONS = {
 const editorTheme = EditorView.theme({
     '&': {
         fontSize: '0.875rem',
-        backgroundColor: 'var(--background, #fff)',
+        backgroundColor: 'transparent',
         minHeight: '220px',
     },
     '.cm-scroller': {
         fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
         lineHeight: '1.55',
         overflow: 'auto',
+        backgroundColor: 'transparent',
     },
     '.cm-content': {
-        padding: '0.75rem 0',
+        padding: '0.75rem 0.85rem',
         caretColor: 'var(--foreground, #111827)',
         minHeight: '200px',
         color: '#111827',
     },
-    '.cm-gutters': {
-        backgroundColor: 'color-mix(in srgb, var(--muted, #f3f4f6) 80%, transparent)',
-        borderRight: '1px solid var(--border, #e5e7eb)',
-        color: 'var(--muted-foreground, #6b7280)',
-    },
-    '.cm-activeLineGutter': {
-        backgroundColor: 'color-mix(in srgb, var(--muted, #f3f4f6) 100%, transparent)',
-    },
     '.cm-activeLine': {
-        backgroundColor: 'color-mix(in srgb, var(--muted, #f3f4f6) 45%, transparent)',
+        backgroundColor: 'color-mix(in srgb, var(--muted, #f3f4f6) 55%, transparent)',
     },
     '&.cm-focused': {
         outline: '2px solid color-mix(in srgb, var(--primary, #3b82f6) 35%, transparent)',
@@ -149,18 +142,6 @@ function ensureHint(parent, className, text) {
     }
     hint.textContent = text;
     return hint;
-}
-
-function ensureBodyTagPreview(root) {
-    let preview = root.querySelector('[data-body-tags-preview]');
-    if (!(preview instanceof HTMLElement)) {
-        preview = document.createElement('div');
-        preview.className = 'gherkin-tags-preview gherkin-tags-preview--body';
-        preview.setAttribute('data-body-tags-preview', 'true');
-        root.appendChild(preview);
-    }
-
-    return preview;
 }
 
 function bindTagsInput(input) {
@@ -264,7 +245,6 @@ function bindCodeEditor(root) {
     const language = root.getAttribute('data-language')
         || mount.getAttribute('data-language')
         || 'plaintext';
-    const isGherkin = String(language).toLowerCase() === 'gherkin';
     const readonly = root.hasAttribute('data-readonly')
         || root.getAttribute('data-readonly') === 'true'
         || textarea.readOnly
@@ -276,22 +256,18 @@ function bindCodeEditor(root) {
         textarea.dispatchEvent(new Event('change', { bubbles: true }));
     };
 
-    const bodyPreview = isGherkin ? ensureBodyTagPreview(root) : null;
-
     const extensions = [
-        basicSetup,
+        minimalSetup,
         history(),
+        highlightActiveLine(),
         keymap.of([...defaultKeymap, ...historyKeymap]),
         languageExtension(language),
-        // Must not be fallback — otherwise basicSetup's muted colors win.
+        // Must not be fallback — otherwise default muted colors win.
         syntaxHighlighting(codeHighlightStyle),
         editorTheme,
         EditorView.updateListener.of((update) => {
             if (update.docChanged && !readonly) {
                 sync(update.view);
-            }
-            if (bodyPreview instanceof HTMLElement && update.docChanged) {
-                renderTagChips(bodyPreview, update.state.doc.toString());
             }
         }),
         EditorView.editable.of(!readonly),
@@ -309,10 +285,6 @@ function bindCodeEditor(root) {
         }),
         parent: mount,
     });
-
-    if (bodyPreview instanceof HTMLElement) {
-        renderTagChips(bodyPreview, view.state.doc.toString());
-    }
 
     bindCopyButton(root, view);
 

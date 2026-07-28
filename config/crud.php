@@ -120,6 +120,17 @@ return [
             'controller' => \App\Http\Controllers\ScenarioController::class,
         ],
 
+        'Architecture' => [
+            'home' => false,
+            'nav' => false,
+            'nav_label' => 'Architecture (C4)',
+            'nav_icon' => 'abstract-26',
+            'nav_icon_v8' => 'abstract-26',
+            'controller' => \App\Http\Controllers\ArchitectureController::class,
+            // C4 editor needs the full page; never open create/edit/view in a modal.
+            'use_modals' => false,
+        ],
+
         'StateFlow' => [
             'home' => false,
             'nav' => false,
@@ -134,6 +145,30 @@ return [
             'nav_label' => 'Swimlane Flows',
             'nav_icon' => 'row-horizontal',
             'nav_icon_v8' => 'row-horizontal',
+        ],
+
+        'Assumption' => [
+            'home' => false,
+            'nav' => false,
+            'nav_label' => 'Assumptions',
+            'nav_icon' => 'questionnaire-tablet',
+            'nav_icon_v8' => 'questionnaire-tablet',
+        ],
+
+        'Constraint' => [
+            'home' => false,
+            'nav' => false,
+            'nav_label' => 'Constraints',
+            'nav_icon' => 'shield-tick',
+            'nav_icon_v8' => 'shield-tick',
+        ],
+
+        'BusinessRule' => [
+            'home' => false,
+            'nav' => false,
+            'nav_label' => 'Business Rules',
+            'nav_icon' => 'book',
+            'nav_icon_v8' => 'book',
         ],
 
         // 'LegacyThing' => ['disabled' => true],

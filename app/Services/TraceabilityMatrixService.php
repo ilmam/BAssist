@@ -126,7 +126,9 @@ class TraceabilityMatrixService
                             need: $need,
                             stakeholderNeed: $stakeholderNeed,
                             feature: null,
-                            gapType: $objective === null || $stakeholderNeed === null ? 'incomplete_chain' : null,
+                            gapType: $objective === null || $stakeholderNeed === null
+                                ? 'incomplete_chain'
+                                : 'missing_feature',
                         );
                         continue;
                     }
@@ -265,6 +267,10 @@ class TraceabilityMatrixService
         }
         if ($stakeholderNeed === null && $need !== null) {
             $gaps[] = 'missing_stakeholder_need';
+        }
+        // Stakeholder need without a linked BDD feature (or orphan SN with no features).
+        if ($feature === null && $stakeholderNeed !== null) {
+            $gaps[] = 'missing_feature';
         }
         if ($gapType === 'orphan_objective') {
             $gaps[] = 'orphan_objective';

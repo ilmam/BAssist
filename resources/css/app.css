@@ -10,3 +10,16 @@
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
 }
+
+/*
+ * Form field spacing lives in themes/metronic9/.../ui-layout.css:
+ *   .kt-form-item / .kt-form-field-row  — label → control gap
+ *   .form-fields                        — sibling field stack
+ *   .form-fields-grid                   — quick-create 12-col grid (row-gap)
+ *   .form-section-intro                 — section help → first field
+ * Compact: opt-in via Form::open attributes data-form-density="compact"
+ * (or class kt-form--compact / form-fields--compact). Used by quick-create only;
+ * full-page and regular modal forms stay comfortable (default).
+ * Note: Metronic styles.css lacks space-y-3/4 — do not rely on those for gaps.
+ */
+

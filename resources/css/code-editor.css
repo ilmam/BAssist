@@ -27,7 +27,7 @@
     border: 1px solid var(--border, #e5e7eb);
     border-radius: 0.5rem;
     overflow: hidden;
-    background: var(--background, #fff);
+    background: color-mix(in srgb, var(--muted, #f3f4f6) 55%, var(--background, #fff));
 }
 
 .code-editor__chrome {
@@ -37,7 +37,7 @@
     gap: 0.5rem;
     padding: 0.35rem 0.65rem;
     border-bottom: 1px solid var(--border, #e5e7eb);
-    background: color-mix(in srgb, var(--muted, #f3f4f6) 70%, transparent);
+    background: color-mix(in srgb, var(--muted, #f3f4f6) 80%, transparent);
 }
 
 .code-editor__actions {
@@ -56,15 +56,16 @@
 
 .code-editor__mount {
     min-height: 220px;
+    background: color-mix(in srgb, var(--muted, #f3f4f6) 42%, var(--background, #fff));
 }
 
 .code-editor--readonly .code-editor__mount {
     min-height: 120px;
 }
 
-.code-editor .cm-editor {
-    border: 0 !important;
-    border-radius: 0 !important;
+.code-editor .cm-editor,
+.code-editor .cm-scroller {
+    background: transparent !important;
 }
 
 /* CodeMirror sync field — must stay invisible (never show resize chrome) */
@@ -104,12 +105,6 @@
     min-height: 0;
 }
 
-.gherkin-tags-preview--body {
-    padding: 0.45rem 0.65rem;
-    border-top: 1px solid var(--border, #e5e7eb);
-    background: color-mix(in srgb, var(--muted, #f3f4f6) 35%, transparent);
-}
-
 .gherkin-tags-preview[hidden] {
     display: none !important;
 }
@@ -128,8 +123,7 @@
 }
 
 .gherkin-tags-hint,
-.gherkin-editor-hint,
-.field-help {
+.gherkin-editor-hint {
     margin: 0.35rem 0 0;
     font-size: 0.75rem;
     color: var(--muted-foreground, #6b7280);

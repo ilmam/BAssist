@@ -28,8 +28,8 @@ class NeedSpineSeeder extends Seeder
 
         $agreedId = EntityStatus::id(EntityStatus::AGREED);
         $draftId = EntityStatus::id(EntityStatus::DRAFT);
-        $highId = EntityPriority::id(EntityPriority::HIGH);
-        $mediumId = EntityPriority::id(EntityPriority::MEDIUM);
+        $mustId = EntityPriority::id(EntityPriority::MUST);
+        $shouldId = EntityPriority::id(EntityPriority::SHOULD);
 
         $project = Project::query()->updateOrCreate(
             [
@@ -54,7 +54,7 @@ class NeedSpineSeeder extends Seeder
                 'description' => 'Make need-to-delivery provenance visible across teams.',
                 'success_measure' => 'Every active story traces to a business need and objective.',
                 'potential_value' => 'Fewer orphan tickets and clearer provenance for audits.',
-                'priority_id' => $highId,
+                'priority_id' => $mustId,
                 'status_id' => $agreedId,
             ],
         );
@@ -70,7 +70,7 @@ class NeedSpineSeeder extends Seeder
                 'rationale' => 'Wikis and tickets lose provenance over time.',
                 'impact' => 'Delivery work loses strategic alignment.',
                 'do_nothing_consequence' => 'Teams keep optimizing tickets without a living need spine.',
-                'priority_id' => $highId,
+                'priority_id' => $mustId,
                 'status_id' => $agreedId,
             ],
         );
@@ -88,7 +88,7 @@ class NeedSpineSeeder extends Seeder
                 'need_type' => 'problem',
                 'description' => 'Example of need-first drafting before an objective is chosen.',
                 'rationale' => 'Bottom-up discovery is valid in BABOK Strategy Analysis.',
-                'priority_id' => $mediumId,
+                'priority_id' => $shouldId,
                 'status_id' => $draftId,
             ],
         );
@@ -119,7 +119,7 @@ class NeedSpineSeeder extends Seeder
             ],
             [
                 'description' => 'Stakeholders need confidence their requests hang under a real business need.',
-                'priority_id' => $mediumId,
+                'priority_id' => $shouldId,
                 'status_id' => $draftId,
             ],
         );
@@ -134,7 +134,7 @@ class NeedSpineSeeder extends Seeder
             ],
             [
                 'description' => 'Example orphan stakeholder need with no business need or stakeholder yet.',
-                'priority_id' => $mediumId,
+                'priority_id' => $shouldId,
                 'status_id' => $draftId,
             ],
         );

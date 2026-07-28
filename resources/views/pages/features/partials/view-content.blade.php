@@ -71,6 +71,9 @@
             @if (! empty($printUrl))
                 <x-button type="link" href="{{ $printUrl }}" color="light" target="_blank">{{ __('ui.print_feature') }}</x-button>
             @endif
+            @if (! empty($importUrl) && entity_can($model, 'update'))
+                <x-button type="link" href="{{ $importUrl }}" color="primary">{{ __('ui.import_feature_file') }}</x-button>
+            @endif
         </div>
         @if (filled($assembledGherkin))
             {{-- Non-rendered copy buffer (never a visible control in the toolbar) --}}
@@ -81,10 +84,7 @@
     {{-- 2. Feature body document only --}}
     <section class="space-y-3">
         <div class="flex flex-wrap items-start justify-between gap-3">
-            <div class="space-y-1">
-                <h3 class="text-base font-semibold text-foreground">{{ __('ui.feature_document') }}</h3>
-                @include('pages.partials.gherkin-tags', ['tags' => $tagList ?? []])
-            </div>
+            <h3 class="text-base font-semibold text-foreground">{{ __('ui.feature_document') }}</h3>
             <div class="flex flex-wrap gap-2">
                 @if (entity_can($model, 'update'))
                     <x-button
@@ -115,23 +115,16 @@
     </section>
 
     {{-- 3+. Each scenario body --}}
-    @php
-        $gherkinAssembler = app(\App\Services\GherkinFeatureAssembler::class);
-    @endphp
     @forelse ($feature->scenarios ?? [] as $child)
         @php
             $viewScenarioModalUrl = model_modal_path('Scenario', 'view', $child->id);
             $editScenarioModalUrl = model_modal_path('Scenario', 'edit', $child->id);
-            $scenarioTags = $gherkinAssembler->scenarioDisplayTags($child);
         @endphp
         <section class="space-y-3">
             <div class="flex flex-wrap items-start justify-between gap-3">
-                <div class="space-y-1">
-                    <h3 class="text-base font-semibold text-foreground">
-                        {{ $child->gherkinKeyword() }}: {{ $child->title }}
-                    </h3>
-                    @include('pages.partials.gherkin-tags', ['tags' => $scenarioTags])
-                </div>
+                <h3 class="text-base font-semibold text-foreground">
+                    {{ $child->gherkinKeyword() }}: {{ $child->title }}
+                </h3>
                 <div class="flex flex-wrap gap-2">
                     <x-button
                         type="link"

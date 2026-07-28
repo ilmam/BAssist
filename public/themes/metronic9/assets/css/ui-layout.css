@@ -233,3 +233,138 @@
   max-width: 140px;
   object-fit: contain;
 }
+
+/**
+ * Form controls — density-aware field spacing.
+ *
+ * Comfortable (default):
+ *   label→control gap ~0.625rem (theme gap-2.5)
+ *   sibling field gap ~1.25rem (gap-5)
+ *
+ * Compact — opt in on <form> (quick-create only by default):
+ *   data-form-density="compact"  and/or  class "kt-form--compact"
+ *   or wrap fields in .form-fields--compact / .form-fields-grid
+ *   sibling gap ~0.75rem (gap-3); label gap stays ≥0.625rem
+ *
+ * Stack path: .form-fields + .kt-form-item margin-bottom
+ * Grid path (quick-create): .form-fields-grid row-gap; item margins zeroed
+ * so gap does not stack with margin-bottom.
+ *
+ * Gap is set here (unlayered) so it cannot be collapsed by Metronic
+ * @layer components or by theme description negative margins.
+ */
+.kt-form-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem; /* min label → control / help */
+  margin-bottom: 1.25rem;
+}
+
+.kt-form-field-row {
+  margin-bottom: 1.25rem;
+}
+
+.form-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-bottom: 1.25rem;
+}
+
+.form-fields:last-child {
+  margin-bottom: 0;
+}
+
+/* Quick-create 12-col grid; gaps come from density rules below */
+.form-fields-grid {
+  column-gap: 1rem;
+  row-gap: 1.25rem; /* comfortable fallback if used without compact */
+  margin-bottom: 1.25rem;
+}
+
+.form-fields-grid:last-child {
+  margin-bottom: 0;
+}
+
+/* Prefer theme description token; neutralize Metronic negative margin + legacy help */
+.kt-form-item .kt-form-description,
+.kt-form-field-row .kt-form-description,
+.field-help {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+/*
+ * Section title + help (e.g. Feature form "Details").
+ * Do NOT rely on Tailwind space-y-3/4 — those utilities are NOT present in
+ * Metronic styles.css, so section.space-y-4 creates zero gap. Use padding
+ * (non-collapsing) so intro → first .kt-form-item / .form-fields is visible.
+ */
+.form-section-intro {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  margin-bottom: 0;
+  padding-bottom: 1rem; /* ~1rem clear gap before first field label */
+}
+
+/* Hard-coded sibling insurance (same gap if padding is overridden) */
+.form-section-intro + .form-fields,
+.form-section-intro + .form-fields-grid,
+.form-section-intro + .kt-form-item,
+.form-section-intro + .kt-form-field-row {
+  margin-top: 0.25rem;
+}
+
+/* ---- Compact density (stack path) ---- */
+.kt-form[data-form-density="compact"] .kt-form-item,
+.kt-form--compact .kt-form-item,
+.form-fields--compact > .kt-form-item {
+  gap: 0.625rem;
+  margin-bottom: 0.75rem;
+}
+
+.kt-form[data-form-density="compact"] .kt-form-field-row,
+.kt-form--compact .kt-form-field-row,
+.form-fields--compact > .kt-form-field-row {
+  margin-bottom: 0.75rem;
+}
+
+.kt-form[data-form-density="compact"] .form-fields,
+.kt-form--compact .form-fields,
+.form-fields--compact {
+  margin-bottom: 0.75rem;
+}
+
+.kt-form[data-form-density="compact"] .form-fields:last-child,
+.kt-form--compact .form-fields:last-child,
+.form-fields--compact:last-child {
+  margin-bottom: 0;
+}
+
+/*
+ * Compact density (grid / quick-create path).
+ * Spacing is row-gap only — zero item margins so they do not stack with gap.
+ */
+.kt-form[data-form-density="compact"] .form-fields-grid,
+.kt-form--compact .form-fields-grid,
+.form-fields-grid.form-fields--compact {
+  row-gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.kt-form[data-form-density="compact"] .form-fields-grid:last-child,
+.kt-form--compact .form-fields-grid:last-child,
+.form-fields-grid.form-fields--compact:last-child {
+  margin-bottom: 0;
+}
+
+.kt-form[data-form-density="compact"] .form-fields-grid .kt-form-item,
+.kt-form--compact .form-fields-grid .kt-form-item,
+.form-fields-grid.form-fields--compact .kt-form-item,
+.kt-form[data-form-density="compact"] .form-fields-grid .kt-form-field-row,
+.kt-form--compact .form-fields-grid .kt-form-field-row,
+.form-fields-grid.form-fields--compact .kt-form-field-row {
+  margin-bottom: 0;
+}
+

@@ -3,12 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Models\Feature;
-use App\Models\Scenario;
-use App\Services\GherkinDocumentParser;
+use App\Services\FeatureImportPreview;
+use App\Services\FeatureImportService;
 use App\Services\GherkinFeatureAssembler;
 use Illuminate\Contracts\View\View;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Str;
+use InvalidArgumentException;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class FeatureController extends CrudController
@@ -29,6 +32,7 @@ class FeatureController extends CrudController
             'tagList' => $assembler->featureDisplayTags($feature),
             'exportUrl' => route('features.export', $feature->id),
             'printUrl' => route('features.print', $feature->id),
+            'importUrl' => route('features.import', $feature->id),
         ]);
     }
 
@@ -47,6 +51,7 @@ class FeatureController extends CrudController
             'tagList' => $assembler->featureDisplayTags($feature),
             'exportUrl' => route('features.export', $feature->id),
             'printUrl' => route('features.print', $feature->id),
+            'importUrl' => route('features.import', $feature->id),
         ];
 
         return $this->respondModalOrPage(
@@ -59,37 +64,9 @@ class FeatureController extends CrudController
 
     public function store(Request $request)
     {
-        $importSource = trim((string) $request->input('import_source', ''));
-        $parsedScenarios = [];
-        $parser = app(GherkinDocumentParser::class);
-
-        if ($importSource !== '') {
-            $parsed = $parser->splitFeatureFile($importSource);
-            $parsedScenarios = $parsed['scenarios'];
-            $body = $parsed['preamble'] !== ''
-                ? $parsed['preamble']
-                : (string) $request->input('body', '');
-            $titleFromBody = $parser->extractFeatureTitle($body);
-            $request->merge([
-                'body' => $body,
-                'title' => $titleFromBody ?? $request->input('title'),
-            ]);
-        }
-
         $dtoClass = '\\App\\Data\\'.$this->modelName.'Data';
         $data = $dtoClass::from($request);
         $created = $this->modelRepository->create($data->toArray());
-
-        foreach ($parsedScenarios as $block) {
-            $scenario = new Scenario([
-                'feature_id' => $created->id,
-                'title' => $block['title'],
-                'body' => $block['body'],
-                'is_outline' => $block['is_outline'],
-            ]);
-            $scenario->syncDocumentFields($parser);
-            $scenario->save();
-        }
 
         return $this->respondAfterMutation($request, $created);
     }
@@ -112,6 +89,118 @@ class FeatureController extends CrudController
         }
 
         return parent::respondAfterMutation($request, $record);
+    }
+
+    public function importForm($id): View
+    {
+        $feature = $this->loadFeature((int) $id);
+        $dto = $this->modelRepository->getById($id);
+
+        return view('pages.features.import', [
+            'feature' => $feature,
+            'dto' => $dto,
+            'model' => $this->modelName,
+            'previewUrl' => route('features.import.preview', $feature->id),
+            'backUrl' => route('features.show', $feature->id),
+        ]);
+    }
+
+    public function importPreview(Request $request, $id): RedirectResponse
+    {
+        $feature = $this->loadFeature((int) $id);
+        $request->validate([
+            'feature_file' => ['required', 'file', 'max:1024'],
+        ]);
+
+        $file = $request->file('feature_file');
+        $contents = (string) file_get_contents($file->getRealPath());
+        $filename = (string) $file->getClientOriginalName();
+
+        try {
+            $preview = app(FeatureImportService::class)->previewReplace($feature, $contents, $filename);
+        } catch (InvalidArgumentException $e) {
+            return redirect()
+                ->route('features.import', $feature->id)
+                ->withErrors(['feature_file' => $e->getMessage()]);
+        }
+
+        $token = Str::random(40);
+        $request->session()->put(FeatureImportService::SESSION_KEY, [
+            'token' => $token,
+            'feature_id' => (int) $feature->id,
+            'preview' => $preview->toArray(),
+        ]);
+
+        return redirect()->route('features.import.preview.show', $feature->id);
+    }
+
+    public function importPreviewShow(Request $request, $id): View|RedirectResponse
+    {
+        $feature = $this->loadFeature((int) $id);
+        $payload = $request->session()->get(FeatureImportService::SESSION_KEY);
+
+        if (! is_array($payload)
+            || (int) ($payload['feature_id'] ?? 0) !== (int) $feature->id
+            || empty($payload['preview'])
+            || empty($payload['token'])
+        ) {
+            return redirect()
+                ->route('features.import', $feature->id)
+                ->withErrors(['feature_file' => __('ui.feature_import_session_expired')]);
+        }
+
+        $preview = FeatureImportPreview::fromArray($payload['preview']);
+        $dto = $this->modelRepository->getById($id);
+
+        return view('pages.features.import-preview', [
+            'feature' => $feature,
+            'dto' => $dto,
+            'model' => $this->modelName,
+            'preview' => $preview,
+            'token' => $payload['token'],
+            'confirmUrl' => route('features.import.confirm', $feature->id),
+            'backUrl' => route('features.import', $feature->id),
+            'cancelUrl' => route('features.show', $feature->id),
+        ]);
+    }
+
+    public function importConfirm(Request $request, $id): RedirectResponse
+    {
+        $feature = $this->loadFeature((int) $id);
+        $request->validate([
+            'token' => ['required', 'string'],
+            'overwrite_title' => ['sometimes', 'boolean'],
+        ]);
+
+        $payload = $request->session()->get(FeatureImportService::SESSION_KEY);
+        if (! is_array($payload)
+            || (int) ($payload['feature_id'] ?? 0) !== (int) $feature->id
+            || ! hash_equals((string) ($payload['token'] ?? ''), (string) $request->input('token'))
+            || empty($payload['preview']['source'])
+        ) {
+            return redirect()
+                ->route('features.import', $feature->id)
+                ->withErrors(['feature_file' => __('ui.feature_import_session_expired')]);
+        }
+
+        $source = (string) $payload['preview']['source'];
+        $overwriteTitle = $request->boolean('overwrite_title', true);
+
+        try {
+            app(FeatureImportService::class)->applyReplace($feature, $source, [
+                'overwrite_title' => $overwriteTitle,
+            ]);
+        } catch (InvalidArgumentException $e) {
+            return redirect()
+                ->route('features.import', $feature->id)
+                ->withErrors(['feature_file' => $e->getMessage()]);
+        }
+
+        $request->session()->forget(FeatureImportService::SESSION_KEY);
+
+        return redirect()
+            ->route('features.show', $feature->id)
+            ->with('status', __('ui.feature_import_success'));
     }
 
     public function export($id): StreamedResponse|Response
@@ -153,5 +242,4 @@ class FeatureController extends CrudController
             ])
             ->findOrFail($id);
     }
-
 }

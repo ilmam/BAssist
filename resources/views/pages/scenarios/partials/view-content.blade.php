@@ -7,7 +7,6 @@
                 </a>
             @endif
         </div>
-        @include('pages.partials.gherkin-tags', ['tags' => $tagList ?? []])
     </div>
 
     @include('pages.partials.gherkin-document', [

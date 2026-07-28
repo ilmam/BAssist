@@ -3,8 +3,9 @@
     $createPageUrl = model_route($model, 'create');
     $createModalUrl = model_modal_path($model, 'create');
     $quickCreateModalUrl = model_modal_path($model, 'quick-create');
-    $useModalCreate = config('ui.modal_create', true);
-    $useQuickCreate = config('ui.modal_quick_create', true);
+    $modelAllowsModals = config('crud.models.'.class_basename($model).'.use_modals', true) !== false;
+    $useModalCreate = config('ui.modal_create', true) && $modelAllowsModals;
+    $useQuickCreate = config('ui.modal_quick_create', true) && $modelAllowsModals;
     $theme = ui_theme();
 @endphp
 

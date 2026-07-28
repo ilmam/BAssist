@@ -49,6 +49,58 @@
             @endif
         </x-card>
 
+        <x-card :title="__('ui.project_readiness')">
+            <x-slot:toolbar>
+                <span class="kt-badge kt-badge-outline">
+                    {{ __('ui.readiness_gap_count', ['count' => $readiness['total_gaps'] ?? 0]) }}
+                </span>
+            </x-slot:toolbar>
+
+            <p class="text-sm text-muted-foreground mb-4">{{ __('ui.project_readiness_help') }}</p>
+
+            @if (($readiness['items'] ?? []) === [])
+                <p class="text-sm text-secondary-foreground">{{ __('ui.readiness_all_clear') }}</p>
+            @else
+                <div class="kt-scrollable-x-auto">
+                    <table class="kt-table">
+                        <thead>
+                            <tr>
+                                <th>{{ __('ui.readiness_gap') }}</th>
+                                <th class="w-24 text-end">{{ __('ui.count') }}</th>
+                                <th class="w-28 text-end">{{ __('ui.actions') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach ($readiness['items'] as $gap)
+                                <tr>
+                                    <td>
+                                        <div class="flex items-center gap-2">
+                                            @if ($gap['severity'] === 'critical')
+                                                <span class="kt-badge kt-badge-sm kt-badge-warning">{{ __('ui.readiness_severity_critical') }}</span>
+                                            @elseif ($gap['severity'] === 'warn')
+                                                <span class="kt-badge kt-badge-sm kt-badge-outline kt-badge-warning">{{ __('ui.readiness_severity_warn') }}</span>
+                                            @else
+                                                <span class="kt-badge kt-badge-sm kt-badge-outline">{{ __('ui.readiness_severity_info') }}</span>
+                                            @endif
+                                            <span>{{ $gap['label'] }}</span>
+                                        </div>
+                                    </td>
+                                    <td class="text-end font-medium">{{ $gap['count'] }}</td>
+                                    <td class="text-end">
+                                        @if (! empty($gap['url']))
+                                            <x-button type="link" href="{{ $gap['url'] }}" color="light" activeColor="primary">
+                                                {{ __('ui.view') }}
+                                            </x-button>
+                                        @endif
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            @endif
+        </x-card>
+
         @if ($counts !== [])
             <div>
                 <h3 class="text-sm font-medium text-foreground mb-3">{{ __('ui.project_dashboard_summary') }}</h3>

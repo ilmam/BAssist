@@ -20,7 +20,9 @@
         'id' => 'modalForm',
         'files' => true,
         'method' => 'post',
-        'attributes' => ['data-modal-form' => 'true'],
+        'attributes' => [
+            'data-modal-form' => 'true',
+        ],
     ])) }}
         <div class="space-y-6">
             @if (! $isCreate)
@@ -32,11 +34,11 @@
             @endif
 
             <section class="space-y-4">
-                <div>
+                <div class="form-section-intro">
                     <h3 class="text-sm font-semibold text-foreground">{{ __('ui.metadata') }}</h3>
                     <p class="text-xs text-muted-foreground">{{ __('ui.feature_traceability_help') }}</p>
                 </div>
-                <div class="space-y-4">
+                <div class="form-fields">
                     @foreach (['code', 'title', 'project_id', 'priority_id', 'status_id'] as $fieldName)
                         @continue(! array_key_exists($fieldName, $formFields))
                         @php
@@ -62,7 +64,7 @@
             </section>
 
             <section class="space-y-3 rounded-lg border border-primary/30 bg-muted/20 p-3">
-                <div>
+                <div class="form-section-intro">
                     <h3 class="text-sm font-semibold text-foreground">{{ __('ui.traceability') }} · {{ __('ui.stakeholder_need') }}</h3>
                     <p class="text-xs text-muted-foreground">{{ __('ui.traceability_section_help') }}</p>
                 </div>
@@ -81,7 +83,7 @@
             </section>
 
             <section class="space-y-4">
-                <div>
+                <div class="form-section-intro">
                     <h3 class="text-sm font-semibold text-foreground">{{ __('ui.feature_document') }}</h3>
                     <p class="text-xs text-muted-foreground">{{ __('ui.feature_document_edit_help') }}</p>
                 </div>
@@ -100,24 +102,6 @@
                 @endforeach
             </section>
 
-            @if ($isCreate)
-                <section class="space-y-3 border-t border-border pt-4">
-                    <div>
-                        <h3 class="text-sm font-semibold text-foreground">{{ __('ui.import_feature_file') }}</h3>
-                        <p class="text-xs text-muted-foreground">{{ __('ui.import_feature_file_help') }}</p>
-                    </div>
-                    <div class="kt-form-item">
-                        <label class="kt-form-label" for="import_source_modal">{{ __('ui.paste_feature_file') }}</label>
-                        <textarea
-                            id="import_source_modal"
-                            name="import_source"
-                            rows="8"
-                            class="kt-input font-mono text-sm"
-                            placeholder="{{ __('ui.paste_feature_file_placeholder') }}"
-                        ></textarea>
-                    </div>
-                </section>
-            @endif
         </div>
 
         <div class="flex justify-end gap-2.5 mt-5">

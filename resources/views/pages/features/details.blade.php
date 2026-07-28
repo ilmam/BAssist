@@ -26,6 +26,10 @@
             @endif
         </x-slot>
 
+        @if (session('status'))
+            <div class="kt-alert kt-alert-success mb-5">{{ session('status') }}</div>
+        @endif
+
         @include('pages.features.partials.view-content', [
             'dto' => $dto,
             'model' => $model,
@@ -35,6 +39,7 @@
             'tagList' => $tagList ?? [],
             'exportUrl' => $exportUrl ?? null,
             'printUrl' => $printUrl ?? null,
+            'importUrl' => $importUrl ?? null,
         ])
 
         <x-slot:footer>
@@ -47,6 +52,9 @@
                     class="js-open-modal"
                     data-modal-url="{{ $addScenarioModalUrl }}"
                 >{{ __('ui.add_scenario') }}</x-button>
+            @endif
+            @if (entity_can($model, 'update') && ! empty($importUrl))
+                <x-button type="link" href="{{ $importUrl }}" color="light">{{ __('ui.import_feature_file') }}</x-button>
             @endif
             @if (entity_can($model, 'update'))
                 <x-button

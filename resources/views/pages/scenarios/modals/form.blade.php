@@ -21,7 +21,9 @@
         'id' => 'modalForm',
         'files' => true,
         'method' => 'post',
-        'attributes' => ['data-modal-form' => 'true'],
+        'attributes' => [
+            'data-modal-form' => 'true',
+        ],
     ])) }}
         <div class="space-y-6">
             @if (! $isCreate)
@@ -33,11 +35,11 @@
             @endif
 
             <section class="space-y-4">
-                <div>
+                <div class="form-section-intro">
                     <h3 class="text-sm font-semibold text-foreground">{{ __('ui.metadata') }}</h3>
                     <p class="text-xs text-muted-foreground">{{ __('ui.scenario_meta_help') }}</p>
                 </div>
-                <div class="space-y-4">
+                <div class="form-fields">
                     @foreach ($metaFields as $fieldName)
                         @continue(! array_key_exists($fieldName, $formFields))
                         @php
@@ -56,7 +58,7 @@
             </section>
 
             <section class="space-y-4">
-                <div>
+                <div class="form-section-intro">
                     <h3 class="text-sm font-semibold text-foreground">{{ __('ui.scenario_document') }}</h3>
                     <p class="text-xs text-muted-foreground">{{ __('ui.scenario_document_edit_help') }}</p>
                 </div>

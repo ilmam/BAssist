@@ -18,7 +18,9 @@
         'id' => 'modalForm',
         'files' => true,
         'method' => 'post',
-        'attributes' => ['data-modal-form' => 'true'],
+        'attributes' => [
+            'data-modal-form' => 'true',
+        ],
     ])) }}
         <div class="space-y-6">
             @if (! in_array($verb, ['POST', 'post'], true))
@@ -29,15 +31,17 @@
                 {{ Form::hidden('id', $dto->id) }}
             @endif
 
-            @foreach ($formFields as $name => $field)
-                @php
-                    $fieldName = is_numeric($name) ? $field : $name;
-                    $type = FormHelper::getFieldType($field);
-                    $fieldValue = $dto->{$fieldName} ?? null;
-                    $list = $field['list'] ?? null;
-                @endphp
-                {{ Form::field($type, $fieldName, $fieldValue, $list, null) }}
-            @endforeach
+            <div class="form-fields">
+                @foreach ($formFields as $name => $field)
+                    @php
+                        $fieldName = is_numeric($name) ? $field : $name;
+                        $type = FormHelper::getFieldType($field);
+                        $fieldValue = $dto->{$fieldName} ?? null;
+                        $list = $field['list'] ?? null;
+                    @endphp
+                    {{ Form::field($type, $fieldName, $fieldValue, $list, null) }}
+                @endforeach
+            </div>
 
             @include('pages.swimlane_flows.partials.elements-editor', [
                 'elements' => $elements,

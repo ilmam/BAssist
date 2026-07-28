@@ -5,7 +5,7 @@ namespace App\Models\Concerns;
 use App\Support\EntityPriority;
 
 /**
- * Applies EntityPriority::defaultId() (medium) when priority_id is blank on create.
+ * Applies EntityPriority::defaultId() (should / MoSCoW) when priority_id is blank on create.
  * Use only on models that have priority_id — not on BaseModel.
  */
 trait AppliesDefaultPriority

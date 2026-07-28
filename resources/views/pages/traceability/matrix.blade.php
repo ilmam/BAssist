@@ -19,6 +19,7 @@
             'missing_objective' => __('ui.gap_missing_objective'),
             'missing_need' => __('ui.gap_missing_need'),
             'missing_stakeholder_need' => __('ui.gap_missing_stakeholder_need'),
+            'missing_feature' => __('ui.gap_missing_feature'),
             'orphan_objective' => __('ui.gap_orphan_objective'),
             'orphan_stakeholder_need' => __('ui.gap_orphan_stakeholder_need'),
             'orphan_feature' => __('ui.gap_orphan_feature'),

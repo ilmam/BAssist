@@ -34,7 +34,9 @@ class EntityFormMaterializer
             ? 'flex justify-end gap-2.5 mt-5'
             : 'kt-card-footer flex justify-end gap-2.5 border-t border-border p-5 lg:p-7.5';
 
-        $openAttributes = $inModal ? ", 'attributes' => ['data-modal-form' => 'true']" : '';
+        $openAttributes = $inModal
+            ? ", 'attributes' => ['data-modal-form' => 'true']"
+            : '';
 
         $listDeclarations = $blocks['list_declarations'] !== ''
             ? "\n\n{$blocks['list_declarations']}"
@@ -65,7 +67,9 @@ class EntityFormMaterializer
                         {{ Form::hidden('id', \$dto->id) }}
                     @endif
 
+                    <div class="form-fields">
 {$blocks['field_lines']}
+                    </div>
                 </div>
             </div>
             <div class="{$footerClass}">

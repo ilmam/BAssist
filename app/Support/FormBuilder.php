@@ -23,6 +23,14 @@ class FormBuilder
         $attributes['method'] = $this->getMethod($method);
         $attributes['action'] = $action;
 
+        $existingClass = trim((string) ($attributes['class'] ?? ''));
+        // Mirror data-form-density onto a class so CSS can target either hook.
+        if (($attributes['data-form-density'] ?? null) === 'compact'
+            && ! str_contains(' '.$existingClass.' ', ' kt-form--compact ')) {
+            $existingClass = trim($existingClass.' kt-form--compact');
+        }
+        $attributes['class'] = trim('kt-form '.$existingClass);
+
         if ($files) {
             $attributes['enctype'] = 'multipart/form-data';
         }
@@ -144,12 +152,11 @@ class FormBuilder
     protected function formFieldVars(array $data): array
     {
         $name = (string) ($data['name'] ?? '');
-        $attributes = $data['attributes'] ?? [];
+        $attributes = is_array($data['attributes'] ?? null) ? $data['attributes'] : [];
 
-        return [
-            'horizontal' => ($attributes['layout'] ?? 'v') === 'h',
-            'labelText' => \App\Helpers\Ui::fieldLabel($name),
-        ];
+        // Blade @include of _vars cannot export locals into the parent view.
+        // Merge layout defaults here so form controls always have them defined.
+        return ui_form_field_layout_vars($name, $attributes);
     }
 
     protected function input(string $type, string $name, $value = null, array $options = []): HtmlString

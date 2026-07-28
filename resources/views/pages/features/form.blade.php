@@ -37,11 +37,11 @@
                 @endif
 
                 <section class="space-y-4">
-                    <div>
+                    <div class="form-section-intro">
                         <h3 class="text-base font-semibold text-foreground">{{ __('ui.metadata') }}</h3>
                         <p class="text-sm text-muted-foreground">{{ __('ui.feature_traceability_help') }}</p>
                     </div>
-                    <div class="space-y-6">
+                    <div class="form-fields">
                         @foreach (['code', 'title', 'project_id', 'priority_id', 'status_id'] as $fieldName)
                             @continue(! array_key_exists($fieldName, $formFields))
                             @php
@@ -67,7 +67,7 @@
                 </section>
 
                 <section class="space-y-4 rounded-lg border border-primary/30 bg-muted/20 p-4">
-                    <div>
+                    <div class="form-section-intro">
                         <h3 class="text-base font-semibold text-foreground">{{ __('ui.traceability') }} · {{ __('ui.stakeholder_need') }}</h3>
                         <p class="text-sm text-muted-foreground">{{ __('ui.traceability_section_help') }}</p>
                     </div>
@@ -88,11 +88,11 @@
                 </section>
 
                 <section class="space-y-4">
-                    <div>
+                    <div class="form-section-intro">
                         <h3 class="text-base font-semibold text-foreground">{{ __('ui.feature_document') }}</h3>
                         <p class="text-sm text-muted-foreground">{{ __('ui.feature_document_edit_help') }}</p>
                     </div>
-                    <div class="space-y-6">
+                    <div class="form-fields">
                         @foreach ($documentFields as $fieldName)
                             @continue(! array_key_exists($fieldName, $formFields))
                             @php
@@ -111,25 +111,6 @@
                     <pre class="field-help whitespace-pre-wrap text-xs font-mono bg-muted/40 border border-border rounded-md p-3">{{ __('ui.gherkin_feature_body_example') }}</pre>
                 </section>
 
-                @if ($isCreate)
-                    <section class="space-y-4 border-t border-border pt-6">
-                        <div>
-                            <h3 class="text-base font-semibold text-foreground">{{ __('ui.import_feature_file') }}</h3>
-                            <p class="text-sm text-muted-foreground">{{ __('ui.import_feature_file_help') }}</p>
-                        </div>
-                        <div class="kt-form-item">
-                            <label class="kt-form-label" for="import_source">{{ __('ui.paste_feature_file') }}</label>
-                            <textarea
-                                id="import_source"
-                                name="import_source"
-                                rows="10"
-                                class="kt-input font-mono text-sm"
-                                placeholder="{{ __('ui.paste_feature_file_placeholder') }}"
-                            ></textarea>
-                            <p class="field-help">{{ __('ui.import_feature_file_hint') }}</p>
-                        </div>
-                    </section>
-                @endif
             </div>
 
             <div class="kt-card-footer flex justify-end gap-2.5 border-t border-border p-5 lg:p-7.5">

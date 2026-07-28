@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Project;
+use App\Services\ProjectReadinessService;
 use App\Support\EntityAccess;
 use Illuminate\View\View;
 
@@ -43,6 +44,12 @@ class ProjectDashboardController extends Controller
             'icon' => 'abstract-26',
         ],
         [
+            'model' => 'Architecture',
+            'count' => 'architecture_exists',
+            'label' => 'architecture_c4',
+            'icon' => 'abstract-26',
+        ],
+        [
             'model' => 'StateFlow',
             'count' => 'state_flows_count',
             'label' => 'state_flows',
@@ -54,7 +61,29 @@ class ProjectDashboardController extends Controller
             'label' => 'swimlane_flows',
             'icon' => 'row-horizontal',
         ],
+        [
+            'model' => 'Assumption',
+            'count' => 'assumptions_count',
+            'label' => 'assumptions',
+            'icon' => 'questionnaire-tablet',
+        ],
+        [
+            'model' => 'Constraint',
+            'count' => 'constraints_count',
+            'label' => 'constraints',
+            'icon' => 'shield-tick',
+        ],
+        [
+            'model' => 'BusinessRule',
+            'count' => 'business_rules_count',
+            'label' => 'business_rules',
+            'icon' => 'book',
+        ],
     ];
+
+    public function __construct(protected ProjectReadinessService $readiness)
+    {
+    }
 
     public function show(Project $project): View
     {
@@ -75,7 +104,11 @@ class ProjectDashboardController extends Controller
             'features',
             'stateFlows',
             'swimlaneFlows',
+            'assumptions',
+            'constraints',
+            'businessRules',
         ]);
+        $project->loadExists(['architecture']);
 
         $scopeQuery = [
             'workspace_id' => (int) $project->workspace_id,
@@ -88,11 +121,21 @@ class ProjectDashboardController extends Controller
                 continue;
             }
 
+            $countValue = $artifact['count'] === 'architecture_exists'
+                ? ((bool) $project->getAttribute('architecture_exists') ? 1 : 0)
+                : (int) ($project->getAttribute($artifact['count']) ?? 0);
+
+            $url = match ($artifact['model']) {
+                'Architecture' => route('architectures.for-project', $project->id),
+                'Assumption', 'Constraint', 'BusinessRule' => route('guardrails.index', $scopeQuery),
+                default => model_route($artifact['model'], 'index').'?'.http_build_query($scopeQuery),
+            };
+
             $counts[] = [
                 'label' => __('ui.'.$artifact['label']),
-                'count' => (int) ($project->getAttribute($artifact['count']) ?? 0),
+                'count' => $countValue,
                 'icon' => $artifact['icon'],
-                'url' => model_route($artifact['model'], 'index').'?'.http_build_query($scopeQuery),
+                'url' => $url,
             ];
         }
 
@@ -129,13 +172,24 @@ class ProjectDashboardController extends Controller
         }
 
         if (nav_item_is_visible([
-            'entities' => ['StateFlow', 'SwimlaneFlow'],
+            'entities' => ['Architecture', 'StateFlow', 'SwimlaneFlow'],
             'route' => 'diagrams.index',
         ])) {
             $links[] = [
                 'label' => __('ui.diagrams'),
                 'url' => route('diagrams.index', $scopeQuery),
                 'icon' => 'share',
+            ];
+        }
+
+        if (nav_item_is_visible([
+            'entities' => ['Assumption', 'Constraint', 'BusinessRule'],
+            'route' => 'guardrails.index',
+        ])) {
+            $links[] = [
+                'label' => __('ui.guardrails'),
+                'url' => route('guardrails.index', $scopeQuery),
+                'icon' => 'shield-tick',
             ];
         }
 
@@ -150,6 +204,7 @@ class ProjectDashboardController extends Controller
             'project' => $project,
             'counts' => $counts,
             'links' => $links,
+            'readiness' => $this->readiness->forProject($project),
         ]);
     }
 }

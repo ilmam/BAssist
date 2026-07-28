@@ -256,6 +256,34 @@ if (! function_exists('ui_form_view')) {
     }
 }
 
+if (! function_exists('ui_form_field_layout_vars')) {
+    /**
+     * Shared layout defaults for Metronic form controls.
+     * Blade @include of _vars cannot export locals into the parent view, so
+     * FormBuilder merges these when rendering bs* components, and controls
+     * may also extract() them in-scope as a fallback.
+     *
+     * fieldStackClass / fieldRowClass drive the per-field wrapper. Sibling and
+     * label spacing live in ui-layout.css. Opt into compact density on Form::open
+     * (quick-create forms do this automatically):
+     *   'attributes' => ['data-form-density' => 'compact']
+     * (also accepts class kt-form--compact, .form-fields--compact, or
+     * .form-fields-grid under a compact form — grid uses row-gap, not margins)
+     */
+    function ui_form_field_layout_vars(string $name = '', ?array $attributes = null): array
+    {
+        $attributes = $attributes ?? [];
+
+        return [
+            'attributes' => $attributes,
+            'horizontal' => ($attributes['layout'] ?? 'v') === 'h',
+            'labelText' => \App\Helpers\Ui::fieldLabel($name),
+            'fieldStackClass' => 'kt-form-item',
+            'fieldRowClass' => 'kt-form-field-row flex flex-col lg:flex-row lg:items-start gap-2.5',
+        ];
+    }
+}
+
 if (! function_exists('model_page_view')) {
     function model_page_view(string $model, string $action): string
     {

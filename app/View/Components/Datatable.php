@@ -43,6 +43,7 @@ class Datatable extends Component
         $model = $this->options['model'] ?: ($this->options['modelName'] ?? '');
         $resource = Str::plural(Str::snake($model));
         $baseUrl = url($resource);
+        $useModals = config("crud.models.{$model}.use_modals", true) !== false;
 
         $modalViewUrl = $baseUrl.'/modal/{id}/view';
         $modalEditUrl = $baseUrl.'/modal/{id}/edit';
@@ -54,15 +55,15 @@ class Datatable extends Component
                 'text' => '',
                 'icon' => 'eye',
                 'link' => $baseUrl.'/{id}',
-                'modalUrl' => config('ui.modal_view', true) ? $modalViewUrl : null,
+                'modalUrl' => ($useModals && config('ui.modal_view', true)) ? $modalViewUrl : null,
             ],
             [
                 'action' => 'edit',
                 'text' => '',
                 'icon' => 'pencil',
                 'link' => $baseUrl.'/{id}/edit',
-                'modalUrl' => config('ui.modal_edit', true) ? $modalEditUrl : null,
-                'menu' => config('ui.modal_edit', true),
+                'modalUrl' => ($useModals && config('ui.modal_edit', true)) ? $modalEditUrl : null,
+                'menu' => $useModals && config('ui.modal_edit', true),
             ],
             [
                 'action' => 'delete',

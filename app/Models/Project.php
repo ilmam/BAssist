@@ -88,4 +88,28 @@ class Project extends BaseModel
     {
         return $this->hasMany(SwimlaneFlow::class);
     }
+
+    #[Relation('HasMany')]
+    public function assumptions(): HasMany
+    {
+        return $this->hasMany(Assumption::class);
+    }
+
+    #[Relation('HasMany')]
+    public function constraints(): HasMany
+    {
+        return $this->hasMany(Constraint::class);
+    }
+
+    #[Relation('HasMany')]
+    public function businessRules(): HasMany
+    {
+        return $this->hasMany(BusinessRule::class);
+    }
+
+    #[Relation('HasOne')]
+    public function architecture(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(Architecture::class);
+    }
 }

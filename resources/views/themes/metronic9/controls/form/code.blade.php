@@ -1,6 +1,7 @@
 @include(ui_form_view('_vars'))
 
 @php
+    extract(ui_form_field_layout_vars((string) ($name ?? ''), $attributes ?? []), EXTR_SKIP);
     $language = strtolower((string) ($attributes['data-language'] ?? $attributes['language'] ?? 'plaintext'));
     $fieldHelp = (string) ($attributes['data-field-help'] ?? $attributes['help'] ?? '');
     unset($attributes['language'], $attributes['data-language'], $attributes['data-field-help'], $attributes['help']);
@@ -28,9 +29,9 @@
 @endphp
 
 @if ($horizontal)
-    <div class="flex flex-col lg:flex-row lg:items-start gap-2.5">
+    <div class="{{ $fieldRowClass }}">
         <label class="kt-form-label lg:w-1/4 lg:pt-2.5" for="{{ $editorId }}">{{ $labelText }}</label>
-        <div class="lg:flex-1">
+        <div class="lg:flex-1 flex flex-col gap-2.5">
             <div class="code-editor" data-code-editor data-language="{{ $language }}">
                 <div class="code-editor__chrome">
                     <span class="code-editor__lang">{{ $langLabel }}</span>
@@ -40,12 +41,12 @@
                 <div id="{{ $editorId }}" class="code-editor__mount" data-code-mount data-language="{{ $language }}" tabindex="0"></div>
             </div>
             @if ($fieldHelp !== '')
-                <p class="field-help">{{ $fieldHelp }}</p>
+                <p class="kt-form-description">{{ $fieldHelp }}</p>
             @endif
         </div>
     </div>
 @else
-    <div class="kt-form-item">
+    <div class="{{ $fieldStackClass }}">
         <label class="kt-form-label" for="{{ $editorId }}">{{ $labelText }}</label>
         <div class="code-editor" data-code-editor data-language="{{ $language }}">
             <div class="code-editor__chrome">
@@ -56,7 +57,7 @@
             <div id="{{ $editorId }}" class="code-editor__mount" data-code-mount data-language="{{ $language }}" tabindex="0"></div>
         </div>
         @if ($fieldHelp !== '')
-            <p class="field-help">{{ $fieldHelp }}</p>
+            <p class="kt-form-description">{{ $fieldHelp }}</p>
         @endif
     </div>
 @endif

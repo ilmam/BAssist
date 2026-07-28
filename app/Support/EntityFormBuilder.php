@@ -41,7 +41,8 @@ class EntityFormBuilder
     }
 
     /**
-     * Resolve option lists for every `select` field from its related repository.
+     * Resolve option lists for every `select` field from its related repository
+     * or from an App\Support\* class that exposes selectOptions().
      *
      * @param  array<string, array<int|string, mixed>>  $fields
      * @return array<string, array<int|string, mixed>>
@@ -52,9 +53,17 @@ class EntityFormBuilder
             $type = $options[0] ?? null;
             $relatedModel = $options[1] ?? null;
 
-            if ($type === 'select' && ! empty($relatedModel)) {
-                $options['list'] = $this->repositories->for($relatedModel)->getSelectOptions();
+            if ($type !== 'select' || empty($relatedModel)) {
+                continue;
             }
+
+            $supportClass = 'App\\Support\\'.$relatedModel;
+            if (class_exists($supportClass) && method_exists($supportClass, 'selectOptions')) {
+                $options['list'] = $supportClass::selectOptions();
+                continue;
+            }
+
+            $options['list'] = $this->repositories->for($relatedModel)->getSelectOptions();
         }
 
         return $fields;

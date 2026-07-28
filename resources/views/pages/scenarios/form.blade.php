@@ -39,12 +39,12 @@
                 @endif
 
                 <section class="space-y-4">
-                    <div>
+                    <div class="form-section-intro">
                         <h3 class="text-base font-semibold text-foreground">{{ __('ui.metadata') }}</h3>
                         <p class="text-sm text-muted-foreground">{{ __('ui.scenario_meta_help') }}</p>
                     </div>
-                    <div class="space-y-6">
-                        @foreach ($metaFields as $fieldName)
+                <div class="form-fields">
+                    @foreach ($metaFields as $fieldName)
                             @continue(! array_key_exists($fieldName, $formFields))
                             @php
                                 $field = $formFields[$fieldName];
@@ -62,11 +62,11 @@
                 </section>
 
                 <section class="space-y-4">
-                    <div>
+                    <div class="form-section-intro">
                         <h3 class="text-base font-semibold text-foreground">{{ __('ui.scenario_document') }}</h3>
                         <p class="text-sm text-muted-foreground">{{ __('ui.scenario_document_edit_help') }}</p>
                     </div>
-                    <div class="space-y-6">
+                    <div class="form-fields">
                         @foreach ($documentFields as $fieldName)
                             @continue(! array_key_exists($fieldName, $formFields))
                             @php

@@ -45,20 +45,26 @@
                 <x-slot:toolbar>
                     <div class="flex flex-wrap items-center gap-2">
                         <span class="kt-badge kt-badge-outline">{{ $section['count'] }}</span>
-                        <x-button type="link" href="{{ $section['index_url'] }}" color="light" activeColor="primary">
-                            {{ __('ui.view_all') }}
-                        </x-button>
-                        @if ($section['can_create'] && $section['create_modal_url'])
-                            <x-button
-                                type="link"
-                                href="{{ $section['create_modal_url'] }}"
-                                icon="plus"
-                                iconOnly="true"
-                                color="primary"
-                                activeColor="primary"
-                                class="js-open-modal"
-                                data-modal-url="{{ $section['create_modal_url'] }}"
-                            ></x-button>
+                        @if (! empty($section['is_architecture']) && ! empty($section['architecture_can_open']) && ! empty($section['architecture_open_url']))
+                            <x-button type="link" href="{{ $section['architecture_open_url'] }}" color="primary" activeColor="primary">
+                                {{ __('ui.c4_open_architecture') }}
+                            </x-button>
+                        @else
+                            <x-button type="link" href="{{ $section['index_url'] }}" color="light" activeColor="primary">
+                                {{ __('ui.view_all') }}
+                            </x-button>
+                            @if ($section['can_create'] && $section['create_modal_url'])
+                                <x-button
+                                    type="link"
+                                    href="{{ $section['create_modal_url'] }}"
+                                    icon="plus"
+                                    iconOnly="true"
+                                    color="primary"
+                                    activeColor="primary"
+                                    class="js-open-modal"
+                                    data-modal-url="{{ $section['create_modal_url'] }}"
+                                ></x-button>
+                            @endif
                         @endif
                     </div>
                 </x-slot:toolbar>
@@ -103,16 +109,33 @@
                                                 activeColor="primary"
                                             ></x-button>
                                             @if (entity_can($section['model'], 'update'))
-                                                <x-button
-                                                    type="link"
-                                                    href="{{ model_modal_path($section['model'], 'edit', $item->id) }}"
-                                                    icon="pencil"
-                                                    iconOnly="true"
-                                                    color="light"
-                                                    activeColor="primary"
-                                                    class="js-open-modal"
-                                                    data-modal-url="{{ model_modal_path($section['model'], 'edit', $item->id) }}"
-                                                ></x-button>
+                                                @php
+                                                    $isArchitecture = ! empty($section['is_architecture']);
+                                                    $editUrl = $isArchitecture
+                                                        ? model_route($section['model'], 'edit', $item->id)
+                                                        : model_modal_path($section['model'], 'edit', $item->id);
+                                                @endphp
+                                                @if ($isArchitecture)
+                                                    <x-button
+                                                        type="link"
+                                                        href="{{ $editUrl }}"
+                                                        icon="pencil"
+                                                        iconOnly="true"
+                                                        color="light"
+                                                        activeColor="primary"
+                                                    ></x-button>
+                                                @else
+                                                    <x-button
+                                                        type="link"
+                                                        href="{{ $editUrl }}"
+                                                        icon="pencil"
+                                                        iconOnly="true"
+                                                        color="light"
+                                                        activeColor="primary"
+                                                        class="js-open-modal"
+                                                        data-modal-url="{{ $editUrl }}"
+                                                    ></x-button>
+                                                @endif
                                             @endif
                                         </div>
                                     </td>

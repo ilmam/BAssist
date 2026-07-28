@@ -14,8 +14,8 @@ class StatusPrioritySeeder extends Seeder
     {
         $statuses = [
             ['code' => EntityStatus::DRAFT, 'name' => 'Draft', 'sort_order' => 10, 'description' => 'Work in progress; not yet agreed.', 'is_system' => true],
-            ['code' => EntityStatus::AGREED, 'name' => 'Agreed', 'sort_order' => 20, 'description' => 'Accepted and active in the spine.', 'is_system' => true],
-            ['code' => EntityStatus::DEPRECATED, 'name' => 'Deprecated', 'sort_order' => 30, 'description' => 'Superseded or no longer in use.', 'is_system' => true],
+            ['code' => EntityStatus::AGREED, 'name' => 'Agreed', 'sort_order' => 20, 'description' => 'Accepted for the current baseline.', 'is_system' => true],
+            ['code' => EntityStatus::DEPRECATED, 'name' => 'Deprecated', 'sort_order' => 30, 'description' => 'Superseded or no longer in scope.', 'is_system' => true],
         ];
 
         foreach ($statuses as $status) {
@@ -26,9 +26,10 @@ class StatusPrioritySeeder extends Seeder
         }
 
         $priorities = [
-            ['code' => EntityPriority::HIGH, 'name' => 'High', 'sort_order' => 10, 'description' => 'Must be addressed soon.', 'is_system' => true],
-            ['code' => EntityPriority::MEDIUM, 'name' => 'Medium', 'sort_order' => 20, 'description' => 'Important but not urgent.', 'is_system' => true],
-            ['code' => EntityPriority::LOW, 'name' => 'Low', 'sort_order' => 30, 'description' => 'Can wait relative to other work.', 'is_system' => true],
+            ['code' => EntityPriority::MUST, 'name' => 'Must', 'sort_order' => 10, 'description' => 'Without this, the release fails.', 'is_system' => true],
+            ['code' => EntityPriority::SHOULD, 'name' => 'Should', 'sort_order' => 20, 'description' => 'Important, but a workaround exists.', 'is_system' => true],
+            ['code' => EntityPriority::COULD, 'name' => 'Could', 'sort_order' => 30, 'description' => 'Nice to have if capacity remains.', 'is_system' => true],
+            ['code' => EntityPriority::WONT, 'name' => "Won't", 'sort_order' => 40, 'description' => 'Explicitly out of scope for this release.', 'is_system' => true],
         ];
 
         foreach ($priorities as $priority) {

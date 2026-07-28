@@ -22,6 +22,10 @@ class GherkinDocumentParser
 
         foreach ($lines as $line) {
             if (preg_match('/^\s*(Scenario(?:\s+Outline)?)\s*:\s*(.*)$/i', $line, $match) === 1) {
+                $prefix = $current === null
+                    ? $this->peelTrailingScenarioPrefix($preambleLines)
+                    : $this->peelTrailingScenarioPrefix($current['lines']);
+
                 if ($current !== null) {
                     $scenarios[] = $this->finalizeScenarioBlock($current);
                 }
@@ -31,7 +35,7 @@ class GherkinDocumentParser
                 $current = [
                     'title' => trim($match[2]),
                     'is_outline' => $keyword,
-                    'lines' => [$line],
+                    'lines' => array_merge($prefix, [$line]),
                 ];
                 continue;
             }
@@ -55,6 +59,47 @@ class GherkinDocumentParser
             'preamble' => rtrim(implode("\n", $preambleLines)).(trim(implode("\n", $preambleLines)) !== '' ? "\n" : ''),
             'scenarios' => $scenarios,
         ];
+    }
+
+    /**
+     * Move trailing @tags (and blank/# lines in that trailing block) onto the next Scenario.
+     * Comments and blanks alone are left in place so Feature narrative comments stay put.
+     *
+     * @param  list<string>  $lines
+     * @return list<string>
+     */
+    protected function peelTrailingScenarioPrefix(array &$lines): array
+    {
+        if ($lines === []) {
+            return [];
+        }
+
+        $end = count($lines) - 1;
+        $start = $end;
+        $sawTag = false;
+
+        while ($start >= 0) {
+            $trimmed = trim($lines[$start]);
+            if ($trimmed === '' || str_starts_with($trimmed, '#')) {
+                $start--;
+                continue;
+            }
+            if (str_starts_with($trimmed, '@')) {
+                $sawTag = true;
+                $start--;
+                continue;
+            }
+            break;
+        }
+
+        if (! $sawTag) {
+            return [];
+        }
+
+        $prefixStart = $start + 1;
+        $prefix = array_splice($lines, $prefixStart);
+
+        return array_values($prefix);
     }
 
     public function extractFeatureTitle(?string $body): ?string

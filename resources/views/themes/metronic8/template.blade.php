@@ -48,7 +48,7 @@
     <script src="{{ ui_asset('plugins/global/plugins.bundle.js') }}"></script>
     <script src="{{ ui_asset('js/scripts.bundle.js') }}"></script>
     <script src="{{ ui_asset('plugins/custom/datatables/datatables.bundle.js') }}"></script>
-    @vite(['resources/js/state-flow-diagram.js', 'resources/js/swimlane-flow-diagram.js', 'resources/js/code-editor.js'])
+    @vite(['resources/js/state-flow-diagram.js', 'resources/js/swimlane-flow-diagram.js', 'resources/js/architecture-c4-diagram.js', 'resources/js/code-editor.js'])
     @stack('scripts')
     <script>
         let modalReturnUrl = null;

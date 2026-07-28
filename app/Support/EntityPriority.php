@@ -6,16 +6,29 @@ use App\Models\Priority;
 use Illuminate\Support\Facades\Cache;
 
 /**
- * Canonical priority codes used by the need spine.
+ * Canonical MoSCoW priority codes used by the need spine.
  *
  * Seeded rows for these codes are system-locked (`is_system = true`) via
  * StatusPrioritySeeder. Custom priorities may exist with other codes and are never system.
  */
 final class EntityPriority
 {
-    public const HIGH = 'high';
-    public const MEDIUM = 'medium';
-    public const LOW = 'low';
+    public const MUST = 'must';
+
+    public const SHOULD = 'should';
+
+    public const COULD = 'could';
+
+    public const WONT = 'wont';
+
+    /** @deprecated Use MUST */
+    public const HIGH = self::MUST;
+
+    /** @deprecated Use SHOULD */
+    public const MEDIUM = self::SHOULD;
+
+    /** @deprecated Use COULD */
+    public const LOW = self::COULD;
 
     /**
      * System allowlist codes (also marked is_system when seeded).
@@ -25,15 +38,16 @@ final class EntityPriority
     public static function values(): array
     {
         return [
-            self::HIGH,
-            self::MEDIUM,
-            self::LOW,
+            self::MUST,
+            self::SHOULD,
+            self::COULD,
+            self::WONT,
         ];
     }
 
     public static function default(): string
     {
-        return self::MEDIUM;
+        return self::SHOULD;
     }
 
     public static function defaultId(): ?int

@@ -32,7 +32,7 @@
                     {{ Form::hidden('id', $dto->id) }}
                 @endif
 
-                <div class="space-y-6">
+                <div class="form-fields">
                     @foreach ($formFields as $name => $field)
                         @php
                             $fieldName = is_numeric($name) ? $field : $name;

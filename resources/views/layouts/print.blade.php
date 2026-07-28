@@ -121,9 +121,13 @@
         }
 
         h3.item-title {
-            margin: 1.25rem 0 0.4rem;
+            margin: 1.25rem 0 0;
             font-size: 1.05rem;
             page-break-after: avoid;
+        }
+
+        h3.item-title .artifact__code {
+            margin-right: 0.45rem;
         }
 
         .muted { color: var(--muted); }
@@ -150,6 +154,49 @@
             color: var(--muted);
         }
 
+        .artifact__meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.35rem 1.25rem;
+            margin: 0;
+            font: 13px/1.4 system-ui, sans-serif;
+        }
+
+        .artifact__meta span {
+            white-space: nowrap;
+        }
+
+        .artifact__meta strong {
+            color: var(--muted);
+            font-weight: 600;
+            margin-right: 0.35rem;
+        }
+
+        .artifact__panel {
+            margin-top: 0.75rem;
+            margin-bottom: 1.25rem;
+            padding: 0.75rem 0.9rem;
+            border: 1px solid #e8e8e8;
+            border-radius: 8px;
+            background: #fcfcfc;
+        }
+
+        .artifact__panel .artifact__meta {
+            margin-bottom: 0;
+        }
+
+        .artifact__panel .kv {
+            margin: 0.65rem 0 0;
+            padding-top: 0.65rem;
+            border-top: 1px solid #ececec;
+        }
+
+        .artifact__panel .kv:first-child {
+            margin-top: 0;
+            padding-top: 0;
+            border-top: 0;
+        }
+
         .kv {
             display: grid;
             grid-template-columns: 9rem 1fr;
@@ -173,9 +220,16 @@
             page-break-inside: avoid;
         }
 
-        .diagram .mermaid {
+        .diagram .mermaid,
+        .diagram .bassist-mermaid {
             margin: 0;
             background: transparent;
+        }
+
+        .diagram .mermaid svg,
+        .diagram .bassist-mermaid svg {
+            max-width: 100%;
+            height: auto;
         }
 
         table.matrix {

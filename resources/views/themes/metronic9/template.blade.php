@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
     <link href="{{ ui_asset('vendors/keenicons/styles.bundle.css') }}" rel="stylesheet" />
     <link href="{{ ui_asset('css/styles.css') }}" rel="stylesheet" />
-    <link href="{{ ui_asset('css/ui-layout.css') }}" rel="stylesheet" />
+    <link href="{{ ui_asset('css/ui-layout.css') }}?v={{ @filemtime(public_path(config('ui.themes.'.ui_theme().'.asset_prefix').'/css/ui-layout.css')) ?: time() }}" rel="stylesheet" />
     <link href="{{ ui_asset('css/bassist.css') }}" rel="stylesheet" />
     @stack('styles')
 </head>
@@ -57,7 +57,7 @@
     <script src="{{ ui_asset('vendors/jquery/jquery.min.js') }}"></script>
     <script src="{{ ui_asset('vendors/datatables-net/dataTables.min.js') }}"></script>
     <script src="{{ ui_asset('js/layouts/demo1.js') }}"></script>
-    @vite(['resources/js/state-flow-diagram.js', 'resources/js/swimlane-flow-diagram.js', 'resources/js/code-editor.js'])
+    @vite(['resources/js/state-flow-diagram.js', 'resources/js/swimlane-flow-diagram.js', 'resources/js/architecture-c4-diagram.js', 'resources/js/code-editor.js'])
     @stack('scripts')
     <script>
         let modalReturnUrl = null;

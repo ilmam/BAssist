@@ -126,7 +126,13 @@ class EntityAccess
 
     public static function abilityForRouteAction(string $action): string
     {
-        return match (strtolower($action)) {
+        $action = strtolower($action);
+
+        if (str_starts_with($action, 'import')) {
+            return self::UPDATE;
+        }
+
+        return match ($action) {
             'create', 'store', 'modalcreate', 'modalquickcreate' => self::CREATE,
             'edit', 'update', 'modaledit' => self::UPDATE,
             'destroy', 'modaldelete', 'modalshow' => self::DELETE,
@@ -136,7 +142,13 @@ class EntityAccess
 
     public static function abilityForControllerMethod(string $method): string
     {
-        return match (strtolower($method)) {
+        $method = strtolower($method);
+
+        if (str_starts_with($method, 'import')) {
+            return self::UPDATE;
+        }
+
+        return match ($method) {
             'create', 'store', 'modalcreate', 'modalquickcreate' => self::CREATE,
             'edit', 'update', 'modaledit' => self::UPDATE,
             'destroy', 'modaldelete', 'modalshow' => self::DELETE,
