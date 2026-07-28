@@ -29,7 +29,7 @@ Short PHP attributes drive list columns, detail values, forms, Quick Create, and
 - Quick Create column spans are **not** Form / ListForm arguments (no `span` / `quickSpan`). Theme type defaults apply (`sm:12` / `md:6` / `lg:4`; `textarea` / `dropzone` stay `12`). Rare `$field['ui_span']` overrides — see [ui-views.md](ui-views.md#override-spans).
 - `readonly: true` renders the control disabled/readonly (not submitted). Empty readonly values are omitted from create forms.
 - Full create/edit modals still show all form fields (span does not apply there).
-- **Status / priority:** leave `status_id` / `priority_id` as `null` on the DTO (with `hideQuick: true` if hidden). On create, `BaseModel` sets draft status; models with `priority_id` use `AppliesDefaultPriority` (medium via `EntityPriority::defaultId()`).
+- **Status / priority:** leave `status_id` / `priority_id` as `null` on the DTO (with `hideQuick: true` if hidden). On create, models with `HasEntityStatus` set draft via `EntityStatus::defaultId()`; models with `priority_id` use `AppliesDefaultPriority` (`EntityPriority::defaultId()` = should / MoSCoW). Entities with their own string lifecycle (e.g. Assumption) do not use `HasEntityStatus`.
 
 `ListForm` accepts the same arguments as `Form`:
 

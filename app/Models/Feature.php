@@ -6,6 +6,7 @@ use App\Attributes\Relation;
 use App\Attributes\RoutableAttribute;
 use App\Models\Concerns\AppliesDefaultPriority;
 use App\Models\Concerns\HasEntityNumber;
+use App\Models\Concerns\HasEntityStatus;
 use App\Services\GherkinDocumentParser;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -16,6 +17,7 @@ class Feature extends BaseModel
 {
     use AppliesDefaultPriority;
     use HasEntityNumber;
+    use HasEntityStatus;
     use HasFactory;
 
     protected $displayField = 'title';

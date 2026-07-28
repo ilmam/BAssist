@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Attributes\Relation;
 use App\Attributes\RoutableAttribute;
+use App\Models\Concerns\HasEntityStatus;
 use App\Services\SystemStakeholderSeeder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -12,6 +13,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 #[RoutableAttribute]
 class Project extends BaseModel
 {
+    use HasEntityStatus;
     use HasFactory;
 
     protected $displayField = 'name';

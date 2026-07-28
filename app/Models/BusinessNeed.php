@@ -6,6 +6,7 @@ use App\Attributes\Relation;
 use App\Attributes\RoutableAttribute;
 use App\Models\Concerns\AppliesDefaultPriority;
 use App\Models\Concerns\HasEntityNumber;
+use App\Models\Concerns\HasEntityStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -15,6 +16,7 @@ class BusinessNeed extends BaseModel
 {
     use AppliesDefaultPriority;
     use HasEntityNumber;
+    use HasEntityStatus;
     use HasFactory;
 
     protected $displayField = 'title';

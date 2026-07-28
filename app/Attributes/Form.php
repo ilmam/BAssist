@@ -31,9 +31,9 @@ use Attribute;
  *   #[Form('text', hideQuick: true, readonly: true)]
  *   #[Form('select', 'StakeholderNeed', help: 'Need Spine link for the matrix.')]
  *
- * Status/priority defaults: leave null on the DTO. BaseModel applies
- * EntityStatus::defaultId() on create; models with priority_id use
- * AppliesDefaultPriority (EntityPriority::defaultId() = medium).
+ * Status/priority defaults: leave null on the DTO. Models with HasEntityStatus
+ * apply EntityStatus::defaultId() on create; models with priority_id use
+ * AppliesDefaultPriority (EntityPriority::defaultId() = should / MoSCoW).
  *
  * @see ListForm to also mark the property as a list column
  * @see Value / InList for display (not editing)
