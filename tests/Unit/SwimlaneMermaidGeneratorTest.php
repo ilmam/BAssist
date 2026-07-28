@@ -97,4 +97,19 @@ class SwimlaneMermaidGeneratorTest extends TestCase
             ],
         ], $rows);
     }
+
+    public function test_skips_self_loop_edges(): void
+    {
+        $generator = new SwimlaneMermaidGenerator();
+
+        $mermaid = $generator->generate(null, [
+            ['lane' => 'User', 'from' => 'Start', 'type' => 'process', 'label' => 'Start'],
+            ['lane' => 'User', 'from' => 'End', 'type' => 'end', 'label' => 'End'],
+            ['lane' => 'User', 'from' => 'Start', 'type' => 'process', 'label' => 'Work'],
+        ]);
+
+        $this->assertStringNotContainsString('Start --> Start', $mermaid);
+        $this->assertStringNotContainsString('End --> End', $mermaid);
+        $this->assertStringContainsString('Start --> Work', $mermaid);
+    }
 }

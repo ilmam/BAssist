@@ -46,6 +46,11 @@ class SwimlaneMermaidGenerator
             $fromId = $this->toNodeId($row['from']);
             $toId = $this->toNodeId($row['label']);
 
+            // Mermaid swimlane-beta crashes on self-loops (from === label).
+            if ($fromId === $toId) {
+                continue;
+            }
+
             if ($row['line_title'] !== null && $row['line_title'] !== '') {
                 $lines[] = '  '.$fromId.' -->|'.$this->sanitizeLineTitle($row['line_title']).'| '.$toId;
             } else {

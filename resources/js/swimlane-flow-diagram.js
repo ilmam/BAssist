@@ -89,6 +89,10 @@ export function generateSwimlaneMermaid(title, elements, direction = 'TB') {
 
         const fromId = toNodeId(row.from);
         const toId = toNodeId(row.label);
+        // Mermaid swimlane-beta crashes on self-loops (from === label).
+        if (fromId === toId) {
+            continue;
+        }
         if (row.line_title) {
             lines.push(`  ${fromId} -->|${sanitizeLineTitle(row.line_title)}| ${toId}`);
         } else {
@@ -159,8 +163,9 @@ async function renderMermaid(preview, source, mermaidText) {
         });
         await mermaid.run({ nodes: [next] });
     } catch (error) {
-        next.textContent = `Unable to render diagram.\n\n${mermaidText}`;
         console.error(error);
+        const reason = error?.message ? `\n\n(${error.message})` : '';
+        next.textContent = `Unable to render diagram.${reason}\n\n${mermaidText}`;
     }
 }
 

@@ -567,12 +567,18 @@
                         window.location.reload();
                     }
                 })
-                .catch(() => {
+                .catch((payload) => {
                     if (submitButton) {
                         submitButton.disabled = false;
                     }
 
-                    window.alert('Save failed. Please check the form and try again.');
+                    const messages = payload?.errors
+                        ? Object.values(payload.errors).flat()
+                        : [];
+                    const detail = messages.length > 0
+                        ? messages.join('\n')
+                        : (payload?.message || 'Please check the form and try again.');
+                    window.alert(`Save failed.\n${detail}`);
                 });
         });
     </script>

@@ -56,7 +56,8 @@ class SwimlaneFlowData extends BaseData
                     $label = trim((string) ($value['label'] ?? ''));
                     $lineTitle = trim((string) ($value['line_title'] ?? ''));
 
-                    if ($lane === '' && $from === '' && $type === '' && $label === '' && $lineTitle === '') {
+                    // Blank editor rows default type to "process"; ignore those until Lane/Label are filled.
+                    if ($lane === '' && $from === '' && $label === '' && $lineTitle === '') {
                         return;
                     }
 
