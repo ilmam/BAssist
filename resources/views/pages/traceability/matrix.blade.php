@@ -28,6 +28,9 @@
     @endphp
 
     <x-card title="{{ __('ui.traceability_matrix') }}">
+        <x-slot:titleAside>
+            <x-help-trigger topic="traceability" />
+        </x-slot:titleAside>
         <x-slot:toolbar>
             <div class="flex flex-wrap items-center gap-2">
                 <a href="{{ $orphansToggle }}"

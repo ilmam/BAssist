@@ -10,6 +10,9 @@
 
     <div class="space-y-5">
         <x-card title="{{ __('ui.guardrails') }}">
+            <x-slot:titleAside>
+                <x-help-trigger topic="guardrails" />
+            </x-slot:titleAside>
             <p class="text-sm text-muted-foreground mb-5">{{ __('ui.guardrails_help') }}</p>
 
             <form method="GET" action="{{ route('guardrails.index') }}" class="flex flex-wrap items-end gap-3">
@@ -42,6 +45,9 @@
 
         @forelse ($sections as $section)
             <x-card :title="$section['label']">
+                <x-slot:titleAside>
+                    <x-help-trigger :model="$section['model']" />
+                </x-slot:titleAside>
                 <x-slot:toolbar>
                     <div class="flex flex-wrap items-center gap-2">
                         <span class="kt-badge kt-badge-outline">{{ $section['count'] }}</span>

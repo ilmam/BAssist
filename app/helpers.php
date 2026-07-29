@@ -1,7 +1,16 @@
 <?php
 
+use App\Helpers\Ui;
+use App\Support\CrudEntityRegistry;
+use App\Support\EntityAccess;
+use App\Support\HelpRegistry;
+use App\Support\NavTreeBuilder;
+use App\Support\ProjectContext;
+use App\Support\WorkspaceContext;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\View as ViewFactory;
+use Illuminate\Support\Str;
 
 if (! function_exists('ui_theme')) {
     function ui_theme(): string
@@ -63,13 +72,13 @@ if (! function_exists('nav_items')) {
             $items[] = nav_item_with_sticky_query($item);
         }
 
-        foreach (app(\App\Support\NavTreeBuilder::class)->build() as $hierarchyItem) {
+        foreach (app(NavTreeBuilder::class)->build() as $hierarchyItem) {
             $items[] = $hierarchyItem;
         }
 
         $administration = config('navigation.administration');
 
-        if ($administration && \App\Support\EntityAccess::isSuperAdmin(auth()->user())) {
+        if ($administration && EntityAccess::isSuperAdmin(auth()->user())) {
             $items[] = [
                 'label' => $administration['label'],
                 'icon' => $administration['icon'] ?? 'setting-2',
@@ -94,8 +103,8 @@ if (! function_exists('nav_item_with_sticky_query')) {
         $route = $item['route'] ?? null;
         if (in_array($route, ['traceability.index', 'acceptance-plan.index', 'diagrams.index'], true)) {
             $query = [];
-            $workspaceId = app(\App\Support\WorkspaceContext::class)->id();
-            $projectId = app(\App\Support\ProjectContext::class)->id();
+            $workspaceId = app(WorkspaceContext::class)->id();
+            $projectId = app(ProjectContext::class)->id();
 
             if ($workspaceId !== null) {
                 $query['workspace_id'] = $workspaceId;
@@ -145,7 +154,7 @@ if (! function_exists('nav_item_is_visible')) {
         }
 
         foreach ($entities as $entity) {
-            if (entity_can((string) $entity, \App\Support\EntityAccess::VIEW)) {
+            if (entity_can((string) $entity, EntityAccess::VIEW)) {
                 return true;
             }
         }
@@ -232,14 +241,14 @@ if (! function_exists('nav_item_context_matches')) {
         }
 
         if (array_key_exists('project_id', $context)) {
-            $activeProject = app(\App\Support\ProjectContext::class)->id()
+            $activeProject = app(ProjectContext::class)->id()
                 ?? (is_numeric(request('project_id')) ? (int) request('project_id') : null);
 
             return $activeProject !== null && (int) $context['project_id'] === $activeProject;
         }
 
         if (array_key_exists('workspace_id', $context)) {
-            $activeWorkspace = app(\App\Support\WorkspaceContext::class)->id()
+            $activeWorkspace = app(WorkspaceContext::class)->id()
                 ?? (is_numeric(request('workspace_id')) ? (int) request('workspace_id') : null);
 
             return $activeWorkspace !== null && (int) $context['workspace_id'] === $activeWorkspace;
@@ -277,7 +286,7 @@ if (! function_exists('ui_form_field_layout_vars')) {
         return [
             'attributes' => $attributes,
             'horizontal' => ($attributes['layout'] ?? 'v') === 'h',
-            'labelText' => \App\Helpers\Ui::fieldLabel($name),
+            'labelText' => Ui::fieldLabel($name),
             'fieldStackClass' => 'kt-form-item',
             'fieldRowClass' => 'kt-form-field-row flex flex-col lg:flex-row lg:items-start gap-2.5',
         ];
@@ -297,7 +306,7 @@ if (! function_exists('model_page_view')) {
             throw new InvalidArgumentException("Unknown model page action [{$action}].");
         }
 
-        $resource = \Illuminate\Support\Str::plural(\Illuminate\Support\Str::snake($model));
+        $resource = Str::plural(Str::snake($model));
         $override = "pages.{$resource}.{$action}";
 
         if (ViewFactory::exists($override)) {
@@ -328,7 +337,7 @@ if (! function_exists('model_modal_view')) {
             throw new InvalidArgumentException("Unknown model modal action [{$action}].");
         }
 
-        $resource = \Illuminate\Support\Str::plural(\Illuminate\Support\Str::snake($model));
+        $resource = Str::plural(Str::snake($model));
         $override = "pages.{$resource}.modals.{$action}";
 
         if (ViewFactory::exists($override)) {
@@ -348,7 +357,7 @@ if (! function_exists('model_modal_view')) {
 if (! function_exists('model_route_name')) {
     function model_route_name(string $model, string $action = 'index'): string
     {
-        return \Illuminate\Support\Str::plural(\Illuminate\Support\Str::snake($model)).'.'.$action;
+        return Str::plural(Str::snake($model)).'.'.$action;
     }
 }
 
@@ -362,7 +371,7 @@ if (! function_exists('model_route')) {
 if (! function_exists('model_modal_path')) {
     function model_modal_path(string $model, string $action, int|string|null $id = null): string
     {
-        $resource = \Illuminate\Support\Str::plural(\Illuminate\Support\Str::snake($model));
+        $resource = Str::plural(Str::snake($model));
 
         if ($action === 'create') {
             return url($resource.'/modal/create');
@@ -380,16 +389,50 @@ if (! function_exists('model_modal_path')) {
     }
 }
 
+if (! function_exists('help_exists')) {
+    function help_exists(string $modelOrKey): bool
+    {
+        $registry = HelpRegistry::class;
+
+        if (array_key_exists(class_basename($modelOrKey), CrudEntityRegistry::all())) {
+            return $registry::existsForModel($modelOrKey);
+        }
+
+        return $registry::exists($modelOrKey);
+    }
+}
+
+if (! function_exists('help_url')) {
+    function help_url(string $modelOrKey): ?string
+    {
+        if (! help_exists($modelOrKey)) {
+            return null;
+        }
+
+        if (array_key_exists(class_basename($modelOrKey), CrudEntityRegistry::all())) {
+            return model_route($modelOrKey, 'help');
+        }
+
+        $key = HelpRegistry::normalizeKey($modelOrKey);
+
+        if (! Route::has($key.'.help')) {
+            return null;
+        }
+
+        return route($key.'.help');
+    }
+}
+
 if (! function_exists('entity_can')) {
     function entity_can(string $entity, string $ability): bool
     {
-        return \App\Support\EntityAccess::can(auth()->user(), $entity, $ability);
+        return EntityAccess::can(auth()->user(), $entity, $ability);
     }
 }
 
 if (! function_exists('is_super_admin')) {
     function is_super_admin(): bool
     {
-        return \App\Support\EntityAccess::isSuperAdmin(auth()->user());
+        return EntityAccess::isSuperAdmin(auth()->user());
     }
 }

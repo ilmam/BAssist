@@ -51,6 +51,7 @@
     </div>
 
     <x-modal id="mianModal" title=""></x-modal>
+    <x-help-drawer />
 
     <script src="{{ ui_asset('js/core.bundle.js') }}"></script>
     <script src="{{ ui_asset('vendors/ktui/ktui.min.js') }}"></script>
@@ -940,6 +941,93 @@
                         : (payload?.message || 'Please check the form and try again.');
                     window.alert(`Save failed.\n${detail}`);
                 });
+        });
+
+        function helpDrawerElement() {
+            return document.getElementById('helpDrawer');
+        }
+
+        function helpDrawerInstance(drawer) {
+            if (!drawer || typeof KTDrawer === 'undefined') {
+                return null;
+            }
+
+            if (typeof KTDrawer.getOrCreateInstance === 'function') {
+                return KTDrawer.getOrCreateInstance(drawer);
+            }
+
+            if (typeof KTDrawer.getInstance === 'function') {
+                return KTDrawer.getInstance(drawer);
+            }
+
+            return null;
+        }
+
+        function showHelpDrawer(drawer) {
+            const instance = helpDrawerInstance(drawer);
+            if (instance && typeof instance.show === 'function') {
+                instance.show();
+                return;
+            }
+
+            drawer.classList.remove('hidden');
+            drawer.classList.add('open', 'kt-drawer', 'kt-drawer-end', 'flex', 'top-0', 'bottom-0', 'w-full', 'max-w-[440px]', 'z-[60]');
+            document.body.classList.add('overflow-hidden');
+        }
+
+        function openHelpDrawer(url) {
+            const drawer = helpDrawerElement();
+            const body = drawer?.querySelector('[data-help-drawer-body]');
+            const title = drawer?.querySelector('[data-help-drawer-title]');
+
+            if (!drawer || !body) {
+                return;
+            }
+
+            body.innerHTML = '<p class="text-sm text-muted-foreground">{{ __('ui.help_loading') }}</p>';
+            if (title) {
+                title.textContent = @json(__('ui.help'));
+            }
+
+            fetch(url, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'text/html',
+                },
+            })
+                .then((response) => {
+                    if (!response.ok) {
+                        throw new Error('Help not found');
+                    }
+
+                    return response.text();
+                })
+                .then((html) => {
+                    body.innerHTML = html;
+                    const embeddedTitle = body.querySelector('[data-help-title]');
+                    if (title && embeddedTitle) {
+                        title.textContent = embeddedTitle.textContent.trim() || @json(__('ui.help'));
+                        embeddedTitle.remove();
+                    }
+                    showHelpDrawer(drawer);
+                })
+                .catch(() => {
+                    body.innerHTML = '<p class="text-sm text-muted-foreground">{{ __('ui.help_unavailable') }}</p>';
+                    showHelpDrawer(drawer);
+                });
+        }
+
+        document.addEventListener('click', function (event) {
+            const trigger = event.target.closest('[data-help-url]');
+            if (!trigger) {
+                return;
+            }
+
+            event.preventDefault();
+            const url = trigger.getAttribute('data-help-url');
+            if (url) {
+                openHelpDrawer(url);
+            }
         });
     </script>
 </body>

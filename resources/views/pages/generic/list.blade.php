@@ -22,8 +22,13 @@
     @endphp
 
     <x-card title="{{ $model }} List">
+        <x-slot:titleAside>
+            <x-help-trigger :model="$model" />
+        </x-slot:titleAside>
         <x-slot:toolbar>
-            @include('pages.partials.create-toolbar-button', ['model' => $model])
+            <div class="flex items-center gap-2">
+                @include('pages.partials.create-toolbar-button', ['model' => $model])
+            </div>
         </x-slot>
         <x-datatable :options="$options" :defaultButtons="true" />
     </x-card>

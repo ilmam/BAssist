@@ -33,6 +33,9 @@
 @endphp
 
 <x-card title="{{ $model }} List">
+    <x-slot:titleAside>
+        <x-help-trigger :model="$model" />
+    </x-slot:titleAside>
     <x-slot:toolbar>
         <div class="flex items-center gap-2">
             @isset($toolbarExtras)

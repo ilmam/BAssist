@@ -137,3 +137,66 @@ body.modal-sheet-push .kt-header {
     }
   }
 }
+
+/**
+ * Help drawer markdown body
+ */
+.help-guide h1,
+.help-guide h2,
+.help-guide h3 {
+  font-weight: 600;
+  color: var(--mono, inherit);
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.help-guide h1:first-child,
+.help-guide h2:first-child,
+.help-guide h3:first-child {
+  margin-top: 0;
+}
+
+.help-guide p,
+.help-guide ul,
+.help-guide ol,
+.help-guide blockquote {
+  margin-bottom: 0.75rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--muted-foreground, inherit);
+}
+
+.help-guide ul,
+.help-guide ol {
+  padding-inline-start: 1.25rem;
+}
+
+.help-guide ul {
+  list-style: disc;
+}
+
+.help-guide ol {
+  list-style: decimal;
+}
+
+.help-guide strong {
+  color: var(--foreground, inherit);
+  font-weight: 600;
+}
+
+.help-guide blockquote {
+  border-inline-start: 3px solid var(--border, #e5e7eb);
+  padding-inline-start: 0.75rem;
+  font-style: italic;
+}
+
+.help-guide hr {
+  margin-block: 3.5rem 0.75rem;
+  border: 0;
+  border-top: 1px solid var(--border, #e5e7eb);
+}
+
+.help-guide hr + p {
+  font-size: 0.65em;
+  color: var(--muted-foreground, gray);
+}

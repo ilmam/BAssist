@@ -3,6 +3,9 @@
 @section('main')
     <div class="space-y-5">
         <x-card title="{{ $project->name }}">
+            <x-slot:titleAside>
+                <x-help-trigger topic="projects" />
+            </x-slot:titleAside>
             <x-slot:toolbar>
                 <div class="flex flex-wrap items-center gap-2">
                     @if (entity_can('Project', 'update'))
