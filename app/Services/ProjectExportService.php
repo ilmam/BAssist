@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Project;
+use App\Support\ScopeItemDirection;
 
 /**
  * Assembles a printable project artifact pack (HTML / browser print-to-PDF).
@@ -23,6 +24,8 @@ class ProjectExportService
      *   project: Project,
      *   generated_at: \Illuminate\Support\Carbon,
      *   readiness: array{total_gaps: int, items: list<array{key: string, label: string, count: int, severity: string, url: string|null}>},
+     *   strategic_baseline: \App\Models\StrategicBaseline|null,
+     *   scope_items: \Illuminate\Database\Eloquent\Collection,
      *   objectives: \Illuminate\Database\Eloquent\Collection,
      *   needs: \Illuminate\Database\Eloquent\Collection,
      *   stakeholders: \Illuminate\Database\Eloquent\Collection,
@@ -57,6 +60,8 @@ class ProjectExportService
             'assumptions',
             'constraints',
             'businessRules',
+            'strategicBaseline',
+            'scopeItems',
             'features.priority',
             'features.status',
             'features.stakeholderNeed',
@@ -76,6 +81,14 @@ class ProjectExportService
             'project' => $project,
             'generated_at' => now(),
             'readiness' => $this->readiness->forProject($project),
+            // Strategy early in the pack (blade order: after readiness, before BO/BN).
+            'strategic_baseline' => $project->strategicBaseline,
+            'scope_items' => $project->scopeItems
+                ->sortBy([
+                    fn ($item) => $item->direction === ScopeItemDirection::IN ? 0 : 1,
+                    'title',
+                ])
+                ->values(),
             'objectives' => $project->businessObjectives->sortBy('number')->values(),
             'needs' => $project->businessNeeds->sortBy('number')->values(),
             'stakeholders' => $stakeholdersWithNeeds,

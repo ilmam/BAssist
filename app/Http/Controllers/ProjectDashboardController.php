@@ -79,6 +79,18 @@ class ProjectDashboardController extends Controller
             'label' => 'business_rules',
             'icon' => 'book',
         ],
+        [
+            'model' => 'StrategicBaseline',
+            'count' => 'strategic_baseline_exists',
+            'label' => 'strategic_baseline',
+            'icon' => 'flag',
+        ],
+        [
+            'model' => 'ScopeItem',
+            'count' => 'scope_items_count',
+            'label' => 'scope_items',
+            'icon' => 'abstract-14',
+        ],
     ];
 
     public function __construct(protected ProjectReadinessService $readiness)
@@ -107,8 +119,9 @@ class ProjectDashboardController extends Controller
             'assumptions',
             'constraints',
             'businessRules',
+            'scopeItems',
         ]);
-        $project->loadExists(['architecture']);
+        $project->loadExists(['architecture', 'strategicBaseline']);
 
         $scopeQuery = [
             'workspace_id' => (int) $project->workspace_id,
@@ -121,13 +134,16 @@ class ProjectDashboardController extends Controller
                 continue;
             }
 
-            $countValue = $artifact['count'] === 'architecture_exists'
-                ? ((bool) $project->getAttribute('architecture_exists') ? 1 : 0)
-                : (int) ($project->getAttribute($artifact['count']) ?? 0);
+            $countValue = match ($artifact['count']) {
+                'architecture_exists', 'strategic_baseline_exists' => ((bool) $project->getAttribute($artifact['count']) ? 1 : 0),
+                default => (int) ($project->getAttribute($artifact['count']) ?? 0),
+            };
 
             $url = match ($artifact['model']) {
                 'Architecture' => route('architectures.for-project', $project->id),
+                'StrategicBaseline' => route('strategic_baselines.for-project', $project->id),
                 'Assumption', 'Constraint', 'BusinessRule' => route('guardrails.index', $scopeQuery),
+                'ScopeItem' => route('strategy.index', $scopeQuery),
                 default => model_route($artifact['model'], 'index').'?'.http_build_query($scopeQuery),
             };
 
@@ -190,6 +206,17 @@ class ProjectDashboardController extends Controller
                 'label' => __('ui.guardrails'),
                 'url' => route('guardrails.index', $scopeQuery),
                 'icon' => 'shield-tick',
+            ];
+        }
+
+        if (nav_item_is_visible([
+            'entities' => ['StrategicBaseline', 'ScopeItem'],
+            'route' => 'strategy.index',
+        ])) {
+            $links[] = [
+                'label' => __('ui.strategy'),
+                'url' => route('strategy.index', $scopeQuery),
+                'icon' => 'flag',
             ];
         }
 

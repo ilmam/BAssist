@@ -117,12 +117,14 @@
             padding-bottom: 0.35rem;
             border-bottom: 1px solid var(--line);
             font-size: 1.25rem;
+            break-after: avoid;
             page-break-after: avoid;
         }
 
         h3.item-title {
             margin: 1.25rem 0 0;
             font-size: 1.05rem;
+            break-after: avoid;
             page-break-after: avoid;
         }
 
@@ -144,6 +146,7 @@
             margin-bottom: 1.25rem;
             padding-bottom: 1rem;
             border-bottom: 1px solid #eee;
+            break-inside: avoid;
             page-break-inside: avoid;
         }
 
@@ -217,6 +220,7 @@
             border-radius: 8px;
             background: #fff;
             overflow-x: auto;
+            break-inside: avoid;
             page-break-inside: avoid;
         }
 
@@ -279,13 +283,56 @@
                 padding: 0;
             }
 
+            .cover {
+                break-inside: avoid;
+                page-break-inside: avoid;
+                break-after: avoid;
+                page-break-after: avoid;
+            }
+
             h2.section-title {
+                break-before: auto;
                 page-break-before: auto;
+                break-after: avoid;
+                page-break-after: avoid;
                 margin-top: 1.5rem;
             }
 
-            .cover {
+            /* Keep section titles with the first following block */
+            h2.section-title + * {
+                break-before: avoid;
+                page-break-before: avoid;
+            }
+
+            h3.item-title {
+                break-after: avoid;
                 page-break-after: avoid;
+            }
+
+            .summary {
+                break-inside: avoid;
+                page-break-inside: avoid;
+            }
+
+            .artifact {
+                break-inside: avoid;
+                page-break-inside: avoid;
+            }
+
+            .artifact__panel,
+            .kv {
+                break-inside: avoid;
+                page-break-inside: avoid;
+            }
+
+            table.matrix thead {
+                break-after: avoid;
+                page-break-after: avoid;
+            }
+
+            table.matrix tbody tr {
+                break-inside: avoid;
+                page-break-inside: avoid;
             }
 
             a { color: inherit; text-decoration: none; }

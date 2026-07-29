@@ -25,6 +25,8 @@
         $hasAssumptions = $assumptions->isNotEmpty();
         $hasConstraints = $constraints->isNotEmpty();
         $hasBusinessRules = $business_rules->isNotEmpty();
+        $hasStrategicBaseline = $strategic_baseline !== null;
+        $hasScopeItems = $scope_items->isNotEmpty();
         $hasFeatures = $features !== [];
         $matrixRows = $matrix['rows'] ?? [];
         $hasMatrix = $matrixRows !== [];
@@ -39,9 +41,27 @@
             || $hasAssumptions
             || $hasConstraints
             || $hasBusinessRules
+            || $hasStrategicBaseline
+            || $hasScopeItems
             || $hasFeatures
             || $hasMatrix
             || $readinessItems !== [];
+
+        $tocSections = array_values(array_filter([
+            $hasStrategicBaseline ? ['id' => 'section-strategic-baseline', 'label' => __('ui.strategic_baseline')] : null,
+            $hasScopeItems ? ['id' => 'section-scope-items', 'label' => __('ui.scope_items')] : null,
+            $hasObjectives ? ['id' => 'section-business-objectives', 'label' => __('ui.business_objectives')] : null,
+            $hasNeeds ? ['id' => 'section-business-needs', 'label' => __('ui.business_needs')] : null,
+            $hasStakeholders ? ['id' => 'section-stakeholders', 'label' => __('ui.stakeholders')] : null,
+            $hasStakeholderNeeds ? ['id' => 'section-stakeholder-needs', 'label' => __('ui.stakeholder_needs')] : null,
+            $hasStateFlows ? ['id' => 'section-state-flows', 'label' => __('ui.state_flows')] : null,
+            $hasSwimlaneFlows ? ['id' => 'section-swimlane-flows', 'label' => __('ui.swimlane_flows')] : null,
+            $hasAssumptions ? ['id' => 'section-assumptions', 'label' => __('ui.assumptions')] : null,
+            $hasConstraints ? ['id' => 'section-constraints', 'label' => __('ui.constraints')] : null,
+            $hasBusinessRules ? ['id' => 'section-business-rules', 'label' => __('ui.business_rules')] : null,
+            $hasFeatures ? ['id' => 'section-features', 'label' => __('ui.features')] : null,
+            $hasMatrix ? ['id' => 'section-traceability-matrix', 'label' => __('ui.traceability_matrix')] : null,
+        ]));
     @endphp
 
     <header class="cover">
@@ -72,6 +92,19 @@
             <p class="empty" style="margin-top: 1.25rem;">{{ __('ui.export_no_artifacts') }}</p>
         @endunless
     </header>
+
+    @if ($tocSections !== [])
+        <nav class="export-toc" aria-label="{{ __('ui.table_of_contents') }}">
+            <h2 class="section-title">{{ __('ui.table_of_contents') }}</h2>
+            <ol class="export-toc__list">
+                @foreach ($tocSections as $entry)
+                    <li>
+                        <a href="#{{ $entry['id'] }}">{{ $entry['label'] }}</a>
+                    </li>
+                @endforeach
+            </ol>
+        </nav>
+    @endif
 
     <h2 class="section-title">{{ __('ui.project_readiness') }}</h2>
     <div class="summary">
@@ -111,8 +144,72 @@
         </table>
     @endif
 
+    @if ($hasStrategicBaseline)
+        <h2 id="section-strategic-baseline" class="section-title section-title--break">{{ __('ui.strategic_baseline') }}</h2>
+        <article class="artifact strategic-baseline">
+            <h3 class="item-title">{{ $strategic_baseline->project?->name ?? __('ui.strategic_baseline') }}</h3>
+            <div class="artifact__meta">
+                <span><strong>{{ __('ui.status') }}</strong>{{ $strategic_baseline->statusLabel() }}</span>
+            </div>
+            <dl class="kv">
+                @if ($strategic_baseline->current_state)
+                    <dt>{{ __('ui.current_state') }}</dt>
+                    <dd class="prose">{{ $strategic_baseline->current_state }}</dd>
+                @endif
+                @if ($strategic_baseline->future_state)
+                    <dt>{{ __('ui.future_state') }}</dt>
+                    <dd class="prose">{{ $strategic_baseline->future_state }}</dd>
+                @endif
+                @if ($strategic_baseline->change_strategy)
+                    <dt>{{ __('ui.change_strategy') }}</dt>
+                    <dd class="prose">{{ $strategic_baseline->change_strategy }}</dd>
+                @endif
+            </dl>
+        </article>
+    @endif
+
+    @if ($hasScopeItems)
+        <h2 id="section-scope-items" class="section-title">{{ __('ui.scope_items') }}</h2>
+        @php
+            $inScopeItems = $scope_items->where('direction', \App\Support\ScopeItemDirection::IN)->values();
+            $outScopeItems = $scope_items->where('direction', \App\Support\ScopeItemDirection::OUT)->values();
+        @endphp
+        <table class="matrix scope-columns">
+            <thead>
+                <tr>
+                    <th>{{ __('ui.scope_item_direction_in') }}</th>
+                    <th>{{ __('ui.scope_item_direction_out') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>
+                        @foreach ($inScopeItems as $item)
+                            <article class="artifact">
+                                <h3 class="item-title">{{ $item->title }}</h3>
+                                @if ($item->description)
+                                    <p class="prose">{{ $item->description }}</p>
+                                @endif
+                            </article>
+                        @endforeach
+                    </td>
+                    <td>
+                        @foreach ($outScopeItems as $item)
+                            <article class="artifact">
+                                <h3 class="item-title">{{ $item->title }}</h3>
+                                @if ($item->description)
+                                    <p class="prose">{{ $item->description }}</p>
+                                @endif
+                            </article>
+                        @endforeach
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    @endif
+
     @if ($hasObjectives)
-        <h2 class="section-title">{{ __('ui.business_objectives') }}</h2>
+        <h2 id="section-business-objectives" class="section-title">{{ __('ui.business_objectives') }}</h2>
         @foreach ($objectives as $objective)
             <article class="artifact">
                 <h3 class="item-title">
@@ -147,7 +244,7 @@
     @endif
 
     @if ($hasNeeds)
-        <h2 class="section-title">{{ __('ui.business_needs') }}</h2>
+        <h2 id="section-business-needs" class="section-title">{{ __('ui.business_needs') }}</h2>
         @foreach ($needs as $need)
             <article class="artifact">
                 <h3 class="item-title">
@@ -201,7 +298,7 @@
     @endif
 
     @if ($hasStakeholders)
-        <h2 class="section-title">{{ __('ui.stakeholders') }}</h2>
+        <h2 id="section-stakeholders" class="section-title">{{ __('ui.stakeholders') }}</h2>
         <table class="matrix">
             <thead>
                 <tr>
@@ -227,7 +324,7 @@
     @endif
 
     @if ($hasStakeholderNeeds)
-        <h2 class="section-title">{{ __('ui.stakeholder_needs') }}</h2>
+        <h2 id="section-stakeholder-needs" class="section-title">{{ __('ui.stakeholder_needs') }}</h2>
         @foreach ($stakeholder_needs as $sn)
             <article class="artifact">
                 <h3 class="item-title">
@@ -266,7 +363,7 @@
     @endif
 
     @if ($hasStateFlows)
-        <h2 class="section-title">{{ __('ui.state_flows') }}</h2>
+        <h2 id="section-state-flows" class="section-title">{{ __('ui.state_flows') }}</h2>
         @foreach ($state_flows as $item)
             @php
                 $flow = $item['model'];
@@ -297,7 +394,7 @@
     @endif
 
     @if ($hasSwimlaneFlows)
-        <h2 class="section-title">{{ __('ui.swimlane_flows') }}</h2>
+        <h2 id="section-swimlane-flows" class="section-title">{{ __('ui.swimlane_flows') }}</h2>
         @foreach ($swimlane_flows as $item)
             @php
                 $flow = $item['model'];
@@ -328,7 +425,7 @@
     @endif
 
     @if ($hasAssumptions)
-        <h2 class="section-title">{{ __('ui.assumptions') }}</h2>
+        <h2 id="section-assumptions" class="section-title">{{ __('ui.assumptions') }}</h2>
         @foreach ($assumptions as $item)
             <article class="artifact">
                 <h3 class="item-title">{{ $item->title }}</h3>
@@ -349,7 +446,7 @@
     @endif
 
     @if ($hasConstraints)
-        <h2 class="section-title">{{ __('ui.constraints') }}</h2>
+        <h2 id="section-constraints" class="section-title">{{ __('ui.constraints') }}</h2>
         @foreach ($constraints as $item)
             <article class="artifact">
                 <h3 class="item-title">{{ $item->title }}</h3>
@@ -370,7 +467,7 @@
     @endif
 
     @if ($hasBusinessRules)
-        <h2 class="section-title">{{ __('ui.business_rules') }}</h2>
+        <h2 id="section-business-rules" class="section-title">{{ __('ui.business_rules') }}</h2>
         @foreach ($business_rules as $item)
             <article class="artifact">
                 <h3 class="item-title">{{ $item->title }}</h3>
@@ -391,7 +488,7 @@
     @endif
 
     @if ($hasFeatures)
-        <h2 class="section-title">{{ __('ui.features') }}</h2>
+        <h2 id="section-features" class="section-title section-title--break">{{ __('ui.features') }}</h2>
         @foreach ($features as $item)
             @php
                 $feature = $item['model'];
@@ -431,7 +528,7 @@
     @endif
 
     @if ($hasMatrix)
-        <h2 class="section-title">{{ __('ui.traceability_matrix') }}</h2>
+        <h2 id="section-traceability-matrix" class="section-title section-title--break">{{ __('ui.traceability_matrix') }}</h2>
         <div class="summary">
             <span>{{ __('ui.matrix_total') }}: <strong>{{ $matrix['summary']['total'] ?? 0 }}</strong></span>
             <span>{{ __('ui.matrix_gaps') }}: <strong>{{ $matrix['summary']['gaps'] ?? 0 }}</strong></span>
@@ -498,6 +595,8 @@
                                         'missing_objective' => __('ui.gap_missing_objective'),
                                         'missing_need' => __('ui.gap_missing_need'),
                                         'missing_stakeholder_need' => __('ui.gap_missing_stakeholder_need'),
+                                        'missing_feature' => __('ui.gap_missing_feature'),
+                                        'missing_scenarios' => __('ui.gap_missing_scenarios'),
                                         'orphan_objective' => __('ui.gap_orphan_objective'),
                                         'orphan_stakeholder_need' => __('ui.gap_orphan_stakeholder_need'),
                                         'orphan_feature' => __('ui.gap_orphan_feature'),
@@ -516,6 +615,31 @@
 
 @push('styles')
     <style>
+        .export-toc {
+            margin: 0 0 0.5rem;
+        }
+
+        .export-toc__list {
+            margin: 0;
+            padding: 0 0 0 1.25rem;
+            font: 14px/1.55 system-ui, sans-serif;
+            color: var(--ink);
+        }
+
+        .export-toc__list li {
+            margin: 0.2rem 0;
+        }
+
+        .export-toc__list a {
+            color: var(--ink);
+            text-decoration: underline;
+            text-underline-offset: 0.15em;
+        }
+
+        .export-toc__list a:hover {
+            color: #000;
+        }
+
         .gherkin-print {
             margin: 0.75rem 0 0;
             padding: 1rem 1.1rem;
@@ -529,12 +653,137 @@
             page-break-inside: auto;
         }
 
+        /* Narrative blocks: looser than dense .kv / matrix rows, still print-friendly */
+        .strategic-baseline .artifact__meta {
+            margin-bottom: 1.1rem;
+        }
+
+        .strategic-baseline .kv {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            margin: 0;
+            grid-template-columns: unset;
+        }
+
+        .strategic-baseline .kv dt {
+            margin: 1.35rem 0 0;
+            padding-top: 1.1rem;
+            border-top: 1px solid #ececec;
+            font-weight: 600;
+            color: var(--muted);
+        }
+
+        .strategic-baseline .kv dt:first-child {
+            margin-top: 0;
+            padding-top: 0;
+            border-top: 0;
+        }
+
+        .strategic-baseline .kv dd {
+            margin: 0.45rem 0 0;
+        }
+
+        .strategic-baseline .kv dd.prose {
+            margin-top: 0.45rem;
+            line-height: 1.55;
+        }
+
+        table.scope-columns th,
+        table.scope-columns td {
+            width: 50%;
+        }
+
+        table.scope-columns .artifact {
+            margin-bottom: 0.85rem;
+            padding-bottom: 0.75rem;
+        }
+
+        table.scope-columns .artifact:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: 0;
+        }
+
+        table.scope-columns h3.item-title {
+            margin-top: 0;
+            font-size: 0.95rem;
+        }
+
         @media print {
+            .export-toc__list {
+                font-size: 11pt;
+            }
+
+            .export-toc__list a {
+                text-decoration: none;
+            }
+
             .gherkin-print {
                 border: 0;
                 border-radius: 0;
                 padding: 0;
                 font-size: 10.5pt;
+                break-inside: auto;
+                page-break-inside: auto;
+            }
+
+            /* Heavy sections: start on a fresh page */
+            h2.section-title.section-title--break {
+                break-before: page;
+                page-break-before: always;
+            }
+
+            /* Long baseline: allow split between narrative fields, keep each field together */
+            .artifact.strategic-baseline {
+                break-inside: auto;
+                page-break-inside: auto;
+            }
+
+            .strategic-baseline .kv {
+                break-inside: auto;
+                page-break-inside: auto;
+            }
+
+            .strategic-baseline .kv dt {
+                margin-top: 1.1rem;
+                padding-top: 0.9rem;
+                break-after: avoid;
+                page-break-after: avoid;
+            }
+
+            .strategic-baseline .kv dt:first-child {
+                margin-top: 0;
+                padding-top: 0;
+            }
+
+            .strategic-baseline .kv dd {
+                break-before: avoid;
+                page-break-before: avoid;
+                break-inside: avoid;
+                page-break-inside: avoid;
+            }
+
+            /* Scope table may span pages; keep each item card intact */
+            table.scope-columns {
+                break-inside: auto;
+                page-break-inside: auto;
+            }
+
+            table.scope-columns th,
+            table.scope-columns td {
+                width: 50%;
+            }
+
+            table.scope-columns .artifact {
+                break-inside: avoid;
+                page-break-inside: avoid;
+            }
+
+            /* Keep matrix heading + summary with the table header row */
+            h2.section-title.section-title--break + .summary {
+                break-after: avoid;
+                page-break-after: avoid;
             }
         }
     </style>

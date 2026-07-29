@@ -9,6 +9,7 @@ use App\Services\SystemStakeholderSeeder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 #[RoutableAttribute]
 class Project extends BaseModel
@@ -108,8 +109,20 @@ class Project extends BaseModel
     }
 
     #[Relation('HasOne')]
-    public function architecture(): \Illuminate\Database\Eloquent\Relations\HasOne
+    public function architecture(): HasOne
     {
         return $this->hasOne(Architecture::class);
+    }
+
+    #[Relation('HasOne')]
+    public function strategicBaseline(): HasOne
+    {
+        return $this->hasOne(StrategicBaseline::class);
+    }
+
+    #[Relation('HasMany')]
+    public function scopeItems(): HasMany
+    {
+        return $this->hasMany(ScopeItem::class);
     }
 }

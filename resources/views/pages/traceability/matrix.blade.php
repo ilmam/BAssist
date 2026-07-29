@@ -20,6 +20,7 @@
             'missing_need' => __('ui.gap_missing_need'),
             'missing_stakeholder_need' => __('ui.gap_missing_stakeholder_need'),
             'missing_feature' => __('ui.gap_missing_feature'),
+            'missing_scenarios' => __('ui.gap_missing_scenarios'),
             'orphan_objective' => __('ui.gap_orphan_objective'),
             'orphan_stakeholder_need' => __('ui.gap_orphan_stakeholder_need'),
             'orphan_feature' => __('ui.gap_orphan_feature'),
@@ -148,6 +149,9 @@
                                             @endif
                                             {{ $row['feature_title'] }}
                                         </a>
+                                        <span class="text-muted-foreground text-xs ms-1">
+                                            ({{ __('ui.scenarios') }}: {{ $row['scenarios_count'] ?? 0 }})
+                                        </span>
                                     @else
                                         <span class="text-muted-foreground">—</span>
                                     @endif

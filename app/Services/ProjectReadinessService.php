@@ -9,9 +9,12 @@ use App\Models\BusinessRule;
 use App\Models\Constraint;
 use App\Models\Feature;
 use App\Models\Project;
+use App\Models\ScopeItem;
 use App\Models\StakeholderNeed;
+use App\Models\StrategicBaseline;
 use App\Support\AssumptionStatus;
 use App\Support\EntityAccess;
+use App\Support\StrategicBaselineStatus;
 
 /**
  * Derived readiness / gap summary for a project (encourage, don't police).
@@ -121,7 +124,7 @@ class ProjectReadinessService
                 label: __('ui.readiness_features_without_scenarios'),
                 count: $count,
                 severity: 'critical',
-                url: model_route('Feature', 'index').'?'.http_build_query($scopeQuery),
+                url: route('traceability.index', $scopeQuery + ['orphans_only' => 1]),
             );
         }
 
@@ -162,6 +165,44 @@ class ProjectReadinessService
                 count: $hasRules ? 0 : 1,
                 severity: 'info',
                 url: route('guardrails.index', $scopeQuery),
+            );
+        }
+
+        if (entity_can('StrategicBaseline', EntityAccess::VIEW)) {
+            $baseline = StrategicBaseline::query()
+                ->where('project_id', $project->id)
+                ->first();
+            $baselineUrl = route('strategic_baselines.for-project', $project->id);
+
+            if ($baseline === null || ! $baseline->hasStrategyContent()) {
+                $items[] = $this->item(
+                    key: 'baseline_missing',
+                    label: __('ui.readiness_no_strategic_baseline'),
+                    count: 1,
+                    severity: 'info',
+                    url: $baselineUrl,
+                );
+            } elseif ($baseline->status === StrategicBaselineStatus::DRAFT) {
+                $items[] = $this->item(
+                    key: 'baseline_draft',
+                    label: __('ui.readiness_strategic_baseline_draft'),
+                    count: 1,
+                    severity: 'warn',
+                    url: $baselineUrl,
+                );
+            }
+        }
+
+        if (entity_can('ScopeItem', EntityAccess::VIEW)) {
+            $hasScopeItems = ScopeItem::query()
+                ->where('project_id', $project->id)
+                ->exists();
+            $items[] = $this->item(
+                key: 'scope_items_captured',
+                label: __('ui.readiness_no_scope_items'),
+                count: $hasScopeItems ? 0 : 1,
+                severity: 'info',
+                url: route('strategy.index', $scopeQuery),
             );
         }
 

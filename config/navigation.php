@@ -70,6 +70,13 @@ return [
                 'icon_v8' => 'shield-tick',
                 'entities' => ['Assumption', 'Constraint', 'BusinessRule'],
             ],
+            [
+                'label' => 'Strategy & Scope',
+                'route' => 'strategy.index',
+                'icon' => 'flag',
+                'icon_v8' => 'flag',
+                'entities' => ['StrategicBaseline', 'ScopeItem'],
+            ],
         ],
     ],
 

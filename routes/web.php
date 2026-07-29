@@ -9,6 +9,8 @@ use App\Http\Controllers\FeatureController;
 use App\Http\Controllers\GuardrailsController;
 use App\Http\Controllers\ProjectDashboardController;
 use App\Http\Controllers\ProjectExportController;
+use App\Http\Controllers\StrategicBaselineController;
+use App\Http\Controllers\StrategyController;
 use App\Http\Controllers\TraceabilityController;
 use App\Support\CrudRouteRegistrar;
 use Illuminate\Support\Facades\Route;
@@ -26,6 +28,7 @@ Route::middleware('auth')->group(function (): void {
     Route::get('acceptance-plan/export', [AcceptancePlanController::class, 'export'])->name('acceptance-plan.export');
     Route::get('diagrams', [DiagramsController::class, 'index'])->name('diagrams.index');
     Route::get('guardrails', [GuardrailsController::class, 'index'])->name('guardrails.index');
+    Route::get('strategy', [StrategyController::class, 'index'])->name('strategy.index');
     Route::get('projects/{project}/dashboard', [ProjectDashboardController::class, 'show'])->name('projects.dashboard');
     Route::get('projects/{project}/export', [ProjectExportController::class, 'show'])->name('projects.export');
 
@@ -47,6 +50,8 @@ Route::middleware('auth')->group(function (): void {
             ->name('architectures.export-dsl');
         Route::get('architectures/{id}/export/json', [ArchitectureController::class, 'exportJson'])
             ->name('architectures.export-json');
+        Route::get('strategic_baselines/for-project/{project}', [StrategicBaselineController::class, 'forProject'])
+            ->name('strategic_baselines.for-project');
         CrudRouteRegistrar::registerWebRoutes();
     });
 });

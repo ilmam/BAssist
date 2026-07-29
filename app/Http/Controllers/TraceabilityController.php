@@ -49,6 +49,7 @@ class TraceabilityController extends Controller
                 'Stakeholder Need',
                 'Feature Code',
                 'Feature',
+                'Scenarios',
                 'Stakeholders',
                 'Gaps',
             ]);
@@ -65,6 +66,7 @@ class TraceabilityController extends Controller
                     $row['stakeholder_need_title'] ?? '',
                     $row['feature_code'] ?? '',
                     $row['feature_title'] ?? '',
+                    $row['scenarios_count'] ?? '',
                     implode('; ', $row['stakeholder_names'] ?? []),
                     implode('; ', $row['gaps'] ?? []),
                 ]);

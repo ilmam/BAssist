@@ -15,7 +15,8 @@ use Illuminate\Support\Collection;
 
 /**
  * Builds a derived traceability matrix from FK / pivot links.
- * Chain: Objective ↔ Need ↔ Stakeholder Need → Feature (via Feature.stakeholder_need_id).
+ * Chain: Objective ↔ Need ↔ Stakeholder Need → Feature → Scenarios
+ * (Feature via Feature.stakeholder_need_id; scenarios_count > 0 required).
  */
 class TraceabilityMatrixService
 {
@@ -29,7 +30,7 @@ class TraceabilityMatrixService
      * @param  array{project_id?: int|string|null, orphans_only?: bool|string|null}  $filters
      * @return array{
      *   rows: list<array<string, mixed>>,
-     *   summary: array{total: int, gaps: int, orphan_objectives: int, orphan_needs: int, orphan_stakeholder_needs: int, orphan_features: int},
+     *   summary: array{total: int, gaps: int, orphan_objectives: int, orphan_needs: int, orphan_stakeholder_needs: int, orphan_features: int, features_without_scenarios: int},
      *   projects: Collection<int, Project>,
      *   filters: array{project_id: int|null, workspace_id: int|null, workspace_name: string|null, orphans_only: bool}
      * }
@@ -75,6 +76,9 @@ class TraceabilityMatrixService
                 'orphan_needs' => $rows->filter(fn (array $r) => in_array('missing_objective', $r['gaps'], true))->count(),
                 'orphan_stakeholder_needs' => $rows->where('gap_type', 'orphan_stakeholder_need')->count(),
                 'orphan_features' => $rows->where('gap_type', 'orphan_feature')->count(),
+                'features_without_scenarios' => $rows->filter(
+                    fn (array $r) => in_array('missing_scenarios', $r['gaps'], true)
+                )->count(),
             ],
             'projects' => $this->projectsForFilter($workspaceId),
             'filters' => [
@@ -97,7 +101,10 @@ class TraceabilityMatrixService
                 'businessObjectives:id,number,title',
                 'stakeholderNeeds:id,number,title,project_id',
                 'stakeholderNeeds.stakeholders:id,name',
-                'stakeholderNeeds.features' => fn ($query) => $query->orderBy('number')->orderBy('title'),
+                'stakeholderNeeds.features' => fn ($query) => $query
+                    ->withCount('scenarios')
+                    ->orderBy('number')
+                    ->orderBy('title'),
             ])
             ->orderBy('number')
             ->orderBy('title')
@@ -140,7 +147,7 @@ class TraceabilityMatrixService
                             need: $need,
                             stakeholderNeed: $stakeholderNeed,
                             feature: $feature,
-                            gapType: $objective === null ? 'incomplete_chain' : null,
+                            gapType: $this->featureRowGapType($objective, $feature),
                         );
                     }
                 }
@@ -182,7 +189,10 @@ class TraceabilityMatrixService
             ->with([
                 'project:id,name,code',
                 'stakeholders:id,name',
-                'features' => fn ($query) => $query->orderBy('number')->orderBy('title'),
+                'features' => fn ($query) => $query
+                    ->withCount('scenarios')
+                    ->orderBy('number')
+                    ->orderBy('title'),
             ])
             ->orderBy('number')
             ->orderBy('title')
@@ -228,6 +238,7 @@ class TraceabilityMatrixService
     {
         $features = $this->scopedQuery(Feature::query(), $projectId, $workspaceId)
             ->whereNull('stakeholder_need_id')
+            ->withCount('scenarios')
             ->with('project:id,name,code')
             ->orderBy('number')
             ->orderBy('title')
@@ -255,6 +266,9 @@ class TraceabilityMatrixService
         ?string $gapType,
     ): array {
         $gaps = [];
+        $scenarioCount = $feature !== null
+            ? (int) ($feature->scenarios_count ?? 0)
+            : 0;
 
         if ($objective === null && $need !== null) {
             $gaps[] = 'missing_objective';
@@ -271,6 +285,10 @@ class TraceabilityMatrixService
         // Stakeholder need without a linked BDD feature (or orphan SN with no features).
         if ($feature === null && $stakeholderNeed !== null) {
             $gaps[] = 'missing_feature';
+        }
+        // Linked feature must have at least one scenario.
+        if ($feature !== null && $scenarioCount === 0) {
+            $gaps[] = 'missing_scenarios';
         }
         if ($gapType === 'orphan_objective') {
             $gaps[] = 'orphan_objective';
@@ -309,10 +327,22 @@ class TraceabilityMatrixService
             'feature_id' => $feature?->id,
             'feature_code' => $feature?->code,
             'feature_title' => $feature?->title,
+            'scenarios_count' => $feature !== null ? $scenarioCount : null,
             'gaps' => $gaps,
             'has_gap' => $gaps !== [],
             'gap_type' => $gapType,
         ];
+    }
+
+    protected function featureRowGapType(?BusinessObjective $objective, Feature $feature): ?string
+    {
+        if ($objective === null) {
+            return 'incomplete_chain';
+        }
+
+        $scenarioCount = (int) ($feature->scenarios_count ?? 0);
+
+        return $scenarioCount === 0 ? 'missing_scenarios' : null;
     }
 
     /**

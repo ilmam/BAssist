@@ -171,6 +171,25 @@ return [
             'nav_icon_v8' => 'book',
         ],
 
+        'StrategicBaseline' => [
+            'home' => false,
+            'nav' => false,
+            'nav_label' => 'Strategic Baseline',
+            'nav_icon' => 'flag',
+            'nav_icon_v8' => 'flag',
+            'controller' => \App\Http\Controllers\StrategicBaselineController::class,
+            // Single document per project; full-page edit, never modal.
+            'use_modals' => false,
+        ],
+
+        'ScopeItem' => [
+            'home' => false,
+            'nav' => false,
+            'nav_label' => 'Scope Items',
+            'nav_icon' => 'abstract-14',
+            'nav_icon_v8' => 'abstract-14',
+        ],
+
         // 'LegacyThing' => ['disabled' => true],
     ],
 
