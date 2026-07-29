@@ -39,6 +39,7 @@
             </div>
         </x-slot>
 
+        {{-- Explicit Filter submit: KTSelect fires change on init, so onchange→submit loops forever. --}}
         <form method="GET" action="{{ route('traceability.index') }}" class="mb-5 flex flex-wrap items-end gap-3">
             @if ($filters['orphans_only'] ?? false)
                 <input type="hidden" name="orphans_only" value="1">
@@ -46,7 +47,7 @@
 
             <div class="flex flex-col gap-1 min-w-[220px]">
                 <label for="project_id" class="text-sm text-muted-foreground">{{ __('ui.project') }}</label>
-                <select name="project_id" id="project_id" class="kt-select" data-kt-select="true" onchange="this.form.submit()">
+                <select name="project_id" id="project_id" class="kt-select" data-kt-select="true">
                     <option value="">{{ __('ui.all_projects') }}</option>
                     @foreach ($projects as $project)
                         <option value="{{ $project->id }}" @selected((int) ($filters['project_id'] ?? 0) === (int) $project->id)>
@@ -55,6 +56,10 @@
                     @endforeach
                 </select>
             </div>
+
+            <x-button type="submit" color="primary" activeColor="primary">
+                {{ __('ui.apply_filters') }}
+            </x-button>
 
             @if ($filters['project_id'] ?? null)
                 <a href="{{ route('traceability.index', array_filter(['orphans_only' => ($filters['orphans_only'] ?? false) ? 1 : null])) }}"

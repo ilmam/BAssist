@@ -4,7 +4,7 @@
     $addScenarioModalUrl = model_modal_path('Scenario', 'create').'?feature_id='.$dto->id;
 @endphp
 
-<x-modal-content :title="($dto->code ? $dto->code.' — ' : '').$dto->title" size="xl">
+<x-modal-content :title="($dto->code ? $dto->code.' — ' : '').$dto->title" size="full">
     @include('pages.features.partials.view-content', [
         'dto' => $dto,
         'model' => $model,

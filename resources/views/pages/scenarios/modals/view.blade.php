@@ -2,7 +2,7 @@
     $modelName = class_basename($model);
 @endphp
 
-<x-modal-content :title="$scenario->gherkinKeyword().': '.$dto->title" size="xl">
+<x-modal-content :title="$scenario->gherkinKeyword().': '.$dto->title" size="full">
     @include('pages.scenarios.partials.view-content', [
         'dto' => $dto,
         'model' => $model,

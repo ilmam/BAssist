@@ -7,6 +7,7 @@
       end | sheet                          — right-side sheet
 
     Header switcher: Small (sm) / Medium (lg) / Large (full) / Side (end).
+    Legacy aliases: xl → full (Large), md → lg (Medium), sheet → end (Side).
     Side mode clears the blurry backdrop by default and pushes page content left
     (body.modal-sheet-push) so the list stays fully visible beside the panel;
     the eye toggle can dim/clear the backdrop in any size.

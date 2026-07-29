@@ -25,6 +25,7 @@
         $hasAssumptions = $assumptions->isNotEmpty();
         $hasConstraints = $constraints->isNotEmpty();
         $hasBusinessRules = $business_rules->isNotEmpty();
+        $hasFeatures = $features !== [];
         $matrixRows = $matrix['rows'] ?? [];
         $hasMatrix = $matrixRows !== [];
         $readinessItems = $readiness['items'] ?? [];
@@ -38,6 +39,7 @@
             || $hasAssumptions
             || $hasConstraints
             || $hasBusinessRules
+            || $hasFeatures
             || $hasMatrix
             || $readinessItems !== [];
     @endphp
@@ -388,6 +390,46 @@
         @endforeach
     @endif
 
+    @if ($hasFeatures)
+        <h2 class="section-title">{{ __('ui.features') }}</h2>
+        @foreach ($features as $item)
+            @php
+                $feature = $item['model'];
+                $gherkinBody = trim($item['gherkin'] ?? '');
+            @endphp
+            <article class="artifact">
+                <h3 class="item-title">
+                    @if ($feature->code)
+                        <span class="artifact__code">{{ $feature->code }}</span>
+                    @endif
+                    {{ $feature->title }}
+                </h3>
+                <div class="artifact__panel">
+                    <div class="artifact__meta">
+                        <span><strong>{{ __('ui.status') }}</strong>{{ $feature->status?->name ?: '—' }}</span>
+                        <span><strong>{{ __('ui.priority') }}</strong>{{ $feature->priority?->name ?: '—' }}</span>
+                    </div>
+                    <dl class="kv">
+                        <dt>{{ __('ui.stakeholder_need') }}</dt>
+                        <dd>
+                            @if ($feature->stakeholderNeed)
+                                @if ($feature->stakeholderNeed->code)
+                                    <span class="artifact__code">{{ $feature->stakeholderNeed->code }}</span>
+                                @endif
+                                {{ $feature->stakeholderNeed->title }}
+                            @else
+                                —
+                            @endif
+                        </dd>
+                    </dl>
+                </div>
+                @if ($gherkinBody !== '')
+                    <pre class="gherkin-print">{{ $gherkinBody }}</pre>
+                @endif
+            </article>
+        @endforeach
+    @endif
+
     @if ($hasMatrix)
         <h2 class="section-title">{{ __('ui.traceability_matrix') }}</h2>
         <div class="summary">
@@ -471,6 +513,32 @@
         </table>
     @endif
 @endsection
+
+@push('styles')
+    <style>
+        .gherkin-print {
+            margin: 0.75rem 0 0;
+            padding: 1rem 1.1rem;
+            background: #fff;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            font: 12px/1.55 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+            white-space: pre-wrap;
+            word-break: break-word;
+            color: #111;
+            page-break-inside: auto;
+        }
+
+        @media print {
+            .gherkin-print {
+                border: 0;
+                border-radius: 0;
+                padding: 0;
+                font-size: 10.5pt;
+            }
+        }
+    </style>
+@endpush
 
 @push('scripts')
     @vite(['resources/js/project-export-print.js'])

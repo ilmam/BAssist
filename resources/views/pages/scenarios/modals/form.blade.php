@@ -16,7 +16,7 @@
     $documentFields = ['body'];
 @endphp
 
-<x-modal-content :title="$title" size="xl">
+<x-modal-content :title="$title" size="full">
     {{ Form::open(array_merge($formRoute, [
         'id' => 'modalForm',
         'files' => true,

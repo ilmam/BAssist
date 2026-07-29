@@ -1,5 +1,11 @@
 @php
-    $resolvedSize = $size !== '' ? $size : 'full';
+    // Legacy aliases: xl → Large (full), md → Medium (lg), sheet → Side (end).
+    $resolvedSize = match ($size !== '' ? $size : 'full') {
+        'xl' => 'full',
+        'md' => 'lg',
+        'sheet' => 'end',
+        default => ($size !== '' ? $size : 'full'),
+    };
     $isSheet = in_array($resolvedSize, ['end', 'sheet'], true);
     // Unified size glyphs: same frame icon at S / M / L scale; side stays distinct.
     $sizeModes = [

@@ -14,6 +14,7 @@ class ProjectExportService
         protected StateDiagramMermaidGenerator $stateDiagrams,
         protected SwimlaneMermaidGenerator $swimlanes,
         protected ProjectReadinessService $readiness,
+        protected GherkinFeatureAssembler $gherkin,
     ) {
     }
 
@@ -31,6 +32,7 @@ class ProjectExportService
      *   assumptions: \Illuminate\Database\Eloquent\Collection,
      *   constraints: \Illuminate\Database\Eloquent\Collection,
      *   business_rules: \Illuminate\Database\Eloquent\Collection,
+     *   features: list<array{model: \App\Models\Feature, gherkin: string}>,
      *   matrix: array{rows: list<array<string, mixed>>, summary: array<string, int>}
      * }
      */
@@ -55,6 +57,10 @@ class ProjectExportService
             'assumptions',
             'constraints',
             'businessRules',
+            'features.priority',
+            'features.status',
+            'features.stakeholderNeed',
+            'features.scenarios',
         ]);
 
         $matrix = $this->matrix->build(['project_id' => $project->id]);
@@ -100,6 +106,15 @@ class ProjectExportService
             'assumptions' => $project->assumptions->sortBy('title')->values(),
             'constraints' => $project->constraints->sortBy('title')->values(),
             'business_rules' => $project->businessRules->sortBy('title')->values(),
+            // Features last among artifacts (before the matrix appendix).
+            'features' => $project->features
+                ->sortBy('number')
+                ->values()
+                ->map(fn ($feature) => [
+                    'model' => $feature,
+                    'gherkin' => $this->gherkin->assembleFeature($feature),
+                ])
+                ->all(),
             'matrix' => [
                 'rows' => $matrix['rows'],
                 'summary' => $matrix['summary'],

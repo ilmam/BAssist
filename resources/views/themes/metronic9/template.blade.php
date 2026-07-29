@@ -66,9 +66,25 @@
             sm: { maxWidth: '400px' },
             md: { maxWidth: '560px' },
             lg: { maxWidth: '720px' },
-            xl: { maxWidth: '960px' },
+            // xl is a legacy alias for Large (full); keep entry for safety.
+            xl: { maxWidth: 'min(1400px, calc(100vw - 2rem))' },
             full: { maxWidth: 'min(1400px, calc(100vw - 2rem))' },
         };
+
+        // Map legacy tokens onto switcher sizes: Small/Medium/Large/Side.
+        function normalizeModalSize(size) {
+            if (size === 'xl') {
+                return 'full';
+            }
+            if (size === 'md') {
+                return 'lg';
+            }
+            if (size === 'sheet') {
+                return 'end';
+            }
+
+            return size;
+        }
 
         function isEndModalSize(size) {
             return size === 'end' || size === 'sheet';
@@ -234,7 +250,7 @@
         }
 
         function applyModalSize(modal, container, size) {
-            const resolved = size || modal?.getAttribute('data-modal-size') || 'full';
+            const resolved = normalizeModalSize(size || modal?.getAttribute('data-modal-size') || 'full');
 
             modal.setAttribute('data-modal-size', resolved);
             modal.style.padding = '';
@@ -277,7 +293,7 @@
 
             applySheetContentLayout(container, false);
 
-            const width = modalSizeStyles[resolved] || modalSizeStyles.lg;
+            const width = modalSizeStyles[resolved] || modalSizeStyles.full;
             /* Explicit width + maxWidth so container queries measure the dialog
                box (sm/md stack <640; lg/full spread), not an indefinite shrink. */
             container.style.width = '100%';
@@ -402,7 +418,9 @@
                     container.innerHTML = html;
 
                     const sizeFromContent = container.querySelector('[data-modal-size]')?.getAttribute('data-modal-size');
-                    const resolvedSize = sizeFromTrigger || sizeFromContent || modal.getAttribute('data-modal-default-size') || 'full';
+                    const resolvedSize = normalizeModalSize(
+                        sizeFromTrigger || sizeFromContent || modal.getAttribute('data-modal-default-size') || 'full'
+                    );
                     applyModalSize(modal, container, resolvedSize);
 
                     modal.classList.add('open');
