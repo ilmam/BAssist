@@ -46,7 +46,7 @@ class SwimlaneFlow extends BaseModel
     }
 
     /**
-     * @return list<array{lane: string, from: string|null, type: string, label: string, line_title: string|null}>
+     * @return list<array{lane: string, from: string|null, type: string, label: string, line_title: string|null, code: string|null, satisfy_type: string|null, satisfy_id: int|null}>
      */
     public function normalizedElements(): array
     {

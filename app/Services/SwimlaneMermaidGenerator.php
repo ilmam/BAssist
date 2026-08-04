@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Support\ProcessStepSatisfyType;
+
 /**
  * Converts a Lane/From/Type/Label/Line-title elements table into Mermaid swimlane-beta text.
  */
@@ -9,13 +11,18 @@ class SwimlaneMermaidGenerator
 {
     public const TYPES = ['start', 'process', 'decision', 'end'];
 
+    /** Element types that design-satisfy a solution requirement. */
+    public const SATISFIABLE_TYPES = ['process', 'decision'];
+
+    public const STEP_CODE_PREFIX = 'PS';
+
     public function __construct(
         protected StateDiagramMermaidGenerator $ids = new StateDiagramMermaidGenerator,
     ) {
     }
 
     /**
-     * @param  list<array{lane?: string|null, from?: string|null, type?: string|null, label?: string|null, line_title?: string|null}>  $elements
+     * @param  list<array<string, mixed>>  $elements
      */
     public function generate(?string $title, array $elements, string $direction = 'TB'): string
     {
@@ -62,8 +69,8 @@ class SwimlaneMermaidGenerator
     }
 
     /**
-     * @param  list<array{lane?: string|null, from?: string|null, type?: string|null, label?: string|null, line_title?: string|null}>  $elements
-     * @return list<array{lane: string, from: string|null, type: string, label: string, line_title: string|null}>
+     * @param  list<array<string, mixed>>  $elements
+     * @return list<array{lane: string, from: string|null, type: string, label: string, line_title: string|null, code: string|null, satisfy_type: string|null, satisfy_id: int|null}>
      */
     public function normalizeElements(array $elements): array
     {
@@ -79,13 +86,21 @@ class SwimlaneMermaidGenerator
             $type = strtolower(trim((string) ($row['type'] ?? '')));
             $from = trim((string) ($row['from'] ?? ''));
             $lineTitle = trim((string) ($row['line_title'] ?? ''));
+            $code = $this->normalizeCode($row['code'] ?? null);
+            [$satisfyType, $satisfyId] = $this->normalizeSatisfy($row);
 
-            if ($lane === '' && $label === '' && $type === '' && $from === '' && $lineTitle === '') {
+            if ($lane === '' && $label === '' && $type === '' && $from === '' && $lineTitle === '' && $code === null && $satisfyType === null) {
                 continue;
             }
 
             if ($lane === '' || $label === '' || ! in_array($type, self::TYPES, true)) {
                 continue;
+            }
+
+            // Start/end markers do not satisfy requirements.
+            if (! in_array($type, self::SATISFIABLE_TYPES, true)) {
+                $satisfyType = null;
+                $satisfyId = null;
             }
 
             $rows[] = [
@@ -94,7 +109,37 @@ class SwimlaneMermaidGenerator
                 'type' => $type,
                 'label' => $label,
                 'line_title' => $lineTitle !== '' ? $lineTitle : null,
+                'code' => $code,
+                'satisfy_type' => $satisfyType,
+                'satisfy_id' => $satisfyId,
             ];
+        }
+
+        return $this->assignMissingCodes($rows);
+    }
+
+    /**
+     * @param  list<array{lane: string, from: string|null, type: string, label: string, line_title: string|null, code: string|null, satisfy_type: string|null, satisfy_id: int|null}>  $rows
+     * @return list<array{lane: string, from: string|null, type: string, label: string, line_title: string|null, code: string|null, satisfy_type: string|null, satisfy_id: int|null}>
+     */
+    public function assignMissingCodes(array $rows): array
+    {
+        $max = 0;
+
+        foreach ($rows as $row) {
+            $number = $this->codeNumber($row['code'] ?? null);
+            if ($number !== null && $number > $max) {
+                $max = $number;
+            }
+        }
+
+        foreach ($rows as $index => $row) {
+            if (($row['code'] ?? null) !== null && $row['code'] !== '') {
+                continue;
+            }
+
+            $max++;
+            $rows[$index]['code'] = self::STEP_CODE_PREFIX.'-'.$max;
         }
 
         return $rows;
@@ -106,8 +151,8 @@ class SwimlaneMermaidGenerator
     }
 
     /**
-     * @param  list<array{lane: string, from: string|null, type: string, label: string, line_title: string|null}>  $rows
-     * @return array<string, list<array{lane: string, from: string|null, type: string, label: string, line_title: string|null}>>
+     * @param  list<array{lane: string, from: string|null, type: string, label: string, line_title: string|null, code?: string|null, satisfy_type?: string|null, satisfy_id?: int|null}>  $rows
+     * @return array<string, list<array{lane: string, from: string|null, type: string, label: string, line_title: string|null, code?: string|null, satisfy_type?: string|null, satisfy_id?: int|null}>>
      */
     protected function lanesInOrder(array $rows): array
     {
@@ -147,5 +192,54 @@ class SwimlaneMermaidGenerator
     protected function sanitizeLineTitle(string $title): string
     {
         return str_replace(["\n", "\r", '|'], [' ', ' ', ' '], trim($title));
+    }
+
+    protected function normalizeCode(mixed $code): ?string
+    {
+        $code = trim((string) ($code ?? ''));
+        if ($code === '') {
+            return null;
+        }
+
+        if (preg_match('/^'.preg_quote(self::STEP_CODE_PREFIX, '/').'-(\d+)$/i', $code, $matches) === 1) {
+            return self::STEP_CODE_PREFIX.'-'.(int) $matches[1];
+        }
+
+        return $code;
+    }
+
+    protected function codeNumber(?string $code): ?int
+    {
+        if ($code === null || $code === '') {
+            return null;
+        }
+
+        if (preg_match('/^'.preg_quote(self::STEP_CODE_PREFIX, '/').'-(\d+)$/i', $code, $matches) !== 1) {
+            return null;
+        }
+
+        return (int) $matches[1];
+    }
+
+    /**
+     * @param  array<string, mixed>  $row
+     * @return array{0: string|null, 1: int|null}
+     */
+    protected function normalizeSatisfy(array $row): array
+    {
+        if (array_key_exists('satisfy', $row) && (string) ($row['satisfy'] ?? '') !== '') {
+            $decoded = ProcessStepSatisfyType::decode($row['satisfy']);
+
+            return [$decoded['type'], $decoded['id']];
+        }
+
+        $type = isset($row['satisfy_type']) ? trim((string) $row['satisfy_type']) : '';
+        $id = isset($row['satisfy_id']) && is_numeric($row['satisfy_id']) ? (int) $row['satisfy_id'] : 0;
+
+        if (! ProcessStepSatisfyType::isValid($type) || $id < 1) {
+            return [null, null];
+        }
+
+        return [$type, $id];
     }
 }

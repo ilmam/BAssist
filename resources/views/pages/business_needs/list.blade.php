@@ -25,7 +25,9 @@
             .'</a>';
     @endphp
 
-    @include('pages.partials.entity-list')
+    @include('pages.partials.entity-list', [
+        'listHelp' => __('ui.babok_step_current_state_needs_note'),
+    ])
 @endsection
 
 @push('styles')

@@ -44,6 +44,24 @@ class ProjectDashboardController extends Controller
             'icon' => 'abstract-26',
         ],
         [
+            'model' => 'FunctionalRequirement',
+            'count' => 'functional_requirements_count',
+            'label' => 'functional_requirements',
+            'icon' => 'subtitle',
+        ],
+        [
+            'model' => 'ChangeRequest',
+            'count' => 'change_requests_count',
+            'label' => 'change_requests',
+            'icon' => 'arrow-mix',
+        ],
+        [
+            'model' => 'Risk',
+            'count' => 'risks_count',
+            'label' => 'risks',
+            'icon' => 'information-3',
+        ],
+        [
             'model' => 'Architecture',
             'count' => 'architecture_exists',
             'label' => 'architecture_c4',
@@ -114,6 +132,9 @@ class ProjectDashboardController extends Controller
             'stakeholders',
             'stakeholderNeeds',
             'features',
+            'functionalRequirements',
+            'changeRequests',
+            'risks',
             'stateFlows',
             'swimlaneFlows',
             'assumptions',
@@ -144,6 +165,8 @@ class ProjectDashboardController extends Controller
                 'StrategicBaseline' => route('strategic_baselines.for-project', $project->id),
                 'Assumption', 'Constraint', 'BusinessRule' => route('guardrails.index', $scopeQuery),
                 'ScopeItem' => route('strategy.index', $scopeQuery),
+                'Feature', 'FunctionalRequirement' => route('solution_requirements.index', $scopeQuery),
+                'ChangeRequest' => model_route('ChangeRequest', 'index').'?'.http_build_query($scopeQuery),
                 default => model_route($artifact['model'], 'index').'?'.http_build_query($scopeQuery),
             };
 
@@ -157,68 +180,64 @@ class ProjectDashboardController extends Controller
 
         $links = [];
 
-        foreach ($counts as $count) {
-            $links[] = [
-                'label' => $count['label'],
-                'url' => $count['url'],
-                'icon' => $count['icon'],
-            ];
+        foreach (config('navigation.hierarchy.project_folders', []) as $folder) {
+            if (! is_array($folder)) {
+                continue;
+            }
+
+            foreach ($folder['children'] ?? [] as $child) {
+                if (! is_array($child)) {
+                    continue;
+                }
+
+                if (isset($child['entity'])) {
+                    $entity = (string) $child['entity'];
+                    if (! entity_can($entity, EntityAccess::VIEW)) {
+                        continue;
+                    }
+
+                    $options = \App\Support\CrudEntityRegistry::all()[$entity] ?? [];
+                    $links[] = [
+                        'label' => $options['nav_label'] ?? $entity,
+                        'url' => model_route($entity, 'index').'?'.http_build_query($scopeQuery),
+                        'icon' => $options['nav_icon'] ?? 'element-11',
+                        'group' => $folder['short'] ?? ($folder['label'] ?? null),
+                    ];
+
+                    continue;
+                }
+
+                if (! nav_item_is_visible($child)) {
+                    continue;
+                }
+
+                $route = $child['route'] ?? null;
+                if (! is_string($route) || $route === '') {
+                    continue;
+                }
+
+                $url = match (true) {
+                    $route === 'change_requests.index' => model_route('ChangeRequest', 'index').'?'.http_build_query($scopeQuery),
+                    isset($child['route_project_param']) => route($route, [
+                        (string) $child['route_project_param'] => $project->id,
+                    ]),
+                    default => route($route, $scopeQuery),
+                };
+
+                $links[] = [
+                    'label' => $child['label'] ?? $route,
+                    'url' => $url,
+                    'icon' => $child['icon'] ?? 'element-11',
+                    'group' => $folder['short'] ?? ($folder['label'] ?? null),
+                ];
+            }
         }
 
-        if (nav_item_is_visible([
-            'entities' => ['BusinessNeed', 'BusinessObjective', 'StakeholderNeed'],
-            'route' => 'traceability.index',
-        ])) {
-            $links[] = [
-                'label' => __('ui.traceability'),
-                'url' => route('traceability.index', $scopeQuery),
-                'icon' => 'abstract-26',
-            ];
-        }
-
-        if (nav_item_is_visible([
-            'entities' => ['Feature', 'Scenario'],
-            'route' => 'acceptance-plan.index',
-        ])) {
-            $links[] = [
-                'label' => __('ui.acceptance_plan'),
-                'url' => route('acceptance-plan.index', $scopeQuery),
-                'icon' => 'check-squared',
-            ];
-        }
-
-        if (nav_item_is_visible([
-            'entities' => ['Architecture', 'StateFlow', 'SwimlaneFlow'],
-            'route' => 'diagrams.index',
-        ])) {
-            $links[] = [
-                'label' => __('ui.diagrams'),
-                'url' => route('diagrams.index', $scopeQuery),
-                'icon' => 'share',
-            ];
-        }
-
-        if (nav_item_is_visible([
-            'entities' => ['Assumption', 'Constraint', 'BusinessRule'],
-            'route' => 'guardrails.index',
-        ])) {
-            $links[] = [
-                'label' => __('ui.guardrails'),
-                'url' => route('guardrails.index', $scopeQuery),
-                'icon' => 'shield-tick',
-            ];
-        }
-
-        if (nav_item_is_visible([
-            'entities' => ['StrategicBaseline', 'ScopeItem'],
-            'route' => 'strategy.index',
-        ])) {
-            $links[] = [
-                'label' => __('ui.strategy'),
-                'url' => route('strategy.index', $scopeQuery),
-                'icon' => 'flag',
-            ];
-        }
+        $links[] = [
+            'label' => __('ui.babok_documents'),
+            'url' => route('projects.babok.index', $project),
+            'icon' => 'book',
+        ];
 
         $links[] = [
             'label' => __('ui.export_pack'),

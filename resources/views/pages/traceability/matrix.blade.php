@@ -21,9 +21,11 @@
             'missing_stakeholder_need' => __('ui.gap_missing_stakeholder_need'),
             'missing_feature' => __('ui.gap_missing_feature'),
             'missing_scenarios' => __('ui.gap_missing_scenarios'),
+            'missing_satisfy' => __('ui.gap_missing_satisfy'),
             'orphan_objective' => __('ui.gap_orphan_objective'),
             'orphan_stakeholder_need' => __('ui.gap_orphan_stakeholder_need'),
             'orphan_feature' => __('ui.gap_orphan_feature'),
+            'orphan_functional_requirement' => __('ui.gap_orphan_functional_requirement'),
         ];
     @endphp
 
@@ -42,6 +44,8 @@
                 </x-button>
             </div>
         </x-slot>
+
+        <p class="text-sm text-muted-foreground mb-5">{{ __('ui.babok_doc_traceability_matrix_note') }}</p>
 
         {{-- Explicit Filter submit: KTSelect fires change on init, so onchange→submit loops forever. --}}
         <form method="GET" action="{{ route('traceability.index') }}" class="mb-5 flex flex-wrap items-end gap-3">
@@ -86,11 +90,11 @@
                 <table class="kt-table kt-table-border w-full">
                     <thead>
                         <tr>
-                            <th>{{ __('ui.project') }}</th>
                             <th>{{ __('ui.business_objective') }}</th>
                             <th>{{ __('ui.business_need') }}</th>
                             <th>{{ __('ui.stakeholder_need') }}</th>
-                            <th>{{ __('ui.feature') }}</th>
+                            <th>{{ __('ui.solution_requirement') }}</th>
+                            <th>{{ __('ui.design_artifact') }}</th>
                             <th>{{ __('ui.stakeholders') }}</th>
                             <th>{{ __('ui.gaps') }}</th>
                         </tr>
@@ -98,16 +102,11 @@
                     <tbody>
                         @forelse ($rows as $row)
                             <tr @class(['is-orphan-row' => $row['has_gap']])>
-                                <td class="font-medium whitespace-nowrap">
-                                    {{ $row['project_name'] ?? '—' }}
-                                    @if (! empty($row['project_code']))
-                                        <span class="text-muted-foreground text-xs">{{ $row['project_code'] }}</span>
-                                    @endif
-                                </td>
                                 <td>
                                     @if ($row['objective_id'])
-                                        <a href="{{ model_route('BusinessObjective', 'show', $row['objective_id']) }}"
-                                           class="text-primary hover:underline">
+                                        <a href="{{ model_modal_path('BusinessObjective', 'view', $row['objective_id']) }}"
+                                           class="text-primary hover:underline js-open-modal"
+                                           data-modal-url="{{ model_modal_path('BusinessObjective', 'view', $row['objective_id']) }}">
                                             @if (! empty($row['objective_code']))
                                                 <span class="text-muted-foreground text-xs me-1">{{ $row['objective_code'] }}</span>
                                             @endif
@@ -119,8 +118,9 @@
                                 </td>
                                 <td>
                                     @if ($row['need_id'])
-                                        <a href="{{ model_route('BusinessNeed', 'show', $row['need_id']) }}"
-                                           class="text-primary hover:underline">
+                                        <a href="{{ model_modal_path('BusinessNeed', 'view', $row['need_id']) }}"
+                                           class="text-primary hover:underline js-open-modal"
+                                           data-modal-url="{{ model_modal_path('BusinessNeed', 'view', $row['need_id']) }}">
                                             @if (! empty($row['need_code']))
                                                 <span class="text-muted-foreground text-xs me-1">{{ $row['need_code'] }}</span>
                                             @endif
@@ -132,8 +132,9 @@
                                 </td>
                                 <td>
                                     @if ($row['stakeholder_need_id'])
-                                        <a href="{{ model_route('StakeholderNeed', 'show', $row['stakeholder_need_id']) }}"
-                                           class="text-primary hover:underline">
+                                        <a href="{{ model_modal_path('StakeholderNeed', 'view', $row['stakeholder_need_id']) }}"
+                                           class="text-primary hover:underline js-open-modal"
+                                           data-modal-url="{{ model_modal_path('StakeholderNeed', 'view', $row['stakeholder_need_id']) }}">
                                             @if (! empty($row['stakeholder_need_code']))
                                                 <span class="text-muted-foreground text-xs me-1">{{ $row['stakeholder_need_code'] }}</span>
                                             @endif
@@ -145,8 +146,9 @@
                                 </td>
                                 <td>
                                     @if (! empty($row['feature_id']))
-                                        <a href="{{ model_route('Feature', 'show', $row['feature_id']) }}"
-                                           class="text-primary hover:underline">
+                                        <a href="{{ model_modal_path('Feature', 'view', $row['feature_id']) }}"
+                                           class="text-primary hover:underline js-open-modal"
+                                           data-modal-url="{{ model_modal_path('Feature', 'view', $row['feature_id']) }}">
                                             @if (! empty($row['feature_code']))
                                                 <span class="text-muted-foreground text-xs me-1">{{ $row['feature_code'] }}</span>
                                             @endif
@@ -155,6 +157,40 @@
                                         <span class="text-muted-foreground text-xs ms-1">
                                             ({{ __('ui.scenarios') }}: {{ $row['scenarios_count'] ?? 0 }})
                                         </span>
+                                    @elseif (! empty($row['functional_requirement_id']))
+                                        <a href="{{ model_modal_path('FunctionalRequirement', 'view', $row['functional_requirement_id']) }}"
+                                           class="text-primary hover:underline js-open-modal"
+                                           data-modal-url="{{ model_modal_path('FunctionalRequirement', 'view', $row['functional_requirement_id']) }}">
+                                            @if (! empty($row['functional_requirement_code']))
+                                                <span class="text-muted-foreground text-xs me-1">{{ $row['functional_requirement_code'] }}</span>
+                                            @endif
+                                            {{ $row['functional_requirement_title'] }}
+                                        </a>
+                                        <span class="text-muted-foreground text-xs ms-1">({{ __('ui.functional_requirement_short') }})</span>
+                                    @else
+                                        <span class="text-muted-foreground">—</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    @if (! empty($row['design_artifact_code']) || ! empty($row['design_artifact_label']))
+                                        @if (! empty($row['design_artifact_flow_id']))
+                                            <a href="{{ model_modal_path('SwimlaneFlow', 'view', $row['design_artifact_flow_id']) }}"
+                                               class="text-primary hover:underline js-open-modal"
+                                               data-modal-url="{{ model_modal_path('SwimlaneFlow', 'view', $row['design_artifact_flow_id']) }}">
+                                                @if (! empty($row['design_artifact_code']))
+                                                    <span class="text-muted-foreground text-xs me-1">{{ $row['design_artifact_code'] }}</span>
+                                                @endif
+                                                {{ $row['design_artifact_label'] }}
+                                            </a>
+                                        @else
+                                            @if (! empty($row['design_artifact_code']))
+                                                <span class="text-muted-foreground text-xs me-1">{{ $row['design_artifact_code'] }}</span>
+                                            @endif
+                                            {{ $row['design_artifact_label'] }}
+                                        @endif
+                                        @if (! empty($row['design_artifact_flow_title']))
+                                            <div class="text-muted-foreground text-xs mt-0.5">{{ $row['design_artifact_flow_title'] }}</div>
+                                        @endif
                                     @else
                                         <span class="text-muted-foreground">—</span>
                                     @endif

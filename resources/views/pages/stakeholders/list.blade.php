@@ -15,7 +15,9 @@
         ];
     @endphp
 
-    @include('pages.partials.entity-list')
+    @include('pages.partials.entity-list', [
+        'listHelp' => __('ui.babok_doc_stakeholder_engagement_note'),
+    ])
 @endsection
 
 @push('styles')

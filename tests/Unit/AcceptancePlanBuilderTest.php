@@ -3,6 +3,7 @@
 namespace Tests\Unit;
 
 use App\Models\Feature;
+use App\Models\FunctionalRequirement;
 use App\Models\Scenario;
 use App\Models\Status;
 use App\Services\AcceptancePlanBuilder;
@@ -93,7 +94,7 @@ class AcceptancePlanBuilderTest extends TestCase
 
         $happy = new Scenario([
             'title' => 'Valid schedule',
-            'body' => "@happy-path\nScenario: Valid schedule",
+            'body' => "@happy-path\nScenario: Valid schedule\nWhen dates are valid\nThen the schedule is saved",
         ]);
         $happy->id = 100;
         $happy->setRelation('status', $agreed);
@@ -113,6 +114,7 @@ class AcceptancePlanBuilderTest extends TestCase
         $this->assertSame('FE-1-001', $rows[0]['test_id']);
         $this->assertSame(AcceptancePlanBuilder::TYPE_HAPPY_PATH, $rows[0]['type']);
         $this->assertSame('Agreed', $rows[0]['status']);
+        // Explicit Rule: wins over scenario When/Then.
         $this->assertSame('Must validate dates', $rows[0]['rule']);
 
         $this->assertSame('FE-1-002', $rows[1]['test_id']);
@@ -120,6 +122,24 @@ class AcceptancePlanBuilderTest extends TestCase
         $this->assertSame(AcceptancePlanBuilder::STATUS_DEFAULT, $rows[1]['status']);
         $this->assertSame(10, $rows[1]['feature_id']);
         $this->assertSame(101, $rows[1]['scenario_id']);
+    }
+
+    public function test_bdd_rule_uses_feature_story_not_scenario_steps(): void
+    {
+        $builder = $this->builder();
+
+        $this->assertSame(
+            'As a Parts Field Agent I want inquiry status to advance So that procurement is safe',
+            $builder->resolveBddRule(
+                "Feature: Inquiry\nAs a Parts Field Agent\nI want inquiry status to advance\nSo that procurement is safe"
+            )
+        );
+
+        // Scenario When/Then must not become the parent statement.
+        $this->assertSame(
+            'As a Agent I want to submit',
+            $builder->resolveBddRule("Feature: Inquiry\nAs a Agent\nI want to submit")
+        );
     }
 
     public function test_status_falls_back_to_feature_then_draft(): void
@@ -144,5 +164,71 @@ class AcceptancePlanBuilderTest extends TestCase
         $feature->setRelation('status', null);
         $rows = $builder->rowsForFeatures([$feature]);
         $this->assertSame('Draft', $rows[0]['status']);
+    }
+
+    public function test_acceptance_criteria_lines_strip_bullets(): void
+    {
+        $builder = $this->builder();
+
+        $this->assertSame([
+            'Duration equals Close minus Open in whole minutes',
+            'Open without Close leaves duration blank',
+            'Edge: Close before Open is rejected',
+        ], $builder->acceptanceCriteriaLines(<<<'TXT'
+- Duration equals Close minus Open in whole minutes
+* Open without Close leaves duration blank
+1. Edge: Close before Open is rejected
+TXT));
+    }
+
+    public function test_rows_from_functional_requirement_acceptance_criteria(): void
+    {
+        $builder = $this->builder();
+
+        $requirement = new FunctionalRequirement([
+            'title' => 'Ticket duration calculation',
+            'statement' => 'The system shall calculate ticket duration from Open and Close timestamps.',
+            'acceptance_criteria' => <<<'TXT'
+- Duration equals Close minus Open in whole minutes
+- Edge: Close before Open is rejected
+TXT,
+        ]);
+        $requirement->id = 7;
+        $requirement->number = 1;
+        $requirement->stakeholder_need_id = 3;
+        $requirement->setRelation('status', new Status(['name' => 'Draft']));
+        $requirement->setRelation('stakeholderNeed', null);
+
+        $rows = $builder->rowsForFunctionalRequirements([$requirement]);
+
+        $this->assertCount(2, $rows);
+        $this->assertSame(AcceptancePlanBuilder::SOURCE_FR, $rows[0]['source']);
+        $this->assertSame('FR-1-001', $rows[0]['test_id']);
+        $this->assertSame('Duration equals Close minus Open in whole minutes', $rows[0]['scenario_title']);
+        $this->assertSame(AcceptancePlanBuilder::TYPE_HAPPY_PATH, $rows[0]['type']);
+        $this->assertSame(
+            'The system shall calculate ticket duration from Open and Close timestamps.',
+            $rows[0]['rule']
+        );
+
+        $this->assertSame('FR-1-002', $rows[1]['test_id']);
+        $this->assertSame(AcceptancePlanBuilder::TYPE_EDGE_CASE, $rows[1]['type']);
+        $this->assertSame(7, $rows[1]['functional_requirement_id']);
+        $this->assertNull($rows[1]['feature_id']);
+    }
+
+    public function test_functional_requirement_without_acceptance_criteria_yields_no_rows(): void
+    {
+        $requirement = new FunctionalRequirement([
+            'title' => 'Empty AC',
+            'statement' => 'The system shall do something.',
+            'acceptance_criteria' => null,
+        ]);
+        $requirement->id = 1;
+        $requirement->number = 2;
+        $requirement->setRelation('status', null);
+        $requirement->setRelation('stakeholderNeed', null);
+
+        $this->assertSame([], $this->builder()->rowsForFunctionalRequirements([$requirement]));
     }
 }

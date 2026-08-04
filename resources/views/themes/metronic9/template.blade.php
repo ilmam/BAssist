@@ -9,7 +9,7 @@
     <link href="{{ ui_asset('vendors/keenicons/styles.bundle.css') }}" rel="stylesheet" />
     <link href="{{ ui_asset('css/styles.css') }}" rel="stylesheet" />
     <link href="{{ ui_asset('css/ui-layout.css') }}?v={{ @filemtime(public_path(config('ui.themes.'.ui_theme().'.asset_prefix').'/css/ui-layout.css')) ?: time() }}" rel="stylesheet" />
-    <link href="{{ ui_asset('css/bassist.css') }}" rel="stylesheet" />
+    <link href="{{ ui_asset('css/bassist.css') }}?v={{ @filemtime(public_path(config('ui.themes.'.ui_theme().'.asset_prefix').'/css/bassist.css')) ?: time() }}" rel="stylesheet" />
     @stack('styles')
 </head>
 <body class="antialiased flex h-full text-base text-foreground bg-background demo1 kt-sidebar-fixed kt-header-fixed">
@@ -85,6 +85,22 @@
             }
 
             return size;
+        }
+
+        // innerHTML does not run <script> tags; re-insert so modal partials can boot.
+        function activateScriptsIn(root) {
+            if (!root) {
+                return;
+            }
+
+            root.querySelectorAll('script').forEach((oldScript) => {
+                const script = document.createElement('script');
+                Array.from(oldScript.attributes).forEach((attr) => {
+                    script.setAttribute(attr.name, attr.value);
+                });
+                script.textContent = oldScript.textContent;
+                oldScript.replaceWith(script);
+            });
         }
 
         function isEndModalSize(size) {
@@ -417,6 +433,7 @@
                 })
                 .then(html => {
                     container.innerHTML = html;
+                    activateScriptsIn(container);
 
                     const sizeFromContent = container.querySelector('[data-modal-size]')?.getAttribute('data-modal-size');
                     const resolvedSize = normalizeModalSize(
@@ -971,8 +988,30 @@
             }
 
             drawer.classList.remove('hidden');
-            drawer.classList.add('open', 'kt-drawer', 'kt-drawer-end', 'flex', 'top-0', 'bottom-0', 'w-full', 'max-w-[440px]', 'z-[60]');
+            drawer.classList.add('open', 'kt-drawer', 'kt-drawer-end', 'flex', 'top-0', 'bottom-0', 'w-full', 'z-[60]');
             document.body.classList.add('overflow-hidden');
+        }
+
+        function hideHelpDrawer(drawer) {
+            if (!drawer) {
+                return;
+            }
+
+            const instance = helpDrawerInstance(drawer);
+            if (instance && typeof instance.hide === 'function') {
+                instance.hide();
+                return;
+            }
+
+            const dismiss = drawer.querySelector('[data-kt-drawer-dismiss="true"]');
+            if (dismiss) {
+                dismiss.click();
+                return;
+            }
+
+            drawer.classList.add('hidden');
+            drawer.classList.remove('open', 'kt-drawer', 'kt-drawer-end', 'flex', 'top-0', 'bottom-0', 'w-full', 'z-[60]');
+            document.body.classList.remove('overflow-hidden');
         }
 
         function openHelpDrawer(url) {
@@ -1027,6 +1066,94 @@
             const url = trigger.getAttribute('data-help-url');
             if (url) {
                 openHelpDrawer(url);
+            }
+        });
+
+        function isHelpDrawerOpen(drawer) {
+            if (!drawer) {
+                return false;
+            }
+
+            if (drawer.classList.contains('open')) {
+                return true;
+            }
+
+            if (drawer.classList.contains('hidden')) {
+                return false;
+            }
+
+            const instance = helpDrawerInstance(drawer);
+            if (instance && typeof instance.isOpen === 'function') {
+                return !!instance.isOpen();
+            }
+
+            return window.getComputedStyle(drawer).display !== 'none';
+        }
+
+        function shouldIgnoreGuideShortcut() {
+            const active = document.activeElement;
+            if (!active) {
+                return false;
+            }
+
+            const tag = active.tagName;
+            const isField = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || active.isContentEditable;
+            if (!isField) {
+                return false;
+            }
+
+            const drawer = helpDrawerElement();
+            return !(drawer && drawer.contains(active));
+        }
+
+        function navigateGuideFromShortcut(nav) {
+            const drawer = helpDrawerElement();
+            const body = drawer?.querySelector('[data-help-drawer-body]');
+            if (!body) {
+                return false;
+            }
+
+            const link = body.querySelector('.help-guide-nav [data-help-nav="' + nav + '"]');
+            const url = link?.getAttribute('data-help-url');
+            if (!url) {
+                return false;
+            }
+
+            openHelpDrawer(url);
+            return true;
+        }
+
+        document.addEventListener('keydown', function (event) {
+            if (!event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) {
+                return;
+            }
+
+            const drawer = helpDrawerElement();
+            if (!isHelpDrawerOpen(drawer) || shouldIgnoreGuideShortcut()) {
+                return;
+            }
+
+            const isGuideKey = event.key === 'ArrowRight'
+                || event.key === 'ArrowLeft'
+                || event.key === 'ArrowUp'
+                || event.key === 'Home';
+
+            if (!isGuideKey) {
+                return;
+            }
+
+            // Always block browser history back/forward while the help drawer is open.
+            event.preventDefault();
+            event.stopPropagation();
+
+            if (event.key === 'ArrowRight') {
+                navigateGuideFromShortcut('next');
+            } else if (event.key === 'ArrowLeft') {
+                if (!navigateGuideFromShortcut('prev')) {
+                    hideHelpDrawer(drawer);
+                }
+            } else if (event.key === 'ArrowUp' || event.key === 'Home') {
+                navigateGuideFromShortcut('toc');
             }
         });
     </script>

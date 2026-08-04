@@ -5,6 +5,7 @@
     $listFilters = $listFilters ?? [];
     $allowedListFilters = $allowedListFilters ?? [];
     $relationColumns = $relationColumns ?? [];
+    $listHelp = $listHelp ?? null;
     $contextFilters = ListUi::contextFilters($listFilters);
     $indexUrl = model_route($model, 'index');
     $filterChips = ListUi::activeFilters($listFilters, $allowedListFilters, $indexUrl);
@@ -27,8 +28,6 @@
         'model' => $model,
         'dataRoutParameters' => ['modelName' => $model],
         'ajaxUrl' => $ajaxUrl,
-        'rowClassField' => 'is_orphan',
-        'rowClass' => 'is-orphan-row',
     ], $datatableOptions ?? []);
 @endphp
 
@@ -44,6 +43,10 @@
             @include('pages.partials.create-toolbar-button', ['model' => $model])
         </div>
     </x-slot>
+
+    @if (filled($listHelp))
+        <p class="text-sm text-muted-foreground mb-4">{{ $listHelp }}</p>
+    @endif
 
     @include('pages.partials.list-filter-banner', [
         'filterChips' => $filterChips,

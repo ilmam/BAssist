@@ -14,6 +14,9 @@
     @endphp
 
     <x-card title="{{ __('ui.acceptance_plan') }}">
+        <x-slot:titleAside>
+            <x-help-trigger topic="acceptance_plan" />
+        </x-slot:titleAside>
         <x-slot:toolbar>
             <div class="flex flex-wrap items-center gap-2">
                 <x-button type="link" href="{{ $exportMdUrl }}" icon="file-down" color="light" activeColor="primary">
@@ -24,6 +27,8 @@
                 </x-button>
             </div>
         </x-slot>
+
+        <p class="text-sm text-muted-foreground mb-5">{{ __('ui.babok_doc_acceptance_criteria_note') }}</p>
 
         {{-- Explicit Filter submit: KTSelect fires change on init, so onchange→submit loops forever. --}}
         <form method="GET" action="{{ route('acceptance-plan.index') }}" class="mb-5 flex flex-wrap items-end gap-3">
@@ -82,6 +87,8 @@
 
         <div class="mb-5 flex flex-wrap gap-3 text-sm">
             <span class="kt-badge kt-badge-outline">{{ __('ui.matrix_total') }}: {{ $summary['total'] }}</span>
+            <span class="kt-badge kt-badge-outline">{{ __('ui.acceptance_plan_source_bdd') }}: {{ $summary['bdd'] ?? 0 }}</span>
+            <span class="kt-badge kt-badge-outline">{{ __('ui.acceptance_plan_source_fr') }}: {{ $summary['fr'] ?? 0 }}</span>
             <span class="kt-badge kt-badge-outline">{{ __('ui.happy_path') }}: {{ $summary['happy_path'] }}</span>
             <span class="kt-badge kt-badge-outline">{{ __('ui.edge_case') }}: {{ $summary['edge_case'] }}</span>
             @if ($filters['workspace_name'] ?? null)
@@ -95,9 +102,9 @@
                     <thead>
                         <tr>
                             <th>{{ __('ui.test_id') }}</th>
-                            <th>{{ __('ui.feature') }}</th>
-                            <th>{{ __('ui.rule') }}</th>
-                            <th>{{ __('ui.scenario') }}</th>
+                            <th>{{ __('ui.acceptance_plan_requirement') }}</th>
+                            <th>{{ __('ui.acceptance_plan_rule') }}</th>
+                            <th>{{ __('ui.acceptance_plan_check') }}</th>
                             <th>{{ __('ui.type') }}</th>
                             <th>{{ __('ui.status') }}</th>
                         </tr>
@@ -105,10 +112,23 @@
                     <tbody>
                         @forelse ($rows as $row)
                             <tr>
-                                <td class="font-medium whitespace-nowrap">{{ $row['test_id'] }}</td>
+                                <td class="font-medium whitespace-nowrap">
+                                    {{ $row['test_id'] }}
+                                    @if (($row['source'] ?? '') === 'fr')
+                                        <span class="kt-badge kt-badge-sm kt-badge-outline ms-1">{{ __('ui.acceptance_plan_source_fr') }}</span>
+                                    @endif
+                                </td>
                                 <td>
                                     @if (! empty($row['feature_id']))
                                         <a href="{{ model_route('Feature', 'show', $row['feature_id']) }}"
+                                           class="text-primary hover:underline">
+                                            @if (! empty($row['feature_code']))
+                                                <span class="text-muted-foreground text-xs me-1">{{ $row['feature_code'] }}</span>
+                                            @endif
+                                            {{ $row['feature_title'] }}
+                                        </a>
+                                    @elseif (! empty($row['functional_requirement_id']))
+                                        <a href="{{ model_route('FunctionalRequirement', 'show', $row['functional_requirement_id']) }}"
                                            class="text-primary hover:underline">
                                             @if (! empty($row['feature_code']))
                                                 <span class="text-muted-foreground text-xs me-1">{{ $row['feature_code'] }}</span>
@@ -132,6 +152,8 @@
                                            class="text-primary hover:underline">
                                             {{ $row['scenario_title'] }}
                                         </a>
+                                    @elseif (($row['scenario_title'] ?? '') !== '')
+                                        {{ $row['scenario_title'] }}
                                     @else
                                         <span class="text-muted-foreground">—</span>
                                     @endif

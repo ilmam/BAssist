@@ -8,12 +8,18 @@ use App\Models\BusinessObjective;
 use App\Models\BusinessRule;
 use App\Models\Constraint;
 use App\Models\Feature;
+use App\Models\FunctionalRequirement;
 use App\Models\Project;
+use App\Models\Risk;
 use App\Models\ScopeItem;
 use App\Models\StakeholderNeed;
 use App\Models\StrategicBaseline;
 use App\Support\AssumptionStatus;
 use App\Support\EntityAccess;
+use App\Support\RiskImpact;
+use App\Support\RiskLikelihood;
+use App\Support\RiskResponse;
+use App\Support\RiskStatus;
 use App\Support\StrategicBaselineStatus;
 
 /**
@@ -21,6 +27,11 @@ use App\Support\StrategicBaselineStatus;
  */
 class ProjectReadinessService
 {
+    public function __construct(
+        protected TraceabilityMatrixService $traceability,
+    ) {
+    }
+
     /**
      * @return array{
      *     total_gaps: int,
@@ -92,13 +103,43 @@ class ProjectReadinessService
             $count = StakeholderNeed::query()
                 ->where('project_id', $project->id)
                 ->whereDoesntHave('features')
+                ->whereDoesntHave('functionalRequirements')
                 ->count();
             $items[] = $this->item(
                 key: 'stories_without_features',
-                label: __('ui.readiness_stories_without_features'),
+                label: __('ui.readiness_stories_without_solution_packaging'),
                 count: $count,
                 severity: 'warn',
-                url: model_route('StakeholderNeed', 'index').'?'.http_build_query($scopeQuery),
+                url: route('solution_requirements.index', $scopeQuery),
+            );
+        }
+
+        if (entity_can('FunctionalRequirement', EntityAccess::VIEW)) {
+            $count = FunctionalRequirement::query()
+                ->where('project_id', $project->id)
+                ->whereNull('stakeholder_need_id')
+                ->count();
+            $items[] = $this->item(
+                key: 'orphan_functional_requirements',
+                label: __('ui.readiness_orphan_functional_requirements'),
+                count: $count,
+                severity: 'warn',
+                url: route('traceability.index', $scopeQuery + ['orphans_only' => 1]),
+            );
+
+            $count = FunctionalRequirement::query()
+                ->where('project_id', $project->id)
+                ->where(function ($query) {
+                    $query->whereNull('acceptance_criteria')
+                        ->orWhere('acceptance_criteria', '');
+                })
+                ->count();
+            $items[] = $this->item(
+                key: 'frs_without_acceptance',
+                label: __('ui.readiness_frs_without_acceptance'),
+                count: $count,
+                severity: 'info',
+                url: route('solution_requirements.index', $scopeQuery),
             );
         }
 
@@ -128,6 +169,20 @@ class ProjectReadinessService
             );
         }
 
+        if (entity_can('SwimlaneFlow', EntityAccess::VIEW)) {
+            $count = $this->traceability->countUnsatisfiedDesignSteps(
+                (int) $project->id,
+                (int) $project->workspace_id,
+            );
+            $items[] = $this->item(
+                key: 'unsatisfied_design_steps',
+                label: __('ui.readiness_unsatisfied_design_steps'),
+                count: $count,
+                severity: 'warn',
+                url: route('traceability.index', $scopeQuery + ['orphans_only' => 1]),
+            );
+        }
+
         if (entity_can('Assumption', EntityAccess::VIEW)) {
             $count = Assumption::query()
                 ->where('project_id', $project->id)
@@ -138,7 +193,81 @@ class ProjectReadinessService
                 label: __('ui.readiness_open_assumptions'),
                 count: $count,
                 severity: 'critical',
-                url: route('guardrails.index', $scopeQuery),
+                url: model_route('Assumption', 'index').'?'.http_build_query($scopeQuery),
+            );
+        }
+
+        if (entity_can('Risk', EntityAccess::VIEW)) {
+            $risksUrl = model_route('Risk', 'index').'?'.http_build_query($scopeQuery);
+
+            $criticalRisks = Risk::query()
+                ->where('project_id', $project->id)
+                ->where('likelihood', RiskLikelihood::HIGH)
+                ->where('impact', RiskImpact::HIGH);
+
+            $activeCritical = (clone $criticalRisks)
+                ->whereIn('status', RiskStatus::active())
+                ->count();
+            $items[] = $this->item(
+                key: 'active_critical_risks',
+                label: __('ui.readiness_active_critical_risks'),
+                count: $activeCritical,
+                severity: 'critical',
+                url: $risksUrl,
+            );
+
+            $criticalWithoutResponse = (clone $criticalRisks)
+                ->where(function ($query): void {
+                    $query->whereNull('response')->orWhere('response', '');
+                })
+                ->count();
+            $items[] = $this->item(
+                key: 'critical_risks_without_response',
+                label: __('ui.readiness_critical_risks_without_response'),
+                count: $criticalWithoutResponse,
+                severity: 'warn',
+                url: $risksUrl,
+            );
+
+            $criticalWithoutTreatment = (clone $criticalRisks)
+                ->where(function ($query): void {
+                    $query->whereNull('treatment')->orWhere('treatment', '');
+                })
+                ->where(function ($query): void {
+                    $query->whereNull('response')
+                        ->orWhere('response', '!=', RiskResponse::ACCEPT);
+                })
+                ->count();
+            $items[] = $this->item(
+                key: 'critical_risks_without_treatment',
+                label: __('ui.readiness_critical_risks_without_treatment'),
+                count: $criticalWithoutTreatment,
+                severity: 'warn',
+                url: $risksUrl,
+            );
+
+            $acceptedWithoutRationale = Risk::query()
+                ->where('project_id', $project->id)
+                ->where('response', RiskResponse::ACCEPT)
+                ->where(function ($q): void {
+                    $q->whereNull('treatment')->orWhere('treatment', '');
+                })
+                ->count();
+            $items[] = $this->item(
+                key: 'accepted_risks_without_rationale',
+                label: __('ui.readiness_accepted_risks_without_rationale'),
+                count: $acceptedWithoutRationale,
+                severity: 'critical',
+                url: $risksUrl,
+            );
+
+            $hasRisks = Risk::query()->where('project_id', $project->id)->exists();
+            $items[] = $this->item(
+                key: 'risks_captured',
+                label: __('ui.readiness_no_risks'),
+                count: $hasRisks ? 0 : 1,
+                severity: 'info',
+                url: $risksUrl,
             );
         }
 
@@ -151,7 +280,7 @@ class ProjectReadinessService
                 label: __('ui.readiness_no_constraints'),
                 count: $hasConstraints ? 0 : 1,
                 severity: 'info',
-                url: route('guardrails.index', $scopeQuery),
+                url: model_route('Constraint', 'index').'?'.http_build_query($scopeQuery),
             );
         }
 
@@ -164,7 +293,7 @@ class ProjectReadinessService
                 label: __('ui.readiness_no_business_rules'),
                 count: $hasRules ? 0 : 1,
                 severity: 'info',
-                url: route('guardrails.index', $scopeQuery),
+                url: model_route('BusinessRule', 'index').'?'.http_build_query($scopeQuery),
             );
         }
 
@@ -202,7 +331,7 @@ class ProjectReadinessService
                 label: __('ui.readiness_no_scope_items'),
                 count: $hasScopeItems ? 0 : 1,
                 severity: 'info',
-                url: route('strategy.index', $scopeQuery),
+                url: model_route('ScopeItem', 'index').'?'.http_build_query($scopeQuery),
             );
         }
 

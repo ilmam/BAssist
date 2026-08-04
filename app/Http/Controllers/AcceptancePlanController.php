@@ -73,9 +73,10 @@ class AcceptancePlanController extends Controller
 
             fputcsv($handle, [
                 'Test ID',
-                'Feature',
-                'Rule',
-                'Scenario',
+                'Source',
+                'Requirement',
+                'Rule / Statement',
+                'Check',
                 'Type',
                 'Status',
             ]);
@@ -83,6 +84,7 @@ class AcceptancePlanController extends Controller
             foreach ($plan['rows'] as $row) {
                 fputcsv($handle, [
                     $row['test_id'] ?? '',
+                    $row['source'] ?? '',
                     $row['feature_title'] ?? '',
                     $row['rule'] ?? '',
                     $row['scenario_title'] ?? '',
@@ -103,12 +105,13 @@ class AcceptancePlanController extends Controller
     protected function toMarkdown(array $rows): string
     {
         $lines = [
-            '| Test ID | Feature | Rule | Scenario | Type | Status |',
-            '| --- | --- | --- | --- | --- | --- |',
+            '| Test ID | Source | Requirement | Rule / Statement | Check | Type | Status |',
+            '| --- | --- | --- | --- | --- | --- | --- |',
         ];
 
         foreach ($rows as $row) {
             $lines[] = '| '.$this->mdCell($row['test_id'] ?? '')
+                .' | '.$this->mdCell($row['source'] ?? '')
                 .' | '.$this->mdCell($row['feature_title'] ?? '')
                 .' | '.$this->mdCell($row['rule'] ?? '')
                 .' | '.$this->mdCell($row['scenario_title'] ?? '')
@@ -118,7 +121,7 @@ class AcceptancePlanController extends Controller
         }
 
         if ($rows === []) {
-            $lines[] = '|  |  |  |  |  |  |';
+            $lines[] = '|  |  |  |  |  |  |  |';
         }
 
         return implode("\n", $lines)."\n";
@@ -136,7 +139,8 @@ class AcceptancePlanController extends Controller
         $user = auth()->user();
 
         $canView = EntityAccess::can($user, 'Feature', EntityAccess::VIEW)
-            || EntityAccess::can($user, 'Scenario', EntityAccess::VIEW);
+            || EntityAccess::can($user, 'Scenario', EntityAccess::VIEW)
+            || EntityAccess::can($user, 'FunctionalRequirement', EntityAccess::VIEW);
 
         if (! $canView) {
             EntityAccess::authorize($user, 'Feature', EntityAccess::VIEW);

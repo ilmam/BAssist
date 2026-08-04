@@ -42,16 +42,19 @@ body.modal-sheet-push .kt-header {
  */
 .create-split-btn > .kt-btn,
 .create-split-btn > a.kt-btn,
-.create-split-btn .create-split-btn__main {
+.create-split-btn .create-split-btn__main,
+.action-split-btn > .kt-btn,
+.action-split-btn > a.kt-btn {
   border-start-end-radius: 0 !important;
   border-end-end-radius: 0 !important;
 }
 
 .create-split-btn .create-split-btn__toggle,
-.create-split-btn [data-kt-dropdown-toggle] {
+.create-split-btn [data-kt-dropdown-toggle],
+.action-split-btn [data-kt-dropdown-toggle] {
   border-start-start-radius: 0 !important;
   border-end-start-radius: 0 !important;
-  border-inline-start: 1px solid color-mix(in oklab, #fff 28%, transparent);
+  border-inline-start: 1px solid color-mix(in oklab, var(--foreground) 12%, transparent);
 }
 
 /**
@@ -139,6 +142,18 @@ body.modal-sheet-push .kt-header {
 }
 
 /**
+ * BA Guide / help drawer width.
+ * Caps at 1100px on large screens; uses 65vw on smaller viewports so the
+ * panel shrinks modestly. Metronic .kt-drawer-end defaults to max-width: 90%.
+ * Arbitrary Tailwind max-w-[…] values used on the drawer (e.g. 1100px) are
+ * not in the prebuilt styles.css bundle, so width must be set here.
+ */
+[data-help-drawer].kt-drawer {
+  width: min(1100px, 65vw);
+  max-width: min(1100px, 65vw);
+}
+
+/**
  * Help drawer markdown body
  */
 .help-guide h1,
@@ -200,3 +215,167 @@ body.modal-sheet-push .kt-header {
   font-size: 0.65em;
   color: var(--muted-foreground, gray);
 }
+
+/**
+ * BA Guide booklet (TOC + step nav inside help drawer)
+ */
+.help-guide-toc__intro {
+  margin-bottom: 1rem;
+}
+
+.help-guide-toc__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.help-guide-toc__link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0.625rem;
+  border-radius: 0.375rem;
+  text-decoration: none;
+  color: var(--foreground, inherit);
+  font-size: 0.875rem;
+  line-height: 1.35;
+}
+
+.help-guide-toc__link:hover {
+  background: var(--accent, rgba(0, 0, 0, 0.04));
+}
+
+.help-guide-toc__index {
+  flex-shrink: 0;
+  width: 1.5rem;
+  height: 1.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--muted-foreground, inherit);
+  background: var(--muted, rgba(0, 0, 0, 0.06));
+}
+
+.help-guide-toc__label {
+  font-weight: 500;
+}
+
+.help-guide-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+}
+
+.help-guide-nav--top {
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border, #e5e7eb);
+}
+
+.help-guide-nav--bottom {
+  margin-top: 1.25rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border, #e5e7eb);
+  position: sticky;
+  bottom: 0;
+  background: var(--background, #fff);
+}
+
+.help-guide-nav__link {
+  color: var(--primary, #3b82f6);
+  text-decoration: none;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.help-guide-nav__link:hover {
+  text-decoration: underline;
+}
+
+.help-guide-nav__contents {
+  flex: 1;
+  text-align: center;
+}
+
+.help-guide-nav__spacer {
+  flex: 0 0 4.5rem;
+}
+
+/**
+ * BABOK project-folder progress badges in the sidebar.
+ */
+.nav-folder-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.75rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: 999px;
+  font: 600 10px/1.2 system-ui, sans-serif;
+  letter-spacing: 0.02em;
+  color: #334155;
+  background: #e2e8f0;
+  border: 1px solid #cbd5e1;
+}
+
+.nav-folder-badge[data-tone="strategy"] {
+  color: #0f3d2e;
+  background: #d8f3e7;
+  border-color: #a7e0c5;
+}
+
+.nav-folder-badge[data-tone="radd"] {
+  color: #1e3a5f;
+  background: #dbeafe;
+  border-color: #bfdbfe;
+}
+
+.nav-folder-badge[data-tone="governance"] {
+  color: #5b21b6;
+  background: #ede9fe;
+  border-color: #ddd6fe;
+}
+
+.nav-folder-badge[data-tone="evaluation"] {
+  color: #14532d;
+  background: #dcfce7;
+  border-color: #bbf7d0;
+}
+
+/* Risk Assessment score / coverage alerts (details + view modal) */
+.risk-alert {
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  font: 13px/1.45 system-ui, sans-serif;
+  color: #334155;
+}
+
+.risk-alert--high {
+  border-color: #f79009;
+  background: #fffcf5;
+  color: #b54708;
+}
+
+.risk-alert--critical {
+  border-color: #f04438;
+  background: #fffbfa;
+  color: #b42318;
+}
+
+.risk-alert--gap {
+  border-color: #f04438;
+  background: #fef3f2;
+  color: #b42318;
+}
+
+

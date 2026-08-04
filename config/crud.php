@@ -71,43 +71,68 @@ return [
 
         'BusinessObjective' => [
             'home' => true,
-            'nav' => true,
+            'nav' => false,
             'nav_label' => 'Business Objectives',
-            'nav_icon' => 'category',
-            'nav_icon_v8' => 'category',
+            'nav_icon' => 'chart-line-up',
+            'nav_icon_v8' => 'chart-line-up',
         ],
 
         'BusinessNeed' => [
             'home' => true,
-            'nav' => true,
+            'nav' => false,
             'nav_label' => 'Business Needs',
-            'nav_icon' => 'category',
-            'nav_icon_v8' => 'category',
+            'nav_icon' => 'questionnaire-tablet',
+            'nav_icon_v8' => 'questionnaire-tablet',
         ],
 
         'Stakeholder' => [
             'home' => true,
-            'nav' => true,
+            'nav' => false,
             'nav_label' => 'Stakeholders',
-            'nav_icon' => 'category',
-            'nav_icon_v8' => 'category',
+            'nav_icon' => 'people',
+            'nav_icon_v8' => 'people',
         ],
 
         'StakeholderNeed' => [
             'home' => true,
-            'nav' => true,
+            'nav' => false,
             'nav_label' => 'Stakeholder Needs',
-            'nav_icon' => 'category',
-            'nav_icon_v8' => 'category',
+            'nav_icon' => 'profile-user',
+            'nav_icon_v8' => 'profile-user',
         ],
 
         'Feature' => [
             'home' => true,
-            'nav' => true,
+            'nav' => false,
             'nav_label' => 'BDD Features',
             'nav_icon' => 'category',
             'nav_icon_v8' => 'category',
             'controller' => \App\Http\Controllers\FeatureController::class,
+        ],
+
+        'FunctionalRequirement' => [
+            'home' => true,
+            'nav' => false,
+            'nav_label' => 'Functional Requirements',
+            'nav_icon' => 'subtitle',
+            'nav_icon_v8' => 'subtitle',
+        ],
+
+        'ChangeRequest' => [
+            'home' => true,
+            'nav' => false,
+            'nav_label' => 'Change Requests',
+            'nav_icon' => 'arrow-mix',
+            'nav_icon_v8' => 'arrow-mix',
+            'controller' => \App\Http\Controllers\ChangeRequestController::class,
+        ],
+
+        'Risk' => [
+            'home' => true,
+            'nav' => false,
+            'nav_label' => 'Risk Assessment',
+            'nav_icon' => 'information-3',
+            'nav_icon_v8' => 'information-3',
         ],
 
         // Routes kept for edit/delete; create/view UX is Feature-centric.
@@ -145,6 +170,7 @@ return [
             'nav_label' => 'Swimlane Flows',
             'nav_icon' => 'row-horizontal',
             'nav_icon_v8' => 'row-horizontal',
+            'controller' => \App\Http\Controllers\SwimlaneFlowController::class,
         ],
 
         'Assumption' => [

@@ -6,7 +6,7 @@
     id="{{ $id }}"
     class="hidden"
     data-kt-drawer="true"
-    data-kt-drawer-class="kt-drawer kt-drawer-end flex top-0 bottom-0 w-full max-w-[440px] z-[60]"
+    data-kt-drawer-class="kt-drawer kt-drawer-end flex top-0 bottom-0 w-full z-[60]"
     data-kt-drawer-overlay="true"
     data-help-drawer
 >

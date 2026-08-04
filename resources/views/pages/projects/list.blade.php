@@ -44,6 +44,24 @@
             ]),
         ];
 
+        $downloadMenuItems = [];
+        foreach (config('babok_documents.documents', []) as $docKey => $docMeta) {
+            $downloadMenuItems[] = [
+                'label' => __($docMeta['title']),
+                'link' => url('projects/{id}/babok/'.$docKey),
+                'target' => '_blank',
+            ];
+        }
+        $downloadMenuItems[] = [
+            'label' => __('ui.babok_documents'),
+            'link' => url('projects/{id}/babok'),
+        ];
+        $downloadMenuItems[] = [
+            'label' => __('ui.export_pack'),
+            'link' => url('projects/{id}/export'),
+            'target' => '_blank',
+        ];
+
         $datatableOptions = [
             'extraButtons' => [
                 [
@@ -52,8 +70,10 @@
                     'icon' => 'file-down',
                     'link' => url('projects/{id}/export'),
                     'target' => '_blank',
-                    'title' => __('ui.export_pack'),
+                    'title' => __('ui.project_downloads'),
                     'showText' => false,
+                    'menu' => true,
+                    'menuItems' => $downloadMenuItems,
                 ],
             ],
         ];

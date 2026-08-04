@@ -20,5 +20,6 @@
         'autoRender' => true,
         'flowTitle' => $dto->title,
         'showTitleField' => true,
+        'satisfyOptions' => $satisfyOptions ?? [],
     ])
 </div>

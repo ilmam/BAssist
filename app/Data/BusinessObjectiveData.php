@@ -17,9 +17,9 @@ class BusinessObjectiveData extends BaseData
         public int $project_id = 0,
         #[Form('textarea', hideQuick: true)]
         public ?string $description = null,
-        #[Form('textarea', hideQuick: true)]
+        #[Form('text', hideQuick: true)]
         public ?string $success_measure = null,
-        #[Form('textarea', hideQuick: true)]
+        #[Form('text', hideQuick: true)]
         public ?string $potential_value = null,
         #[Form('select', 'Priority')]
         public ?int $priority_id = null,

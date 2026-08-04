@@ -19,6 +19,7 @@
             'dto' => $dto,
             'model' => $model,
             'fields' => $fields,
+            'satisfyOptions' => $satisfyOptions ?? [],
         ])
 
         <x-slot:footer>

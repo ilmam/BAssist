@@ -79,6 +79,24 @@ class Project extends BaseModel
     }
 
     #[Relation('HasMany')]
+    public function functionalRequirements(): HasMany
+    {
+        return $this->hasMany(FunctionalRequirement::class);
+    }
+
+    #[Relation('HasMany')]
+    public function changeRequests(): HasMany
+    {
+        return $this->hasMany(ChangeRequest::class);
+    }
+
+    #[Relation('HasMany')]
+    public function risks(): HasMany
+    {
+        return $this->hasMany(Risk::class);
+    }
+
+    #[Relation('HasMany')]
     public function stateFlows(): HasMany
     {
         return $this->hasMany(StateFlow::class);

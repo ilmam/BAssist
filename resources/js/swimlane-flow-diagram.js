@@ -4,6 +4,7 @@
  */
 
 const TYPES = ['start', 'process', 'decision', 'end'];
+const SATISFIABLE_TYPES = ['process', 'decision'];
 
 function toNodeId(label) {
     const trimmed = String(label ?? '').trim();
@@ -36,12 +37,16 @@ function normalizeElements(elements) {
             type: String(row?.type ?? '').trim().toLowerCase(),
             label: String(row?.label ?? '').trim(),
             line_title: String(row?.line_title ?? '').trim(),
+            code: String(row?.code ?? '').trim(),
+            satisfy: String(row?.satisfy ?? '').trim(),
         }))
         .filter((row) => row.lane !== '' && row.label !== '' && TYPES.includes(row.type))
         .map((row) => ({
             ...row,
             from: row.from !== '' ? row.from : null,
             line_title: row.line_title !== '' ? row.line_title : null,
+            code: row.code !== '' ? row.code : null,
+            satisfy: SATISFIABLE_TYPES.includes(row.type) && row.satisfy !== '' ? row.satisfy : null,
         }));
 }
 
@@ -127,6 +132,8 @@ export function readElementsFromTable(table) {
         type: readField(row, 'type'),
         label: readField(row, 'label'),
         line_title: readField(row, 'line_title'),
+        code: readField(row, 'code'),
+        satisfy: readField(row, 'satisfy'),
     }));
 }
 
@@ -169,6 +176,45 @@ async function renderMermaid(preview, source, mermaidText) {
     }
 }
 
+function setSatisfySelectOptions(select, options, selectedValue) {
+    if (!select) {
+        return;
+    }
+
+    const keep = selectedValue ? String(selectedValue) : '';
+    select.innerHTML = '';
+
+    const blank = document.createElement('option');
+    blank.value = '';
+    blank.textContent = '—';
+    select.appendChild(blank);
+
+    (options || []).forEach((opt) => {
+        const option = document.createElement('option');
+        option.value = String(opt.value ?? '');
+        option.textContent = opt.label ?? option.value;
+        if (keep !== '' && option.value === keep) {
+            option.selected = true;
+        }
+        select.appendChild(option);
+    });
+}
+
+function syncSatisfyEnabled(row) {
+    const typeEl = row.querySelector('[data-field="type"]');
+    const satisfyEl = row.querySelector('[data-field="satisfy"]');
+    if (!typeEl || !satisfyEl || satisfyEl.tagName !== 'SELECT') {
+        return;
+    }
+
+    const type = String(typeEl.value ?? '').toLowerCase();
+    const enabled = SATISFIABLE_TYPES.includes(type);
+    satisfyEl.disabled = !enabled;
+    if (!enabled) {
+        satisfyEl.value = '';
+    }
+}
+
 export function bindSwimlaneFlowEditor(root) {
     if (!root || root.dataset.bound === '1') {
         return;
@@ -184,10 +230,12 @@ export function bindSwimlaneFlowEditor(root) {
         form?.querySelector('[name="title"]') ||
         document.querySelector('[name="title"]');
     const directionInput = root.querySelector('[name="direction"]');
+    const projectInput = form?.querySelector('[name="project_id"]');
     let preview = root.querySelector('[data-mermaid-preview]');
     const source = root.querySelector('[data-mermaid-source]');
     const template = root.querySelector('template[data-element-row-template]');
     const autoRender = root.getAttribute('data-auto-render') === '1';
+    const satisfyOptionsUrl = root.getAttribute('data-satisfy-options-url') || '';
 
     if (!preview) {
         return;
@@ -220,7 +268,66 @@ export function bindSwimlaneFlowEditor(root) {
                     input.name = `elements[${index}][${field}]`;
                 }
             });
+            syncSatisfyEnabled(row);
         });
+    };
+
+    const reloadSatisfyOptions = () => {
+        if (!satisfyOptionsUrl || !tbody) {
+            return;
+        }
+
+        const projectId = projectInput?.value || '';
+        if (!projectId || projectId === '0') {
+            tbody.querySelectorAll('[data-field="satisfy"]').forEach((select) => {
+                if (select.tagName === 'SELECT') {
+                    setSatisfySelectOptions(select, [], '');
+                }
+            });
+            if (template) {
+                const templateSelect = template.content.querySelector('[data-field="satisfy"]');
+                setSatisfySelectOptions(templateSelect, [], '');
+            }
+            return;
+        }
+
+        const currentByRow = Array.from(tbody.querySelectorAll('tr[data-element-row]')).map((row) => {
+            const select = row.querySelector('[data-field="satisfy"]');
+            return select && 'value' in select ? select.value : '';
+        });
+
+        const endpoint = `${satisfyOptionsUrl}?project_id=${encodeURIComponent(projectId)}`;
+        fetch(endpoint, {
+            headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+            credentials: 'same-origin',
+        })
+            .then((response) => {
+                if (!response.ok) {
+                    throw new Error('satisfy options failed');
+                }
+                return response.json();
+            })
+            .then((payload) => {
+                const options = payload.options || [];
+                tbody.querySelectorAll('tr[data-element-row]').forEach((row, index) => {
+                    const select = row.querySelector('[data-field="satisfy"]');
+                    if (select && select.tagName === 'SELECT') {
+                        setSatisfySelectOptions(select, options, currentByRow[index] || '');
+                        syncSatisfyEnabled(row);
+                    }
+                });
+                if (template) {
+                    const templateSelect = template.content.querySelector('[data-field="satisfy"]');
+                    setSatisfySelectOptions(templateSelect, options, '');
+                }
+            })
+            .catch(() => {
+                tbody.querySelectorAll('[data-field="satisfy"]').forEach((select) => {
+                    if (select.tagName === 'SELECT') {
+                        setSatisfySelectOptions(select, [], '');
+                    }
+                });
+            });
     };
 
     const addRow = (afterRow = null) => {
@@ -295,6 +402,16 @@ export function bindSwimlaneFlowEditor(root) {
         }
     });
 
+    tbody?.addEventListener('change', (event) => {
+        const row = event.target?.closest?.('tr[data-element-row]');
+        if (!row) {
+            return;
+        }
+        if (event.target?.getAttribute?.('data-field') === 'type') {
+            syncSatisfyEnabled(row);
+        }
+    });
+
     tbody?.addEventListener('keydown', (event) => {
         if (event.key !== 'Enter') {
             return;
@@ -307,6 +424,12 @@ export function bindSwimlaneFlowEditor(root) {
 
         event.preventDefault();
         addRow(addBtn.closest('tr[data-element-row]'));
+    });
+
+    form?.addEventListener('change', (event) => {
+        if (event.target?.getAttribute?.('name') === 'project_id') {
+            reloadSatisfyOptions();
+        }
     });
 
     reindexRows();

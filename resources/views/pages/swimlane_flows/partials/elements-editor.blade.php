@@ -1,7 +1,9 @@
 @php
+    use App\Support\ProcessStepSatisfyType;
+
     $elementRows = is_array($elements ?? null) ? $elements : [];
     if ($elementRows === []) {
-        $elementRows = [['lane' => '', 'from' => '', 'type' => 'process', 'label' => '', 'line_title' => '']];
+        $elementRows = [['lane' => '', 'from' => '', 'type' => 'process', 'label' => '', 'line_title' => '', 'code' => '', 'satisfy_type' => null, 'satisfy_id' => null]];
     }
 
     $editable = $editable ?? true;
@@ -10,6 +12,11 @@
     $flowTitle = $flowTitle ?? '';
     $showDiagram = $showDiagram ?? true;
     $direction = strtoupper((string) ($direction ?? 'TB')) === 'LR' ? 'LR' : 'TB';
+    $satisfyOptions = is_array($satisfyOptions ?? null) ? $satisfyOptions : [];
+    $satisfyOptionsUrl = $satisfyOptionsUrl ?? route('swimlane_flows.satisfy-options');
+    $satisfyLabels = collect($satisfyOptions)->mapWithKeys(
+        fn (array $opt) => [($opt['value'] ?? '') => ($opt['label'] ?? '')]
+    )->all();
 
     $typeOptions = [
         'start' => __('ui.element_type_start'),
@@ -32,6 +39,7 @@
     @if ($autoRender) data-auto-render="1" @endif
     @if ($flowTitle !== '') data-flow-title-value="{{ $flowTitle }}" @endif
     data-direction="{{ $direction }}"
+    data-satisfy-options-url="{{ $satisfyOptionsUrl }}"
     class="space-y-5"
 >
     @if ($showTitleField)
@@ -57,11 +65,13 @@
             <table class="kt-table table-auto w-full" data-elements-table>
                 <thead>
                     <tr>
+                        <th class="min-w-24">{{ __('ui.element_code') }}</th>
                         <th class="min-w-36">{{ __('ui.element_lane') }}</th>
                         <th class="min-w-36">{{ __('ui.element_from') }}</th>
                         <th class="min-w-32">{{ __('ui.element_type') }}</th>
                         <th class="min-w-40">{{ __('ui.element_label') }}</th>
                         <th class="min-w-36">{{ __('ui.element_line_title') }}</th>
+                        <th class="min-w-56">{{ __('ui.element_satisfy') }}</th>
                         @if ($editable)
                             <th class="w-28">{{ __('ui.actions') }}</th>
                         @endif
@@ -74,8 +84,31 @@
                             if (! array_key_exists($type, $typeOptions)) {
                                 $type = 'process';
                             }
+                            $code = (string) ($row['code'] ?? '');
+                            $satisfyValue = ProcessStepSatisfyType::encode(
+                                isset($row['satisfy_type']) ? (string) $row['satisfy_type'] : null,
+                                isset($row['satisfy_id']) ? (int) $row['satisfy_id'] : null
+                            );
+                            if ($satisfyValue === '' && ! empty($row['satisfy'])) {
+                                $satisfyValue = (string) $row['satisfy'];
+                            }
+                            $satisfyLabel = $satisfyLabels[$satisfyValue] ?? $satisfyValue;
+                            $satisfiable = in_array($type, ['process', 'decision'], true);
                         @endphp
                         <tr data-element-row>
+                            <td>
+                                <input
+                                    type="text"
+                                    class="kt-input bg-muted/40"
+                                    data-field="code"
+                                    name="elements[{{ $index }}][code]"
+                                    value="{{ $code }}"
+                                    readonly
+                                    tabindex="-1"
+                                    placeholder="{{ __('ui.element_code_placeholder') }}"
+                                    autocomplete="off"
+                                >
+                            </td>
                             <td>
                                 @if ($editable)
                                     <input
@@ -147,6 +180,27 @@
                                     <span class="text-sm" data-field="line_title" data-value="{{ $row['line_title'] ?? '' }}">{{ $row['line_title'] ?? '' }}</span>
                                 @endif
                             </td>
+                            <td>
+                                @if ($editable)
+                                    <select
+                                        class="kt-select"
+                                        data-field="satisfy"
+                                        name="elements[{{ $index }}][satisfy]"
+                                        @disabled(! $satisfiable)
+                                    >
+                                        <option value="">—</option>
+                                        @foreach ($satisfyOptions as $opt)
+                                            <option value="{{ $opt['value'] }}" @selected($satisfyValue === ($opt['value'] ?? ''))>
+                                                {{ $opt['label'] }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                @else
+                                    <span class="text-sm" data-field="satisfy" data-value="{{ $satisfyValue }}">
+                                        {{ $satisfiable ? ($satisfyLabel !== '' ? $satisfyLabel : '—') : '—' }}
+                                    </span>
+                                @endif
+                            </td>
                             @if ($editable)
                                 <td>
                                     <div class="flex items-center justify-end gap-1">
@@ -182,6 +236,9 @@
         <template data-element-row-template>
             <tr data-element-row>
                 <td>
+                    <input type="text" class="kt-input bg-muted/40" data-field="code" name="elements[__INDEX__][code]" value="" readonly tabindex="-1" placeholder="{{ __('ui.element_code_placeholder') }}" autocomplete="off">
+                </td>
+                <td>
                     <input type="text" class="kt-input" data-field="lane" name="elements[__INDEX__][lane]" value="" placeholder="Support" autocomplete="off">
                 </td>
                 <td>
@@ -199,6 +256,14 @@
                 </td>
                 <td>
                     <input type="text" class="kt-input" data-field="line_title" name="elements[__INDEX__][line_title]" value="" placeholder="Yes" autocomplete="off">
+                </td>
+                <td>
+                    <select class="kt-select" data-field="satisfy" name="elements[__INDEX__][satisfy]">
+                        <option value="">—</option>
+                        @foreach ($satisfyOptions as $opt)
+                            <option value="{{ $opt['value'] }}">{{ $opt['label'] }}</option>
+                        @endforeach
+                    </select>
                 </td>
                 <td>
                     <div class="flex items-center justify-end gap-1">

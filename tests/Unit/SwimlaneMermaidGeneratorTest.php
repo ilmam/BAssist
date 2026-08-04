@@ -94,8 +94,52 @@ class SwimlaneMermaidGeneratorTest extends TestCase
                 'type' => 'process',
                 'label' => 'Ok',
                 'line_title' => 'Go',
+                'code' => 'PS-1',
+                'satisfy_type' => null,
+                'satisfy_id' => null,
             ],
         ], $rows);
+    }
+
+    public function test_normalize_preserves_code_and_satisfy(): void
+    {
+        $generator = new SwimlaneMermaidGenerator();
+
+        $rows = $generator->normalizeElements([
+            [
+                'lane' => 'Support',
+                'type' => 'process',
+                'label' => 'Review',
+                'code' => 'PS-3',
+                'satisfy' => 'functional_requirement:12',
+            ],
+            [
+                'lane' => 'Support',
+                'type' => 'start',
+                'label' => 'Begin',
+                'satisfy' => 'feature:9',
+            ],
+        ]);
+
+        $this->assertSame('PS-3', $rows[0]['code']);
+        $this->assertSame('functional_requirement', $rows[0]['satisfy_type']);
+        $this->assertSame(12, $rows[0]['satisfy_id']);
+        $this->assertSame('PS-4', $rows[1]['code']);
+        $this->assertNull($rows[1]['satisfy_type']);
+        $this->assertNull($rows[1]['satisfy_id']);
+    }
+
+    public function test_assign_missing_codes_continues_sequence(): void
+    {
+        $generator = new SwimlaneMermaidGenerator();
+
+        $rows = $generator->normalizeElements([
+            ['lane' => 'A', 'type' => 'process', 'label' => 'One', 'code' => 'PS-2'],
+            ['lane' => 'A', 'type' => 'process', 'label' => 'Two'],
+        ]);
+
+        $this->assertSame('PS-2', $rows[0]['code']);
+        $this->assertSame('PS-3', $rows[1]['code']);
     }
 
     public function test_skips_self_loop_edges(): void

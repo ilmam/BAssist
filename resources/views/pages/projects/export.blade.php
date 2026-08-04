@@ -22,11 +22,16 @@
         $hasStakeholderNeeds = $stakeholder_needs->isNotEmpty();
         $hasStateFlows = $state_flows !== [];
         $hasSwimlaneFlows = $swimlane_flows !== [];
+        $architecture = $architecture ?? null;
+        $hasArchitecture = is_array($architecture) && ($architecture['views'] ?? []) !== [];
         $hasAssumptions = $assumptions->isNotEmpty();
+        $risks = $risks ?? collect();
+        $hasRisks = $risks->isNotEmpty();
         $hasConstraints = $constraints->isNotEmpty();
         $hasBusinessRules = $business_rules->isNotEmpty();
         $hasStrategicBaseline = $strategic_baseline !== null;
         $hasScopeItems = $scope_items->isNotEmpty();
+        $hasFunctionalRequirements = $functional_requirements->isNotEmpty();
         $hasFeatures = $features !== [];
         $matrixRows = $matrix['rows'] ?? [];
         $hasMatrix = $matrixRows !== [];
@@ -38,11 +43,14 @@
             || $hasStakeholderNeeds
             || $hasStateFlows
             || $hasSwimlaneFlows
+            || $hasArchitecture
             || $hasAssumptions
+            || $hasRisks
             || $hasConstraints
             || $hasBusinessRules
             || $hasStrategicBaseline
             || $hasScopeItems
+            || $hasFunctionalRequirements
             || $hasFeatures
             || $hasMatrix
             || $readinessItems !== [];
@@ -54,11 +62,14 @@
             $hasNeeds ? ['id' => 'section-business-needs', 'label' => __('ui.business_needs')] : null,
             $hasStakeholders ? ['id' => 'section-stakeholders', 'label' => __('ui.stakeholders')] : null,
             $hasStakeholderNeeds ? ['id' => 'section-stakeholder-needs', 'label' => __('ui.stakeholder_needs')] : null,
+            $hasArchitecture ? ['id' => 'section-architecture', 'label' => __('ui.architecture_c4')] : null,
             $hasStateFlows ? ['id' => 'section-state-flows', 'label' => __('ui.state_flows')] : null,
             $hasSwimlaneFlows ? ['id' => 'section-swimlane-flows', 'label' => __('ui.swimlane_flows')] : null,
             $hasAssumptions ? ['id' => 'section-assumptions', 'label' => __('ui.assumptions')] : null,
+            $hasRisks ? ['id' => 'section-risks', 'label' => __('ui.risk_assessment')] : null,
             $hasConstraints ? ['id' => 'section-constraints', 'label' => __('ui.constraints')] : null,
             $hasBusinessRules ? ['id' => 'section-business-rules', 'label' => __('ui.business_rules')] : null,
+            $hasFunctionalRequirements ? ['id' => 'section-functional-requirements', 'label' => __('ui.functional_requirements')] : null,
             $hasFeatures ? ['id' => 'section-features', 'label' => __('ui.features')] : null,
             $hasMatrix ? ['id' => 'section-traceability-matrix', 'label' => __('ui.traceability_matrix')] : null,
         ]));
@@ -362,6 +373,14 @@
         @endforeach
     @endif
 
+    @if ($hasArchitecture)
+        @include('pages.projects.babok.partials.architecture-c4', [
+            'architecture' => $architecture,
+            'sectionId' => 'section-architecture',
+            'sectionBreak' => true,
+        ])
+    @endif
+
     @if ($hasStateFlows)
         <h2 id="section-state-flows" class="section-title">{{ __('ui.state_flows') }}</h2>
         @foreach ($state_flows as $item)
@@ -445,6 +464,11 @@
         @endforeach
     @endif
 
+    @if ($hasRisks)
+        <h2 id="section-risks" class="section-title">{{ __('ui.risk_assessment') }}</h2>
+        @include('pages.projects.babok.partials.risk-assessment', ['risks' => $risks])
+    @endif
+
     @if ($hasConstraints)
         <h2 id="section-constraints" class="section-title">{{ __('ui.constraints') }}</h2>
         @foreach ($constraints as $item)
@@ -483,6 +507,49 @@
                 @if ($item->description)
                     <p class="prose">{{ $item->description }}</p>
                 @endif
+            </article>
+        @endforeach
+    @endif
+
+    @if ($hasFunctionalRequirements)
+        <h2 id="section-functional-requirements" class="section-title section-title--break">{{ __('ui.functional_requirements') }}</h2>
+        @foreach ($functional_requirements as $requirement)
+            <article class="artifact">
+                <h3 class="item-title">
+                    @if ($requirement->code)
+                        <span class="artifact__code">{{ $requirement->code }}</span>
+                    @endif
+                    {{ $requirement->title }}
+                </h3>
+                <div class="artifact__panel">
+                    <div class="artifact__meta">
+                        <span><strong>{{ __('ui.status') }}</strong>{{ $requirement->status?->name ?: '—' }}</span>
+                        <span><strong>{{ __('ui.priority') }}</strong>{{ $requirement->priority?->name ?: '—' }}</span>
+                    </div>
+                    <dl class="kv">
+                        <dt>{{ __('ui.stakeholder_need') }}</dt>
+                        <dd>
+                            @if ($requirement->stakeholderNeed)
+                                @if ($requirement->stakeholderNeed->code)
+                                    <span class="artifact__code">{{ $requirement->stakeholderNeed->code }}</span>
+                                @endif
+                                {{ $requirement->stakeholderNeed->title }}
+                            @else
+                                —
+                            @endif
+                        </dd>
+                        <dt>{{ __('ui.statement') }}</dt>
+                        <dd>{{ $requirement->statement ?: '—' }}</dd>
+                        @if (filled($requirement->trigger))
+                            <dt>{{ __('ui.trigger') }}</dt>
+                            <dd>{{ $requirement->trigger }}</dd>
+                        @endif
+                        @if (filled($requirement->acceptance_criteria))
+                            <dt>{{ __('ui.acceptance_criteria') }}</dt>
+                            <dd>{{ $requirement->acceptance_criteria }}</dd>
+                        @endif
+                    </dl>
+                </div>
             </article>
         @endforeach
     @endif
@@ -539,7 +606,8 @@
                     <th>{{ __('ui.business_objective') }}</th>
                     <th>{{ __('ui.business_need') }}</th>
                     <th>{{ __('ui.stakeholder_need') }}</th>
-                    <th>{{ __('ui.feature') }}</th>
+                    <th>{{ __('ui.solution_requirement') }}</th>
+                    <th>{{ __('ui.design_artifact') }}</th>
                     <th>{{ __('ui.stakeholders') }}</th>
                     <th>{{ __('ui.gaps') }}</th>
                 </tr>
@@ -583,6 +651,24 @@
                                     <span class="artifact__code">{{ $row['feature_code'] }}</span>
                                 @endif
                                 {{ $row['feature_title'] ?? '' }}
+                            @elseif (! empty($row['functional_requirement_code']) || ! empty($row['functional_requirement_title']))
+                                @if (! empty($row['functional_requirement_code']))
+                                    <span class="artifact__code">{{ $row['functional_requirement_code'] }}</span>
+                                @endif
+                                {{ $row['functional_requirement_title'] ?? '' }}
+                            @else
+                                —
+                            @endif
+                        </td>
+                        <td>
+                            @if (! empty($row['design_artifact_code']) || ! empty($row['design_artifact_label']))
+                                @if (! empty($row['design_artifact_code']))
+                                    <span class="artifact__code">{{ $row['design_artifact_code'] }}</span>
+                                @endif
+                                {{ $row['design_artifact_label'] ?? '' }}
+                                @if (! empty($row['design_artifact_flow_title']))
+                                    <div class="text-muted">{{ $row['design_artifact_flow_title'] }}</div>
+                                @endif
                             @else
                                 —
                             @endif
@@ -597,9 +683,11 @@
                                         'missing_stakeholder_need' => __('ui.gap_missing_stakeholder_need'),
                                         'missing_feature' => __('ui.gap_missing_feature'),
                                         'missing_scenarios' => __('ui.gap_missing_scenarios'),
+                                        'missing_satisfy' => __('ui.gap_missing_satisfy'),
                                         'orphan_objective' => __('ui.gap_orphan_objective'),
                                         'orphan_stakeholder_need' => __('ui.gap_orphan_stakeholder_need'),
                                         'orphan_feature' => __('ui.gap_orphan_feature'),
+                                        'orphan_functional_requirement' => __('ui.gap_orphan_functional_requirement'),
                                         default => $gap,
                                     };
                                 })->all();
@@ -710,6 +798,53 @@
             font-size: 0.95rem;
         }
 
+        .doc-note {
+            margin: 0 0 1.25rem;
+            padding: 0.75rem 1rem;
+            background: var(--surface);
+            border-left: 3px solid var(--accent);
+            font: 13px/1.45 system-ui, sans-serif;
+            color: var(--muted);
+        }
+
+        .risk-score-chip {
+            display: inline-block;
+            margin-left: 0.5rem;
+            padding: 0.15rem 0.55rem;
+            border-radius: 999px;
+            font: 600 11px/1.3 system-ui, sans-serif;
+            vertical-align: middle;
+            background: #eef2f6;
+            color: #4b5675;
+        }
+
+        .risk-score-chip--high {
+            background: #fff3e0;
+            color: #b54708;
+        }
+
+        .risk-score-chip--critical {
+            background: #ffe4e2;
+            color: #b42318;
+        }
+
+        .artifact--risk-critical {
+            border-left: 3px solid #f04438;
+            padding-left: 0.75rem;
+            background: #fffbfa;
+        }
+
+        .artifact--coverage-gap {
+            outline: 1px dashed #f04438;
+            outline-offset: 2px;
+        }
+
+        .risk-gap-flag {
+            margin: 0.75rem 0 0;
+            font: 600 12px/1.4 system-ui, sans-serif;
+            color: #b42318;
+        }
+
         @media print {
             .export-toc__list {
                 font-size: 11pt;
@@ -784,6 +919,12 @@
             h2.section-title.section-title--break + .summary {
                 break-after: avoid;
                 page-break-after: avoid;
+            }
+
+            .artifact--risk-critical,
+            .risk-score-chip--critical {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
             }
         }
     </style>

@@ -8,7 +8,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
 /**
- * Builds workspace → project → artifact sidebar navigation for the current tenant.
+ * Builds workspace → project → BABOK folder → artifact sidebar navigation.
  */
 class NavTreeBuilder
 {
@@ -22,6 +22,7 @@ class NavTreeBuilder
     public function __construct(
         protected WorkspaceContext $workspaceContext,
         protected ProjectContext $projectContext,
+        protected NavFolderProgress $folderProgress,
     ) {
     }
 
@@ -37,9 +38,9 @@ class NavTreeBuilder
 
         $canViewWorkspace = EntityAccess::can($user, 'Workspace', EntityAccess::VIEW);
         $canViewProject = EntityAccess::can($user, 'Project', EntityAccess::VIEW);
-        $artifacts = $this->artifactItems();
+        $folderTemplates = $this->folderTemplates();
 
-        if (! $canViewWorkspace && ! $canViewProject && $artifacts === []) {
+        if (! $canViewWorkspace && ! $canViewProject && $folderTemplates === []) {
             return [];
         }
 
@@ -66,7 +67,7 @@ class NavTreeBuilder
         foreach ($workspaces as $workspace) {
             $workspaceChildren = $this->workspaceChildren(
                 $workspace,
-                $artifacts,
+                $folderTemplates,
                 $canViewProject,
                 $activeProjectId,
             );
@@ -100,12 +101,12 @@ class NavTreeBuilder
     }
 
     /**
-     * @param  list<array<string, mixed>>  $artifacts
+     * @param  list<array<string, mixed>>  $folderTemplates
      * @return list<array<string, mixed>>
      */
     protected function workspaceChildren(
         Workspace $workspace,
-        array $artifacts,
+        array $folderTemplates,
         bool $canViewProject,
         ?int $activeProjectId,
     ): array {
@@ -129,16 +130,7 @@ class NavTreeBuilder
                 'project_id' => $project->id,
             ];
 
-            $artifactChildren = [];
-            foreach ($artifacts as $artifact) {
-                $artifactChildren[] = array_merge($artifact, [
-                    'query' => $projectQuery,
-                    'context' => [
-                        'workspace_id' => (int) $workspace->id,
-                        'project_id' => (int) $project->id,
-                    ],
-                ]);
-            }
+            $isActiveProject = $activeProjectId !== null && (int) $activeProjectId === (int) $project->id;
 
             $children[] = [
                 'label' => $project->name,
@@ -151,8 +143,8 @@ class NavTreeBuilder
                     'workspace_id' => (int) $workspace->id,
                     'project_id' => (int) $project->id,
                 ],
-                'children' => $artifactChildren,
-                'force_open' => $activeProjectId !== null && (int) $activeProjectId === (int) $project->id,
+                'children' => $this->projectFolderItems($project, $folderTemplates, $projectQuery, $isActiveProject),
+                'force_open' => $isActiveProject,
             ];
         }
 
@@ -160,56 +152,133 @@ class NavTreeBuilder
     }
 
     /**
+     * @param  list<array<string, mixed>>  $folderTemplates
+     * @param  array<string, int>  $projectQuery
      * @return list<array<string, mixed>>
      */
-    protected function artifactItems(): array
+    protected function projectFolderItems(
+        Project $project,
+        array $folderTemplates,
+        array $projectQuery,
+        bool $computeBadges,
+    ): array {
+        $folders = [];
+
+        foreach ($folderTemplates as $folder) {
+            $children = [];
+
+            foreach ($folder['children'] as $childDef) {
+                $leaf = $this->resolveLeaf($childDef, $project);
+                if ($leaf === null) {
+                    continue;
+                }
+
+                $merged = array_merge($leaf, [
+                    'context' => [
+                        'workspace_id' => (int) $projectQuery['workspace_id'],
+                        'project_id' => (int) $project->id,
+                    ],
+                ]);
+
+                // for-project style routes already carry the project in route_params.
+                if (empty($leaf['route_params'])) {
+                    $merged['query'] = $projectQuery;
+                }
+
+                $children[] = $merged;
+            }
+
+            if ($children === []) {
+                continue;
+            }
+
+            $item = [
+                'type' => 'folder',
+                'folder_key' => $folder['key'] ?? null,
+                'label' => $folder['label'],
+                'icon' => $folder['icon'] ?? 'folder',
+                'icon_v8' => $folder['icon_v8'] ?? ($folder['icon'] ?? 'folder'),
+                'title' => trim(($folder['babok'] ?? '').' — '.($folder['purpose'] ?? ''), ' —'),
+                'badge_tone' => $folder['badge_tone'] ?? null,
+                'children' => $children,
+                // Open when a child is active; do not force all folders open.
+                'force_open' => false,
+            ];
+
+            if ($computeBadges && config('navigation.hierarchy.show_folder_badges', false)) {
+                $badge = $this->folderProgress->forFolder($project, $folder, $children);
+                if ($badge !== null) {
+                    $item['badge'] = $badge['label'];
+                    $item['badge_title'] = $badge['title'];
+                }
+            }
+
+            $folders[] = $item;
+        }
+
+        return $folders;
+    }
+
+    /**
+     * @param  array<string, mixed>  $childDef
+     * @return array<string, mixed>|null
+     */
+    protected function resolveLeaf(array $childDef, ?Project $project = null): ?array
     {
-        $items = [];
-
-        foreach (CrudEntityRegistry::all() as $model => $options) {
-            if (! ($options['nav'] ?? false)) {
-                continue;
+        if (isset($childDef['entity']) && is_string($childDef['entity'])) {
+            $model = $childDef['entity'];
+            $options = CrudEntityRegistry::all()[$model] ?? null;
+            if ($options === null || ! empty($options['disabled'])) {
+                return null;
             }
-
-            if (in_array($model, self::CONTAINER_MODELS, true)) {
-                continue;
-            }
-
-            if (! empty($options['nav_container'])) {
-                continue;
-            }
-
             if (! entity_can($model, EntityAccess::VIEW)) {
-                continue;
+                return null;
             }
 
-            $items[] = [
+            return [
                 'label' => $options['nav_label'] ?? Str::plural($model),
                 'route' => model_route_name($model, 'index'),
                 'icon' => $options['nav_icon'] ?? 'element-11',
                 'icon_v8' => $options['nav_icon_v8'] ?? ($options['nav_icon'] ?? 'element-11'),
+                'entity' => $model,
             ];
         }
 
-        foreach (config('navigation.hierarchy.project_artifacts', []) as $artifact) {
-            if (! is_array($artifact) || ! nav_item_is_visible($artifact)) {
-                continue;
-            }
-
-            $route = $artifact['route'] ?? null;
-            if (! is_string($route) || $route === '') {
-                continue;
-            }
-
-            $items[] = [
-                'label' => $artifact['label'] ?? $route,
-                'route' => $route,
-                'icon' => $artifact['icon'] ?? 'element-11',
-                'icon_v8' => $artifact['icon_v8'] ?? ($artifact['icon'] ?? 'element-11'),
-            ];
+        if (! nav_item_is_visible($childDef)) {
+            return null;
         }
 
-        return $items;
+        $route = $childDef['route'] ?? null;
+        if (! is_string($route) || $route === '') {
+            return null;
+        }
+
+        $leaf = [
+            'label' => $childDef['label'] ?? $route,
+            'route' => $route,
+            'icon' => $childDef['icon'] ?? 'element-11',
+            'icon_v8' => $childDef['icon_v8'] ?? ($childDef['icon'] ?? 'element-11'),
+        ];
+
+        $projectParam = $childDef['route_project_param'] ?? null;
+        if (is_string($projectParam) && $projectParam !== '' && $project !== null) {
+            $leaf['route_params'] = [$projectParam => $project->id];
+        }
+
+        return $leaf;
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    protected function folderTemplates(): array
+    {
+        $folders = config('navigation.hierarchy.project_folders', []);
+        if (! is_array($folders) || $folders === []) {
+            return [];
+        }
+
+        return array_values(array_filter($folders, fn ($folder) => is_array($folder)));
     }
 
     /**

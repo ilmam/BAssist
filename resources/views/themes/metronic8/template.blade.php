@@ -132,6 +132,14 @@
                 .then(response => response.text())
                 .then(html => {
                     container.innerHTML = html;
+                    container.querySelectorAll('script').forEach((oldScript) => {
+                        const script = document.createElement('script');
+                        Array.from(oldScript.attributes).forEach((attr) => {
+                            script.setAttribute(attr.name, attr.value);
+                        });
+                        script.textContent = oldScript.textContent;
+                        oldScript.replaceWith(script);
+                    });
                     if (typeof bootstrap !== 'undefined') {
                         bootstrap.Modal.getOrCreateInstance(modalEl).show();
                     }

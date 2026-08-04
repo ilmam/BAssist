@@ -136,7 +136,7 @@ class Ui
                 continue;
             }
 
-            if (self::keyset($option, 'menu')) {
+            if (self::keyset($option, 'menu') || is_array($option['menuItems'] ?? null)) {
                 $colValue .= self::tableActionSplitButton($option, $theme);
                 continue;
             }
@@ -200,41 +200,98 @@ class Ui
         $link = self::keyset($option, 'link');
         $icon = self::keyset($option, 'icon');
         $modalUrl = self::keyset($option, 'modalUrl');
+        $target = self::keyset($option, 'target');
+        $title = self::keyset($option, 'title');
+        $menuItems = is_array($option['menuItems'] ?? null) ? $option['menuItems'] : null;
         $iconClass = self::tableActionIcon($icon, $theme);
+        $splitClass = self::keyset($option, 'splitClass', $menuItems !== null ? 'action-split-btn' : '');
+        $menuAriaLabel = $title !== '' ? $title : 'More actions';
+        $primaryModalClass = $modalUrl ? ' js-open-modal' : '';
+        $primaryModalAttr = $modalUrl ? ' data-modal-url="'.e($modalUrl).'"' : '';
+        $targetAttr = $target ? ' target="'.e($target).'" rel="noopener"' : '';
+        $titleAttr = $title ? ' title="'.e($title).'"' : '';
+        $wrapperClass = trim('inline-flex items-center '.($splitClass !== '' ? $splitClass : ''));
 
         if ($theme === 'metronic9') {
             $buttonClass = self::keyset($option, 'buttonClass', 'kt-btn kt-btn-sm kt-btn-icon kt-btn-ghost');
+            $menuMinWidth = self::keyset($option, 'menuMinWidth', $menuItems !== null ? 'min-w-[240px]' : 'min-w-[160px]');
 
             // KTUI dropdown API (not Metronic 8 data-kt-menu). Rows are injected by
             // DataTables, so template JS re-inits KTDropdown after each draw.
-            return '<div class="inline-flex items-center">'
-                .'<a href="'.$link.'" class="'.$buttonClass.' js-open-modal" data-modal-url="'.e($modalUrl).'">'
+            $menuHtml = $menuItems !== null
+                ? self::tableActionMenuItemsHtml($menuItems, $theme)
+                : '<a href="'.e($modalUrl).'" class="kt-dropdown-menu-link js-open-modal" data-modal-url="'.e($modalUrl).'" data-kt-dropdown-dismiss="true">Open</a>'
+                    .'<a href="'.$link.'" class="kt-dropdown-menu-link" target="_blank" rel="noopener" data-kt-dropdown-dismiss="true">Open in new page</a>';
+
+            return '<div class="'.$wrapperClass.'">'
+                .'<a href="'.$link.'" class="'.$buttonClass.$primaryModalClass.'"'.$primaryModalAttr.$targetAttr.$titleAttr.'>'
                 .($iconClass ? '<i class="'.$iconClass.'"></i>' : '')
                 .'</a>'
                 .'<div class="inline-flex" data-kt-dropdown="true" data-kt-dropdown-trigger="click">'
-                .'<button type="button" class="kt-btn kt-btn-sm kt-btn-icon kt-btn-ghost" data-kt-dropdown-toggle="true" aria-label="More actions">'
+                .'<button type="button" class="kt-btn kt-btn-sm kt-btn-icon kt-btn-ghost" data-kt-dropdown-toggle="true" aria-label="'.e($menuAriaLabel).'">'
                 .'<i class="ki-filled ki-down text-xs"></i>'
                 .'</button>'
-                .'<div class="kt-dropdown-menu min-w-[160px]" data-kt-dropdown-menu="true">'
-                .'<a href="'.e($modalUrl).'" class="kt-dropdown-menu-link js-open-modal" data-modal-url="'.e($modalUrl).'" data-kt-dropdown-dismiss="true">Open</a>'
-                .'<a href="'.$link.'" class="kt-dropdown-menu-link" target="_blank" rel="noopener" data-kt-dropdown-dismiss="true">Open in new page</a>'
+                .'<div class="kt-dropdown-menu '.$menuMinWidth.'" data-kt-dropdown-menu="true">'
+                .$menuHtml
                 .'</div>'
                 .'</div>'
                 .'</div>';
         }
 
         $buttonClass = self::keyset($option, 'buttonClass', 'btn btn-sm btn-icon btn-light btn-active-light-primary h-25px w-25px');
+        $menuHtml = $menuItems !== null
+            ? self::tableActionMenuItemsHtml($menuItems, $theme)
+            : '<li><a class="dropdown-item js-open-modal" data-modal-url="'.e($modalUrl).'" href="'.e($modalUrl).'">Open</a></li>'
+                .'<li><a class="dropdown-item" href="'.$link.'" target="_blank" rel="noopener">Open in new page</a></li>';
 
-        return '<div class="btn-group">'
-            .'<a href="'.$link.'" class="'.$buttonClass.' js-open-modal" data-modal-url="'.e($modalUrl).'">'
+        return '<div class="btn-group'.($splitClass !== '' ? ' '.$splitClass : '').'">'
+            .'<a href="'.$link.'" class="'.$buttonClass.$primaryModalClass.'"'.$primaryModalAttr.$targetAttr.$titleAttr.'>'
             .($iconClass ? '<i class="'.$iconClass.'"></i>' : '')
             .'</a>'
-            .'<button type="button" class="'.$buttonClass.' dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false"></button>'
+            .'<button type="button" class="'.$buttonClass.' dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false" aria-label="'.e($menuAriaLabel).'"></button>'
             .'<ul class="dropdown-menu dropdown-menu-end">'
-            .'<li><a class="dropdown-item js-open-modal" data-modal-url="'.e($modalUrl).'" href="'.e($modalUrl).'">Open</a></li>'
-            .'<li><a class="dropdown-item" href="'.$link.'" target="_blank" rel="noopener">Open in new page</a></li>'
+            .$menuHtml
             .'</ul>'
             .'</div>';
+    }
+
+    /**
+     * @param  list<array{label: string, link: string, target?: string, modalUrl?: string}>  $items
+     */
+    protected static function tableActionMenuItemsHtml(array $items, string $theme): string
+    {
+        $html = '';
+
+        foreach ($items as $item) {
+            if (! is_array($item)) {
+                continue;
+            }
+
+            $label = (string) ($item['label'] ?? '');
+            $link = (string) ($item['link'] ?? '');
+            if ($label === '' || $link === '') {
+                continue;
+            }
+
+            $target = (string) ($item['target'] ?? '');
+            $modalUrl = (string) ($item['modalUrl'] ?? '');
+            $targetAttr = $target !== '' ? ' target="'.e($target).'" rel="noopener"' : '';
+            $modalClass = $modalUrl !== '' ? ' js-open-modal' : '';
+            $modalAttr = $modalUrl !== '' ? ' data-modal-url="'.e($modalUrl).'"' : '';
+
+            if ($theme === 'metronic9') {
+                $html .= '<a href="'.$link.'" class="kt-dropdown-menu-link'.$modalClass.'"'.$modalAttr.$targetAttr.' data-kt-dropdown-dismiss="true">'
+                    .e($label)
+                    .'</a>';
+                continue;
+            }
+
+            $html .= '<li><a class="dropdown-item'.$modalClass.'" href="'.$link.'"'.$modalAttr.$targetAttr.'>'
+                .e($label)
+                .'</a></li>';
+        }
+
+        return $html;
     }
 
     protected static function tableActionIcon(?string $icon, string $theme): string
@@ -250,6 +307,7 @@ class Ui
                 'eye' => 'ki-filled ki-eye',
                 'plus' => 'ki-filled ki-plus',
                 'file-down' => 'ki-filled ki-file-down',
+                'book' => 'ki-filled ki-book',
                 'printer' => 'ki-filled ki-printer',
             ];
 

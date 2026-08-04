@@ -75,9 +75,11 @@ No new MoSCoW model — same `priority_id` field.
 
 ## Later Phase 1.x (not started)
 
-1. Change impact (“if this need changes → affected children”)  
-2. Baselines / versions  
-3. Acceptance run evidence on existing Acceptance Test surface  
+1. Change impact (“if this need changes → affected children”) — *partially addressed via Change Request cascade*  
+2. Baselines / versions — *LOCKED in [`phase-2-todo.md`](phase-2-todo.md) §10 (multi-version Strategic Baseline)*  
+3. Acceptance run evidence on existing Acceptance Test surface — *queued in [`phase-2-todo.md`](phase-2-todo.md) §4*
+
+**Phase 2 backlog:** Risk subject linking (P0), multi-version Strategic Baseline (§10), SDLC/test handoff, and other deferred lifecycle items are tracked in [`phase-2-todo.md`](phase-2-todo.md).
 
 ---
 

@@ -40,5 +40,6 @@
         'relationColumns' => $relationColumns,
         'listFilters' => $listFilters ?? [],
         'allowedListFilters' => $allowedListFilters ?? [],
+        'listHelp' => __('ui.babok_doc_acceptance_criteria_note'),
     ])
 @endsection

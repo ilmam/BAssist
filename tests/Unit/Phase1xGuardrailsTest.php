@@ -58,4 +58,21 @@ class Phase1xGuardrailsTest extends TestCase
         $this->assertStringContainsString("__('ui.project_readiness')", $blade);
         $this->assertStringContainsString('$readiness[\'items\']', $blade);
     }
+
+    public function test_readiness_covers_unsatisfied_design_steps(): void
+    {
+        $this->assertNotSame(
+            'ui.readiness_unsatisfied_design_steps',
+            __('ui.readiness_unsatisfied_design_steps')
+        );
+        $this->assertStringContainsString(
+            'Design steps',
+            __('ui.readiness_unsatisfied_design_steps')
+        );
+
+        $service = file_get_contents(dirname(__DIR__, 2).'/app/Services/ProjectReadinessService.php');
+        $this->assertIsString($service);
+        $this->assertStringContainsString("key: 'unsatisfied_design_steps'", $service);
+        $this->assertStringContainsString('countUnsatisfiedDesignSteps', $service);
+    }
 }

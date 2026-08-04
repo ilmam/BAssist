@@ -4,6 +4,16 @@
 
 @auth
     <div class="flex items-center gap-3">
+        <button
+            type="button"
+            class="kt-btn kt-btn-ghost kt-btn-sm gap-1.5"
+            title="{{ __('ui.ba_guide') }}"
+            aria-label="{{ __('ui.ba_guide') }}"
+            data-help-url="{{ route('help.guide') }}"
+        >
+            <i class="ki-filled ki-book text-base"></i>
+            <span>{{ __('ui.ba_guide') }}</span>
+        </button>
         <span class="text-sm text-foreground hidden sm:inline">{{ auth()->user()->name }}</span>
         <form method="POST" action="{{ route('logout') }}">
             @csrf

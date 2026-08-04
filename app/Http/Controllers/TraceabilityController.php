@@ -50,6 +50,11 @@ class TraceabilityController extends Controller
                 'Feature Code',
                 'Feature',
                 'Scenarios',
+                'Functional Requirement Code',
+                'Functional Requirement',
+                'Design Artifact Code',
+                'Design Artifact',
+                'Swimlane Flow',
                 'Stakeholders',
                 'Gaps',
             ]);
@@ -67,6 +72,11 @@ class TraceabilityController extends Controller
                     $row['feature_code'] ?? '',
                     $row['feature_title'] ?? '',
                     $row['scenarios_count'] ?? '',
+                    $row['functional_requirement_code'] ?? '',
+                    $row['functional_requirement_title'] ?? '',
+                    $row['design_artifact_code'] ?? '',
+                    $row['design_artifact_label'] ?? '',
+                    $row['design_artifact_flow_title'] ?? '',
                     implode('; ', $row['stakeholder_names'] ?? []),
                     implode('; ', $row['gaps'] ?? []),
                 ]);
@@ -85,7 +95,8 @@ class TraceabilityController extends Controller
         $canView = EntityAccess::can($user, 'BusinessNeed', EntityAccess::VIEW)
             || EntityAccess::can($user, 'BusinessObjective', EntityAccess::VIEW)
             || EntityAccess::can($user, 'StakeholderNeed', EntityAccess::VIEW)
-            || EntityAccess::can($user, 'Feature', EntityAccess::VIEW);
+            || EntityAccess::can($user, 'Feature', EntityAccess::VIEW)
+            || EntityAccess::can($user, 'FunctionalRequirement', EntityAccess::VIEW);
 
         if (! $canView) {
             EntityAccess::authorize($user, 'BusinessNeed', EntityAccess::VIEW);

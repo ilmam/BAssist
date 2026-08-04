@@ -72,4 +72,10 @@ class StakeholderNeed extends BaseModel
     {
         return $this->hasMany(Feature::class);
     }
+
+    #[Relation('HasMany')]
+    public function functionalRequirements(): HasMany
+    {
+        return $this->hasMany(FunctionalRequirement::class);
+    }
 }

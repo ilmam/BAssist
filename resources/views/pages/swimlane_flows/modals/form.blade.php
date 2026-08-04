@@ -47,6 +47,8 @@
                 'elements' => $elements,
                 'direction' => $dto->direction ?? 'TB',
                 'editable' => true,
+                'satisfyOptions' => $satisfyOptions ?? [],
+                'satisfyOptionsUrl' => $satisfyOptionsUrl ?? route('swimlane_flows.satisfy-options'),
             ])
         </div>
 

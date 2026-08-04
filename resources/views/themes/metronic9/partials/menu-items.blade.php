@@ -33,13 +33,20 @@
                     @if (! empty($item['route']))
                         <a href="{{ nav_url($item) }}"
                             onclick="event.stopPropagation()"
-                            class="kt-menu-title text-sm font-medium text-foreground kt-menu-item-active:text-primary kt-menu-link-hover:!text-primary grow">
+                            class="kt-menu-title text-sm font-medium text-foreground kt-menu-item-active:text-primary kt-menu-link-hover:!text-primary grow"
+                            @if (! empty($item['title'])) title="{{ $item['title'] }}" @endif>
                             {{ $item['label'] }}
                         </a>
                     @else
-                        <span class="kt-menu-title text-sm font-medium text-foreground kt-menu-item-active:text-primary kt-menu-link-hover:!text-primary">
+                        <span class="kt-menu-title text-sm font-medium text-foreground kt-menu-item-active:text-primary kt-menu-link-hover:!text-primary grow"
+                            @if (! empty($item['title'])) title="{{ $item['title'] }}" @endif>
                             {{ $item['label'] }}
                         </span>
+                    @endif
+                    @if (! empty($item['badge']))
+                        <span class="nav-folder-badge shrink-0"
+                            data-tone="{{ $item['badge_tone'] ?? 'default' }}"
+                            title="{{ $item['badge_title'] ?? $item['badge'] }}">{{ $item['badge'] }}</span>
                     @endif
                     <span class="kt-menu-arrow text-muted-foreground w-[20px] shrink-0 justify-end ms-1 me-[-10px]">
                         <span class="inline-flex kt-menu-item-show:hidden">
@@ -59,13 +66,20 @@
                     @if (! empty($item['route']))
                         <a href="{{ nav_url($item) }}"
                             onclick="event.stopPropagation()"
-                            class="kt-menu-title text-2sm font-normal me-1 text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-medium kt-menu-link-hover:!text-primary grow">
+                            class="kt-menu-title text-2sm font-normal me-1 text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-medium kt-menu-link-hover:!text-primary grow"
+                            @if (! empty($item['title'])) title="{{ $item['title'] }}" @endif>
                             {{ $item['label'] }}
                         </a>
                     @else
-                        <span class="kt-menu-title text-2sm font-normal me-1 text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-medium kt-menu-link-hover:!text-primary">
+                        <span class="kt-menu-title text-2sm font-normal me-1 text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-medium kt-menu-link-hover:!text-primary grow"
+                            @if (! empty($item['title'])) title="{{ $item['title'] }}" @endif>
                             {{ $item['label'] }}
                         </span>
+                    @endif
+                    @if (! empty($item['badge']))
+                        <span class="nav-folder-badge shrink-0"
+                            data-tone="{{ $item['badge_tone'] ?? 'default' }}"
+                            title="{{ $item['badge_title'] ?? $item['badge'] }}">{{ $item['badge'] }}</span>
                     @endif
                     <span class="kt-menu-arrow text-muted-foreground w-[20px] shrink-0 justify-end ms-1 me-[-10px]">
                         <span class="inline-flex kt-menu-item-show:hidden">

@@ -23,12 +23,12 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Workspace → Project → Artifact hierarchy
+    | Workspace → Project → BABOK folders
     |--------------------------------------------------------------------------
     |
-    | Replaces the flat "Entities" accordion. Artifact models come from
-    | config/crud.php (nav: true) excluding Workspace and Project containers.
-    | Extra non-CRUD project links (e.g. Traceability) use project_artifacts.
+    | Under each project, artifacts are grouped into collapsible folders that
+    | mirror the pre-approval / delivery / governance / evaluation journey.
+    | Folders guide; they never lock access (iterative BA).
     |
     */
     'hierarchy' => [
@@ -41,41 +41,153 @@ return [
         'project_icon_v8' => 'abstract-26',
         'all_workspaces_label' => 'All Workspaces',
         'all_projects_label' => 'All Projects',
-        'project_artifacts' => [
+
+        // Temporarily hide BABOK folder progress badges in the sidebar.
+        // Set true to re-enable (NavFolderProgress + blade markup remain in place).
+        'show_folder_badges' => false,
+
+        /*
+         | Project folders (order = BA journey).
+         | Child keys:
+         |   entity  — CRUD model leaf (route from registry)
+         |   route   — hub / non-CRUD page
+         |   entities — visibility gate (any VIEW permission)
+         |   progress — how the folder badge evaluates this leaf
+         */
+        'project_folders' => [
             [
-                'label' => 'Traceability',
-                'route' => 'traceability.index',
+                'key' => 'strategy',
+                'label' => 'Strategy & Alignment',
+                'short' => 'Strategy',
+                'babok' => 'KA 6 — Strategy Analysis',
+                'purpose' => 'Establishes why we are doing this and sets the baseline.',
+                'icon' => 'compass',
+                'icon_v8' => 'flag',
+                'badge_tone' => 'strategy',
+                'children' => [
+                    [
+                        'entity' => 'BusinessObjective',
+                        'progress' => 'entity_agreed',
+                    ],
+                    [
+                        'entity' => 'BusinessNeed',
+                        'progress' => 'entity_agreed',
+                    ],
+                    [
+                        'entity' => 'Risk',
+                        'progress' => 'entity_present',
+                    ],
+                    [
+                        'label' => 'Strategic Baseline',
+                        'route' => 'strategic_baselines.for-project',
+                        'route_project_param' => 'project',
+                        'icon' => 'flag',
+                        'icon_v8' => 'flag',
+                        'entities' => ['StrategicBaseline'],
+                        'progress' => 'strategic_baseline',
+                    ],
+                    [
+                        'entity' => 'ScopeItem',
+                        'progress' => 'entity_present',
+                    ],
+                ],
+            ],
+            [
+                'key' => 'radd',
+                'label' => 'Requirements & Design',
+                'short' => 'RADD',
+                'babok' => 'KA 7 — Requirements Analysis & Design Definition',
+                'purpose' => 'Specifies what the solution looks like, who needs it, and the rules governing it.',
                 'icon' => 'abstract-26',
                 'icon_v8' => 'abstract-26',
-                'entities' => ['BusinessNeed', 'BusinessObjective', 'StakeholderNeed'],
+                'badge_tone' => 'radd',
+                'children' => [
+                    [
+                        'entity' => 'Stakeholder',
+                        'progress' => 'entity_present',
+                    ],
+                    [
+                        'entity' => 'StakeholderNeed',
+                        'progress' => 'entity_agreed',
+                    ],
+                    [
+                        'label' => 'Solution Requirements',
+                        'route' => 'solution_requirements.index',
+                        'icon' => 'note-2',
+                        'icon_v8' => 'note-2',
+                        'entities' => ['Feature', 'FunctionalRequirement'],
+                        'progress' => 'solution_hub',
+                    ],
+                    [
+                        'entity' => 'Assumption',
+                        'progress' => 'entity_present',
+                    ],
+                    [
+                        'entity' => 'Constraint',
+                        'progress' => 'entity_present',
+                    ],
+                    [
+                        'entity' => 'BusinessRule',
+                        'progress' => 'entity_present',
+                    ],
+                    [
+                        // Keep as one hub until diagrams get a better home.
+                        'label' => 'Diagrams',
+                        'route' => 'diagrams.index',
+                        'icon' => 'share',
+                        'icon_v8' => 'share',
+                        'entities' => ['Architecture', 'StateFlow', 'SwimlaneFlow'],
+                        'progress' => 'diagrams_hub',
+                    ],
+                ],
             ],
             [
-                'label' => 'Acceptance Test',
-                'route' => 'acceptance-plan.index',
+                'key' => 'governance',
+                'label' => 'Governance & Lifecycle',
+                'short' => 'Governance',
+                'babok' => 'KA 5 & KA 3 — Lifecycle / Planning & Monitoring',
+                'purpose' => 'Tracks changes, impact, approvals, and structural lineage.',
+                'icon' => 'arrow-mix',
+                'icon_v8' => 'arrow-mix',
+                'badge_tone' => 'governance',
+                'children' => [
+                    [
+                        'label' => 'Change Requests',
+                        'route' => 'change_requests.index',
+                        'icon' => 'arrow-mix',
+                        'icon_v8' => 'arrow-mix',
+                        'entities' => ['ChangeRequest'],
+                        'progress' => 'change_requests_hub',
+                    ],
+                    [
+                        'label' => 'Traceability',
+                        'route' => 'traceability.index',
+                        'icon' => 'abstract-39',
+                        'icon_v8' => 'abstract-39',
+                        'entities' => ['BusinessNeed', 'BusinessObjective', 'StakeholderNeed'],
+                        'progress' => 'traceability_hub',
+                    ],
+                ],
+            ],
+            [
+                'key' => 'evaluation',
+                'label' => 'Evaluation & Acceptance',
+                'short' => 'Acceptance',
+                'babok' => 'KA 8 — Solution Evaluation',
+                'purpose' => 'Verifies the solution meets quality standards and delivers business value.',
                 'icon' => 'check-squared',
                 'icon_v8' => 'check-squared',
-                'entities' => ['Feature', 'Scenario'],
-            ],
-            [
-                'label' => 'Diagrams',
-                'route' => 'diagrams.index',
-                'icon' => 'share',
-                'icon_v8' => 'share',
-                'entities' => ['Architecture', 'StateFlow', 'SwimlaneFlow'],
-            ],
-            [
-                'label' => 'Rules & Assumptions',
-                'route' => 'guardrails.index',
-                'icon' => 'shield-tick',
-                'icon_v8' => 'shield-tick',
-                'entities' => ['Assumption', 'Constraint', 'BusinessRule'],
-            ],
-            [
-                'label' => 'Strategy & Scope',
-                'route' => 'strategy.index',
-                'icon' => 'flag',
-                'icon_v8' => 'flag',
-                'entities' => ['StrategicBaseline', 'ScopeItem'],
+                'badge_tone' => 'evaluation',
+                'children' => [
+                    [
+                        'label' => 'Acceptance Test',
+                        'route' => 'acceptance-plan.index',
+                        'icon' => 'check-squared',
+                        'icon_v8' => 'check-squared',
+                        'entities' => ['Feature', 'Scenario', 'FunctionalRequirement'],
+                        'progress' => 'acceptance_hub',
+                    ],
+                ],
             ],
         ],
     ],

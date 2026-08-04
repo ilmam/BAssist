@@ -22,6 +22,15 @@
                     @endif
                     <x-button
                         type="link"
+                        href="{{ route('projects.babok.index', $project) }}"
+                        icon="book"
+                        color="light"
+                        activeColor="primary"
+                    >
+                        {{ __('ui.babok_documents') }}
+                    </x-button>
+                    <x-button
+                        type="link"
                         href="{{ route('projects.export', $project) }}"
                         icon="file-down"
                         color="primary"

@@ -15,7 +15,9 @@
         ];
     @endphp
 
-    @include('pages.partials.entity-list')
+    @include('pages.partials.entity-list', [
+        'listHelp' => __('ui.babok_step_future_state_objectives_note'),
+    ])
 @endsection
 
 @push('styles')

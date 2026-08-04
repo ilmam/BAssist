@@ -4,9 +4,23 @@ title: BDD Features & Scenarios
 
 ## Context & Definition
 
-A BDD feature translates a stakeholder need into structured, executable behaviour using Gherkin. The feature (or story) states *who* benefits, *what* capability is delivered, and *why* it matters. A scenario is a concrete example of that behaviour, expressed as Given / When / Then steps that anyone on the delivery team can read the same way.
+A BDD (Behavior-Driven Development) feature translates a stakeholder need into structured, executable behaviour using Gherkin syntax. The feature (or story) states who benefits, what capability is delivered, and why it matters. A scenario is a concrete example of that behaviour, expressed as Given / When / Then steps that anyone on the delivery team can read the same way.
 
 Together they form a pair: the feature frames the capability; scenarios prove it with deterministic examples. Prefer business intent over screens or implementation details—describe the outcome a role experiences, not the button they click.
+
+## Why It Matters
+
+Ambiguous requirements fragment into conflicting interpretations among business, development, and testing teams. BDD features and scenarios create a shared language—often forged in a "Three Amigos" conversation (BA, Developer, QA)—so acceptance criteria are concrete examples everyone can execute, not prose everyone rewrites.
+
+Clear Given / When / Then examples reduce rework: edge cases surface early, business rules become visible in steps, and pass/fail is objective rather than negotiated after the code is built.
+
+## How to Use
+
+1. **Frame the Feature:** Write who / what / why (As a… I want… So that…) for one clear capability.
+2. **Add Scenarios:** Cover the happy path and meaningful exceptions with concrete Given / When / Then steps. Prefer business outcomes over UI choreography.
+3. **Bind the Guardrails:** Reflect applicable Business Rules, Constraints, and Assumptions in the steps or tags so policy is testable, not buried in footnotes.
+4. **Keep Examples Deterministic:** Each scenario should have an unambiguous pass or fail—no "usually" or "the system somehow knows."
+5. **Trace Upstream:** Link the feature to the Stakeholder Need it realises so behaviour stays anchored to a real voice and problem.
 
 **Example — Dealer Inquiry State Management**
 
@@ -29,26 +43,14 @@ Feature: Dealer Inquiry State Management
     And the agent is told which fields are still required
 ```
 
-## Why It Matters
-
-Ambiguous requirements fragment into conflicting interpretations among business, development, and test. BDD features and scenarios create a shared language—often forged in a Three Amigos conversation—so acceptance criteria are examples everyone can execute, not prose everyone rewrites.
-
-Clear Given / When / Then examples reduce rework: edge cases surface early, business rules become visible in steps, and pass/fail is objective rather than negotiated after the build.
-
-## How to Use
-
-1. **Frame the feature:** Write who / what / why (As a… I want… So that…, or an equivalent story statement) for one clear capability.
-2. **Add scenarios:** Cover the happy path and meaningful exceptions with concrete Given / When / Then steps. Prefer business outcomes over UI choreography.
-3. **Bind the guardrails:** Reflect applicable business rules, constraints, and assumptions in the steps or tags so policy is testable, not buried in footnotes.
-4. **Keep examples deterministic:** Each scenario should have an unambiguous pass or fail—no “usually” or “the system somehow knows.”
-5. **Trace upstream:** Link the feature to the stakeholder need it realises so behaviour stays anchored to a real voice and problem.
-
 ## The Bigger Picture & Downstream Links
 
-- **Upstream (why it exists):** Stakeholder needs, business rules, constraints, and assumptions that justify and bound the behaviour.
-- **Downstream (what it drives):** Automated acceptance (e.g. Cucumber, SpecFlow), QA suites, and developer TDD that implement the same examples.
-- **The rule of integrity:** Treat a feature without at least one scenario as incomplete for acceptance—capability without an example cannot be agreed or verified. Prefer every scenario to sit under a feature that traces to a stakeholder need.
+- **Upstream (The Justification):** Stakeholder Needs, Business Rules, Constraints, and Assumptions that justify and bound the behaviour.
+- **Downstream (The Execution):** Automated acceptance test frameworks (e.g., Cucumber, SpecFlow), QA test suites, and developer Test-Driven Development (TDD) that implement the same examples.
+- **The Rule of Integrity:** Treat a feature without at least one scenario as incomplete for acceptance—a capability without an example cannot be agreed upon or verified. As a BA practice, prefer every scenario to sit under a feature that traces to a validated Stakeholder Need.
+
+**Practical tip:** Never write UI steps in your scenarios! If your scenario says, "When I click the green submit button," you have created a fragile requirement. What happens if the UI changes to a swipe on a mobile app? Your test breaks, even though the business logic hasn't changed. Write "When the agent submits the inquiry." Keep it focused on the behaviour, not the screen layout.
 
 ---
 
-*BABOK® Guide Section 7.2, Technique 10.1 (Acceptance and Evaluation Criteria), Technique 10.48 (User Stories), Chapter 11 (Agile Perspective).*
+*BABOK® Guide Section 7.2 Specify and Model Requirements & Technique 10.1 Acceptance and Evaluation Criteria.*

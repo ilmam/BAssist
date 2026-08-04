@@ -1,0 +1,345 @@
+table,description,column,type,nullable,key,default,foreign_key
+architectures,"C4 architecture model (1 per project).",id,INTEGER,NO,PK,,
+architectures,"C4 architecture model (1 per project).",title,varchar,NO,,,
+architectures,"C4 architecture model (1 per project).",project_id,INTEGER,NO,FK,,projects.id
+architectures,"C4 architecture model (1 per project).",description,TEXT,YES,,,
+architectures,"C4 architecture model (1 per project).",elements,TEXT,YES,,,
+architectures,"C4 architecture model (1 per project).",relationships,TEXT,YES,,,
+architectures,"C4 architecture model (1 per project).",status_id,INTEGER,YES,FK,,statuses.id
+architectures,"C4 architecture model (1 per project).",created_at,datetime,YES,,,
+architectures,"C4 architecture model (1 per project).",updated_at,datetime,YES,,,
+architectures,"C4 architecture model (1 per project).",created_by,INTEGER,YES,FK,,users.id
+architectures,"C4 architecture model (1 per project).",updated_by,INTEGER,YES,FK,,users.id
+architectures,"C4 architecture model (1 per project).",deleted_by,INTEGER,YES,FK,,users.id
+architectures,"C4 architecture model (1 per project).",deleted_at,datetime,YES,,,
+architectures,"C4 architecture model (1 per project).",layout,TEXT,YES,,,
+assumptions,"Beliefs treated as true until proven.",id,INTEGER,NO,PK,,
+assumptions,"Beliefs treated as true until proven.",title,varchar,NO,,,
+assumptions,"Beliefs treated as true until proven.",project_id,INTEGER,NO,FK,,projects.id
+assumptions,"Beliefs treated as true until proven.",description,TEXT,YES,,,
+assumptions,"Beliefs treated as true until proven.",status,varchar,NO,,'open',
+assumptions,"Beliefs treated as true until proven.",source,varchar,YES,,,
+assumptions,"Beliefs treated as true until proven.",created_at,datetime,YES,,,
+assumptions,"Beliefs treated as true until proven.",updated_at,datetime,YES,,,
+assumptions,"Beliefs treated as true until proven.",created_by,INTEGER,YES,FK,,users.id
+assumptions,"Beliefs treated as true until proven.",updated_by,INTEGER,YES,FK,,users.id
+assumptions,"Beliefs treated as true until proven.",deleted_by,INTEGER,YES,FK,,users.id
+assumptions,"Beliefs treated as true until proven.",deleted_at,datetime,YES,,,
+business_need_business_objective,"M:N — Need ↔ Objective.",id,INTEGER,NO,PK,,
+business_need_business_objective,"M:N — Need ↔ Objective.",business_need_id,INTEGER,NO,FK,,business_needs.id
+business_need_business_objective,"M:N — Need ↔ Objective.",business_objective_id,INTEGER,NO,FK,,business_objectives.id
+business_need_business_objective,"M:N — Need ↔ Objective.",is_primary,tinyint(1),NO,,'0',
+business_need_business_objective,"M:N — Need ↔ Objective.",created_at,datetime,YES,,,
+business_need_business_objective,"M:N — Need ↔ Objective.",updated_at,datetime,YES,,,
+business_need_stakeholder_need,"M:N — Business Need ↔ Stakeholder Need.",id,INTEGER,NO,PK,,
+business_need_stakeholder_need,"M:N — Business Need ↔ Stakeholder Need.",business_need_id,INTEGER,NO,FK,,business_needs.id
+business_need_stakeholder_need,"M:N — Business Need ↔ Stakeholder Need.",stakeholder_need_id,INTEGER,NO,FK,,stakeholder_needs.id
+business_need_stakeholder_need,"M:N — Business Need ↔ Stakeholder Need.",created_at,datetime,YES,,,
+business_need_stakeholder_need,"M:N — Business Need ↔ Stakeholder Need.",updated_at,datetime,YES,,,
+business_needs,"Business problems/opportunities; coded BN-n.",id,INTEGER,NO,PK,,
+business_needs,"Business problems/opportunities; coded BN-n.",title,varchar,NO,,,
+business_needs,"Business problems/opportunities; coded BN-n.",project_id,INTEGER,NO,FK,,projects.id
+business_needs,"Business problems/opportunities; coded BN-n.",description,TEXT,YES,,,
+business_needs,"Business problems/opportunities; coded BN-n.",rationale,TEXT,YES,,,
+business_needs,"Business problems/opportunities; coded BN-n.",priority_id,INTEGER,YES,FK,,priorities.id
+business_needs,"Business problems/opportunities; coded BN-n.",status_id,INTEGER,YES,FK,,statuses.id
+business_needs,"Business problems/opportunities; coded BN-n.",created_at,datetime,YES,,,
+business_needs,"Business problems/opportunities; coded BN-n.",updated_at,datetime,YES,,,
+business_needs,"Business problems/opportunities; coded BN-n.",created_by,INTEGER,YES,FK,,users.id
+business_needs,"Business problems/opportunities; coded BN-n.",updated_by,INTEGER,YES,FK,,users.id
+business_needs,"Business problems/opportunities; coded BN-n.",deleted_by,INTEGER,YES,FK,,users.id
+business_needs,"Business problems/opportunities; coded BN-n.",deleted_at,datetime,YES,,,
+business_needs,"Business problems/opportunities; coded BN-n.",need_type,varchar,YES,,,
+business_needs,"Business problems/opportunities; coded BN-n.",impact,TEXT,YES,,,
+business_needs,"Business problems/opportunities; coded BN-n.",do_nothing_consequence,TEXT,YES,,,
+business_needs,"Business problems/opportunities; coded BN-n.",number,INTEGER,YES,,,
+business_objectives,"Measurable outcomes (SMART); coded BO-n.",id,INTEGER,NO,PK,,
+business_objectives,"Measurable outcomes (SMART); coded BO-n.",title,varchar,NO,,,
+business_objectives,"Measurable outcomes (SMART); coded BO-n.",project_id,INTEGER,NO,FK,,projects.id
+business_objectives,"Measurable outcomes (SMART); coded BO-n.",description,TEXT,YES,,,
+business_objectives,"Measurable outcomes (SMART); coded BO-n.",success_measure,TEXT,YES,,,
+business_objectives,"Measurable outcomes (SMART); coded BO-n.",priority_id,INTEGER,YES,FK,,priorities.id
+business_objectives,"Measurable outcomes (SMART); coded BO-n.",status_id,INTEGER,YES,FK,,statuses.id
+business_objectives,"Measurable outcomes (SMART); coded BO-n.",created_at,datetime,YES,,,
+business_objectives,"Measurable outcomes (SMART); coded BO-n.",updated_at,datetime,YES,,,
+business_objectives,"Measurable outcomes (SMART); coded BO-n.",created_by,INTEGER,YES,FK,,users.id
+business_objectives,"Measurable outcomes (SMART); coded BO-n.",updated_by,INTEGER,YES,FK,,users.id
+business_objectives,"Measurable outcomes (SMART); coded BO-n.",deleted_by,INTEGER,YES,FK,,users.id
+business_objectives,"Measurable outcomes (SMART); coded BO-n.",deleted_at,datetime,YES,,,
+business_objectives,"Measurable outcomes (SMART); coded BO-n.",potential_value,TEXT,YES,,,
+business_objectives,"Measurable outcomes (SMART); coded BO-n.",number,INTEGER,YES,,,
+business_rules,"Policies the solution must respect.",id,INTEGER,NO,PK,,
+business_rules,"Policies the solution must respect.",title,varchar,NO,,,
+business_rules,"Policies the solution must respect.",project_id,INTEGER,NO,FK,,projects.id
+business_rules,"Policies the solution must respect.",description,TEXT,YES,,,
+business_rules,"Policies the solution must respect.",status,varchar,NO,,'draft',
+business_rules,"Policies the solution must respect.",source,varchar,YES,,,
+business_rules,"Policies the solution must respect.",created_at,datetime,YES,,,
+business_rules,"Policies the solution must respect.",updated_at,datetime,YES,,,
+business_rules,"Policies the solution must respect.",created_by,INTEGER,YES,FK,,users.id
+business_rules,"Policies the solution must respect.",updated_by,INTEGER,YES,FK,,users.id
+business_rules,"Policies the solution must respect.",deleted_by,INTEGER,YES,FK,,users.id
+business_rules,"Policies the solution must respect.",deleted_at,datetime,YES,,,
+change_requests,"Governed change intake / impact on spine subjects.",id,INTEGER,NO,PK,,
+change_requests,"Governed change intake / impact on spine subjects.",number,INTEGER,YES,,,
+change_requests,"Governed change intake / impact on spine subjects.",title,varchar,NO,,,
+change_requests,"Governed change intake / impact on spine subjects.",project_id,INTEGER,NO,FK,,projects.id
+change_requests,"Governed change intake / impact on spine subjects.",problem,TEXT,NO,,,
+change_requests,"Governed change intake / impact on spine subjects.",proposed_change,TEXT,NO,,,
+change_requests,"Governed change intake / impact on spine subjects.",requestor,varchar,YES,,,
+change_requests,"Governed change intake / impact on spine subjects.",impact_level,varchar,NO,,'medium',
+change_requests,"Governed change intake / impact on spine subjects.",impact_notes,TEXT,YES,,,
+change_requests,"Governed change intake / impact on spine subjects.",affected_type,varchar,YES,,,
+change_requests,"Governed change intake / impact on spine subjects.",affected_id,INTEGER,YES,,,
+change_requests,"Governed change intake / impact on spine subjects.",priority_id,INTEGER,YES,FK,,priorities.id
+change_requests,"Governed change intake / impact on spine subjects.",status,varchar,NO,,'draft',
+change_requests,"Governed change intake / impact on spine subjects.",created_at,datetime,YES,,,
+change_requests,"Governed change intake / impact on spine subjects.",updated_at,datetime,YES,,,
+change_requests,"Governed change intake / impact on spine subjects.",created_by,INTEGER,YES,FK,,users.id
+change_requests,"Governed change intake / impact on spine subjects.",updated_by,INTEGER,YES,FK,,users.id
+change_requests,"Governed change intake / impact on spine subjects.",deleted_by,INTEGER,YES,FK,,users.id
+change_requests,"Governed change intake / impact on spine subjects.",deleted_at,datetime,YES,,,
+constraints,"Hard limits (NFR / boundary obligations).",id,INTEGER,NO,PK,,
+constraints,"Hard limits (NFR / boundary obligations).",title,varchar,NO,,,
+constraints,"Hard limits (NFR / boundary obligations).",project_id,INTEGER,NO,FK,,projects.id
+constraints,"Hard limits (NFR / boundary obligations).",description,TEXT,YES,,,
+constraints,"Hard limits (NFR / boundary obligations).",status,varchar,NO,,'active',
+constraints,"Hard limits (NFR / boundary obligations).",source,varchar,YES,,,
+constraints,"Hard limits (NFR / boundary obligations).",created_at,datetime,YES,,,
+constraints,"Hard limits (NFR / boundary obligations).",updated_at,datetime,YES,,,
+constraints,"Hard limits (NFR / boundary obligations).",created_by,INTEGER,YES,FK,,users.id
+constraints,"Hard limits (NFR / boundary obligations).",updated_by,INTEGER,YES,FK,,users.id
+constraints,"Hard limits (NFR / boundary obligations).",deleted_by,INTEGER,YES,FK,,users.id
+constraints,"Hard limits (NFR / boundary obligations).",deleted_at,datetime,YES,,,
+features,"BDD feature packages linked to a stakeholder need.",id,INTEGER,NO,PK,,
+features,"BDD feature packages linked to a stakeholder need.",number,INTEGER,YES,,,
+features,"BDD feature packages linked to a stakeholder need.",title,varchar,NO,,,
+features,"BDD feature packages linked to a stakeholder need.",project_id,INTEGER,NO,FK,,projects.id
+features,"BDD feature packages linked to a stakeholder need.",stakeholder_need_id,INTEGER,YES,FK,,stakeholder_needs.id
+features,"BDD feature packages linked to a stakeholder need.",priority_id,INTEGER,YES,FK,,priorities.id
+features,"BDD feature packages linked to a stakeholder need.",status_id,INTEGER,YES,FK,,statuses.id
+features,"BDD feature packages linked to a stakeholder need.",created_at,datetime,YES,,,
+features,"BDD feature packages linked to a stakeholder need.",updated_at,datetime,YES,,,
+features,"BDD feature packages linked to a stakeholder need.",created_by,INTEGER,YES,FK,,users.id
+features,"BDD feature packages linked to a stakeholder need.",updated_by,INTEGER,YES,FK,,users.id
+features,"BDD feature packages linked to a stakeholder need.",deleted_by,INTEGER,YES,FK,,users.id
+features,"BDD feature packages linked to a stakeholder need.",deleted_at,datetime,YES,,,
+features,"BDD feature packages linked to a stakeholder need.",body,TEXT,YES,,,
+functional_requirements,"Solution functional requirements; coded FR-n.",id,INTEGER,NO,PK,,
+functional_requirements,"Solution functional requirements; coded FR-n.",number,INTEGER,YES,,,
+functional_requirements,"Solution functional requirements; coded FR-n.",title,varchar,NO,,,
+functional_requirements,"Solution functional requirements; coded FR-n.",project_id,INTEGER,NO,FK,,projects.id
+functional_requirements,"Solution functional requirements; coded FR-n.",stakeholder_need_id,INTEGER,YES,FK,,stakeholder_needs.id
+functional_requirements,"Solution functional requirements; coded FR-n.",statement,TEXT,NO,,,
+functional_requirements,"Solution functional requirements; coded FR-n.",trigger,TEXT,YES,,,
+functional_requirements,"Solution functional requirements; coded FR-n.",acceptance_criteria,TEXT,YES,,,
+functional_requirements,"Solution functional requirements; coded FR-n.",priority_id,INTEGER,YES,FK,,priorities.id
+functional_requirements,"Solution functional requirements; coded FR-n.",status_id,INTEGER,YES,FK,,statuses.id
+functional_requirements,"Solution functional requirements; coded FR-n.",created_at,datetime,YES,,,
+functional_requirements,"Solution functional requirements; coded FR-n.",updated_at,datetime,YES,,,
+functional_requirements,"Solution functional requirements; coded FR-n.",created_by,INTEGER,YES,FK,,users.id
+functional_requirements,"Solution functional requirements; coded FR-n.",updated_by,INTEGER,YES,FK,,users.id
+functional_requirements,"Solution functional requirements; coded FR-n.",deleted_by,INTEGER,YES,FK,,users.id
+functional_requirements,"Solution functional requirements; coded FR-n.",deleted_at,datetime,YES,,,
+priorities,"Shared MoSCoW priority lookup.",id,INTEGER,NO,PK,,
+priorities,"Shared MoSCoW priority lookup.",name,varchar,NO,,,
+priorities,"Shared MoSCoW priority lookup.",code,varchar,NO,,,
+priorities,"Shared MoSCoW priority lookup.",sort_order,INTEGER,NO,,'0',
+priorities,"Shared MoSCoW priority lookup.",description,TEXT,YES,,,
+priorities,"Shared MoSCoW priority lookup.",created_at,datetime,YES,,,
+priorities,"Shared MoSCoW priority lookup.",updated_at,datetime,YES,,,
+priorities,"Shared MoSCoW priority lookup.",created_by,INTEGER,YES,FK,,users.id
+priorities,"Shared MoSCoW priority lookup.",updated_by,INTEGER,YES,FK,,users.id
+priorities,"Shared MoSCoW priority lookup.",deleted_by,INTEGER,YES,FK,,users.id
+priorities,"Shared MoSCoW priority lookup.",deleted_at,datetime,YES,,,
+priorities,"Shared MoSCoW priority lookup.",is_system,tinyint(1),NO,,'0',
+projects,"Delivery effort container for the need spine.",id,INTEGER,NO,PK,,
+projects,"Delivery effort container for the need spine.",name,varchar,NO,,,
+projects,"Delivery effort container for the need spine.",code,varchar,YES,,,
+projects,"Delivery effort container for the need spine.",workspace_id,INTEGER,NO,FK,,workspaces.id
+projects,"Delivery effort container for the need spine.",description,TEXT,YES,,,
+projects,"Delivery effort container for the need spine.",status_id,INTEGER,YES,FK,,statuses.id
+projects,"Delivery effort container for the need spine.",created_at,datetime,YES,,,
+projects,"Delivery effort container for the need spine.",updated_at,datetime,YES,,,
+projects,"Delivery effort container for the need spine.",created_by,INTEGER,YES,FK,,users.id
+projects,"Delivery effort container for the need spine.",updated_by,INTEGER,YES,FK,,users.id
+projects,"Delivery effort container for the need spine.",deleted_by,INTEGER,YES,FK,,users.id
+projects,"Delivery effort container for the need spine.",deleted_at,datetime,YES,,,
+risks,"Risk register (likelihood × impact); optional free-text related_to until structured subject links.",id,INTEGER,NO,PK,,
+risks,"Risk register (likelihood × impact); optional free-text related_to until structured subject links.",number,INTEGER,YES,,,
+risks,"Risk register (likelihood × impact); optional free-text related_to until structured subject links.",title,varchar,NO,,,
+risks,"Risk register (likelihood × impact); optional free-text related_to until structured subject links.",project_id,INTEGER,NO,FK,,projects.id
+risks,"Risk register (likelihood × impact); optional free-text related_to until structured subject links.",description,TEXT,YES,,,
+risks,"Risk register (likelihood × impact); optional free-text related_to until structured subject links.",category,varchar,NO,,'technical',
+risks,"Risk register (likelihood × impact); optional free-text related_to until structured subject links.",likelihood,varchar,NO,,'medium',
+risks,"Risk register (likelihood × impact); optional free-text related_to until structured subject links.",impact,varchar,NO,,'medium',
+risks,"Risk register (likelihood × impact); optional free-text related_to until structured subject links.",response,varchar,YES,,,
+risks,"Risk register (likelihood × impact); optional free-text related_to until structured subject links.",treatment,TEXT,YES,,,
+risks,"Risk register (likelihood × impact); optional free-text related_to until structured subject links.",trigger,varchar,YES,,,
+risks,"Risk register (likelihood × impact); optional free-text related_to until structured subject links.",owner,varchar,YES,,,
+risks,"Risk register (likelihood × impact); optional free-text related_to until structured subject links.",status,varchar,NO,,'open',
+risks,"Risk register (likelihood × impact); optional free-text related_to until structured subject links.",source,varchar,YES,,,
+risks,"Risk register (likelihood × impact); optional free-text related_to until structured subject links.",created_at,datetime,YES,,,
+risks,"Risk register (likelihood × impact); optional free-text related_to until structured subject links.",updated_at,datetime,YES,,,
+risks,"Risk register (likelihood × impact); optional free-text related_to until structured subject links.",created_by,INTEGER,YES,FK,,users.id
+risks,"Risk register (likelihood × impact); optional free-text related_to until structured subject links.",updated_by,INTEGER,YES,FK,,users.id
+risks,"Risk register (likelihood × impact); optional free-text related_to until structured subject links.",deleted_by,INTEGER,YES,FK,,users.id
+risks,"Risk register (likelihood × impact); optional free-text related_to until structured subject links.",deleted_at,datetime,YES,,,
+risks,"Risk register (likelihood × impact); optional free-text related_to until structured subject links.",related_to,varchar,YES,,,
+role_entity_permissions,"Per-entity CRUD permissions for a role.",id,INTEGER,NO,PK,,
+role_entity_permissions,"Per-entity CRUD permissions for a role.",role_id,INTEGER,NO,FK,,roles.id
+role_entity_permissions,"Per-entity CRUD permissions for a role.",entity,varchar,NO,,,
+role_entity_permissions,"Per-entity CRUD permissions for a role.",can_view,tinyint(1),NO,,'0',
+role_entity_permissions,"Per-entity CRUD permissions for a role.",can_create,tinyint(1),NO,,'0',
+role_entity_permissions,"Per-entity CRUD permissions for a role.",can_update,tinyint(1),NO,,'0',
+role_entity_permissions,"Per-entity CRUD permissions for a role.",can_delete,tinyint(1),NO,,'0',
+role_entity_permissions,"Per-entity CRUD permissions for a role.",created_at,datetime,YES,,,
+role_entity_permissions,"Per-entity CRUD permissions for a role.",updated_at,datetime,YES,,,
+roles,"RBAC roles.",id,INTEGER,NO,PK,,
+roles,"RBAC roles.",name,varchar,NO,,,
+roles,"RBAC roles.",slug,varchar,NO,,,
+roles,"RBAC roles.",created_at,datetime,YES,,,
+roles,"RBAC roles.",updated_at,datetime,YES,,,
+scenarios,"Gherkin scenarios under a feature.",id,INTEGER,NO,PK,,
+scenarios,"Gherkin scenarios under a feature.",title,varchar,NO,,,
+scenarios,"Gherkin scenarios under a feature.",feature_id,INTEGER,NO,FK,,features.id
+scenarios,"Gherkin scenarios under a feature.",is_outline,tinyint(1),NO,,'0',
+scenarios,"Gherkin scenarios under a feature.",status_id,INTEGER,YES,FK,,statuses.id
+scenarios,"Gherkin scenarios under a feature.",created_at,datetime,YES,,,
+scenarios,"Gherkin scenarios under a feature.",updated_at,datetime,YES,,,
+scenarios,"Gherkin scenarios under a feature.",created_by,INTEGER,YES,FK,,users.id
+scenarios,"Gherkin scenarios under a feature.",updated_by,INTEGER,YES,FK,,users.id
+scenarios,"Gherkin scenarios under a feature.",deleted_by,INTEGER,YES,FK,,users.id
+scenarios,"Gherkin scenarios under a feature.",deleted_at,datetime,YES,,,
+scenarios,"Gherkin scenarios under a feature.",body,TEXT,YES,,,
+scope_items,"In/out solution scope boundaries.",id,INTEGER,NO,PK,,
+scope_items,"In/out solution scope boundaries.",title,varchar,NO,,,
+scope_items,"In/out solution scope boundaries.",project_id,INTEGER,NO,FK,,projects.id
+scope_items,"In/out solution scope boundaries.",direction,varchar,NO,,'in',
+scope_items,"In/out solution scope boundaries.",description,TEXT,YES,,,
+scope_items,"In/out solution scope boundaries.",business_need_id,INTEGER,YES,FK,,business_needs.id
+scope_items,"In/out solution scope boundaries.",created_at,datetime,YES,,,
+scope_items,"In/out solution scope boundaries.",updated_at,datetime,YES,,,
+scope_items,"In/out solution scope boundaries.",created_by,INTEGER,YES,FK,,users.id
+scope_items,"In/out solution scope boundaries.",updated_by,INTEGER,YES,FK,,users.id
+scope_items,"In/out solution scope boundaries.",deleted_by,INTEGER,YES,FK,,users.id
+scope_items,"In/out solution scope boundaries.",deleted_at,datetime,YES,,,
+stakeholder_needs,"Stakeholder-level requirements / stories; coded SN-n.",id,INTEGER,NO,PK,,
+stakeholder_needs,"Stakeholder-level requirements / stories; coded SN-n.",title,varchar,NO,,,
+stakeholder_needs,"Stakeholder-level requirements / stories; coded SN-n.",project_id,INTEGER,NO,FK,,projects.id
+stakeholder_needs,"Stakeholder-level requirements / stories; coded SN-n.",description,TEXT,YES,,,
+stakeholder_needs,"Stakeholder-level requirements / stories; coded SN-n.",priority_id,INTEGER,YES,FK,,priorities.id
+stakeholder_needs,"Stakeholder-level requirements / stories; coded SN-n.",status_id,INTEGER,YES,FK,,statuses.id
+stakeholder_needs,"Stakeholder-level requirements / stories; coded SN-n.",created_at,datetime,YES,,,
+stakeholder_needs,"Stakeholder-level requirements / stories; coded SN-n.",updated_at,datetime,YES,,,
+stakeholder_needs,"Stakeholder-level requirements / stories; coded SN-n.",created_by,INTEGER,YES,FK,,users.id
+stakeholder_needs,"Stakeholder-level requirements / stories; coded SN-n.",updated_by,INTEGER,YES,FK,,users.id
+stakeholder_needs,"Stakeholder-level requirements / stories; coded SN-n.",deleted_by,INTEGER,YES,FK,,users.id
+stakeholder_needs,"Stakeholder-level requirements / stories; coded SN-n.",deleted_at,datetime,YES,,,
+stakeholder_needs,"Stakeholder-level requirements / stories; coded SN-n.",number,INTEGER,YES,,,
+stakeholder_stakeholder_need,"M:N — Stakeholder ↔ Stakeholder Need.",id,INTEGER,NO,PK,,
+stakeholder_stakeholder_need,"M:N — Stakeholder ↔ Stakeholder Need.",stakeholder_id,INTEGER,NO,FK,,stakeholders.id
+stakeholder_stakeholder_need,"M:N — Stakeholder ↔ Stakeholder Need.",stakeholder_need_id,INTEGER,NO,FK,,stakeholder_needs.id
+stakeholder_stakeholder_need,"M:N — Stakeholder ↔ Stakeholder Need.",created_at,datetime,YES,,,
+stakeholder_stakeholder_need,"M:N — Stakeholder ↔ Stakeholder Need.",updated_at,datetime,YES,,,
+stakeholders,"Roles/people impacted by or influencing the change.",id,INTEGER,NO,PK,,
+stakeholders,"Roles/people impacted by or influencing the change.",name,varchar,NO,,,
+stakeholders,"Roles/people impacted by or influencing the change.",project_id,INTEGER,NO,FK,,projects.id
+stakeholders,"Roles/people impacted by or influencing the change.",type,varchar,YES,,,
+stakeholders,"Roles/people impacted by or influencing the change.",influence,varchar,YES,,,
+stakeholders,"Roles/people impacted by or influencing the change.",interest,varchar,YES,,,
+stakeholders,"Roles/people impacted by or influencing the change.",notes,TEXT,YES,,,
+stakeholders,"Roles/people impacted by or influencing the change.",is_system,tinyint(1),NO,,'0',
+stakeholders,"Roles/people impacted by or influencing the change.",system_key,varchar,YES,,,
+stakeholders,"Roles/people impacted by or influencing the change.",status_id,INTEGER,YES,FK,,statuses.id
+stakeholders,"Roles/people impacted by or influencing the change.",created_at,datetime,YES,,,
+stakeholders,"Roles/people impacted by or influencing the change.",updated_at,datetime,YES,,,
+stakeholders,"Roles/people impacted by or influencing the change.",created_by,INTEGER,YES,FK,,users.id
+stakeholders,"Roles/people impacted by or influencing the change.",updated_by,INTEGER,YES,FK,,users.id
+stakeholders,"Roles/people impacted by or influencing the change.",deleted_by,INTEGER,YES,FK,,users.id
+stakeholders,"Roles/people impacted by or influencing the change.",deleted_at,datetime,YES,,,
+state_flows,"State transition diagrams (JSON transitions).",id,INTEGER,NO,PK,,
+state_flows,"State transition diagrams (JSON transitions).",title,varchar,NO,,,
+state_flows,"State transition diagrams (JSON transitions).",project_id,INTEGER,NO,FK,,projects.id
+state_flows,"State transition diagrams (JSON transitions).",description,TEXT,YES,,,
+state_flows,"State transition diagrams (JSON transitions).",transitions,TEXT,YES,,,
+state_flows,"State transition diagrams (JSON transitions).",status_id,INTEGER,YES,FK,,statuses.id
+state_flows,"State transition diagrams (JSON transitions).",created_at,datetime,YES,,,
+state_flows,"State transition diagrams (JSON transitions).",updated_at,datetime,YES,,,
+state_flows,"State transition diagrams (JSON transitions).",created_by,INTEGER,YES,FK,,users.id
+state_flows,"State transition diagrams (JSON transitions).",updated_by,INTEGER,YES,FK,,users.id
+state_flows,"State transition diagrams (JSON transitions).",deleted_by,INTEGER,YES,FK,,users.id
+state_flows,"State transition diagrams (JSON transitions).",deleted_at,datetime,YES,,,
+statuses,"Shared entity status lookup.",id,INTEGER,NO,PK,,
+statuses,"Shared entity status lookup.",name,varchar,NO,,,
+statuses,"Shared entity status lookup.",code,varchar,NO,,,
+statuses,"Shared entity status lookup.",sort_order,INTEGER,NO,,'0',
+statuses,"Shared entity status lookup.",description,TEXT,YES,,,
+statuses,"Shared entity status lookup.",created_at,datetime,YES,,,
+statuses,"Shared entity status lookup.",updated_at,datetime,YES,,,
+statuses,"Shared entity status lookup.",created_by,INTEGER,YES,FK,,users.id
+statuses,"Shared entity status lookup.",updated_by,INTEGER,YES,FK,,users.id
+statuses,"Shared entity status lookup.",deleted_by,INTEGER,YES,FK,,users.id
+statuses,"Shared entity status lookup.",deleted_at,datetime,YES,,,
+statuses,"Shared entity status lookup.",is_system,tinyint(1),NO,,'0',
+strategic_baselines,"Current / future state and change strategy narrative (1 per project).",id,INTEGER,NO,PK,,
+strategic_baselines,"Current / future state and change strategy narrative (1 per project).",project_id,INTEGER,NO,FK,,projects.id
+strategic_baselines,"Current / future state and change strategy narrative (1 per project).",current_state,TEXT,YES,,,
+strategic_baselines,"Current / future state and change strategy narrative (1 per project).",future_state,TEXT,YES,,,
+strategic_baselines,"Current / future state and change strategy narrative (1 per project).",change_strategy,TEXT,YES,,,
+strategic_baselines,"Current / future state and change strategy narrative (1 per project).",status,varchar,NO,,'draft',
+strategic_baselines,"Current / future state and change strategy narrative (1 per project).",created_at,datetime,YES,,,
+strategic_baselines,"Current / future state and change strategy narrative (1 per project).",updated_at,datetime,YES,,,
+strategic_baselines,"Current / future state and change strategy narrative (1 per project).",created_by,INTEGER,YES,FK,,users.id
+strategic_baselines,"Current / future state and change strategy narrative (1 per project).",updated_by,INTEGER,YES,FK,,users.id
+strategic_baselines,"Current / future state and change strategy narrative (1 per project).",deleted_by,INTEGER,YES,FK,,users.id
+strategic_baselines,"Current / future state and change strategy narrative (1 per project).",deleted_at,datetime,YES,,,
+swimlane_flows,"Process swimlane diagrams (JSON elements).",id,INTEGER,NO,PK,,
+swimlane_flows,"Process swimlane diagrams (JSON elements).",title,varchar,NO,,,
+swimlane_flows,"Process swimlane diagrams (JSON elements).",project_id,INTEGER,NO,FK,,projects.id
+swimlane_flows,"Process swimlane diagrams (JSON elements).",description,TEXT,YES,,,
+swimlane_flows,"Process swimlane diagrams (JSON elements).",direction,varchar,NO,,'TB',
+swimlane_flows,"Process swimlane diagrams (JSON elements).",elements,TEXT,YES,,,
+swimlane_flows,"Process swimlane diagrams (JSON elements).",status_id,INTEGER,YES,FK,,statuses.id
+swimlane_flows,"Process swimlane diagrams (JSON elements).",created_at,datetime,YES,,,
+swimlane_flows,"Process swimlane diagrams (JSON elements).",updated_at,datetime,YES,,,
+swimlane_flows,"Process swimlane diagrams (JSON elements).",created_by,INTEGER,YES,FK,,users.id
+swimlane_flows,"Process swimlane diagrams (JSON elements).",updated_by,INTEGER,YES,FK,,users.id
+swimlane_flows,"Process swimlane diagrams (JSON elements).",deleted_by,INTEGER,YES,FK,,users.id
+swimlane_flows,"Process swimlane diagrams (JSON elements).",deleted_at,datetime,YES,,,
+tenants,"Organization / tenancy boundary.",id,INTEGER,NO,PK,,
+tenants,"Organization / tenancy boundary.",name,varchar,NO,,,
+tenants,"Organization / tenancy boundary.",slug,varchar,NO,,,
+tenants,"Organization / tenancy boundary.",status_id,INTEGER,YES,FK,,statuses.id
+tenants,"Organization / tenancy boundary.",created_at,datetime,YES,,,
+tenants,"Organization / tenancy boundary.",updated_at,datetime,YES,,,
+tenants,"Organization / tenancy boundary.",created_by,INTEGER,YES,FK,,users.id
+tenants,"Organization / tenancy boundary.",updated_by,INTEGER,YES,FK,,users.id
+tenants,"Organization / tenancy boundary.",deleted_by,INTEGER,YES,FK,,users.id
+tenants,"Organization / tenancy boundary.",deleted_at,datetime,YES,,,
+users,"Application users (tenant + role).",id,INTEGER,NO,PK,,
+users,"Application users (tenant + role).",name,varchar,NO,,,
+users,"Application users (tenant + role).",email,varchar,NO,,,
+users,"Application users (tenant + role).",email_verified_at,datetime,YES,,,
+users,"Application users (tenant + role).",password,varchar,NO,,,
+users,"Application users (tenant + role).",remember_token,varchar,YES,,,
+users,"Application users (tenant + role).",created_at,datetime,YES,,,
+users,"Application users (tenant + role).",updated_at,datetime,YES,,,
+users,"Application users (tenant + role).",two_factor_secret,TEXT,YES,,,
+users,"Application users (tenant + role).",two_factor_recovery_codes,TEXT,YES,,,
+users,"Application users (tenant + role).",two_factor_confirmed_at,datetime,YES,,,
+users,"Application users (tenant + role).",role_id,INTEGER,YES,FK,,roles.id
+users,"Application users (tenant + role).",tenant_id,INTEGER,YES,FK,,tenants.id
+users,"Application users (tenant + role).",workspace_id,INTEGER,YES,FK,,workspaces.id
+workspaces,"Workspace under a tenant; contains projects.",id,INTEGER,NO,PK,,
+workspaces,"Workspace under a tenant; contains projects.",name,varchar,NO,,,
+workspaces,"Workspace under a tenant; contains projects.",slug,varchar,NO,,,
+workspaces,"Workspace under a tenant; contains projects.",tenant_id,INTEGER,NO,FK,,tenants.id
+workspaces,"Workspace under a tenant; contains projects.",description,TEXT,YES,,,
+workspaces,"Workspace under a tenant; contains projects.",status_id,INTEGER,YES,FK,,statuses.id
+workspaces,"Workspace under a tenant; contains projects.",created_at,datetime,YES,,,
+workspaces,"Workspace under a tenant; contains projects.",updated_at,datetime,YES,,,
+workspaces,"Workspace under a tenant; contains projects.",created_by,INTEGER,YES,FK,,users.id
+workspaces,"Workspace under a tenant; contains projects.",updated_by,INTEGER,YES,FK,,users.id
+workspaces,"Workspace under a tenant; contains projects.",deleted_by,INTEGER,YES,FK,,users.id
+workspaces,"Workspace under a tenant; contains projects.",deleted_at,datetime,YES,,,
