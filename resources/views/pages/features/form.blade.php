@@ -87,6 +87,19 @@
                     @else
                         <p class="text-sm text-danger">{{ __('ui.stakeholder_need') }} field is missing from the form definition.</p>
                     @endif
+                    @if (array_key_exists('change_request_id', $formFields))
+                        @php
+                            $field = $formFields['change_request_id'];
+                            $type = FormHelper::getFieldType($field);
+                            $fieldValue = $dto->change_request_id ?? null;
+                            $list = $field['list'] ?? null;
+                            $options = [];
+                            if (! empty($field['help'])) {
+                                $options['data-field-help'] = $field['help'];
+                            }
+                        @endphp
+                        {{ Form::field($type, 'change_request_id', $fieldValue, $list, $options ?: null) }}
+                    @endif
                     @if (array_key_exists('swimlane_flow_step_id', $formFields))
                         @php
                             $field = $formFields['swimlane_flow_step_id'];
