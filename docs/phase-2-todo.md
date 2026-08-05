@@ -390,6 +390,44 @@ Extract **`StrategicBaselineResolver`** (or equivalent) — one method, e.g. `re
 
 ---
 
+## 11. Datatable — Title/identity column floor on wide fixed-layout lists — **LOCKED** · **P2**
+
+**Status:** LOCKED for Phase 2 queue (documentation only — **do not implement now**).
+Logged from the datatable full-width/wrap layout work (see `git log` — "Make entity list tables fill the card with a fixed layout, wrapped text, and compact actions").
+
+### Problem
+
+Entity list tables use `table-layout: fixed` + `width: 100%` (`public/themes/metronic9/assets/css/bassist.css`, `resources/views/themes/metronic8/components/datatable.blade.php`) so sparse lists (BO / BN / Projects / …) always fill the card instead of shrinking to content width. The identity column (`name` / `title`) deliberately has **no** fixed `width` — only `min-width: 14rem` (`DatatableUi::IDENTITY_MIN_WIDTH`) — so it absorbs 100% of the leftover space after every other column claims its explicit rem width (see contract comment atop `DatatableUi::columnStyle()` in `app/Helpers/DatatableUi.php`).
+
+On lists with many columns — **Risks** today (10 `#[InList]` columns: code, title, project, category, likelihood, impact, score, response, owner, status, plus actions), and any future wide list — the other columns' explicit rem widths can sum close to (or past) the card's full width, leaving little or no leftover for identity. A bare `min-width` does **not** reserve space the way `width` does under `table-layout: fixed`'s column-sizing algorithm, so the browser can still render Title narrower than the 14rem floor implies once every other column has taken its share — crushing Title to a near-unreadable sliver on dense registers.
+
+### Constraint (why this isn't a quick fix)
+
+Cannot simply give identity a real `width` (fixed rem/%) or shrink other columns further, because **sparse lists rely on identity having no `width` at all** to absorb 100% of leftover space and fill the card. This is locked in by `DatatableUiTest::identity_column_has_no_fixed_width_so_it_absorbs_leftover_space` and the sibling tests in `tests/Unit/DatatableUiTest.php`. Any fix must not regress that sparse-list behavior (tables shrinking below 100% width again, or leaving dead trailing space).
+
+### Options to evaluate (not decided — needs a fresh look)
+
+- CSS `width: max(14rem, ...)`-style floor, or a small JS post-render pass (DataTables `drawCallback`) that measures and enforces a minimum pixel width on the identity `<td>`/`<th>` after layout.
+- Detect "wide" tables (column count over a threshold — Risks-style) and give **only those** a different strategy: e.g. an explicit percentage floor on identity, or deliberately allow horizontal scroll via `.kt-table-wrapper` (`overflow: auto`, already present) instead of fighting for space — i.e. a wide-table mode in `DatatableUi` rather than a global change.
+- Re-examine whether some Risks `#[InList]` columns could move to `SHORT_WIDTH` or be dropped from the default list (see `RiskViewData::$related_to` comment for a related precedent of trimming list columns) to reduce total column-width pressure without touching the identity mechanism at all.
+
+### Acceptance criteria (when picked up)
+
+- [ ] Risks list Title column stays readable (not a single-character sliver) at common viewport/card widths with the full 10-column set present.
+- [ ] Sparse lists (BO, BN, Projects, etc.) still render at full 100% card width with no regression — extend `tests/Unit/DatatableUiTest.php` rather than just re-running it.
+- [ ] If horizontal scroll is used as the fallback for very wide tables, it's an intentional, styled choice — not an accidental overflow.
+
+### Touch points
+
+| Layer | Files |
+|-------|-------|
+| Column width logic | `app/Helpers/DatatableUi.php` — `columnStyle()`, `IDENTITY_MIN_WIDTH`, `SHORT_ROOTS`, `RELATION_ROOTS` |
+| Global table CSS | `public/themes/metronic9/assets/css/bassist.css`, `resources/views/themes/metronic8/components/datatable.blade.php` |
+| Tests | `tests/Unit/DatatableUiTest.php` — existing width-contract tests to extend |
+| Worst-case list | `app/Data/RiskViewData.php` — most `#[InList]` columns of any entity today |
+
+---
+
 ## Out of scope (Phase 3+)
 
 Do not queue under Phase 2:
