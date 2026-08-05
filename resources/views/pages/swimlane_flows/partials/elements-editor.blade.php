@@ -1,9 +1,7 @@
 @php
-    use App\Support\ProcessStepSatisfyType;
-
     $elementRows = is_array($elements ?? null) ? $elements : [];
     if ($elementRows === []) {
-        $elementRows = [['lane' => '', 'from' => '', 'type' => 'process', 'label' => '', 'line_title' => '', 'code' => '', 'satisfy_type' => null, 'satisfy_id' => null]];
+        $elementRows = [['id' => null, 'lane' => '', 'from' => '', 'type' => 'process', 'label' => '', 'line_title' => '', 'code' => '', 'stakeholder_need_id' => null]];
     }
 
     $editable = $editable ?? true;
@@ -12,10 +10,10 @@
     $flowTitle = $flowTitle ?? '';
     $showDiagram = $showDiagram ?? true;
     $direction = strtoupper((string) ($direction ?? 'TB')) === 'LR' ? 'LR' : 'TB';
-    $satisfyOptions = is_array($satisfyOptions ?? null) ? $satisfyOptions : [];
-    $satisfyOptionsUrl = $satisfyOptionsUrl ?? route('swimlane_flows.satisfy-options');
-    $satisfyLabels = collect($satisfyOptions)->mapWithKeys(
-        fn (array $opt) => [($opt['value'] ?? '') => ($opt['label'] ?? '')]
+    $stakeholderNeedOptions = is_array($stakeholderNeedOptions ?? null) ? $stakeholderNeedOptions : [];
+    $stakeholderNeedOptionsUrl = $stakeholderNeedOptionsUrl ?? route('swimlane_flows.stakeholder-need-options');
+    $needLabels = collect($stakeholderNeedOptions)->mapWithKeys(
+        fn (array $opt) => [((string) ($opt['value'] ?? '')) => ($opt['label'] ?? '')]
     )->all();
 
     $typeOptions = [
@@ -39,7 +37,7 @@
     @if ($autoRender) data-auto-render="1" @endif
     @if ($flowTitle !== '') data-flow-title-value="{{ $flowTitle }}" @endif
     data-direction="{{ $direction }}"
-    data-satisfy-options-url="{{ $satisfyOptionsUrl }}"
+    data-stakeholder-need-options-url="{{ $stakeholderNeedOptionsUrl }}"
     class="space-y-5"
 >
     @if ($showTitleField)
@@ -71,7 +69,7 @@
                         <th class="min-w-32">{{ __('ui.element_type') }}</th>
                         <th class="min-w-40">{{ __('ui.element_label') }}</th>
                         <th class="min-w-36">{{ __('ui.element_line_title') }}</th>
-                        <th class="min-w-56">{{ __('ui.element_satisfy') }}</th>
+                        <th class="min-w-56">{{ __('ui.element_stakeholder_need') }}</th>
                         @if ($editable)
                             <th class="w-28">{{ __('ui.actions') }}</th>
                         @endif
@@ -85,18 +83,18 @@
                                 $type = 'process';
                             }
                             $code = (string) ($row['code'] ?? '');
-                            $satisfyValue = ProcessStepSatisfyType::encode(
-                                isset($row['satisfy_type']) ? (string) $row['satisfy_type'] : null,
-                                isset($row['satisfy_id']) ? (int) $row['satisfy_id'] : null
-                            );
-                            if ($satisfyValue === '' && ! empty($row['satisfy'])) {
-                                $satisfyValue = (string) $row['satisfy'];
-                            }
-                            $satisfyLabel = $satisfyLabels[$satisfyValue] ?? $satisfyValue;
-                            $satisfiable = in_array($type, ['process', 'decision'], true);
+                            $stepId = isset($row['id']) && is_numeric($row['id']) ? (int) $row['id'] : null;
+                            $needId = isset($row['stakeholder_need_id']) && is_numeric($row['stakeholder_need_id'])
+                                ? (string) (int) $row['stakeholder_need_id']
+                                : '';
+                            $needLabel = $needLabels[$needId] ?? ($needId !== '' ? $needId : '');
+                            $linkable = in_array($type, ['process', 'decision'], true);
                         @endphp
                         <tr data-element-row>
                             <td>
+                                @if ($stepId)
+                                    <input type="hidden" data-field="id" name="elements[{{ $index }}][id]" value="{{ $stepId }}">
+                                @endif
                                 <input
                                     type="text"
                                     class="kt-input bg-muted/40"
@@ -184,20 +182,20 @@
                                 @if ($editable)
                                     <select
                                         class="kt-select"
-                                        data-field="satisfy"
-                                        name="elements[{{ $index }}][satisfy]"
-                                        @disabled(! $satisfiable)
+                                        data-field="stakeholder_need_id"
+                                        name="elements[{{ $index }}][stakeholder_need_id]"
+                                        @disabled(! $linkable)
                                     >
                                         <option value="">—</option>
-                                        @foreach ($satisfyOptions as $opt)
-                                            <option value="{{ $opt['value'] }}" @selected($satisfyValue === ($opt['value'] ?? ''))>
+                                        @foreach ($stakeholderNeedOptions as $opt)
+                                            <option value="{{ $opt['value'] }}" @selected($needId === (string) ($opt['value'] ?? ''))>
                                                 {{ $opt['label'] }}
                                             </option>
                                         @endforeach
                                     </select>
                                 @else
-                                    <span class="text-sm" data-field="satisfy" data-value="{{ $satisfyValue }}">
-                                        {{ $satisfiable ? ($satisfyLabel !== '' ? $satisfyLabel : '—') : '—' }}
+                                    <span class="text-sm" data-field="stakeholder_need_id" data-value="{{ $needId }}">
+                                        {{ $linkable ? ($needLabel !== '' ? $needLabel : '—') : '—' }}
                                     </span>
                                 @endif
                             </td>
@@ -258,9 +256,9 @@
                     <input type="text" class="kt-input" data-field="line_title" name="elements[__INDEX__][line_title]" value="" placeholder="Yes" autocomplete="off">
                 </td>
                 <td>
-                    <select class="kt-select" data-field="satisfy" name="elements[__INDEX__][satisfy]">
+                    <select class="kt-select" data-field="stakeholder_need_id" name="elements[__INDEX__][stakeholder_need_id]">
                         <option value="">—</option>
-                        @foreach ($satisfyOptions as $opt)
+                        @foreach ($stakeholderNeedOptions as $opt)
                             <option value="{{ $opt['value'] }}">{{ $opt['label'] }}</option>
                         @endforeach
                     </select>

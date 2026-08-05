@@ -20,6 +20,6 @@
         'autoRender' => true,
         'flowTitle' => $dto->title,
         'showTitleField' => true,
-        'satisfyOptions' => $satisfyOptions ?? [],
+        'stakeholderNeedOptions' => $stakeholderNeedOptions ?? [],
     ])
 </div>

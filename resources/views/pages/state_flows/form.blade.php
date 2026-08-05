@@ -23,7 +23,7 @@
         </x-slot>
 
         {{ Form::open(array_merge($formRoute, ['id' => 'form1', 'files' => true, 'method' => 'post'])) }}
-            <div class="kt-card-body border-t border-border p-5 lg:p-7.5 space-y-8">
+            <div class="kt-card-body border-t border-border p-5 lg:p-7.5 space-y-8" data-ui-container>
                 @if (! in_array($verb, ['POST', 'post'], true))
                     @method($verb)
                 @endif
@@ -32,7 +32,7 @@
                     {{ Form::hidden('id', $dto->id) }}
                 @endif
 
-                <div class="form-fields">
+                <div class="form-fields-grid grid grid-cols-12">
                     @foreach ($formFields as $name => $field)
                         @php
                             $fieldName = is_numeric($name) ? $field : $name;
@@ -40,8 +40,11 @@
                             $fieldValue = $dto->{$fieldName} ?? null;
                             $list = $field['list'] ?? null;
                             $options = [];
+                            $isWide = in_array($type, ['textarea', 'code', 'dropzone'], true);
                         @endphp
-                        {{ Form::field($type, $fieldName, $fieldValue, $list, $options ?: null) }}
+                        <div data-ui-span="12" data-ui-span-md="{{ $isWide ? 12 : 6 }}" data-ui-span-lg="{{ $isWide ? 12 : 6 }}">
+                            {{ Form::field($type, $fieldName, $fieldValue, $list, $options ?: null) }}
+                        </div>
                     @endforeach
                 </div>
 

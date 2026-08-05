@@ -49,9 +49,9 @@ Route::middleware('auth')->group(function (): void {
     Route::get('change_requests/affected-options', [ChangeRequestController::class, 'affectedOptions'])
         ->middleware('entity.access')
         ->name('change_requests.affected-options');
-    Route::get('swimlane_flows/satisfy-options', [SwimlaneFlowController::class, 'satisfyOptions'])
+    Route::get('swimlane_flows/stakeholder-need-options', [SwimlaneFlowController::class, 'stakeholderNeedOptions'])
         ->middleware('entity.access')
-        ->name('swimlane_flows.satisfy-options');
+        ->name('swimlane_flows.stakeholder-need-options');
     Route::get('projects/{project}/dashboard', [ProjectDashboardController::class, 'show'])->name('projects.dashboard');
     Route::get('projects/{project}/export', [ProjectExportController::class, 'show'])->name('projects.export');
     Route::get('projects/{project}/babok', [BabokDocumentController::class, 'index'])->name('projects.babok.index');

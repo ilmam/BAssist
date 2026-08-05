@@ -39,7 +39,7 @@
                     <h3 class="text-sm font-semibold text-foreground">{{ __('ui.metadata') }}</h3>
                     <p class="text-xs text-muted-foreground">{{ __('ui.scenario_meta_help') }}</p>
                 </div>
-                <div class="form-fields">
+                <div class="form-fields-grid grid grid-cols-12">
                     @foreach ($metaFields as $fieldName)
                         @continue(! array_key_exists($fieldName, $formFields))
                         @php
@@ -52,7 +52,9 @@
                                 $options['data-field-help'] = $field['help'];
                             }
                         @endphp
-                        {{ Form::field($type, $fieldName, $fieldValue, $list, $options ?: null) }}
+                        <div data-ui-span="12" data-ui-span-md="6" data-ui-span-lg="6">
+                            {{ Form::field($type, $fieldName, $fieldValue, $list, $options ?: null) }}
+                        </div>
                     @endforeach
                 </div>
             </section>

@@ -22,6 +22,8 @@
             'missing_feature' => __('ui.gap_missing_feature'),
             'missing_scenarios' => __('ui.gap_missing_scenarios'),
             'missing_satisfy' => __('ui.gap_missing_satisfy'),
+            'missing_step_stakeholder_need' => __('ui.gap_missing_step_stakeholder_need'),
+            'uncovered_process_step' => __('ui.gap_uncovered_process_step'),
             'orphan_objective' => __('ui.gap_orphan_objective'),
             'orphan_stakeholder_need' => __('ui.gap_orphan_stakeholder_need'),
             'orphan_feature' => __('ui.gap_orphan_feature'),
@@ -94,7 +96,7 @@
                             <th>{{ __('ui.business_need') }}</th>
                             <th>{{ __('ui.stakeholder_need') }}</th>
                             <th>{{ __('ui.solution_requirement') }}</th>
-                            <th>{{ __('ui.design_artifact') }}</th>
+                            <th>{{ __('ui.process_step') }}</th>
                             <th>{{ __('ui.stakeholders') }}</th>
                             <th>{{ __('ui.gaps') }}</th>
                         </tr>
@@ -172,24 +174,30 @@
                                     @endif
                                 </td>
                                 <td>
-                                    @if (! empty($row['design_artifact_code']) || ! empty($row['design_artifact_label']))
-                                        @if (! empty($row['design_artifact_flow_id']))
-                                            <a href="{{ model_modal_path('SwimlaneFlow', 'view', $row['design_artifact_flow_id']) }}"
+                                    @php
+                                        $stepCode = $row['process_step_code'] ?? $row['design_artifact_code'] ?? null;
+                                        $stepLabel = $row['process_step_label'] ?? $row['design_artifact_label'] ?? null;
+                                        $stepFlowId = $row['process_step_flow_id'] ?? $row['design_artifact_flow_id'] ?? null;
+                                        $stepFlowTitle = $row['process_step_flow_title'] ?? $row['design_artifact_flow_title'] ?? null;
+                                    @endphp
+                                    @if (! empty($stepCode) || ! empty($stepLabel))
+                                        @if (! empty($stepFlowId))
+                                            <a href="{{ model_modal_path('SwimlaneFlow', 'view', $stepFlowId) }}"
                                                class="text-primary hover:underline js-open-modal"
-                                               data-modal-url="{{ model_modal_path('SwimlaneFlow', 'view', $row['design_artifact_flow_id']) }}">
-                                                @if (! empty($row['design_artifact_code']))
-                                                    <span class="text-muted-foreground text-xs me-1">{{ $row['design_artifact_code'] }}</span>
+                                               data-modal-url="{{ model_modal_path('SwimlaneFlow', 'view', $stepFlowId) }}">
+                                                @if (! empty($stepCode))
+                                                    <span class="text-muted-foreground text-xs me-1">{{ $stepCode }}</span>
                                                 @endif
-                                                {{ $row['design_artifact_label'] }}
+                                                {{ $stepLabel }}
                                             </a>
                                         @else
-                                            @if (! empty($row['design_artifact_code']))
-                                                <span class="text-muted-foreground text-xs me-1">{{ $row['design_artifact_code'] }}</span>
+                                            @if (! empty($stepCode))
+                                                <span class="text-muted-foreground text-xs me-1">{{ $stepCode }}</span>
                                             @endif
-                                            {{ $row['design_artifact_label'] }}
+                                            {{ $stepLabel }}
                                         @endif
-                                        @if (! empty($row['design_artifact_flow_title']))
-                                            <div class="text-muted-foreground text-xs mt-0.5">{{ $row['design_artifact_flow_title'] }}</div>
+                                        @if (! empty($stepFlowTitle))
+                                            <div class="text-muted-foreground text-xs mt-0.5">{{ $stepFlowTitle }}</div>
                                         @endif
                                     @else
                                         <span class="text-muted-foreground">—</span>

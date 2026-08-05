@@ -22,6 +22,9 @@ class FunctionalRequirementData extends BaseData
         #[Form('select', 'StakeholderNeed', help: 'Links this functional requirement in the project traceability matrix.')]
         public ?int $stakeholder_need_id = null,
 
+        #[Form('select', 'SwimlaneFlowStep', help: 'Optional BPD process/decision step this FR elaborates (coverage only; lineage stays via Stakeholder Need).')]
+        public ?int $swimlane_flow_step_id = null,
+
         #[Form('textarea', hideQuick: true)]
         public string $statement = '',
 
@@ -45,6 +48,7 @@ class FunctionalRequirementData extends BaseData
             'title' => ['required', 'string', 'max:255'],
             'project_id' => ['required', 'integer', 'exists:projects,id'],
             'stakeholder_need_id' => ['nullable', 'integer', 'exists:stakeholder_needs,id'],
+            'swimlane_flow_step_id' => ['nullable', 'integer', 'exists:swimlane_flow_steps,id'],
             'statement' => ['required', 'string'],
             'trigger' => ['nullable', 'string'],
             'acceptance_criteria' => ['nullable', 'string'],

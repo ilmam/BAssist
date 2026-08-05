@@ -2,18 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use App\Services\ProcessStepSatisfyService;
+use App\Models\StakeholderNeed;
 use App\Support\EntityAccess;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class SwimlaneFlowController extends CrudController
 {
-    public function __construct(protected ProcessStepSatisfyService $satisfy)
-    {
-    }
-
-    public function satisfyOptions(Request $request): JsonResponse
+    public function stakeholderNeedOptions(Request $request): JsonResponse
     {
         EntityAccess::authorize(auth()->user(), 'SwimlaneFlow', EntityAccess::VIEW);
 
@@ -21,7 +17,7 @@ class SwimlaneFlowController extends CrudController
         $projectId = is_numeric($projectId) ? (int) $projectId : null;
 
         return response()->json([
-            'options' => $this->satisfy->optionsForProject($projectId),
+            'options' => $this->stakeholderNeedOptionsForProject($projectId),
         ]);
     }
 
@@ -89,7 +85,7 @@ class SwimlaneFlowController extends CrudController
 
     /**
      * @param  array{dto: object, formFields: array<string, array<string, mixed>>}  $form
-     * @return array{dto: object, model: string, formFields: array<string, array<string, mixed>>, operation: string, satisfyOptions: list<array{value: string, label: string}>, satisfyOptionsUrl: string}
+     * @return array{dto: object, model: string, formFields: array<string, array<string, mixed>>, operation: string, stakeholderNeedOptions: list<array{value: string, label: string}>, stakeholderNeedOptionsUrl: string}
      */
     protected function formViewData(array $form, string $operation): array
     {
@@ -102,14 +98,14 @@ class SwimlaneFlowController extends CrudController
             'model' => $this->modelName,
             'formFields' => $form['formFields'],
             'operation' => $operation,
-            'satisfyOptions' => $this->satisfy->optionsForProject($projectId),
-            'satisfyOptionsUrl' => route('swimlane_flows.satisfy-options'),
+            'stakeholderNeedOptions' => $this->stakeholderNeedOptionsForProject($projectId),
+            'stakeholderNeedOptionsUrl' => route('swimlane_flows.stakeholder-need-options'),
         ];
     }
 
     /**
      * @param  array<string, mixed>  $fields
-     * @return array{dto: object, model: string, fields: array<string, mixed>, satisfyOptions: list<array{value: string, label: string}>}
+     * @return array{dto: object, model: string, fields: array<string, mixed>, stakeholderNeedOptions: list<array{value: string, label: string}>}
      */
     protected function viewData(object $dto, array $fields): array
     {
@@ -121,7 +117,32 @@ class SwimlaneFlowController extends CrudController
             'dto' => $dto,
             'model' => $this->modelName,
             'fields' => $fields,
-            'satisfyOptions' => $this->satisfy->optionsForProject($projectId),
+            'stakeholderNeedOptions' => $this->stakeholderNeedOptionsForProject($projectId),
         ];
+    }
+
+    /**
+     * @return list<array{value: string, label: string}>
+     */
+    protected function stakeholderNeedOptionsForProject(?int $projectId): array
+    {
+        if ($projectId === null || $projectId < 1) {
+            return [];
+        }
+
+        return StakeholderNeed::query()
+            ->where('project_id', $projectId)
+            ->orderBy('number')
+            ->orderBy('title')
+            ->get()
+            ->map(function (StakeholderNeed $need) {
+                $code = $need->code ? $need->code.' — ' : '';
+
+                return [
+                    'value' => (string) $need->id,
+                    'label' => $code.$need->title,
+                ];
+            })
+            ->all();
     }
 }

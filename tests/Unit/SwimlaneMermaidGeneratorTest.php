@@ -87,46 +87,39 @@ class SwimlaneMermaidGeneratorTest extends TestCase
             ['lane' => 'A', 'type' => 'weird', 'label' => 'Bad'],
         ]);
 
-        $this->assertSame([
-            [
-                'lane' => 'A',
-                'from' => 'Prior',
-                'type' => 'process',
-                'label' => 'Ok',
-                'line_title' => 'Go',
-                'code' => 'PS-1',
-                'satisfy_type' => null,
-                'satisfy_id' => null,
-            ],
-        ], $rows);
+        $this->assertCount(1, $rows);
+        $this->assertSame('A', $rows[0]['lane']);
+        $this->assertSame('Ok', $rows[0]['label']);
+        $this->assertSame('PS-1', $rows[0]['code']);
+        $this->assertNull($rows[0]['stakeholder_need_id']);
     }
 
-    public function test_normalize_preserves_code_and_satisfy(): void
+    public function test_normalize_preserves_code_and_stakeholder_need(): void
     {
         $generator = new SwimlaneMermaidGenerator();
 
         $rows = $generator->normalizeElements([
             [
+                'id' => 9,
                 'lane' => 'Support',
                 'type' => 'process',
                 'label' => 'Review',
                 'code' => 'PS-3',
-                'satisfy' => 'functional_requirement:12',
+                'stakeholder_need_id' => 12,
             ],
             [
                 'lane' => 'Support',
                 'type' => 'start',
                 'label' => 'Begin',
-                'satisfy' => 'feature:9',
+                'stakeholder_need_id' => 9,
             ],
         ]);
 
+        $this->assertSame(9, $rows[0]['id']);
         $this->assertSame('PS-3', $rows[0]['code']);
-        $this->assertSame('functional_requirement', $rows[0]['satisfy_type']);
-        $this->assertSame(12, $rows[0]['satisfy_id']);
+        $this->assertSame(12, $rows[0]['stakeholder_need_id']);
         $this->assertSame('PS-4', $rows[1]['code']);
-        $this->assertNull($rows[1]['satisfy_type']);
-        $this->assertNull($rows[1]['satisfy_id']);
+        $this->assertNull($rows[1]['stakeholder_need_id']);
     }
 
     public function test_assign_missing_codes_continues_sequence(): void

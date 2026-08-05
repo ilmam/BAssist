@@ -31,15 +31,18 @@
                 {{ Form::hidden('id', $dto->id) }}
             @endif
 
-            <div class="form-fields">
+            <div class="form-fields-grid grid grid-cols-12">
                 @foreach ($formFields as $name => $field)
                     @php
                         $fieldName = is_numeric($name) ? $field : $name;
                         $type = FormHelper::getFieldType($field);
                         $fieldValue = $dto->{$fieldName} ?? null;
                         $list = $field['list'] ?? null;
+                        $isWide = in_array($type, ['textarea', 'code', 'dropzone'], true);
                     @endphp
-                    {{ Form::field($type, $fieldName, $fieldValue, $list, null) }}
+                    <div data-ui-span="12" data-ui-span-md="{{ $isWide ? 12 : 6 }}" data-ui-span-lg="{{ $isWide ? 12 : 6 }}">
+                        {{ Form::field($type, $fieldName, $fieldValue, $list, null) }}
+                    </div>
                 @endforeach
             </div>
 
@@ -47,8 +50,8 @@
                 'elements' => $elements,
                 'direction' => $dto->direction ?? 'TB',
                 'editable' => true,
-                'satisfyOptions' => $satisfyOptions ?? [],
-                'satisfyOptionsUrl' => $satisfyOptionsUrl ?? route('swimlane_flows.satisfy-options'),
+                'stakeholderNeedOptions' => $stakeholderNeedOptions ?? [],
+                'stakeholderNeedOptionsUrl' => $stakeholderNeedOptionsUrl ?? route('swimlane_flows.stakeholder-need-options'),
             ])
         </div>
 

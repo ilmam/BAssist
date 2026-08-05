@@ -38,7 +38,7 @@
                     <h3 class="text-sm font-semibold text-foreground">{{ __('ui.metadata') }}</h3>
                     <p class="text-xs text-muted-foreground">{{ __('ui.feature_traceability_help') }}</p>
                 </div>
-                <div class="form-fields">
+                <div class="form-fields-grid grid grid-cols-12">
                     @foreach (['code', 'title', 'project_id', 'priority_id', 'status_id'] as $fieldName)
                         @continue(! array_key_exists($fieldName, $formFields))
                         @php
@@ -58,7 +58,9 @@
                                 $options['data-field-help'] = $field['help'];
                             }
                         @endphp
-                        {{ Form::field($type, $fieldName, $fieldValue, $list, $options ?: null) }}
+                        <div data-ui-span="12" data-ui-span-md="6" data-ui-span-lg="6">
+                            {{ Form::field($type, $fieldName, $fieldValue, $list, $options ?: null) }}
+                        </div>
                     @endforeach
                 </div>
             </section>
@@ -79,6 +81,19 @@
                         ];
                     @endphp
                     {{ Form::field($type, 'stakeholder_need_id', $fieldValue, $list, $options) }}
+                @endif
+                @if (array_key_exists('swimlane_flow_step_id', $formFields))
+                    @php
+                        $field = $formFields['swimlane_flow_step_id'];
+                        $type = FormHelper::getFieldType($field);
+                        $fieldValue = $dto->swimlane_flow_step_id ?? null;
+                        $list = $field['list'] ?? null;
+                        $options = [];
+                        if (! empty($field['help'])) {
+                            $options['data-field-help'] = $field['help'];
+                        }
+                    @endphp
+                    {{ Form::field($type, 'swimlane_flow_step_id', $fieldValue, $list, $options ?: null) }}
                 @endif
             </section>
 

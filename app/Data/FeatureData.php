@@ -22,6 +22,9 @@ class FeatureData extends BaseData
         #[Form('select', 'StakeholderNeed', help: 'Saves as @need:{code} at the top of the Feature document. Also links this Feature in the project traceability matrix.')]
         public ?int $stakeholder_need_id = null,
 
+        #[Form('select', 'SwimlaneFlowStep', help: 'Optional BPD process/decision step this feature elaborates (coverage only; lineage stays via Stakeholder Need).')]
+        public ?int $swimlane_flow_step_id = null,
+
         /**
          * Feature header document: @tags, Feature:, As a / I want / In order to, Background:.
          * Scenarios are separate records.
@@ -43,6 +46,7 @@ class FeatureData extends BaseData
             'title' => ['required', 'string', 'max:255'],
             'project_id' => ['required', 'integer', 'exists:projects,id'],
             'stakeholder_need_id' => ['nullable', 'integer', 'exists:stakeholder_needs,id'],
+            'swimlane_flow_step_id' => ['nullable', 'integer', 'exists:swimlane_flow_steps,id'],
             'body' => ['nullable', 'string'],
             'priority_id' => ['nullable', 'integer', 'exists:priorities,id'],
             'status_id' => ['nullable', 'integer', 'exists:statuses,id'],

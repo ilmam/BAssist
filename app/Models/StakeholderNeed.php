@@ -78,4 +78,10 @@ class StakeholderNeed extends BaseModel
     {
         return $this->hasMany(FunctionalRequirement::class);
     }
+
+    #[Relation('HasMany')]
+    public function swimlaneFlowSteps(): HasMany
+    {
+        return $this->hasMany(SwimlaneFlowStep::class);
+    }
 }

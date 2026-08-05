@@ -607,7 +607,7 @@
                     <th>{{ __('ui.business_need') }}</th>
                     <th>{{ __('ui.stakeholder_need') }}</th>
                     <th>{{ __('ui.solution_requirement') }}</th>
-                    <th>{{ __('ui.design_artifact') }}</th>
+                    <th>{{ __('ui.process_step') }}</th>
                     <th>{{ __('ui.stakeholders') }}</th>
                     <th>{{ __('ui.gaps') }}</th>
                 </tr>
@@ -684,6 +684,8 @@
                                         'missing_feature' => __('ui.gap_missing_feature'),
                                         'missing_scenarios' => __('ui.gap_missing_scenarios'),
                                         'missing_satisfy' => __('ui.gap_missing_satisfy'),
+                                        'missing_step_stakeholder_need' => __('ui.gap_missing_step_stakeholder_need'),
+                                        'uncovered_process_step' => __('ui.gap_uncovered_process_step'),
                                         'orphan_objective' => __('ui.gap_orphan_objective'),
                                         'orphan_stakeholder_need' => __('ui.gap_orphan_stakeholder_need'),
                                         'orphan_feature' => __('ui.gap_orphan_feature'),

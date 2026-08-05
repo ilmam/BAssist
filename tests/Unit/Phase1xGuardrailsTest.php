@@ -59,20 +59,26 @@ class Phase1xGuardrailsTest extends TestCase
         $this->assertStringContainsString('$readiness[\'items\']', $blade);
     }
 
-    public function test_readiness_covers_unsatisfied_design_steps(): void
+    public function test_readiness_covers_process_step_gaps(): void
     {
         $this->assertNotSame(
-            'ui.readiness_unsatisfied_design_steps',
-            __('ui.readiness_unsatisfied_design_steps')
+            'ui.readiness_process_steps_without_need',
+            __('ui.readiness_process_steps_without_need')
         );
         $this->assertStringContainsString(
-            'Design steps',
-            __('ui.readiness_unsatisfied_design_steps')
+            'stakeholder need',
+            __('ui.readiness_process_steps_without_need')
+        );
+        $this->assertStringContainsString(
+            'elaborating',
+            __('ui.readiness_uncovered_process_steps')
         );
 
         $service = file_get_contents(dirname(__DIR__, 2).'/app/Services/ProjectReadinessService.php');
         $this->assertIsString($service);
-        $this->assertStringContainsString("key: 'unsatisfied_design_steps'", $service);
-        $this->assertStringContainsString('countUnsatisfiedDesignSteps', $service);
+        $this->assertStringContainsString("key: 'process_steps_without_need'", $service);
+        $this->assertStringContainsString("key: 'uncovered_process_steps'", $service);
+        $this->assertStringContainsString('countSwimlaneFlowStepsWithoutNeed', $service);
+        $this->assertStringContainsString('countUncoveredSwimlaneFlowSteps', $service);
     }
 }

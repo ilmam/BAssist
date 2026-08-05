@@ -170,14 +170,26 @@ class ProjectReadinessService
         }
 
         if (entity_can('SwimlaneFlow', EntityAccess::VIEW)) {
-            $count = $this->traceability->countUnsatisfiedDesignSteps(
+            $withoutNeed = $this->traceability->countSwimlaneFlowStepsWithoutNeed(
                 (int) $project->id,
                 (int) $project->workspace_id,
             );
             $items[] = $this->item(
-                key: 'unsatisfied_design_steps',
-                label: __('ui.readiness_unsatisfied_design_steps'),
-                count: $count,
+                key: 'process_steps_without_need',
+                label: __('ui.readiness_process_steps_without_need'),
+                count: $withoutNeed,
+                severity: 'warn',
+                url: route('traceability.index', $scopeQuery + ['orphans_only' => 1]),
+            );
+
+            $uncovered = $this->traceability->countUncoveredSwimlaneFlowSteps(
+                (int) $project->id,
+                (int) $project->workspace_id,
+            );
+            $items[] = $this->item(
+                key: 'uncovered_process_steps',
+                label: __('ui.readiness_uncovered_process_steps'),
+                count: $uncovered,
                 severity: 'warn',
                 url: route('traceability.index', $scopeQuery + ['orphans_only' => 1]),
             );

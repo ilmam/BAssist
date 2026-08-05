@@ -379,10 +379,10 @@ This is how nested panels (including modals) let children size to the **parent b
 |------|-----------------|------------------------|---------------------|
 | **sm** | &lt; 640px | 12 | 12 |
 | **md** | 640–959px | 6 | 12 |
-| **lg** | ≥ 960px | 4 | 12 |
+| **lg** | ≥ 960px | 6 | 12 |
 
 - Thresholds are **px** so theme root `font-size` cannot shift the breaks  
-- Vs `modalSizeStyles`: **sm 400 / md 560 / side ~600** stay on sm:12; **lg 720** → md:6 (2-up); **full ~1400** → lg:4 (3-up)
+- Vs `modalSizeStyles`: **sm 400 / md 560 / side ~600** stay on sm:12; **lg 720+** → md:6/lg:6 (2-up, half width)
 
 **Layout engines (do not mix `%` width into grid)**
 
@@ -398,18 +398,18 @@ Base and `@container` span rules must share equal specificity (or `@container` h
 ```html
 <div data-ui-container>
   <div class="grid grid-cols-12 gap-x-4 gap-y-3">
-    <div data-ui-span="12" data-ui-span-md="6" data-ui-span-lg="4">…</div>
-    <div data-ui-span="12" data-ui-span-md="6" data-ui-span-lg="4">…</div>
+    <div data-ui-span="12" data-ui-span-md="6" data-ui-span-lg="6">…</div>
+    <div data-ui-span="12" data-ui-span-md="6" data-ui-span-lg="6">…</div>
     <div data-ui-span="12" data-ui-span-md="12" data-ui-span-lg="12">…</div>
   </div>
 </div>
 ```
 
-Quick Create fields emit `data-ui-span` / `-md` / `-lg` from theme `form` components (type defaults above). Modal content may mark `data-ui-container` (Metronic 9) / modal body (Metronic 8); inside a modal the effective query host is `.kt-modal-content`. Centered dialogs set `width: 100%` + `maxWidth`; side sheets set an explicit ~600px width so the named container measures the panel, not the viewport.
+All theme `form` components (Quick Create, modal, and full page create/edit) emit `data-ui-span` / `-md` / `-lg` for every field (type defaults above), and mark their own field wrapper as `data-ui-container` so full-page forms (which have no ancestor modal) still measure the actual card width. Modal content also marks `data-ui-container` (Metronic 9) / modal body (Metronic 8); inside a modal the effective query host is `.kt-modal-content` — the nested container on the form wrapper is neutralized there. Centered dialogs set `width: 100%` + `maxWidth`; side sheets set an explicit ~600px width so the named container measures the panel, not the viewport.
 
 #### Override spans
 
-`#[Form]` / `#[ListForm]` do **not** take span / `quickSpan`. Spans use the type defaults above. Rare overrides set `$field['ui_span']` at form-assembly time (after `EntityFormBuilder` / `getFormFields()`, or in a per-model form override blade). **Only Quick Create** honors spans; full create/edit ignores them.
+`#[Form]` / `#[ListForm]` do **not** take span / `quickSpan`. Spans use the type defaults above. Rare overrides set `$field['ui_span']` at form-assembly time (after `EntityFormBuilder` / `getFormFields()`, or in a per-model form override blade). All theme `form` components (Quick Create, modal, full create/edit) honor spans.
 
 ```php
 // Same at every stop

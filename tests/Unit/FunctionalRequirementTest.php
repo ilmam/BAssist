@@ -28,6 +28,7 @@ class FunctionalRequirementTest extends TestCase
 
         $this->assertSame('textarea', $fields['statement']['type'] ?? null);
         $this->assertSame('select', $fields['stakeholder_need_id']['type'] ?? null);
+        $this->assertSame('select', $fields['swimlane_flow_step_id']['type'] ?? null);
         $this->assertSame('select', $fields['status_id']['type'] ?? null);
         $this->assertSame('select', $fields['priority_id']['type'] ?? null);
     }

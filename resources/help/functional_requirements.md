@@ -27,7 +27,7 @@ Developers cannot code from a vague wish such as “I want to track tickets.” 
 
 - **Upstream:** Derived from and justified by stakeholder requirements; bounded by business rules, constraints, and assumptions where relevant.
 - **Related solution packaging:** BDD features and scenarios are an alternative way to express solution behaviour as executable examples. Use FRs, examples, or both—whichever makes the obligation unambiguous—without forcing one form to parent the other.
-- **Downstream:** FRs feed design, development, and system/integration testing. Acceptance criteria are the verification path for this form of specification.
+- **Downstream:** FRs feed design, development, and system/integration testing. Acceptance criteria are the verification path for this form of specification. Optionally link an FR to a BPD process/decision step for process coverage; primary lineage remains the Stakeholder Need.
 - **The Rule of Integrity:** An FR without an upstream stakeholder link is candidate scope creep. An FR without clear acceptance criteria is untestable.
 
 **Practical tip:** Never describe the UI in a Functional Requirement. If two reviewers can disagree whether a demo passed the statement, tighten the verb, object, and condition (and the acceptance criteria) until only one honest reading remains.

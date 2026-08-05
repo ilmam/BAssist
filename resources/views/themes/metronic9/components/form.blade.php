@@ -24,16 +24,16 @@
         );
     }
 
-    // Quick-create uses a 12-col grid; compact spacing is owned by
-    // .form-fields-grid under [data-form-density=compact] in ui-layout.css
-    // (do not also apply gap-y-* — that stacks with .kt-form-item margins).
-    $fieldsWrapperClass = $quickCreate
-        ? 'form-fields-grid grid grid-cols-12'
-        : 'form-fields';
+    // All forms (quick-create, modal, and full page) use a 12-col grid so
+    // narrow fields default to half width; compact spacing (quick-create
+    // only) is owned by .form-fields-grid under [data-form-density=compact]
+    // in ui-layout.css (do not also apply gap-y-* — that stacks with
+    // .kt-form-item margins).
+    $fieldsWrapperClass = 'form-fields-grid grid grid-cols-12';
 @endphp
 
 {{ Form::open($formOpenOptions) }}
-    <div class="{{ $inModal ? '' : 'kt-card-body border-t border-border p-5 lg:p-7.5' }}">
+    <div class="{{ $inModal ? '' : 'kt-card-body border-t border-border p-5 lg:p-7.5' }}" data-ui-container>
         <div class="{{ $fieldsWrapperClass }}">
             @if (! in_array($verb, ['POST', 'post'], true))
                 @method($verb)
@@ -83,12 +83,12 @@
                     }
 
                     // Multi-stop spans via container queries (ui-layout.css).
-                    // Defaults: sm:12 md:6 lg:4 — textarea/code/dropzone stay 12 at all stops.
+                    // Defaults: sm:12 md:6 lg:6 (half width) — textarea/code/dropzone stay 12 at all stops.
                     $clamp = static fn (int $n): int => max(1, min(12, $n));
                     $isWide = in_array($type, ['textarea', 'code', 'dropzone'], true);
                     $defaults = $isWide
                         ? ['sm' => 12, 'md' => 12, 'lg' => 12]
-                        : ['sm' => 12, 'md' => 6, 'lg' => 4];
+                        : ['sm' => 12, 'md' => 6, 'lg' => 6];
                     $raw = $field['ui_span'] ?? null;
                     if (is_int($raw) || (is_string($raw) && ctype_digit($raw))) {
                         $n = $clamp((int) $raw);
@@ -105,17 +105,13 @@
                     }
                 @endphp
 
-                @if ($quickCreate)
-                    <div
-                        data-ui-span="{{ $span['sm'] }}"
-                        data-ui-span-md="{{ $span['md'] }}"
-                        data-ui-span-lg="{{ $span['lg'] }}"
-                    >
-                        {{ Form::field($type, $fieldName, $fieldValue, $list, $options) }}
-                    </div>
-                @else
+                <div
+                    data-ui-span="{{ $span['sm'] }}"
+                    data-ui-span-md="{{ $span['md'] }}"
+                    data-ui-span-lg="{{ $span['lg'] }}"
+                >
                     {{ Form::field($type, $fieldName, $fieldValue, $list, $options ?: null) }}
-                @endif
+                </div>
             @endforeach
         </div>
     </div>

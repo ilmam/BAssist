@@ -19,7 +19,7 @@
             'dto' => $dto,
             'model' => $model,
             'fields' => $fields,
-            'satisfyOptions' => $satisfyOptions ?? [],
+            'stakeholderNeedOptions' => $stakeholderNeedOptions ?? [],
         ])
 
         <x-slot:footer>

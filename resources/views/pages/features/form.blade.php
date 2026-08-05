@@ -27,7 +27,7 @@
         </x-slot>
 
         {{ Form::open(array_merge($formRoute, ['id' => 'form1', 'files' => true, 'method' => 'post'])) }}
-            <div class="kt-card-body border-t border-border p-5 lg:p-7.5 space-y-8">
+            <div class="kt-card-body border-t border-border p-5 lg:p-7.5 space-y-8" data-ui-container>
                 @if (! $isCreate)
                     @method($verb)
                 @endif
@@ -41,7 +41,7 @@
                         <h3 class="text-base font-semibold text-foreground">{{ __('ui.metadata') }}</h3>
                         <p class="text-sm text-muted-foreground">{{ __('ui.feature_traceability_help') }}</p>
                     </div>
-                    <div class="form-fields">
+                    <div class="form-fields-grid grid grid-cols-12">
                         @foreach (['code', 'title', 'project_id', 'priority_id', 'status_id'] as $fieldName)
                             @continue(! array_key_exists($fieldName, $formFields))
                             @php
@@ -61,7 +61,9 @@
                                     $options['data-field-help'] = $field['help'];
                                 }
                             @endphp
-                            {{ Form::field($type, $fieldName, $fieldValue, $list, $options ?: null) }}
+                            <div data-ui-span="12" data-ui-span-md="6" data-ui-span-lg="6">
+                                {{ Form::field($type, $fieldName, $fieldValue, $list, $options ?: null) }}
+                            </div>
                         @endforeach
                     </div>
                 </section>
@@ -84,6 +86,19 @@
                         {{ Form::field($type, 'stakeholder_need_id', $fieldValue, $list, $options) }}
                     @else
                         <p class="text-sm text-danger">{{ __('ui.stakeholder_need') }} field is missing from the form definition.</p>
+                    @endif
+                    @if (array_key_exists('swimlane_flow_step_id', $formFields))
+                        @php
+                            $field = $formFields['swimlane_flow_step_id'];
+                            $type = FormHelper::getFieldType($field);
+                            $fieldValue = $dto->swimlane_flow_step_id ?? null;
+                            $list = $field['list'] ?? null;
+                            $options = [];
+                            if (! empty($field['help'])) {
+                                $options['data-field-help'] = $field['help'];
+                            }
+                        @endphp
+                        {{ Form::field($type, 'swimlane_flow_step_id', $fieldValue, $list, $options ?: null) }}
                     @endif
                 </section>
 

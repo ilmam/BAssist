@@ -4,7 +4,7 @@
  */
 
 const TYPES = ['start', 'process', 'decision', 'end'];
-const SATISFIABLE_TYPES = ['process', 'decision'];
+const LINKABLE_TYPES = ['process', 'decision'];
 
 function toNodeId(label) {
     const trimmed = String(label ?? '').trim();
@@ -38,7 +38,7 @@ function normalizeElements(elements) {
             label: String(row?.label ?? '').trim(),
             line_title: String(row?.line_title ?? '').trim(),
             code: String(row?.code ?? '').trim(),
-            satisfy: String(row?.satisfy ?? '').trim(),
+            stakeholder_need_id: String(row?.stakeholder_need_id ?? '').trim(),
         }))
         .filter((row) => row.lane !== '' && row.label !== '' && TYPES.includes(row.type))
         .map((row) => ({
@@ -46,7 +46,10 @@ function normalizeElements(elements) {
             from: row.from !== '' ? row.from : null,
             line_title: row.line_title !== '' ? row.line_title : null,
             code: row.code !== '' ? row.code : null,
-            satisfy: SATISFIABLE_TYPES.includes(row.type) && row.satisfy !== '' ? row.satisfy : null,
+            stakeholder_need_id:
+                LINKABLE_TYPES.includes(row.type) && row.stakeholder_need_id !== ''
+                    ? row.stakeholder_need_id
+                    : null,
         }));
 }
 
@@ -127,13 +130,14 @@ export function readElementsFromTable(table) {
     };
 
     return Array.from(table.querySelectorAll('tbody tr[data-element-row]')).map((row) => ({
+        id: readField(row, 'id'),
         lane: readField(row, 'lane'),
         from: readField(row, 'from'),
         type: readField(row, 'type'),
         label: readField(row, 'label'),
         line_title: readField(row, 'line_title'),
         code: readField(row, 'code'),
-        satisfy: readField(row, 'satisfy'),
+        stakeholder_need_id: readField(row, 'stakeholder_need_id'),
     }));
 }
 
@@ -176,7 +180,7 @@ async function renderMermaid(preview, source, mermaidText) {
     }
 }
 
-function setSatisfySelectOptions(select, options, selectedValue) {
+function setNeedSelectOptions(select, options, selectedValue) {
     if (!select) {
         return;
     }
@@ -200,18 +204,18 @@ function setSatisfySelectOptions(select, options, selectedValue) {
     });
 }
 
-function syncSatisfyEnabled(row) {
+function syncNeedEnabled(row) {
     const typeEl = row.querySelector('[data-field="type"]');
-    const satisfyEl = row.querySelector('[data-field="satisfy"]');
-    if (!typeEl || !satisfyEl || satisfyEl.tagName !== 'SELECT') {
+    const needEl = row.querySelector('[data-field="stakeholder_need_id"]');
+    if (!typeEl || !needEl || needEl.tagName !== 'SELECT') {
         return;
     }
 
     const type = String(typeEl.value ?? '').toLowerCase();
-    const enabled = SATISFIABLE_TYPES.includes(type);
-    satisfyEl.disabled = !enabled;
+    const enabled = LINKABLE_TYPES.includes(type);
+    needEl.disabled = !enabled;
     if (!enabled) {
-        satisfyEl.value = '';
+        needEl.value = '';
     }
 }
 
@@ -235,7 +239,7 @@ export function bindSwimlaneFlowEditor(root) {
     const source = root.querySelector('[data-mermaid-source]');
     const template = root.querySelector('template[data-element-row-template]');
     const autoRender = root.getAttribute('data-auto-render') === '1';
-    const satisfyOptionsUrl = root.getAttribute('data-satisfy-options-url') || '';
+    const needOptionsUrl = root.getAttribute('data-stakeholder-need-options-url') || '';
 
     if (!preview) {
         return;
@@ -268,63 +272,63 @@ export function bindSwimlaneFlowEditor(root) {
                     input.name = `elements[${index}][${field}]`;
                 }
             });
-            syncSatisfyEnabled(row);
+            syncNeedEnabled(row);
         });
     };
 
-    const reloadSatisfyOptions = () => {
-        if (!satisfyOptionsUrl || !tbody) {
+    const reloadNeedOptions = () => {
+        if (!needOptionsUrl || !tbody) {
             return;
         }
 
         const projectId = projectInput?.value || '';
         if (!projectId || projectId === '0') {
-            tbody.querySelectorAll('[data-field="satisfy"]').forEach((select) => {
+            tbody.querySelectorAll('[data-field="stakeholder_need_id"]').forEach((select) => {
                 if (select.tagName === 'SELECT') {
-                    setSatisfySelectOptions(select, [], '');
+                    setNeedSelectOptions(select, [], '');
                 }
             });
             if (template) {
-                const templateSelect = template.content.querySelector('[data-field="satisfy"]');
-                setSatisfySelectOptions(templateSelect, [], '');
+                const templateSelect = template.content.querySelector('[data-field="stakeholder_need_id"]');
+                setNeedSelectOptions(templateSelect, [], '');
             }
             return;
         }
 
         const currentByRow = Array.from(tbody.querySelectorAll('tr[data-element-row]')).map((row) => {
-            const select = row.querySelector('[data-field="satisfy"]');
+            const select = row.querySelector('[data-field="stakeholder_need_id"]');
             return select && 'value' in select ? select.value : '';
         });
 
-        const endpoint = `${satisfyOptionsUrl}?project_id=${encodeURIComponent(projectId)}`;
+        const endpoint = `${needOptionsUrl}?project_id=${encodeURIComponent(projectId)}`;
         fetch(endpoint, {
             headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
             credentials: 'same-origin',
         })
             .then((response) => {
                 if (!response.ok) {
-                    throw new Error('satisfy options failed');
+                    throw new Error('stakeholder need options failed');
                 }
                 return response.json();
             })
             .then((payload) => {
                 const options = payload.options || [];
                 tbody.querySelectorAll('tr[data-element-row]').forEach((row, index) => {
-                    const select = row.querySelector('[data-field="satisfy"]');
+                    const select = row.querySelector('[data-field="stakeholder_need_id"]');
                     if (select && select.tagName === 'SELECT') {
-                        setSatisfySelectOptions(select, options, currentByRow[index] || '');
-                        syncSatisfyEnabled(row);
+                        setNeedSelectOptions(select, options, currentByRow[index] || '');
+                        syncNeedEnabled(row);
                     }
                 });
                 if (template) {
-                    const templateSelect = template.content.querySelector('[data-field="satisfy"]');
-                    setSatisfySelectOptions(templateSelect, options, '');
+                    const templateSelect = template.content.querySelector('[data-field="stakeholder_need_id"]');
+                    setNeedSelectOptions(templateSelect, options, '');
                 }
             })
             .catch(() => {
-                tbody.querySelectorAll('[data-field="satisfy"]').forEach((select) => {
+                tbody.querySelectorAll('[data-field="stakeholder_need_id"]').forEach((select) => {
                     if (select.tagName === 'SELECT') {
-                        setSatisfySelectOptions(select, [], '');
+                        setNeedSelectOptions(select, [], '');
                     }
                 });
             });
@@ -408,7 +412,7 @@ export function bindSwimlaneFlowEditor(root) {
             return;
         }
         if (event.target?.getAttribute?.('data-field') === 'type') {
-            syncSatisfyEnabled(row);
+            syncNeedEnabled(row);
         }
     });
 
@@ -428,7 +432,7 @@ export function bindSwimlaneFlowEditor(root) {
 
     form?.addEventListener('change', (event) => {
         if (event.target?.getAttribute?.('name') === 'project_id') {
-            reloadSatisfyOptions();
+            reloadNeedOptions();
         }
     });
 
