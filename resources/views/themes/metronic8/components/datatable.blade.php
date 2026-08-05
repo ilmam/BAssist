@@ -1,45 +1,61 @@
+{{-- Width/wrap rules: M8 keeps a local push; no table-level min-width sum. --}}
 @push('styles')
 <style>
-    /* Metronic-style: fixed layout + explicit rem widths on short columns. */
+    .table-responsive,
+    .table-responsive .dataTables_wrapper,
     table.dataTable {
-        table-layout: fixed;
-        width: 100%;
+        width: 100% !important;
+        max-width: 100%;
     }
-
+    .table-responsive .dataTables_wrapper { display: block; }
+    table.dataTable { table-layout: fixed !important; min-width: 0; }
     table.dataTable thead th {
-        vertical-align: bottom;
+        height: auto;
+        white-space: normal !important;
+        overflow-wrap: break-word;
+        word-break: normal;
     }
-
-    table.dataTable th.dt-nowrap,
-    table.dataTable td.dt-nowrap {
+    table.dataTable th,
+    table.dataTable td {
+        white-space: normal;
+        overflow-wrap: break-word;
+        word-break: normal;
+    }
+    table.dataTable tbody td.dt-nowrap {
         white-space: nowrap;
+        overflow-wrap: normal;
+        word-break: normal;
     }
 </style>
 @endpush
 
-<table class="table align-middle table-row-dashed fs-6 gy-5 dataTable no-footer {{ $class }}"
-    id="{{ \App\Helpers\Ui::keyset($id, 'id', 'datatable') }}">
-    <thead>
-        <tr class="text-start text-muted fw-bolder fs-7 text-uppercase gs-0">
-            @foreach ($options['columns'] as $col)
-                @php
-                    $colStyle = \App\Helpers\DatatableUi::columnStyle($col);
-                    $bodyNowrap = (bool) preg_match('/white-space\s*:\s*nowrap/i', $colStyle);
-                @endphp
-                <th class="sorting{{ $bodyNowrap ? ' dt-nowrap' : '' }}" tabindex="0"
-                    data-style="{{ $colStyle }}"
-                    @if ($bodyNowrap) data-body-nowrap="1" @endif
-                    @if ($colStyle !== '') style="{{ $colStyle }}" @endif>
-                    @if (! is_array($col))
-                        {{ Ui::fieldLabel((string) $col) }}
-                    @else
-                        {{ $col['title'] ?? Ui::fieldLabel((string) ($col['name'] ?? $col['data'] ?? '')) }}
-                    @endif
-                </th>
-            @endforeach
-        </tr>
-    </thead>
-</table>
+<div class="table-responsive">
+    <table class="table align-middle table-row-dashed fs-6 gy-5 dataTable no-footer {{ $class }}"
+        id="{{ \App\Helpers\Ui::keyset($id, 'id', 'datatable') }}"
+        style="width: 100%;">
+        <thead>
+            <tr class="text-start text-muted fw-bolder fs-7 text-uppercase gs-0">
+                @foreach ($options['columns'] as $col)
+                    @php
+                        $colStyle = \App\Helpers\DatatableUi::columnStyle($col, $loop->index);
+                        $headerStyle = \App\Helpers\DatatableUi::headerStyle($colStyle);
+                        $bodyNowrap = (bool) preg_match('/white-space\s*:\s*nowrap/i', $colStyle);
+                    @endphp
+                    <th class="sorting" tabindex="0"
+                        data-style="{{ $colStyle }}"
+                        @if ($bodyNowrap) data-body-nowrap="1" @endif
+                        @if ($headerStyle !== '') style="{{ $headerStyle }}" @endif>
+                        @if (! is_array($col))
+                            {{ Ui::fieldLabel((string) $col) }}
+                        @else
+                            {{ $col['title'] ?? Ui::fieldLabel((string) ($col['name'] ?? $col['data'] ?? '')) }}
+                        @endif
+                    </th>
+                @endforeach
+            </tr>
+        </thead>
+    </table>
+</div>
 
 @push('scripts')
 <script>
@@ -118,6 +134,10 @@
                 },
                 drawCallback: function() {
                     var api = this.api();
+                    var $table = $(dtid);
+                    $table.css('width', '100%');
+                    $table.closest('.dataTables_wrapper').css('width', '100%');
+                    $table.closest('.table-responsive').css('width', '100%');
                     $(dtid + ' thead th[data-body-nowrap="1"]').each(function() {
                         api.column($(this).index()).nodes().to$().addClass('dt-nowrap');
                     });

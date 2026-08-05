@@ -1,37 +1,23 @@
-@push('styles')
-<style>
-    /* Metronic-style: fixed layout + explicit rem widths on short columns. */
-    table.dataTable {
-        table-layout: fixed;
-        width: 100%;
-    }
-
-    table.dataTable thead th {
-        vertical-align: bottom;
-    }
-
-    table.dataTable th.dt-nowrap,
-    table.dataTable td.dt-nowrap {
-        white-space: nowrap;
-    }
-</style>
-@endpush
+{{-- Width/wrap rules live in public/.../bassist.css (fixed layout + 100% width).
+     No table-level min-width sum — that left sparse lists stuck below card width. --}}
 
 <div class="kt-card-table">
     <div class="kt-table-wrapper">
-        <table class="kt-table kt-table-border table-fixed w-full dataTable no-footer {{ $class }}"
-            id="{{ \App\Helpers\Ui::keyset($id, 'id', 'datatable') }}">
+        <table class="kt-table kt-table-border w-full dataTable no-footer {{ $class }}"
+            id="{{ \App\Helpers\Ui::keyset($id, 'id', 'datatable') }}"
+            style="width: 100%;">
             <thead>
                 <tr>
                     @foreach ($options['columns'] as $col)
                         @php
-                            $colStyle = \App\Helpers\DatatableUi::columnStyle($col);
+                            $colStyle = \App\Helpers\DatatableUi::columnStyle($col, $loop->index);
+                            $headerStyle = \App\Helpers\DatatableUi::headerStyle($colStyle);
                             $bodyNowrap = (bool) preg_match('/white-space\s*:\s*nowrap/i', $colStyle);
                         @endphp
-                        <th class="sorting{{ $bodyNowrap ? ' dt-nowrap' : '' }}" tabindex="0"
+                        <th class="sorting" tabindex="0"
                             data-style="{{ $colStyle }}"
                             @if ($bodyNowrap) data-body-nowrap="1" @endif
-                            @if ($colStyle !== '') style="{{ $colStyle }}" @endif>
+                            @if ($headerStyle !== '') style="{{ $headerStyle }}" @endif>
                             @if (! is_array($col))
                                 {{ Ui::fieldLabel((string) $col) }}
                             @else
@@ -122,6 +108,10 @@
                 },
                 drawCallback: function() {
                     var api = this.api();
+                    var $table = $(dtid);
+                    $table.css('width', '100%');
+                    $table.closest('.dataTables_wrapper').css('width', '100%');
+                    $table.closest('.kt-table-wrapper, .table-responsive').css('width', '100%');
                     $(dtid + ' thead th[data-body-nowrap="1"]').each(function() {
                         api.column($(this).index()).nodes().to$().addClass('dt-nowrap');
                     });
