@@ -19,10 +19,13 @@ class FeatureData extends BaseData
         #[Form('select', 'Project')]
         public int $project_id = 0,
 
-        #[Form('select', 'StakeholderNeed', help: 'Saves as @need:{code} at the top of the Feature document. Also links this Feature in the project traceability matrix.')]
+        #[Form('select', 'StakeholderNeed', help: 'Parent lineage: pick a Stakeholder Need OR an approved Change Request (not both). SN also saves as @need:{code} in the Feature document.')]
         public ?int $stakeholder_need_id = null,
 
-        #[Form('select', 'SwimlaneFlowStep', help: 'Optional BPD process/decision step this feature elaborates (coverage only; lineage stays via Stakeholder Need).')]
+        #[Form('select', 'ChangeRequest', help: 'Approved CRs only. Parent under a CR instead of directly under an SN.')]
+        public ?int $change_request_id = null,
+
+        #[Form('select', 'SwimlaneFlowStep', help: 'Optional BPD process/decision step this feature elaborates (coverage only).')]
         public ?int $swimlane_flow_step_id = null,
 
         /**
@@ -46,6 +49,7 @@ class FeatureData extends BaseData
             'title' => ['required', 'string', 'max:255'],
             'project_id' => ['required', 'integer', 'exists:projects,id'],
             'stakeholder_need_id' => ['nullable', 'integer', 'exists:stakeholder_needs,id'],
+            'change_request_id' => ['nullable', 'integer', 'exists:change_requests,id'],
             'swimlane_flow_step_id' => ['nullable', 'integer', 'exists:swimlane_flow_steps,id'],
             'body' => ['nullable', 'string'],
             'priority_id' => ['nullable', 'integer', 'exists:priorities,id'],

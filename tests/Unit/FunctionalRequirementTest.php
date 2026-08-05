@@ -50,4 +50,30 @@ class FunctionalRequirementTest extends TestCase
         $this->assertContains('required', $rules['title']);
         $this->assertContains('required', $rules['project_id']);
     }
+
+    /**
+     * Change Request is an optional alternate parent (Stakeholder Need XOR
+     * approved CR — see SolutionPackagingParent) — it must never be required.
+     */
+    public function test_change_request_id_is_optional(): void
+    {
+        $rules = FunctionalRequirementData::rules();
+
+        $this->assertContains('nullable', $rules['change_request_id']);
+        $this->assertNotContains('required', $rules['change_request_id']);
+    }
+
+    /**
+     * The select's option list must include a leading blank entry, or the
+     * browser auto-selects the first Change Request and the "optional"
+     * validation rule becomes unreachable from the UI (mirrors
+     * SwimlaneFlowStepRepository::getSelectOptions()).
+     */
+    public function test_change_request_select_options_include_blank_entry(): void
+    {
+        $options = (new \App\Repositories\ChangeRequestRepository)->getSelectOptions();
+
+        $this->assertArrayHasKey('', $options);
+        $this->assertSame('', $options['']);
+    }
 }

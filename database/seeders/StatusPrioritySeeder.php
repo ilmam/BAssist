@@ -15,6 +15,7 @@ class StatusPrioritySeeder extends Seeder
         $statuses = [
             ['code' => EntityStatus::DRAFT, 'name' => 'Draft', 'sort_order' => 10, 'description' => 'Work in progress; not yet agreed.', 'is_system' => true],
             ['code' => EntityStatus::AGREED, 'name' => 'Agreed', 'sort_order' => 20, 'description' => 'Accepted for the current baseline.', 'is_system' => true],
+            ['code' => EntityStatus::NEED_REVISION, 'name' => 'Need Revision', 'sort_order' => 25, 'description' => 'Flagged by an approved change request; must be kept, revised (via new item), or deprecated.', 'is_system' => true],
             ['code' => EntityStatus::DEPRECATED, 'name' => 'Deprecated', 'sort_order' => 30, 'description' => 'Superseded or no longer in scope.', 'is_system' => true],
         ];
 

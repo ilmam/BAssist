@@ -390,10 +390,29 @@ Extract **`StrategicBaselineResolver`** (or equivalent) — one method, e.g. `re
 
 ---
 
-## 11. Datatable — Title/identity column floor on wide fixed-layout lists — **LOCKED** · **P2**
+## 11. Datatable — Title/identity column floor on wide fixed-layout lists — **DONE** (2026-08-05)
 
-**Status:** LOCKED for Phase 2 queue (documentation only — **do not implement now**).
+**Status:** Shipped. Fixed while investigating a broken Change Requests list (same family of issue as the Risks Title floor documented below).
 Logged from the datatable full-width/wrap layout work (see `git log` — "Make entity list tables fill the card with a fixed layout, wrapped text, and compact actions").
+
+### Resolution
+
+Added `DatatableUi::minTableWidth(array $columns): string` — sums every column's explicit `width` plus `IDENTITY_MIN_WIDTH` for the one width-less identity column, returned as an inline `min-width` declaration applied to the `<table>` element itself (alongside its existing `width: 100%`) in both theme `datatable.blade.php` components.
+
+- **Sparse lists** (BO/BN/Projects/…): the computed sum is comfortably smaller than the card's natural 100% width, so `min-width` never engages — unchanged behavior, still fills the card exactly at 100%.
+- **Wide lists** (Risks, Change Requests): once the card is narrower than the computed sum, the table's `min-width` forces it past 100%, which — under `table-layout: fixed` — gives the width-less identity column its true `IDENTITY_MIN_WIDTH` share instead of being starved below it. `.kt-table-wrapper` (`overflow: auto`) scrolls horizontally as the intentional, already-styled fallback.
+- Inline `min-width` wins the cascade over the stylesheet's non-`!important` `min-width: 0` default (`public/themes/metronic9/assets/css/bassist.css`), so no CSS specificity fights were needed.
+- Also added `impact_level` and `requestor` to `DatatableUi::SHORT_ROOTS` (same treatment as Risk's `owner`) so Change Requests' own column-width sum is smaller before the floor even needs to engage.
+
+**Files changed:** `app/Helpers/DatatableUi.php` (`minTableWidth()`, `SHORT_ROOTS` additions), `resources/views/themes/metronic9/components/datatable.blade.php`, `resources/views/themes/metronic8/components/datatable.blade.php`, `public/themes/metronic9/assets/css/bassist.css` (comment only), `tests/Unit/DatatableUiTest.php`.
+
+### Acceptance criteria (met)
+
+- [x] Risks list Title column stays readable (not a single-character sliver) at common viewport/card widths with the full 10-column set present — enforced via table-level `min-width`, not just the per-column floor.
+- [x] Sparse lists (BO, BN, Projects, etc.) still render at full 100% card width with no regression — extended `tests/Unit/DatatableUiTest.php` with `min_table_width_is_small_on_sparse_lists`.
+- [x] Horizontal scroll is the intentional, already-styled fallback for very wide tables (`.kt-table-wrapper { overflow: auto }`) — not an accidental overflow.
+
+### Superseded background (kept for history)
 
 ### Problem
 
@@ -405,17 +424,11 @@ On lists with many columns — **Risks** today (10 `#[InList]` columns: code, ti
 
 Cannot simply give identity a real `width` (fixed rem/%) or shrink other columns further, because **sparse lists rely on identity having no `width` at all** to absorb 100% of leftover space and fill the card. This is locked in by `DatatableUiTest::identity_column_has_no_fixed_width_so_it_absorbs_leftover_space` and the sibling tests in `tests/Unit/DatatableUiTest.php`. Any fix must not regress that sparse-list behavior (tables shrinking below 100% width again, or leaving dead trailing space).
 
-### Options to evaluate (not decided — needs a fresh look)
+### Options that were evaluated
 
 - CSS `width: max(14rem, ...)`-style floor, or a small JS post-render pass (DataTables `drawCallback`) that measures and enforces a minimum pixel width on the identity `<td>`/`<th>` after layout.
-- Detect "wide" tables (column count over a threshold — Risks-style) and give **only those** a different strategy: e.g. an explicit percentage floor on identity, or deliberately allow horizontal scroll via `.kt-table-wrapper` (`overflow: auto`, already present) instead of fighting for space — i.e. a wide-table mode in `DatatableUi` rather than a global change.
-- Re-examine whether some Risks `#[InList]` columns could move to `SHORT_WIDTH` or be dropped from the default list (see `RiskViewData::$related_to` comment for a related precedent of trimming list columns) to reduce total column-width pressure without touching the identity mechanism at all.
-
-### Acceptance criteria (when picked up)
-
-- [ ] Risks list Title column stays readable (not a single-character sliver) at common viewport/card widths with the full 10-column set present.
-- [ ] Sparse lists (BO, BN, Projects, etc.) still render at full 100% card width with no regression — extend `tests/Unit/DatatableUiTest.php` rather than just re-running it.
-- [ ] If horizontal scroll is used as the fallback for very wide tables, it's an intentional, styled choice — not an accidental overflow.
+- **Chosen:** detect "wide" tables implicitly by summing every column's explicit width server-side and applying that sum (plus the identity floor) as a `min-width` on the `<table>` element itself — see Resolution above. No column-count threshold needed; the sum-based `min-width` is a no-op whenever it's already smaller than the card.
+- Re-examine whether some Risks `#[InList]` columns could move to `SHORT_WIDTH` or be dropped from the default list (see `RiskViewData::$related_to` comment for a related precedent of trimming list columns) — applied the `SHORT_WIDTH` half of this for Change Requests (`impact_level`, `requestor`) as a belt-and-suspenders improvement alongside the table-level floor.
 
 ### Touch points
 

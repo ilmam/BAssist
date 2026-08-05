@@ -14,7 +14,7 @@
     <x-slot:footer>
         @include('pages.change_requests.partials.request-change-button', [
             'dto' => $dto,
-            'affectedType' => \App\Support\ChangeRequestAffectedType::STAKEHOLDER_NEED,
+            'stakeholderNeedId' => (int) $dto->id,
         ])
         <x-modal-dismiss text="Close" />
     </x-slot:footer>

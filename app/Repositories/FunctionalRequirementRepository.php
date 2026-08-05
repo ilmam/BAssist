@@ -5,6 +5,7 @@ namespace App\Repositories;
 use App\Data\FunctionalRequirementData;
 use App\Data\FunctionalRequirementViewData;
 use App\Models\FunctionalRequirement;
+use App\Support\SolutionPackagingParent;
 use Illuminate\Database\Eloquent\Model;
 
 class FunctionalRequirementRepository extends BaseRepository
@@ -20,6 +21,7 @@ class FunctionalRequirementRepository extends BaseRepository
         'status_id',
         'priority_id',
         'stakeholder_need_id',
+        'change_request_id',
     ];
 
     protected array $listContextFilters = [
@@ -30,10 +32,21 @@ class FunctionalRequirementRepository extends BaseRepository
 
     protected array $listContextRelations = [
         'project.workspace',
+        'changeRequest',
     ];
 
     public function __construct()
     {
         $this->model = new FunctionalRequirement();
+    }
+
+    public function create(array $data)
+    {
+        return parent::create(SolutionPackagingParent::normalize($data));
+    }
+
+    public function update($id, array $newData)
+    {
+        return parent::update($id, SolutionPackagingParent::normalize($newData));
     }
 }

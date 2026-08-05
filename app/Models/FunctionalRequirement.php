@@ -24,6 +24,7 @@ class FunctionalRequirement extends BaseModel
         'title',
         'project_id',
         'stakeholder_need_id',
+        'change_request_id',
         'swimlane_flow_step_id',
         'statement',
         'trigger',
@@ -47,6 +48,12 @@ class FunctionalRequirement extends BaseModel
     public function stakeholderNeed(): BelongsTo
     {
         return $this->belongsTo(StakeholderNeed::class);
+    }
+
+    #[Relation('BelongsTo')]
+    public function changeRequest(): BelongsTo
+    {
+        return $this->belongsTo(ChangeRequest::class);
     }
 
     #[Relation('BelongsTo')]

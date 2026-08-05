@@ -15,6 +15,7 @@ final class EntityStatus
 {
     public const DRAFT = 'draft';
     public const AGREED = 'agreed';
+    public const NEED_REVISION = 'need_revision';
     public const DEPRECATED = 'deprecated';
 
     /**
@@ -27,6 +28,7 @@ final class EntityStatus
         return [
             self::DRAFT,
             self::AGREED,
+            self::NEED_REVISION,
             self::DEPRECATED,
         ];
     }

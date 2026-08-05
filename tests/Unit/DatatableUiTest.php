@@ -103,4 +103,78 @@ class DatatableUiTest extends TestCase
         $this->assertStringContainsString('width: 8.4rem', $style);
         $this->assertStringContainsString('min-width: 8.4rem', $style);
     }
+
+    #[Test]
+    public function change_request_enum_columns_get_compact_short_width_not_relation_width(): void
+    {
+        // impact_level (enum) and requestor (person name) must stay at
+        // SHORT_WIDTH — same treatment as Risk's owner — or they add to the
+        // column-width pressure that crushes the width-less title column.
+        foreach (['impact_level', 'requestor'] as $index => $root) {
+            $style = DatatableUi::columnStyle($root, $index + 3);
+
+            $this->assertStringContainsString('width: '.DatatableUi::SHORT_WIDTH, $style, "root [{$root}] should use SHORT_WIDTH");
+            $this->assertStringNotContainsString(DatatableUi::RELATION_WIDTH, $style, "root [{$root}] should not use RELATION_WIDTH");
+        }
+    }
+
+    #[Test]
+    public function min_table_width_is_small_on_sparse_lists(): void
+    {
+        // A typical sparse list: title, status, actions — well under any
+        // realistic card width, so `min-width` should never engage.
+        $columns = [
+            'title',
+            'status',
+            ['name' => 'actions', 'buttons' => [['action' => 'show'], ['action' => 'edit'], ['action' => 'delete']]],
+        ];
+
+        $minWidth = DatatableUi::minTableWidth($columns);
+
+        // title (14) + status (8) + actions (3 slots × 2.1 = 6.3) = 28.3rem
+        $this->assertSame('min-width: 28.3rem', $minWidth);
+    }
+
+    #[Test]
+    public function min_table_width_sums_every_explicit_width_plus_identity_floor_on_wide_lists(): void
+    {
+        // Risks-style wide list: code, title, project, category, likelihood,
+        // impact, response, owner, status, actions.
+        $columns = [
+            'code', 'title', 'project.name', 'category', 'likelihood',
+            'impact', 'response', 'owner', 'status',
+            ['name' => 'actions', 'buttons' => [['action' => 'show'], ['action' => 'edit'], ['action' => 'delete']]],
+        ];
+
+        $minWidth = DatatableUi::minTableWidth($columns);
+
+        // code(8) + title(min 14) + project(12) + category(8) + likelihood(8)
+        // + impact(8) + response(8) + owner(8) + status(8) + actions(6.3) = 88.3rem
+        $this->assertSame('min-width: 88.3rem', $minWidth);
+    }
+
+    #[Test]
+    public function min_table_width_does_not_crush_change_request_title(): void
+    {
+        // Change Requests: code, title, project, requestor, impact_level,
+        // stakeholderNeed, priority, status, actions.
+        $columns = [
+            'code', 'title', 'project.name', 'requestor', 'impact_level',
+            'stakeholderNeed.title', 'priority.name', 'status',
+            ['name' => 'actions', 'buttons' => [['action' => 'show'], ['action' => 'edit'], ['action' => 'delete']]],
+        ];
+
+        $minWidth = DatatableUi::minTableWidth($columns);
+
+        $this->assertNotSame('', $minWidth);
+        $this->assertMatchesRegularExpression('/min-width: \d+(\.\d+)?rem/', $minWidth);
+
+        // The floor guarantees Title always gets at least IDENTITY_MIN_WIDTH
+        // once the table is forced to this min-width — confirm the sum is
+        // comfortably above every other column's width alone (i.e. Title's
+        // floor is actually included, not silently dropped).
+        preg_match('/min-width: ([\d.]+)rem/', $minWidth, $matches);
+        $totalRem = (float) $matches[1];
+        $this->assertGreaterThanOrEqual(14.0 + 8 + 12 + 8 + 12 + 8 + 8 + 6.3, $totalRem);
+    }
 }

@@ -5,7 +5,7 @@
         $modelName = class_basename($model);
     @endphp
 
-    <x-card :title="$modelName.' Details'">
+    <x-card :title="($dto->code ? $dto->code.' — ' : '').$dto->title">
         <x-slot:toolbar>
             @if (entity_can($model, 'update'))
                 <x-button type="link" href="{{ model_modal_path($model, 'edit', $dto->id) }}" icon="pencil" iconOnly="true" color="primary" activeColor="primary" class="js-open-modal" data-modal-url="{{ model_modal_path($model, 'edit', $dto->id) }}"></x-button>
@@ -23,7 +23,16 @@
         @include('pages.change_requests.partials.cascade', ['cascade' => $cascade ?? []])
 
         <x-slot:footer>
-            <x-button type="link" href="{{ model_route($model, 'index') }}" color="light">Back to list</x-button>
+            <x-button type="link" href="{{ model_route($model, 'index') }}" color="light">{{ __('ui.back_to_list') }}</x-button>
+            @if (! empty($canApprove) && ! empty($approveUrl))
+                <x-button
+                    type="link"
+                    href="{{ $approveUrl }}"
+                    color="primary"
+                    class="js-open-modal"
+                    data-modal-url="{{ $approveUrl }}"
+                >{{ __('ui.change_request_approve_taint') }}</x-button>
+            @endif
         </x-slot:footer>
     </x-card>
 @endsection

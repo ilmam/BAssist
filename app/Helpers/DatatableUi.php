@@ -21,12 +21,18 @@ class DatatableUi
      * (never `width`). Under table-layout: fixed, only an explicit `width`
      * makes a column ineligible for the "auto" leftover-space share — a bare
      * `min-width` does not, so identity still absorbs 100% of the leftover
-     * space on sparse lists (BO/BN/Projects/…) exactly as before. It only
-     * kicks in as a real floor on wide lists (e.g. Risks) where the other
-     * columns' explicit widths would otherwise leave little/nothing for
-     * identity; if that floor can't fit inside the card at 100%, the table
-     * overflows and `.kt-table-wrapper` (overflow: auto) scrolls horizontally
-     * instead of crushing the title text to an unreadable sliver.
+     * space on sparse lists (BO/BN/Projects/…) exactly as before.
+     *
+     * A bare `min-width` on the `<td>`/`<th>` itself does NOT reliably
+     * reserve that space once every other column's explicit `width` sum
+     * approaches or exceeds the table's own width — the fixed-layout
+     * algorithm can still starve the width-less column below this floor.
+     * The real floor for wide lists (Risks, Change Requests, …) is enforced
+     * separately by putting a `min-width` on the `<table>` element itself —
+     * see `minTableWidth()` — sized to this constant plus every other
+     * column's explicit width, so the browser is forced to give the
+     * identity column its true share (and `.kt-table-wrapper`'s
+     * `overflow: auto` scrolls horizontally instead of crushing the title).
      */
     public const IDENTITY_MIN_WIDTH = '14rem';
 
@@ -42,13 +48,16 @@ class DatatableUi
      * to RiskData/RiskViewData — safe to add here without affecting other
      * entities) so the Risks list, which has far more columns than most
      * lists, doesn't blow past a sane total column-width sum under
-     * table-layout: fixed and crush the identity (title) column.
+     * table-layout: fixed and crush the identity (title) column. Also
+     * includes short Change Request fields (`impact_level` enum, `requestor`
+     * person name — same treatment as Risk's `owner`) for the same reason.
      *
      * @var list<string>
      */
     public const SHORT_ROOTS = [
         'id', 'code', 'number', 'priority', 'status',
         'category', 'likelihood', 'impact', 'response', 'owner',
+        'impact_level', 'requestor',
     ];
 
     /** @var list<string> */
@@ -113,6 +122,58 @@ class DatatableUi
         }
 
         return self::withoutNowrap($style);
+    }
+
+    /**
+     * `<table>`-level `min-width` (rem) so wide lists can't crush the
+     * width-less identity column under table-layout: fixed.
+     *
+     * Sums every column's explicit `width` (Status, counts, actions, …) plus
+     * IDENTITY_MIN_WIDTH for the one width-less identity/leftover column, and
+     * returns it as an inline `min-width` declaration for the `<table>`
+     * itself (alongside its `width: 100%`).
+     *
+     * - Sparse lists (BO/BN/Projects/…): this sum is comfortably smaller than
+     *   the card's natural 100% width, so `min-width` never engages — the
+     *   table renders at exactly 100% exactly as before.
+     * - Wide lists (Risks, Change Requests, …): once the card is narrower
+     *   than this sum, `min-width` forces the table past 100%, giving the
+     *   identity column its true floor instead of being starved to a
+     *   sliver, and `.kt-table-wrapper` (overflow: auto) scrolls
+     *   horizontally as the intentional fallback.
+     *
+     * @param  list<string|array<string, mixed>>  $columns
+     */
+    public static function minTableWidth(array $columns): string
+    {
+        $sum = 0.0;
+
+        foreach (array_values($columns) as $index => $col) {
+            $style = self::columnStyle($col, $index);
+
+            if (preg_match('/(?<!min-)width\s*:\s*([\d.]+)rem/i', $style, $matches) === 1) {
+                $sum += (float) $matches[1];
+
+                continue;
+            }
+
+            if (preg_match('/min-width\s*:\s*([\d.]+)rem/i', $style, $matches) === 1) {
+                $sum += (float) $matches[1];
+            }
+        }
+
+        if ($sum <= 0.0) {
+            return '';
+        }
+
+        return 'min-width: '.self::formatRem($sum).'rem';
+    }
+
+    protected static function formatRem(float $value): string
+    {
+        $formatted = rtrim(rtrim(number_format($value, 2, '.', ''), '0'), '.');
+
+        return $formatted === '' ? '0' : $formatted;
     }
 
     /**

@@ -6,6 +6,7 @@ use App\Models\Assumption;
 use App\Models\BusinessNeed;
 use App\Models\BusinessObjective;
 use App\Models\BusinessRule;
+use App\Models\ChangeRequest;
 use App\Models\Constraint;
 use App\Models\Feature;
 use App\Models\FunctionalRequirement;
@@ -15,7 +16,9 @@ use App\Models\ScopeItem;
 use App\Models\StakeholderNeed;
 use App\Models\StrategicBaseline;
 use App\Support\AssumptionStatus;
+use App\Support\ChangeRequestStatus;
 use App\Support\EntityAccess;
+use App\Support\EntityStatus;
 use App\Support\RiskImpact;
 use App\Support\RiskLikelihood;
 use App\Support\RiskResponse;
@@ -114,10 +117,38 @@ class ProjectReadinessService
             );
         }
 
+        if (entity_can('ChangeRequest', EntityAccess::VIEW)) {
+            $count = ChangeRequest::query()
+                ->where('project_id', $project->id)
+                ->whereIn('status', [ChangeRequestStatus::DRAFT, ChangeRequestStatus::UNDER_REVIEW])
+                ->count();
+            $items[] = $this->item(
+                key: 'unconfirmed_change_requests',
+                label: __('ui.readiness_unconfirmed_change_requests'),
+                count: $count,
+                severity: 'warn',
+                url: model_route('ChangeRequest', 'index').'?'.http_build_query($scopeQuery),
+            );
+
+            $count = ChangeRequest::query()
+                ->where('project_id', $project->id)
+                ->whereNull('stakeholder_need_id')
+                ->whereIn('status', ChangeRequestStatus::requiresStakeholderNeed())
+                ->count();
+            $items[] = $this->item(
+                key: 'crs_without_stakeholder_need',
+                label: __('ui.readiness_crs_without_stakeholder_need'),
+                count: $count,
+                severity: 'critical',
+                url: model_route('ChangeRequest', 'index').'?'.http_build_query($scopeQuery),
+            );
+        }
+
         if (entity_can('FunctionalRequirement', EntityAccess::VIEW)) {
             $count = FunctionalRequirement::query()
                 ->where('project_id', $project->id)
                 ->whereNull('stakeholder_need_id')
+                ->whereNull('change_request_id')
                 ->count();
             $items[] = $this->item(
                 key: 'orphan_functional_requirements',
@@ -143,10 +174,36 @@ class ProjectReadinessService
             );
         }
 
+        $needRevisionId = EntityStatus::id(EntityStatus::NEED_REVISION);
+        if ($needRevisionId !== null && (
+            entity_can('FunctionalRequirement', EntityAccess::VIEW) || entity_can('Feature', EntityAccess::VIEW)
+        )) {
+            $frCount = entity_can('FunctionalRequirement', EntityAccess::VIEW)
+                ? FunctionalRequirement::query()
+                    ->where('project_id', $project->id)
+                    ->where('status_id', $needRevisionId)
+                    ->count()
+                : 0;
+            $feCount = entity_can('Feature', EntityAccess::VIEW)
+                ? Feature::query()
+                    ->where('project_id', $project->id)
+                    ->where('status_id', $needRevisionId)
+                    ->count()
+                : 0;
+            $items[] = $this->item(
+                key: 'need_revision_packaging',
+                label: __('ui.readiness_need_revision_packaging'),
+                count: $frCount + $feCount,
+                severity: 'critical',
+                url: route('solution_requirements.index', $scopeQuery),
+            );
+        }
+
         if (entity_can('Feature', EntityAccess::VIEW)) {
             $count = Feature::query()
                 ->where('project_id', $project->id)
                 ->whereNull('stakeholder_need_id')
+                ->whereNull('change_request_id')
                 ->count();
             $items[] = $this->item(
                 key: 'orphan_features',

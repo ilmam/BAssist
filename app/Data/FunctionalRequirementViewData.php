@@ -26,6 +26,9 @@ class FunctionalRequirementViewData extends BaseData
         public ?int $stakeholder_need_id = null,
         #[InList]
         public ?StakeholderNeedViewData $stakeholder_need = null,
+        public ?int $change_request_id = null,
+        #[InList]
+        public ?ChangeRequestViewData $change_request = null,
         public string $statement = '',
         public ?string $trigger = null,
         public ?string $acceptance_criteria = null,

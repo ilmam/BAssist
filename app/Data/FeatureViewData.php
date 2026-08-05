@@ -26,6 +26,9 @@ class FeatureViewData extends BaseData
         public ?int $stakeholder_need_id = null,
         #[InList]
         public ?StakeholderNeedViewData $stakeholder_need = null,
+        public ?int $change_request_id = null,
+        #[InList]
+        public ?ChangeRequestViewData $change_request = null,
         public ?string $body = null,
         public ?int $priority_id = null,
         public ?PriorityViewData $priority = null,

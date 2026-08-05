@@ -16,9 +16,4 @@
         :fieldsArray="$formFields"
         :inModal="true"
     />
-
-    @include('pages.change_requests.partials.affected-options-script', [
-        'formId' => 'modalForm',
-        'affectedOptionsUrl' => $affectedOptionsUrl,
-    ])
 </x-modal-content>

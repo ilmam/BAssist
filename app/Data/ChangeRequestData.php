@@ -4,7 +4,6 @@ namespace App\Data;
 
 use App\Attributes\Form;
 use App\Attributes\ListForm;
-use App\Support\ChangeRequestAffectedType;
 use App\Support\ChangeRequestImpact;
 use App\Support\ChangeRequestStatus;
 use Illuminate\Validation\Rule;
@@ -38,16 +37,13 @@ class ChangeRequestData extends BaseData
         #[Form('textarea', hideQuick: true, help: 'Brief impact notes. Required when impact is High.')]
         public ?string $impact_notes = null,
 
-        #[ListForm('select', 'ChangeRequestAffectedType', help: 'Level of the requirement this change applies to.')]
-        public ?string $affected_type = null,
-
-        #[Form('select', help: 'The specific requirement being changed. Choose the type first.')]
-        public ?int $affected_id = null,
+        #[ListForm('select', 'StakeholderNeed', help: 'Anchor this change to a Stakeholder Need (5 Whys). Create the SN first if this change invents a new need.')]
+        public ?int $stakeholder_need_id = null,
 
         #[Form('select', 'Priority')]
         public ?int $priority_id = null,
 
-        #[ListForm('select', 'ChangeRequestStatus')]
+        #[ListForm('select', 'ChangeRequestStatus', help: 'Use Approve & mark for revision to move to Approved (confirms which FR/BDD to taint).')]
         public string $status = ChangeRequestStatus::DRAFT,
     ) {
     }
@@ -62,8 +58,7 @@ class ChangeRequestData extends BaseData
             'requestor' => ['required', 'string', 'max:255'],
             'impact_level' => ['required', 'string', Rule::in(ChangeRequestImpact::values())],
             'impact_notes' => ['nullable', 'string'],
-            'affected_type' => ['nullable', 'string', Rule::in(ChangeRequestAffectedType::values())],
-            'affected_id' => ['nullable', 'integer', 'min:1'],
+            'stakeholder_need_id' => ['nullable', 'integer', 'exists:stakeholder_needs,id'],
             'priority_id' => ['nullable', 'integer', 'exists:priorities,id'],
             'status' => ['required', 'string', Rule::in(ChangeRequestStatus::values())],
         ];

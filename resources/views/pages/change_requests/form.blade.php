@@ -23,9 +23,4 @@
             :fieldsArray="$formFields"
         />
     </x-form-card>
-
-    @include('pages.change_requests.partials.affected-options-script', [
-        'formId' => 'form1',
-        'affectedOptionsUrl' => $affectedOptionsUrl,
-    ])
 @endsection

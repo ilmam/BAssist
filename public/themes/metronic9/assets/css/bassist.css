@@ -407,7 +407,11 @@ body.modal-sheet-push .kt-header {
 table.kt-table.dataTable,
 table.dataTable {
   /* Fixed + 100% width: sparse lists always fill the card; leftover goes to the
-     width-less identity column (name/title). Column rem widths on other ths. */
+     width-less identity column (name/title). Column rem widths on other ths.
+     `min-width: 0` here is the sparse-list default — wide lists (Risks,
+     Change Requests, …) override it per-table via an inline `min-width`
+     (DatatableUi::minTableWidth(), set in the datatable Blade component),
+     which always wins the cascade over this non-`!important` rule. */
   table-layout: fixed !important;
   width: 100% !important;
   max-width: 100%;

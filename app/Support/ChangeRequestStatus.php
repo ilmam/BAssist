@@ -31,17 +31,32 @@ final class ChangeRequestStatus
         ];
     }
 
+    /**
+     * Statuses selectable on the CR form (approval uses a dedicated confirm flow).
+     *
+     * @return list<string>
+     */
+    public static function formValues(): array
+    {
+        return [
+            self::DRAFT,
+            self::UNDER_REVIEW,
+            self::REJECTED,
+            self::IMPLEMENTED,
+        ];
+    }
+
     public static function default(): string
     {
         return self::DRAFT;
     }
 
     /**
-     * Statuses that require at least one affected requirement link.
+     * Statuses that require a Stakeholder Need anchor.
      *
      * @return list<string>
      */
-    public static function requiresAffected(): array
+    public static function requiresStakeholderNeed(): array
     {
         return [
             self::UNDER_REVIEW,
@@ -51,13 +66,23 @@ final class ChangeRequestStatus
     }
 
     /**
-     * @deprecated Use requiresAffected()
+     * @deprecated Use requiresStakeholderNeed()
+     *
+     * @return list<string>
+     */
+    public static function requiresAffected(): array
+    {
+        return self::requiresStakeholderNeed();
+    }
+
+    /**
+     * @deprecated Use requiresStakeholderNeed()
      *
      * @return list<string>
      */
     public static function requiresUpstream(): array
     {
-        return self::requiresAffected();
+        return self::requiresStakeholderNeed();
     }
 
     /**
@@ -65,17 +90,26 @@ final class ChangeRequestStatus
      */
     public static function selectOptions(): array
     {
-        return [
+        $options = [];
+        foreach (self::formValues() as $code) {
+            $options[$code] = self::label($code);
+        }
+
+        // Keep approved visible when already approved (readonly display via form value).
+        $options[self::APPROVED] = __('ui.change_request_status_approved');
+
+        return $options;
+    }
+
+    public static function label(string $code): string
+    {
+        return match ($code) {
             self::DRAFT => __('ui.change_request_status_draft'),
             self::UNDER_REVIEW => __('ui.change_request_status_under_review'),
             self::APPROVED => __('ui.change_request_status_approved'),
             self::REJECTED => __('ui.change_request_status_rejected'),
             self::IMPLEMENTED => __('ui.change_request_status_implemented'),
-        ];
-    }
-
-    public static function label(string $code): string
-    {
-        return self::selectOptions()[$code] ?? $code;
+            default => $code,
+        };
     }
 }

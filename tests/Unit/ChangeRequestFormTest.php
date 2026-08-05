@@ -5,12 +5,14 @@ namespace Tests\Unit;
 use App\Data\ChangeRequestData;
 use App\Http\Controllers\ChangeRequestController;
 use App\Models\ChangeRequest;
-use App\Support\ChangeRequestAffectedType;
 use App\Support\ChangeRequestImpact;
 use App\Support\ChangeRequestStatus;
 use App\Support\CrudEntityRegistry;
 use App\Support\EntityFormBuilder;
+use App\Support\EntityStatus;
+use App\Support\ProjectContext;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class ChangeRequestFormTest extends TestCase
@@ -27,20 +29,15 @@ class ChangeRequestFormTest extends TestCase
         $this->assertSame('CR', $method->invoke(null));
     }
 
-    public function test_form_uses_type_and_item_subject_fields(): void
+    public function test_form_uses_stakeholder_need_anchor(): void
     {
         $fields = (new EntityFormBuilder)->fields(ChangeRequestData::class);
 
         $this->assertSame('text', $fields['requestor']['type'] ?? null);
         $this->assertSame('select', $fields['impact_level']['type'] ?? null);
-        $this->assertSame('select', $fields['affected_type']['type'] ?? null);
-        $this->assertSame('select', $fields['affected_id']['type'] ?? null);
-        $this->assertArrayNotHasKey('business_need_id', $fields);
-        $this->assertArrayNotHasKey('feature_id', $fields);
-        $this->assertEqualsCanonicalizing(
-            ChangeRequestAffectedType::values(),
-            array_keys($fields['affected_type']['list'] ?? [])
-        );
+        $this->assertSame('select', $fields['stakeholder_need_id']['type'] ?? null);
+        $this->assertArrayNotHasKey('affected_type', $fields);
+        $this->assertArrayNotHasKey('affected_id', $fields);
         $this->assertEqualsCanonicalizing(
             ChangeRequestImpact::values(),
             array_keys($fields['impact_level']['list'] ?? [])
@@ -57,18 +54,22 @@ class ChangeRequestFormTest extends TestCase
         $this->assertContains('required', $rules['impact_level']);
     }
 
-    public function test_review_statuses_require_affected_subject(): void
+    public function test_review_statuses_require_stakeholder_need(): void
     {
-        $this->assertContains(ChangeRequestStatus::UNDER_REVIEW, ChangeRequestStatus::requiresAffected());
-        $this->assertNotContains(ChangeRequestStatus::DRAFT, ChangeRequestStatus::requiresAffected());
+        $this->assertContains(ChangeRequestStatus::UNDER_REVIEW, ChangeRequestStatus::requiresStakeholderNeed());
+        $this->assertNotContains(ChangeRequestStatus::DRAFT, ChangeRequestStatus::requiresStakeholderNeed());
     }
 
-    public function test_create_form_prefills_affected_subject_from_query(): void
+    public function test_need_revision_is_entity_status(): void
+    {
+        $this->assertContains(EntityStatus::NEED_REVISION, EntityStatus::values());
+    }
+
+    public function test_create_form_prefills_stakeholder_need_from_query(): void
     {
         $request = Request::create('/change_requests/modal/create', 'GET', [
             'project_id' => 5,
-            'affected_type' => ChangeRequestAffectedType::BUSINESS_OBJECTIVE,
-            'affected_id' => 12,
+            'stakeholder_need_id' => 12,
         ]);
         $this->app->instance('request', $request);
 
@@ -82,7 +83,46 @@ class ChangeRequestFormTest extends TestCase
         );
 
         $this->assertSame(5, $dto->project_id);
-        $this->assertSame(ChangeRequestAffectedType::BUSINESS_OBJECTIVE, $dto->affected_type);
-        $this->assertSame(12, $dto->affected_id);
+        $this->assertSame(12, $dto->stakeholder_need_id);
+    }
+
+    /**
+     * FR/Feature "Change Request" select must only offer approved/implemented
+     * CRs from the sticky project in scope — never another project's CRs, and
+     * never draft/under_review/rejected ones.
+     */
+    public function test_select_options_are_scoped_to_current_project_and_approved_status(): void
+    {
+        $changeRequest = ChangeRequest::query()->orderBy('id')->first();
+
+        if ($changeRequest === null) {
+            $this->markTestSkipped('No Change Request fixture available in the database.');
+        }
+
+        $originalStatus = $changeRequest->status;
+        $ownProjectId = (int) $changeRequest->project_id;
+
+        try {
+            $changeRequest->forceFill(['status' => ChangeRequestStatus::APPROVED])->save();
+            $repository = new \App\Repositories\ChangeRequestRepository;
+
+            $stub = $this->createStub(ProjectContext::class);
+            $stub->method('id')->willReturn($ownProjectId);
+            $this->app->instance(ProjectContext::class, $stub);
+            $this->assertArrayHasKey($changeRequest->id, $repository->getSelectOptions());
+
+            $otherStub = $this->createStub(ProjectContext::class);
+            $otherStub->method('id')->willReturn($ownProjectId + 999999);
+            $this->app->instance(ProjectContext::class, $otherStub);
+            $this->assertArrayNotHasKey($changeRequest->id, $repository->getSelectOptions());
+
+            $noProjectStub = $this->createStub(ProjectContext::class);
+            $noProjectStub->method('id')->willReturn(null);
+            $this->app->instance(ProjectContext::class, $noProjectStub);
+            $this->assertArrayHasKey($changeRequest->id, $repository->getSelectOptions());
+        } finally {
+            $changeRequest->forceFill(['status' => $originalStatus])->save();
+            $this->app->forgetInstance(ProjectContext::class);
+        }
     }
 }

@@ -1,11 +1,18 @@
 {{-- Width/wrap rules live in public/.../bassist.css (fixed layout + 100% width).
-     No table-level min-width sum — that left sparse lists stuck below card width. --}}
+     The inline `min-width` below (sum of every column's explicit width, see
+     DatatableUi::minTableWidth()) is a no-op on sparse lists — smaller than
+     the card's natural 100% — and only engages on wide lists (Risks, Change
+     Requests, …) to stop the width-less identity column being crushed. --}}
+
+@php
+    $tableMinWidth = \App\Helpers\DatatableUi::minTableWidth($options['columns']);
+@endphp
 
 <div class="kt-card-table">
     <div class="kt-table-wrapper">
         <table class="kt-table kt-table-border w-full dataTable no-footer {{ $class }}"
             id="{{ \App\Helpers\Ui::keyset($id, 'id', 'datatable') }}"
-            style="width: 100%;">
+            style="width: 100%;@if ($tableMinWidth !== '') {{ ' '.$tableMinWidth.';' }}@endif">
             <thead>
                 <tr>
                     @foreach ($options['columns'] as $col)

@@ -19,10 +19,13 @@ class FunctionalRequirementData extends BaseData
         #[Form('select', 'Project')]
         public int $project_id = 0,
 
-        #[Form('select', 'StakeholderNeed', help: 'Links this functional requirement in the project traceability matrix.')]
+        #[Form('select', 'StakeholderNeed', help: 'Parent lineage: pick a Stakeholder Need OR an approved Change Request (not both).')]
         public ?int $stakeholder_need_id = null,
 
-        #[Form('select', 'SwimlaneFlowStep', help: 'Optional BPD process/decision step this FR elaborates (coverage only; lineage stays via Stakeholder Need).')]
+        #[Form('select', 'ChangeRequest', help: 'Approved CRs only. Parent under a CR instead of directly under an SN (CR remains the lasting extension of its SN).')]
+        public ?int $change_request_id = null,
+
+        #[Form('select', 'SwimlaneFlowStep', help: 'Optional BPD process/decision step this FR elaborates (coverage only).')]
         public ?int $swimlane_flow_step_id = null,
 
         #[Form('textarea', hideQuick: true)]
@@ -48,6 +51,7 @@ class FunctionalRequirementData extends BaseData
             'title' => ['required', 'string', 'max:255'],
             'project_id' => ['required', 'integer', 'exists:projects,id'],
             'stakeholder_need_id' => ['nullable', 'integer', 'exists:stakeholder_needs,id'],
+            'change_request_id' => ['nullable', 'integer', 'exists:change_requests,id'],
             'swimlane_flow_step_id' => ['nullable', 'integer', 'exists:swimlane_flow_steps,id'],
             'statement' => ['required', 'string'],
             'trigger' => ['nullable', 'string'],

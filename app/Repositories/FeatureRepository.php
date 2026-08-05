@@ -5,6 +5,7 @@ namespace App\Repositories;
 use App\Data\FeatureData;
 use App\Data\FeatureViewData;
 use App\Models\Feature;
+use App\Support\SolutionPackagingParent;
 use Illuminate\Database\Eloquent\Model;
 
 class FeatureRepository extends BaseRepository
@@ -18,6 +19,7 @@ class FeatureRepository extends BaseRepository
         'status_id',
         'priority_id',
         'stakeholder_need_id',
+        'change_request_id',
     ];
 
     protected array $listContextFilters = [
@@ -28,6 +30,7 @@ class FeatureRepository extends BaseRepository
 
     protected array $listContextRelations = [
         'project.workspace',
+        'changeRequest',
     ];
 
     protected array $listWithCounts = [
@@ -41,6 +44,7 @@ class FeatureRepository extends BaseRepository
 
     public function create(array $data)
     {
+        $data = SolutionPackagingParent::normalize($data);
         $feature = new Feature($this->filterFillable($data));
         $feature->syncDocumentFields();
         $feature->save();
@@ -50,6 +54,7 @@ class FeatureRepository extends BaseRepository
 
     public function update($id, array $newData)
     {
+        $newData = SolutionPackagingParent::normalize($newData);
         /** @var Feature $feature */
         $feature = Feature::query()->findOrFail($id);
         $feature->fill($this->filterFillable($newData));

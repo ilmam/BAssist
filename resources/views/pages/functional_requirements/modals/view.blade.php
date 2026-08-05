@@ -12,10 +12,7 @@
     </div>
 
     <x-slot:footer>
-        @include('pages.change_requests.partials.request-change-button', [
-            'dto' => $dto,
-            'affectedType' => \App\Support\ChangeRequestAffectedType::FUNCTIONAL_REQUIREMENT,
-        ])
+        @include('pages.change_requests.partials.request-change-button', ['dto' => $dto])
         <x-modal-dismiss text="Close" />
     </x-slot:footer>
 </x-modal-content>

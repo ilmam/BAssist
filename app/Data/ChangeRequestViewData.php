@@ -30,11 +30,9 @@ class ChangeRequestViewData extends BaseData
         #[InList]
         public string $impact_level = '',
         public ?string $impact_notes = null,
+        public ?int $stakeholder_need_id = null,
         #[InList]
-        public ?string $affected_type = null,
-        public ?int $affected_id = null,
-        #[InList]
-        public ?string $affected_label = null,
+        public ?StakeholderNeedViewData $stakeholderNeed = null,
         public ?int $priority_id = null,
         #[InList]
         public ?PriorityViewData $priority = null,

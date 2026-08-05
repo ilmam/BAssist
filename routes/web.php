@@ -46,9 +46,12 @@ Route::middleware('auth')->group(function (): void {
     Route::get('solution-requirements', [SolutionRequirementsController::class, 'index'])->name('solution_requirements.index');
     Route::get('solution-requirements/help', [HelpController::class, 'show'])->defaults('helpKey', 'solution_requirements')->name('solution_requirements.help');
     Route::get('functional-requirements/help', [HelpController::class, 'show'])->defaults('helpKey', 'functional_requirements')->name('functional_requirements.help');
-    Route::get('change_requests/affected-options', [ChangeRequestController::class, 'affectedOptions'])
+    Route::get('change_requests/{id}/approve-taint', [ChangeRequestController::class, 'approveTaintForm'])
         ->middleware('entity.access')
-        ->name('change_requests.affected-options');
+        ->name('change_requests.approve-taint');
+    Route::post('change_requests/{id}/approve-taint', [ChangeRequestController::class, 'approveTaintStore'])
+        ->middleware('entity.access')
+        ->name('change_requests.approve-taint.store');
     Route::get('swimlane_flows/stakeholder-need-options', [SwimlaneFlowController::class, 'stakeholderNeedOptions'])
         ->middleware('entity.access')
         ->name('swimlane_flows.stakeholder-need-options');

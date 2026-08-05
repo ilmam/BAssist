@@ -10,6 +10,7 @@ use App\Support\ChangeRequestImpact;
 use App\Support\ChangeRequestStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[RoutableAttribute]
 class ChangeRequest extends BaseModel
@@ -28,8 +29,7 @@ class ChangeRequest extends BaseModel
         'requestor',
         'impact_level',
         'impact_notes',
-        'affected_type',
-        'affected_id',
+        'stakeholder_need_id',
         'priority_id',
         'status',
     ];
@@ -60,9 +60,27 @@ class ChangeRequest extends BaseModel
     }
 
     #[Relation('BelongsTo')]
+    public function stakeholderNeed(): BelongsTo
+    {
+        return $this->belongsTo(StakeholderNeed::class);
+    }
+
+    #[Relation('BelongsTo')]
     public function priority(): BelongsTo
     {
         return $this->belongsTo(Priority::class);
+    }
+
+    #[Relation('HasMany')]
+    public function features(): HasMany
+    {
+        return $this->hasMany(Feature::class);
+    }
+
+    #[Relation('HasMany')]
+    public function functionalRequirements(): HasMany
+    {
+        return $this->hasMany(FunctionalRequirement::class);
     }
 
     public function statusLabel(): string
@@ -75,8 +93,14 @@ class ChangeRequest extends BaseModel
         return ChangeRequestImpact::label((string) $this->impact_level);
     }
 
-    public function hasAffectedRequirement(): bool
+    public function hasStakeholderNeed(): bool
     {
-        return filled($this->affected_type) && (int) $this->affected_id > 0;
+        return (int) ($this->stakeholder_need_id ?? 0) > 0;
+    }
+
+    public function isApproved(): bool
+    {
+        return (string) $this->status === ChangeRequestStatus::APPROVED
+            || (string) $this->status === ChangeRequestStatus::IMPLEMENTED;
     }
 }

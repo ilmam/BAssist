@@ -6,7 +6,7 @@ use App\Support\EntityStatus;
 
 /**
  * Applies EntityStatus::defaultId() (draft) when status_id is blank on create,
- * and exposes draft/agreed/deprecated helpers against the shared statuses table.
+ * and exposes draft/agreed/need-revision/deprecated helpers against the shared statuses table.
  *
  * Use only on models that have status_id — not on BaseModel or entities with
  * their own string lifecycle (e.g. Assumption / Constraint / BusinessRule).
@@ -36,6 +36,11 @@ trait HasEntityStatus
     public function isAgreed(): bool
     {
         return EntityStatus::is(EntityStatus::AGREED, $this->statusIdOrNull());
+    }
+
+    public function isNeedsRevision(): bool
+    {
+        return EntityStatus::is(EntityStatus::NEED_REVISION, $this->statusIdOrNull());
     }
 
     public function isDeprecated(): bool
