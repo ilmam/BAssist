@@ -118,11 +118,11 @@ class TraceabilityMatrixService
                 'stakeholderNeeds.stakeholders:id,name',
                 'stakeholderNeeds.features' => fn ($query) => $query
                     ->withCount('scenarios')
-                    ->with(['processStep.swimlaneFlow:id,title', 'processStep.project:id,name,code'])
+                    ->with(['swimlaneFlowStep.swimlaneFlow:id,title', 'swimlaneFlowStep.project:id,name,code'])
                     ->orderBy('number')
                     ->orderBy('title'),
                 'stakeholderNeeds.functionalRequirements' => fn ($query) => $query
-                    ->with(['processStep.swimlaneFlow:id,title', 'processStep.project:id,name,code'])
+                    ->with(['swimlaneFlowStep.swimlaneFlow:id,title', 'swimlaneFlowStep.project:id,name,code'])
                     ->orderBy('number')
                     ->orderBy('title'),
             ])
@@ -173,7 +173,7 @@ class TraceabilityMatrixService
                             stakeholderNeed: $stakeholderNeed,
                             feature: $feature,
                             functionalRequirement: null,
-                            processStep: $feature->processStep,
+                            processStep: $feature->swimlaneFlowStep,
                             gapType: $this->featureRowGapType($objective, $feature),
                         );
                     }
@@ -186,7 +186,7 @@ class TraceabilityMatrixService
                             stakeholderNeed: $stakeholderNeed,
                             feature: null,
                             functionalRequirement: $functionalRequirement,
-                            processStep: $functionalRequirement->processStep,
+                            processStep: $functionalRequirement->swimlaneFlowStep,
                             gapType: $objective === null ? 'incomplete_chain' : null,
                         );
                     }
@@ -233,11 +233,11 @@ class TraceabilityMatrixService
                 'stakeholders:id,name',
                 'features' => fn ($query) => $query
                     ->withCount('scenarios')
-                    ->with(['processStep.swimlaneFlow:id,title', 'processStep.project:id,name,code'])
+                    ->with(['swimlaneFlowStep.swimlaneFlow:id,title', 'swimlaneFlowStep.project:id,name,code'])
                     ->orderBy('number')
                     ->orderBy('title'),
                 'functionalRequirements' => fn ($query) => $query
-                    ->with(['processStep.swimlaneFlow:id,title', 'processStep.project:id,name,code'])
+                    ->with(['swimlaneFlowStep.swimlaneFlow:id,title', 'swimlaneFlowStep.project:id,name,code'])
                     ->orderBy('number')
                     ->orderBy('title'),
             ])
@@ -273,7 +273,7 @@ class TraceabilityMatrixService
                     stakeholderNeed: $stakeholderNeed,
                     feature: $feature,
                     functionalRequirement: null,
-                    processStep: $feature->processStep,
+                    processStep: $feature->swimlaneFlowStep,
                     gapType: 'orphan_stakeholder_need',
                 );
             }
@@ -286,7 +286,7 @@ class TraceabilityMatrixService
                     stakeholderNeed: $stakeholderNeed,
                     feature: null,
                     functionalRequirement: $functionalRequirement,
-                    processStep: $functionalRequirement->processStep,
+                    processStep: $functionalRequirement->swimlaneFlowStep,
                     gapType: 'orphan_stakeholder_need',
                 );
             }
@@ -303,7 +303,7 @@ class TraceabilityMatrixService
         $features = $this->scopedQuery(Feature::query(), $projectId, $workspaceId)
             ->whereNull('stakeholder_need_id')
             ->withCount('scenarios')
-            ->with(['project:id,name,code', 'processStep.swimlaneFlow:id,title', 'processStep.project:id,name,code'])
+            ->with(['project:id,name,code', 'swimlaneFlowStep.swimlaneFlow:id,title', 'swimlaneFlowStep.project:id,name,code'])
             ->orderBy('number')
             ->orderBy('title')
             ->get();
@@ -315,7 +315,7 @@ class TraceabilityMatrixService
             stakeholderNeed: null,
             feature: $feature,
             functionalRequirement: null,
-            processStep: $feature->processStep,
+            processStep: $feature->swimlaneFlowStep,
             gapType: 'orphan_feature',
         ))->all();
     }
@@ -327,7 +327,7 @@ class TraceabilityMatrixService
     {
         $requirements = $this->scopedQuery(FunctionalRequirement::query(), $projectId, $workspaceId)
             ->whereNull('stakeholder_need_id')
-            ->with(['project:id,name,code', 'processStep.swimlaneFlow:id,title', 'processStep.project:id,name,code'])
+            ->with(['project:id,name,code', 'swimlaneFlowStep.swimlaneFlow:id,title', 'swimlaneFlowStep.project:id,name,code'])
             ->orderBy('number')
             ->orderBy('title')
             ->get();
@@ -339,7 +339,7 @@ class TraceabilityMatrixService
             stakeholderNeed: null,
             feature: null,
             functionalRequirement: $requirement,
-            processStep: $requirement->processStep,
+            processStep: $requirement->swimlaneFlowStep,
             gapType: 'orphan_functional_requirement',
         ))->all();
     }
