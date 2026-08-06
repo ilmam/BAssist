@@ -52,8 +52,8 @@ class FunctionalRequirementTest extends TestCase
     }
 
     /**
-     * Change Request is an optional alternate parent (Stakeholder Need XOR
-     * approved CR — see SolutionPackagingParent) — it must never be required.
+     * Change Request is an optional link on top of a required Stakeholder Need
+     * (must match the CR's anchored SN — see SolutionPackagingParent).
      */
     public function test_change_request_id_is_optional(): void
     {
@@ -61,6 +61,13 @@ class FunctionalRequirementTest extends TestCase
 
         $this->assertContains('nullable', $rules['change_request_id']);
         $this->assertNotContains('required', $rules['change_request_id']);
+    }
+
+    public function test_stakeholder_need_id_is_required(): void
+    {
+        $rules = FunctionalRequirementData::rules();
+
+        $this->assertContains('required', $rules['stakeholder_need_id']);
     }
 
     /**

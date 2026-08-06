@@ -44,7 +44,7 @@ class ChangeRequestRepository extends BaseRepository
     }
 
     /**
-     * Options for FR/Feature parent select — approved CRs only, scoped to the
+     * Options for FR/Feature Change Request select — approved CRs only, scoped to the
      * sticky project context (mirrors BaseController::applyStickyContextDefaults())
      * so cross-project CRs never leak into another project's dropdown. When no
      * project is in scope (e.g. no sticky context yet), falls back to unscoped
@@ -53,6 +53,7 @@ class ChangeRequestRepository extends BaseRepository
      * Leading blank keeps change_request_id optional on FR/Feature selects
      * (mirrors SwimlaneFlowStepRepository::getSelectOptions()) — without it the
      * browser auto-selects the first CR and the field is effectively required.
+     * Stakeholder Need remains the required spine parent; CR is an optional link.
      *
      * @return array<int|string, string>
      */

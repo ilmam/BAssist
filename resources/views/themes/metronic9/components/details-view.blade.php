@@ -15,12 +15,6 @@
         <div
             class="kt-input-view{{ $isMultiline ? ' kt-input-view--multiline' : '' }}"
             aria-readonly="true"
-        >
-            @if ($isEmpty)
-                <span class="text-muted-foreground">—</span>
-            @else
-                {{ $display }}
-            @endif
-        </div>
+        >@if ($isEmpty)<span class="text-muted-foreground">—</span>@else{{ $display }}@endif</div>
     </div>
 @endforeach
