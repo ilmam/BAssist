@@ -50,10 +50,9 @@ class ChangeRequestRepository extends BaseRepository
      * project is in scope (e.g. no sticky context yet), falls back to unscoped
      * to avoid hiding valid options.
      *
-     * Leading blank keeps change_request_id optional on FR/Feature selects
+     * Leading blank keeps the CR select clearable on FR/Feature forms
      * (mirrors SwimlaneFlowStepRepository::getSelectOptions()) — without it the
-     * browser auto-selects the first CR and the field is effectively required.
-     * Stakeholder Need remains the required spine parent; CR is an optional link.
+     * browser auto-selects the first CR. Parent lineage is exclusive: SN or CR.
      *
      * @return array<int|string, string>
      */

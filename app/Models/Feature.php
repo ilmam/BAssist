@@ -96,6 +96,9 @@ class Feature extends BaseModel
         if ($this->stakeholder_need_id) {
             $this->loadMissing('stakeholderNeed');
             $needCode = $this->stakeholderNeed?->code;
+        } elseif ($this->change_request_id) {
+            $this->loadMissing('changeRequest.stakeholderNeed');
+            $needCode = $this->changeRequest?->stakeholderNeed?->code;
         }
         $this->body = $parser->syncNeedTraceabilityTag($this->body, $needCode);
 

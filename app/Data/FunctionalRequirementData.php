@@ -19,10 +19,10 @@ class FunctionalRequirementData extends BaseData
         #[Form('select', 'Project', hideQuick: true)]
         public int $project_id = 0,
 
-        #[Form('select', 'StakeholderNeed', help: 'Required spine parent. When a Change Request is also linked, it must belong to this Stakeholder Need.', section: 'traceability', uiSpan: 12)]
+        #[Form('select', 'StakeholderNeed', help: 'Spine parent — choose this OR an approved Change Request (not both).', section: 'traceability', uiSpan: 12)]
         public ?int $stakeholder_need_id = null,
 
-        #[Form('select', 'ChangeRequest', help: 'Optional. Approved CRs only — links this FR to a governed change on the same Stakeholder Need.', section: 'traceability')]
+        #[Form('select', 'ChangeRequest', help: 'Approved CRs only — choose this OR a Stakeholder Need as parent (not both).', section: 'traceability')]
         public ?int $change_request_id = null,
 
         #[Form('select', 'SwimlaneFlowStep', help: 'Optional BPD process/decision step this FR elaborates (coverage only).', section: 'traceability')]
@@ -50,8 +50,8 @@ class FunctionalRequirementData extends BaseData
         return [
             'title' => ['required', 'string', 'max:255'],
             'project_id' => ['required', 'integer', 'exists:projects,id'],
-            'stakeholder_need_id' => ['required', 'integer', 'exists:stakeholder_needs,id'],
-            'change_request_id' => ['nullable', 'integer', 'exists:change_requests,id'],
+            'stakeholder_need_id' => ['nullable', 'integer', 'exists:stakeholder_needs,id', 'required_without:change_request_id', 'prohibits:change_request_id'],
+            'change_request_id' => ['nullable', 'integer', 'exists:change_requests,id', 'required_without:stakeholder_need_id', 'prohibits:stakeholder_need_id'],
             'swimlane_flow_step_id' => ['nullable', 'integer', 'exists:swimlane_flow_steps,id'],
             'statement' => ['required', 'string'],
             'trigger' => ['nullable', 'string'],

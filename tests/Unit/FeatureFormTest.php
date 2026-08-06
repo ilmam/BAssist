@@ -2,6 +2,7 @@
 
 namespace Tests\Unit;
 
+use App\Data\FeatureData;
 use Tests\TestCase;
 
 class FeatureFormTest extends TestCase
@@ -21,5 +22,28 @@ class FeatureFormTest extends TestCase
         $this->assertIsString($modal);
         $this->assertStringContainsString("'change_request_id'", $page);
         $this->assertStringContainsString("'change_request_id'", $modal);
+    }
+
+    public function test_parent_lineage_is_exclusive_xor(): void
+    {
+        $rules = FeatureData::rules();
+
+        $this->assertContains('nullable', $rules['stakeholder_need_id']);
+        $this->assertContains('required_without:change_request_id', $rules['stakeholder_need_id']);
+        $this->assertContains('prohibits:change_request_id', $rules['stakeholder_need_id']);
+
+        $this->assertContains('nullable', $rules['change_request_id']);
+        $this->assertContains('required_without:stakeholder_need_id', $rules['change_request_id']);
+        $this->assertContains('prohibits:stakeholder_need_id', $rules['change_request_id']);
+        $this->assertNotContains('required', $rules['stakeholder_need_id']);
+    }
+
+    public function test_details_partial_uses_shared_details_view(): void
+    {
+        $partial = file_get_contents(dirname(__DIR__, 2).'/resources/views/pages/features/partials/view-content.blade.php');
+
+        $this->assertIsString($partial);
+        $this->assertStringContainsString('x-details-view', $partial);
+        $this->assertStringNotContainsString("__('ui.traceability') · __('ui.stakeholder_need')", $partial);
     }
 }

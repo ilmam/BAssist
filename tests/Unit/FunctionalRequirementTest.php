@@ -52,22 +52,21 @@ class FunctionalRequirementTest extends TestCase
     }
 
     /**
-     * Change Request is an optional link on top of a required Stakeholder Need
-     * (must match the CR's anchored SN — see SolutionPackagingParent).
+     * Parent lineage is exclusive: SN or CR (see SolutionPackagingParent).
      */
-    public function test_change_request_id_is_optional(): void
+    public function test_parent_lineage_is_exclusive_xor(): void
     {
         $rules = FunctionalRequirementData::rules();
+
+        $this->assertContains('nullable', $rules['stakeholder_need_id']);
+        $this->assertContains('required_without:change_request_id', $rules['stakeholder_need_id']);
+        $this->assertContains('prohibits:change_request_id', $rules['stakeholder_need_id']);
 
         $this->assertContains('nullable', $rules['change_request_id']);
+        $this->assertContains('required_without:stakeholder_need_id', $rules['change_request_id']);
+        $this->assertContains('prohibits:stakeholder_need_id', $rules['change_request_id']);
         $this->assertNotContains('required', $rules['change_request_id']);
-    }
-
-    public function test_stakeholder_need_id_is_required(): void
-    {
-        $rules = FunctionalRequirementData::rules();
-
-        $this->assertContains('required', $rules['stakeholder_need_id']);
+        $this->assertNotContains('required', $rules['stakeholder_need_id']);
     }
 
     /**

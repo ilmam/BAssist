@@ -281,6 +281,8 @@ class FeatureController extends CrudController
                 'scenarios' => fn ($query) => $query->orderBy('id'),
                 'project',
                 'stakeholderNeed',
+                'changeRequest',
+                'swimlaneFlowStep',
                 'priority',
                 'status',
             ])

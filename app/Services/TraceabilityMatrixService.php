@@ -125,6 +125,17 @@ class TraceabilityMatrixService
                     ->with(['swimlaneFlowStep.swimlaneFlow:id,title', 'swimlaneFlowStep.project:id,name,code'])
                     ->orderBy('number')
                     ->orderBy('title'),
+                'stakeholderNeeds.changeRequests.features' => fn ($query) => $query
+                    ->whereNull('stakeholder_need_id')
+                    ->withCount('scenarios')
+                    ->with(['swimlaneFlowStep.swimlaneFlow:id,title', 'swimlaneFlowStep.project:id,name,code'])
+                    ->orderBy('number')
+                    ->orderBy('title'),
+                'stakeholderNeeds.changeRequests.functionalRequirements' => fn ($query) => $query
+                    ->whereNull('stakeholder_need_id')
+                    ->with(['swimlaneFlowStep.swimlaneFlow:id,title', 'swimlaneFlowStep.project:id,name,code'])
+                    ->orderBy('number')
+                    ->orderBy('title'),
             ])
             ->orderBy('number')
             ->orderBy('title')
@@ -142,12 +153,7 @@ class TraceabilityMatrixService
 
             foreach ($objectives as $objective) {
                 foreach ($stakeholderNeeds as $stakeholderNeed) {
-                    $features = $stakeholderNeed?->relationLoaded('features')
-                        ? $stakeholderNeed->features
-                        : collect();
-                    $functionalRequirements = $stakeholderNeed?->relationLoaded('functionalRequirements')
-                        ? $stakeholderNeed->functionalRequirements
-                        : collect();
+                    [$features, $functionalRequirements] = $this->packagingForStakeholderNeed($stakeholderNeed);
 
                     if ($features->isEmpty() && $functionalRequirements->isEmpty()) {
                         $rows[] = $this->makeRow(
@@ -240,6 +246,17 @@ class TraceabilityMatrixService
                     ->with(['swimlaneFlowStep.swimlaneFlow:id,title', 'swimlaneFlowStep.project:id,name,code'])
                     ->orderBy('number')
                     ->orderBy('title'),
+                'changeRequests.features' => fn ($query) => $query
+                    ->whereNull('stakeholder_need_id')
+                    ->withCount('scenarios')
+                    ->with(['swimlaneFlowStep.swimlaneFlow:id,title', 'swimlaneFlowStep.project:id,name,code'])
+                    ->orderBy('number')
+                    ->orderBy('title'),
+                'changeRequests.functionalRequirements' => fn ($query) => $query
+                    ->whereNull('stakeholder_need_id')
+                    ->with(['swimlaneFlowStep.swimlaneFlow:id,title', 'swimlaneFlowStep.project:id,name,code'])
+                    ->orderBy('number')
+                    ->orderBy('title'),
             ])
             ->orderBy('number')
             ->orderBy('title')
@@ -248,8 +265,7 @@ class TraceabilityMatrixService
         $rows = [];
 
         foreach ($stakeholderNeeds as $stakeholderNeed) {
-            $features = $stakeholderNeed->features;
-            $functionalRequirements = $stakeholderNeed->functionalRequirements;
+            [$features, $functionalRequirements] = $this->packagingForStakeholderNeed($stakeholderNeed);
 
             if ($features->isEmpty() && $functionalRequirements->isEmpty()) {
                 $rows[] = $this->makeRow(
@@ -302,6 +318,7 @@ class TraceabilityMatrixService
     {
         $features = $this->scopedQuery(Feature::query(), $projectId, $workspaceId)
             ->whereNull('stakeholder_need_id')
+            ->whereNull('change_request_id')
             ->withCount('scenarios')
             ->with(['project:id,name,code', 'swimlaneFlowStep.swimlaneFlow:id,title', 'swimlaneFlowStep.project:id,name,code'])
             ->orderBy('number')
@@ -327,6 +344,7 @@ class TraceabilityMatrixService
     {
         $requirements = $this->scopedQuery(FunctionalRequirement::query(), $projectId, $workspaceId)
             ->whereNull('stakeholder_need_id')
+            ->whereNull('change_request_id')
             ->with(['project:id,name,code', 'swimlaneFlowStep.swimlaneFlow:id,title', 'swimlaneFlowStep.project:id,name,code'])
             ->orderBy('number')
             ->orderBy('title')
@@ -592,6 +610,41 @@ class TraceabilityMatrixService
         $scenarioCount = (int) ($feature->scenarios_count ?? 0);
 
         return $scenarioCount === 0 ? 'missing_scenarios' : null;
+    }
+
+    /**
+     * SN-direct packaging plus CR-only packaging under this Stakeholder Need.
+     *
+     * @return array{0: Collection<int, Feature>, 1: Collection<int, FunctionalRequirement>}
+     */
+    protected function packagingForStakeholderNeed(?StakeholderNeed $stakeholderNeed): array
+    {
+        if ($stakeholderNeed === null) {
+            return [collect(), collect()];
+        }
+
+        $features = $stakeholderNeed->relationLoaded('features')
+            ? $stakeholderNeed->features
+            : collect();
+        $functionalRequirements = $stakeholderNeed->relationLoaded('functionalRequirements')
+            ? $stakeholderNeed->functionalRequirements
+            : collect();
+
+        if ($stakeholderNeed->relationLoaded('changeRequests')) {
+            foreach ($stakeholderNeed->changeRequests as $changeRequest) {
+                if ($changeRequest->relationLoaded('features')) {
+                    $features = $features->concat($changeRequest->features);
+                }
+                if ($changeRequest->relationLoaded('functionalRequirements')) {
+                    $functionalRequirements = $functionalRequirements->concat($changeRequest->functionalRequirements);
+                }
+            }
+        }
+
+        return [
+            $features->unique('id')->values(),
+            $functionalRequirements->unique('id')->values(),
+        ];
     }
 
     /**

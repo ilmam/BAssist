@@ -1,13 +1,13 @@
+@php
+    $modelName = class_basename($model);
+@endphp
+
 <div class="space-y-4">
-    <div class="flex flex-wrap items-center justify-between gap-2">
-        <div class="text-sm text-muted-foreground">
-            @if ($scenario->feature_id)
-                <a class="kt-link" href="{{ model_route('Feature', 'show', $scenario->feature_id) }}">
-                    {{ $scenario->feature?->code ? $scenario->feature->code.' — ' : '' }}{{ $scenario->feature?->title ?: __('ui.back_to_feature') }}
-                </a>
-            @endif
-        </div>
-    </div>
+    <x-details-view
+        model="{{ $modelName }}"
+        :dto="$dto"
+        :fields="$fields"
+    />
 
     @include('pages.partials.gherkin-document', [
         'source' => $gherkin,

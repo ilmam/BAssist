@@ -4,83 +4,46 @@
     $editFeatureModalUrl = model_modal_path($model, 'edit', $dto->id);
     $rawDialogId = 'feature_raw_'.$dto->id;
     $assembledExportId = 'assembled_export_'.$dto->id;
+    $modelName = class_basename($model);
 @endphp
 
 <div class="space-y-6" data-feature-page>
-    {{-- 1. Compact feature metadata + export actions (no always-visible full-file block) --}}
-    <section class="rounded-lg border border-border bg-muted/30 p-4 space-y-3">
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 text-sm">
-            <div>
-                <div class="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{{ __('ui.code') }}</div>
-                <div class="text-foreground">{{ $feature->code ?: '—' }}</div>
-            </div>
-            <div class="sm:col-span-2">
-                <div class="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{{ __('ui.title') }}</div>
-                <div class="text-foreground">{{ $feature->title ?: '—' }}</div>
-            </div>
-            <div>
-                <div class="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{{ __('ui.project') }}</div>
-                <div class="text-foreground">{{ $feature->project?->name ?: '—' }}</div>
-            </div>
-            <div class="sm:col-span-2 rounded-md border border-primary/25 bg-background/80 px-3 py-2">
-                <div class="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                    {{ __('ui.traceability') }} · {{ __('ui.stakeholder_need') }}
-                </div>
-                <div class="text-foreground mt-0.5">
-                    @if ($feature->stakeholderNeed)
-                        @if (entity_can('StakeholderNeed', 'view'))
-                            <a class="kt-link" href="{{ model_route('StakeholderNeed', 'show', $feature->stakeholder_need_id) }}">
-                                {{ $feature->stakeholderNeed->code ? $feature->stakeholderNeed->code.' — ' : '' }}{{ $feature->stakeholderNeed->title }}
-                            </a>
-                        @else
-                            {{ $feature->stakeholderNeed->code ? $feature->stakeholderNeed->code.' — ' : '' }}{{ $feature->stakeholderNeed->title }}
-                        @endif
-                    @else
-                        <span class="text-muted-foreground">{{ __('ui.no_stakeholder_need_linked') }}</span>
-                    @endif
-                </div>
-                <p class="text-xs text-muted-foreground mt-1">{{ __('ui.stakeholder_need_field_help') }}</p>
-            </div>
-            <div>
-                <div class="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{{ __('ui.status') }}</div>
-                <div class="text-foreground">{{ $feature->status?->name ?: '—' }}</div>
-            </div>
-            <div>
-                <div class="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{{ __('ui.priority') }}</div>
-                <div class="text-foreground">{{ $feature->priority?->name ?: '—' }}</div>
-            </div>
-        </div>
+    {{-- Metadata: same field chrome as FR / Stakeholder Need / generic entities --}}
+    <x-details-view
+        model="{{ $modelName }}"
+        :dto="$dto"
+        :fields="$fields"
+    />
 
-        <div class="flex flex-wrap gap-2 border-t border-border pt-3">
-            @if (filled($assembledGherkin))
-                <button
-                    type="button"
-                    class="kt-btn kt-btn-sm kt-btn-primary"
-                    data-feature-raw-open="{{ $rawDialogId }}"
-                >{{ __('ui.view_raw') }}</button>
-                <button
-                    type="button"
-                    class="kt-btn kt-btn-sm kt-btn-outline"
-                    data-clipboard-from="#{{ $assembledExportId }}"
-                >{{ __('ui.copy_gherkin') }}</button>
-            @endif
-            @if (! empty($exportUrl))
-                <x-button type="link" href="{{ $exportUrl }}" color="light">{{ __('ui.download_feature') }}</x-button>
-            @endif
-            @if (! empty($printUrl))
-                <x-button type="link" href="{{ $printUrl }}" color="light" target="_blank">{{ __('ui.print_feature') }}</x-button>
-            @endif
-            @if (! empty($importUrl) && entity_can($model, 'update'))
-                <x-button type="link" href="{{ $importUrl }}" color="primary">{{ __('ui.import_feature_file') }}</x-button>
-            @endif
-        </div>
+    {{-- Feature-specific export / import actions --}}
+    <div class="flex flex-wrap gap-2">
         @if (filled($assembledGherkin))
-            {{-- Non-rendered copy buffer (never a visible control in the toolbar) --}}
-            <script type="application/json" id="{{ $assembledExportId }}">@json($assembledGherkin)</script>
+            <button
+                type="button"
+                class="kt-btn kt-btn-sm kt-btn-primary"
+                data-feature-raw-open="{{ $rawDialogId }}"
+            >{{ __('ui.view_raw') }}</button>
+            <button
+                type="button"
+                class="kt-btn kt-btn-sm kt-btn-outline"
+                data-clipboard-from="#{{ $assembledExportId }}"
+            >{{ __('ui.copy_gherkin') }}</button>
         @endif
-    </section>
+        @if (! empty($exportUrl))
+            <x-button type="link" href="{{ $exportUrl }}" color="light">{{ __('ui.download_feature') }}</x-button>
+        @endif
+        @if (! empty($printUrl))
+            <x-button type="link" href="{{ $printUrl }}" color="light" target="_blank">{{ __('ui.print_feature') }}</x-button>
+        @endif
+        @if (! empty($importUrl) && entity_can($model, 'update'))
+            <x-button type="link" href="{{ $importUrl }}" color="primary">{{ __('ui.import_feature_file') }}</x-button>
+        @endif
+    </div>
+    @if (filled($assembledGherkin))
+        <script type="application/json" id="{{ $assembledExportId }}">@json($assembledGherkin)</script>
+    @endif
 
-    {{-- 2. Feature body document only --}}
+    {{-- Feature body document --}}
     <section class="space-y-3">
         <div class="flex flex-wrap items-start justify-between gap-3">
             <h3 class="text-base font-semibold text-foreground">{{ __('ui.feature_document') }}</h3>
@@ -104,7 +67,6 @@
         ])
     </section>
 
-    {{-- 3+. Scenarios always with the Feature --}}
     @include('pages.features.partials.scenarios-panel', [
         'featureId' => $dto->id,
         'feature' => $feature,

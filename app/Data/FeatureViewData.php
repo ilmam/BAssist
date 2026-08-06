@@ -29,6 +29,9 @@ class FeatureViewData extends BaseData
         public ?int $change_request_id = null,
         #[InList]
         public ?ChangeRequestViewData $change_request = null,
+        public ?int $swimlane_flow_step_id = null,
+        public ?SwimlaneFlowStepViewData $swimlane_flow_step = null,
+        #[Hide]
         public ?string $body = null,
         public ?int $priority_id = null,
         public ?PriorityViewData $priority = null,

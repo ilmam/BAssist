@@ -29,6 +29,8 @@ class FunctionalRequirementViewData extends BaseData
         public ?int $change_request_id = null,
         #[InList]
         public ?ChangeRequestViewData $change_request = null,
+        public ?int $swimlane_flow_step_id = null,
+        public ?SwimlaneFlowStepViewData $swimlane_flow_step = null,
         public string $statement = '',
         public ?string $trigger = null,
         public ?string $acceptance_criteria = null,

@@ -16,7 +16,7 @@ class SolutionPackagingParentTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_requires_stakeholder_need(): void
+    public function test_requires_at_least_one_parent(): void
     {
         $this->expectException(ValidationException::class);
 
@@ -37,20 +37,7 @@ class SolutionPackagingParentTest extends TestCase
         $this->assertNull($data['change_request_id']);
     }
 
-    public function test_allows_stakeholder_need_with_matching_change_request(): void
-    {
-        [$need, $cr] = $this->seedNeedAndApprovedCr();
-
-        $data = SolutionPackagingParent::normalize([
-            'stakeholder_need_id' => $need->id,
-            'change_request_id' => $cr->id,
-        ]);
-
-        $this->assertSame($need->id, $data['stakeholder_need_id']);
-        $this->assertSame($cr->id, $data['change_request_id']);
-    }
-
-    public function test_fills_stakeholder_need_from_change_request_when_missing(): void
+    public function test_allows_change_request_only(): void
     {
         [$need, $cr] = $this->seedNeedAndApprovedCr();
 
@@ -59,22 +46,45 @@ class SolutionPackagingParentTest extends TestCase
             'change_request_id' => $cr->id,
         ]);
 
-        $this->assertSame($need->id, $data['stakeholder_need_id']);
+        $this->assertNull($data['stakeholder_need_id']);
         $this->assertSame($cr->id, $data['change_request_id']);
+        $this->assertSame($need->id, $cr->stakeholder_need_id);
     }
 
-    public function test_rejects_change_request_on_different_stakeholder_need(): void
+    public function test_rejects_both_parents(): void
     {
         [$need, $cr] = $this->seedNeedAndApprovedCr();
-        $otherNeed = StakeholderNeed::query()->create([
-            'project_id' => $need->project_id,
-            'title' => 'Other need',
-        ]);
 
         $this->expectException(ValidationException::class);
 
         SolutionPackagingParent::normalize([
-            'stakeholder_need_id' => $otherNeed->id,
+            'stakeholder_need_id' => $need->id,
+            'change_request_id' => $cr->id,
+        ]);
+    }
+
+    public function test_rejects_unapproved_change_request(): void
+    {
+        [$need, $cr] = $this->seedNeedAndApprovedCr();
+        $cr->update(['status' => ChangeRequestStatus::DRAFT]);
+
+        $this->expectException(ValidationException::class);
+
+        SolutionPackagingParent::normalize([
+            'stakeholder_need_id' => null,
+            'change_request_id' => $cr->id,
+        ]);
+    }
+
+    public function test_rejects_change_request_without_stakeholder_need_anchor(): void
+    {
+        [, $cr] = $this->seedNeedAndApprovedCr();
+        $cr->update(['stakeholder_need_id' => null]);
+
+        $this->expectException(ValidationException::class);
+
+        SolutionPackagingParent::normalize([
+            'stakeholder_need_id' => null,
             'change_request_id' => $cr->id,
         ]);
     }
