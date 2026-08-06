@@ -2,7 +2,6 @@
     $featureBody = (string) ($feature->body ?? '');
     $assembledGherkin = $assembledGherkin ?? '';
     $editFeatureModalUrl = model_modal_path($model, 'edit', $dto->id);
-    $addScenarioModalUrl = model_modal_path('Scenario', 'create').'?feature_id='.$dto->id;
     $rawDialogId = 'feature_raw_'.$dto->id;
     $assembledExportId = 'assembled_export_'.$dto->id;
 @endphp
@@ -95,15 +94,6 @@
                         data-modal-url="{{ $editFeatureModalUrl }}"
                     >{{ __('ui.edit') }}</x-button>
                 @endif
-                @if (entity_can('Scenario', 'create'))
-                    <x-button
-                        type="link"
-                        href="{{ $addScenarioModalUrl }}"
-                        color="light"
-                        class="js-open-modal"
-                        data-modal-url="{{ $addScenarioModalUrl }}"
-                    >{{ __('ui.add_scenario') }}</x-button>
-                @endif
             </div>
         </div>
 
@@ -114,55 +104,13 @@
         ])
     </section>
 
-    {{-- 3+. Each scenario body --}}
-    @forelse ($feature->scenarios ?? [] as $child)
-        @php
-            $viewScenarioModalUrl = model_modal_path('Scenario', 'view', $child->id);
-            $editScenarioModalUrl = model_modal_path('Scenario', 'edit', $child->id);
-        @endphp
-        <section class="space-y-3">
-            <div class="flex flex-wrap items-start justify-between gap-3">
-                <h3 class="text-base font-semibold text-foreground">
-                    {{ $child->gherkinKeyword() }}: {{ $child->title }}
-                </h3>
-                <div class="flex flex-wrap gap-2">
-                    <x-button
-                        type="link"
-                        href="{{ $viewScenarioModalUrl }}"
-                        color="light"
-                        class="js-open-modal"
-                        data-modal-url="{{ $viewScenarioModalUrl }}"
-                    >{{ __('ui.view') }}</x-button>
-                    @if (entity_can('Scenario', 'update'))
-                        <x-button
-                            type="link"
-                            href="{{ $editScenarioModalUrl }}"
-                            color="primary"
-                            class="js-open-modal"
-                            data-modal-url="{{ $editScenarioModalUrl }}"
-                        >{{ __('ui.edit') }}</x-button>
-                    @endif
-                    @if (entity_can('Scenario', 'delete'))
-                        <x-button
-                            type="link"
-                            href="{{ model_modal_path('Scenario', 'delete', $child->id) }}"
-                            color="danger"
-                            class="js-open-modal"
-                            data-modal-url="{{ model_modal_path('Scenario', 'delete', $child->id) }}"
-                        >{{ __('ui.delete') }}</x-button>
-                    @endif
-                </div>
-            </div>
-
-            @include('pages.partials.gherkin-document', [
-                'source' => (string) ($child->body ?? ''),
-                'showCopy' => true,
-                'editorId' => 'scenario_body_'.$child->id,
-            ])
-        </section>
-    @empty
-        <p class="text-sm text-muted-foreground">{{ __('ui.no_scenarios_yet') }}</p>
-    @endforelse
+    {{-- 3+. Scenarios always with the Feature --}}
+    @include('pages.features.partials.scenarios-panel', [
+        'featureId' => $dto->id,
+        'feature' => $feature,
+        'scenarios' => $feature->scenarios ?? collect(),
+        'editorSuffix' => '_view',
+    ])
 
     @if (filled($assembledGherkin))
         <dialog id="{{ $rawDialogId }}" class="feature-raw-dialog">

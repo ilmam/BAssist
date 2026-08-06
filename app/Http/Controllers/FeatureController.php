@@ -62,6 +62,26 @@ class FeatureController extends CrudController
         );
     }
 
+    public function edit($id)
+    {
+        $form = $this->buildEditForm($id);
+
+        return view(model_page_view($this->modelName, 'form'), $this->featureFormViewData($form, 'edit', (int) $id));
+    }
+
+    public function modalEdit($id)
+    {
+        $form = $this->buildEditForm($id);
+        $data = $this->featureFormViewData($form, 'edit', (int) $id);
+
+        return $this->respondModalOrPage(
+            model_modal_view($this->modelName, 'form'),
+            $data,
+            model_page_view($this->modelName, 'form'),
+            $data
+        );
+    }
+
     public function store(Request $request)
     {
         $dtoClass = '\\App\\Data\\'.$this->modelName.'Data';
@@ -69,6 +89,30 @@ class FeatureController extends CrudController
         $created = $this->modelRepository->create($data->toArray());
 
         return $this->respondAfterMutation($request, $created);
+    }
+
+    /**
+     * @param  array{dto: object, formFields: array<string, mixed>}  $form
+     * @return array<string, mixed>
+     */
+    protected function featureFormViewData(array $form, string $operation, ?int $featureId = null): array
+    {
+        $data = [
+            'dto' => $form['dto'],
+            'model' => $this->modelName,
+            'formFields' => $form['formFields'],
+            'operation' => $operation,
+            'feature' => null,
+            'scenarios' => collect(),
+        ];
+
+        if ($featureId !== null && $featureId > 0) {
+            $feature = $this->loadFeature($featureId);
+            $data['feature'] = $feature;
+            $data['scenarios'] = $feature->scenarios;
+        }
+
+        return $data;
     }
 
     protected function respondAfterMutation(Request $request, mixed $record = null)

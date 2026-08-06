@@ -47,7 +47,7 @@ class ListUi
     public static function childLinkColumn(string $childModel, string $filterParam, string $countField, array $options = []): array
     {
         $label = $options['label'] ?? Str::headline(Str::snake($childModel));
-        $icon = $options['icon'] ?? 'abstract-26';
+        $icon = $options['icon'] ?? (function_exists('entity_icon') ? entity_icon($childModel) : 'abstract-26');
         $title = $options['title'] ?? $label;
         $header = $options['header'] ?? '';
         $style = $options['style'] ?? DatatableUi::compactStyle();

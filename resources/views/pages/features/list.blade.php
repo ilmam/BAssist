@@ -11,7 +11,7 @@
 
         if ($theme === 'metronic9') {
             $scenariosTemplate = '<a href="'.$showHref.'" class="kt-btn kt-btn-sm kt-btn-ghost gap-1" title="'.e(__('ui.scenarios')).'">'
-                .'<i class="ki-filled ki-abstract-26"></i>'
+                .'<i class="ki-filled ki-'.e(entity_icon('Scenario')).'"></i>'
                 .'<span class="text-xs font-medium">{scenarios_count}</span>'
                 .'</a>';
         } else {

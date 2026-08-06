@@ -23,7 +23,6 @@
         $relationColumns = [
             ListUi::childLinkColumn('StakeholderNeed', 'stakeholder_id', 'stakeholder_needs_count', [
                 'title' => __('ui.stakeholder_needs'),
-                'icon' => 'questionnaire-tablet',
                 'preserve' => $preserve,
             ]),
         ];

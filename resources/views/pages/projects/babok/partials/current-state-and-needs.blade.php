@@ -27,10 +27,6 @@
                 {{ $need->title }}
             </h3>
             <div class="artifact__panel">
-                <div class="artifact__meta">
-                    <span><strong>{{ __('ui.status') }}</strong>{{ $need->status?->name ?: '—' }}</span>
-                    <span><strong>{{ __('ui.priority') }}</strong>{{ $need->priority?->name ?: '—' }}</span>
-                </div>
                 <dl class="kv">
                     @if ($need->need_type)
                         <dt>{{ __('ui.need_type') }}</dt>

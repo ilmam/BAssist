@@ -9,7 +9,6 @@
         $relationColumns = [
             ListUi::childLinkColumn('BusinessNeed', 'business_objective_id', 'business_needs_count', [
                 'title' => __('ui.business_needs'),
-                'icon' => 'abstract-26',
                 'preserve' => $preserve,
             ]),
         ];

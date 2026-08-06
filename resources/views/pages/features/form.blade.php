@@ -152,5 +152,19 @@
                 <x-button type="submit" color="primary">Save</x-button>
             </div>
         {{ Form::close() }}
+
+        @if (! $isCreate && ($dto->id ?? null))
+            <div class="kt-card-body border-t border-border p-5 lg:p-7.5">
+                @include('pages.features.partials.scenarios-panel', [
+                    'featureId' => $dto->id,
+                    'scenarios' => $scenarios ?? collect(),
+                    'editorSuffix' => '_edit',
+                ])
+            </div>
+        @elseif ($isCreate)
+            <div class="kt-card-body border-t border-border p-5 lg:p-7.5">
+                <p class="text-sm text-muted-foreground">{{ __('ui.feature_scenarios_after_create_help') }}</p>
+            </div>
+        @endif
     </x-form-card>
 @endsection

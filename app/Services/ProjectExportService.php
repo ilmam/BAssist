@@ -49,10 +49,7 @@ class ProjectExportService
         $project->loadMissing([
             'workspace',
             'status',
-            'businessObjectives.priority',
-            'businessObjectives.status',
-            'businessNeeds.priority',
-            'businessNeeds.status',
+            'businessObjectives',
             'businessNeeds.businessObjectives',
             // Export stakeholders matrix: only rows linked to ≥1 StakeholderNeed (project "requirements").
             'stakeholders.stakeholderNeeds',

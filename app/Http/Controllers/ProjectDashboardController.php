@@ -10,104 +10,88 @@ use Illuminate\View\View;
 class ProjectDashboardController extends Controller
 {
     /**
-     * @var list<array{model: string, count: string, label: string, icon: string}>
+     * @var list<array{model: string, count: string, label: string}>
      */
     protected const ARTIFACTS = [
         [
             'model' => 'BusinessObjective',
             'count' => 'business_objectives_count',
             'label' => 'business_objectives',
-            'icon' => 'chart-line-up-2',
         ],
         [
             'model' => 'BusinessNeed',
             'count' => 'business_needs_count',
             'label' => 'business_needs',
-            'icon' => 'abstract-26',
         ],
         [
             'model' => 'Stakeholder',
             'count' => 'stakeholders_count',
             'label' => 'stakeholders',
-            'icon' => 'people',
         ],
         [
             'model' => 'StakeholderNeed',
             'count' => 'stakeholder_needs_count',
             'label' => 'stakeholder_needs',
-            'icon' => 'questionnaire-tablet',
         ],
         [
             'model' => 'Feature',
             'count' => 'features_count',
             'label' => 'features',
-            'icon' => 'abstract-26',
         ],
         [
             'model' => 'FunctionalRequirement',
             'count' => 'functional_requirements_count',
             'label' => 'functional_requirements',
-            'icon' => 'subtitle',
         ],
         [
             'model' => 'ChangeRequest',
             'count' => 'change_requests_count',
             'label' => 'change_requests',
-            'icon' => 'arrow-mix',
         ],
         [
             'model' => 'Risk',
             'count' => 'risks_count',
             'label' => 'risks',
-            'icon' => 'information-3',
         ],
         [
             'model' => 'Architecture',
             'count' => 'architecture_exists',
             'label' => 'architecture_c4',
-            'icon' => 'abstract-26',
         ],
         [
             'model' => 'StateFlow',
             'count' => 'state_flows_count',
             'label' => 'state_flows',
-            'icon' => 'abstract-39',
         ],
         [
             'model' => 'SwimlaneFlow',
             'count' => 'swimlane_flows_count',
             'label' => 'swimlane_flows',
-            'icon' => 'row-horizontal',
         ],
         [
             'model' => 'Assumption',
             'count' => 'assumptions_count',
             'label' => 'assumptions',
-            'icon' => 'questionnaire-tablet',
         ],
         [
             'model' => 'Constraint',
             'count' => 'constraints_count',
             'label' => 'constraints',
-            'icon' => 'shield-tick',
         ],
         [
             'model' => 'BusinessRule',
             'count' => 'business_rules_count',
             'label' => 'business_rules',
-            'icon' => 'book',
         ],
         [
             'model' => 'StrategicBaseline',
             'count' => 'strategic_baseline_exists',
             'label' => 'strategic_baseline',
-            'icon' => 'flag',
         ],
         [
             'model' => 'ScopeItem',
             'count' => 'scope_items_count',
             'label' => 'scope_items',
-            'icon' => 'abstract-14',
         ],
     ];
 
@@ -173,7 +157,7 @@ class ProjectDashboardController extends Controller
             $counts[] = [
                 'label' => __('ui.'.$artifact['label']),
                 'count' => $countValue,
-                'icon' => $artifact['icon'],
+                'icon' => entity_icon($artifact['model']),
                 'url' => $url,
             ];
         }
@@ -200,7 +184,7 @@ class ProjectDashboardController extends Controller
                     $links[] = [
                         'label' => $options['nav_label'] ?? $entity,
                         'url' => model_route($entity, 'index').'?'.http_build_query($scopeQuery),
-                        'icon' => $options['nav_icon'] ?? 'element-11',
+                        'icon' => entity_icon($entity),
                         'group' => $folder['short'] ?? ($folder['label'] ?? null),
                     ];
 
@@ -227,7 +211,7 @@ class ProjectDashboardController extends Controller
                 $links[] = [
                     'label' => $child['label'] ?? $route,
                     'url' => $url,
-                    'icon' => $child['icon'] ?? 'element-11',
+                    'icon' => $child['icon'] ?? entity_icon($this->surfaceKeyForRoute($route), 'element-11'),
                     'group' => $folder['short'] ?? ($folder['label'] ?? null),
                 ];
             }
@@ -236,13 +220,13 @@ class ProjectDashboardController extends Controller
         $links[] = [
             'label' => __('ui.babok_documents'),
             'url' => route('projects.babok.index', $project),
-            'icon' => 'book',
+            'icon' => entity_icon('babok_documents'),
         ];
 
         $links[] = [
             'label' => __('ui.export_pack'),
             'url' => route('projects.export', $project),
-            'icon' => 'file-down',
+            'icon' => entity_icon('export_pack'),
             'external' => true,
         ];
 
@@ -252,5 +236,18 @@ class ProjectDashboardController extends Controller
             'links' => $links,
             'readiness' => $this->readiness->forProject($project),
         ]);
+    }
+
+    protected function surfaceKeyForRoute(string $route): string
+    {
+        return match ($route) {
+            'solution_requirements.index' => 'solution_requirements',
+            'diagrams.index' => 'diagrams',
+            'change_requests.index' => 'change_requests',
+            'traceability.index' => 'traceability',
+            'acceptance-plan.index' => 'acceptance_plan',
+            'strategic_baselines.for-project' => 'strategic_baseline',
+            default => $route,
+        };
     }
 }

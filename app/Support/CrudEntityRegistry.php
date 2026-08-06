@@ -132,6 +132,18 @@ class CrudEntityRegistry
 
         ksort($entities);
 
-        return $ordered + $entities;
+        $entities = $ordered + $entities;
+
+        foreach ($entities as $model => $options) {
+            $icon = config('entity_icons.models.'.$model);
+            if (! is_string($icon) || $icon === '') {
+                continue;
+            }
+
+            $entities[$model]['nav_icon'] = $icon;
+            $entities[$model]['nav_icon_v8'] = $icon;
+        }
+
+        return $entities;
     }
 }

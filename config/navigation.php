@@ -113,8 +113,8 @@ return [
                     [
                         'label' => 'Solution Requirements',
                         'route' => 'solution_requirements.index',
-                        'icon' => 'note-2',
-                        'icon_v8' => 'note-2',
+                        'icon' => 'subtitle',
+                        'icon_v8' => 'subtitle',
                         'entities' => ['Feature', 'FunctionalRequirement'],
                         'progress' => 'solution_hub',
                     ],
@@ -162,8 +162,8 @@ return [
                     [
                         'label' => 'Traceability',
                         'route' => 'traceability.index',
-                        'icon' => 'abstract-39',
-                        'icon_v8' => 'abstract-39',
+                        'icon' => 'fasten',
+                        'icon_v8' => 'fasten',
                         'entities' => ['BusinessNeed', 'BusinessObjective', 'StakeholderNeed'],
                         'progress' => 'traceability_hub',
                     ],

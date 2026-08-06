@@ -14,6 +14,4 @@ Strategy frames the need spine: it explains *why* the work exists and which boun
 
 - Capture current vs future state before listing many scope items.
 - Keep scope items explicit (in vs out) so debates stay concrete.
-- Align readiness and traceability gaps with the strategic baseline.
-
-> Content coming soon — replace this stub with your full educational guide.
+- Use **Readiness & Gaps** (dashboard help) for enterprise readiness, gap analysis, and solution vs enterprise limitations under Task 6.4 / 8.3–8.4.

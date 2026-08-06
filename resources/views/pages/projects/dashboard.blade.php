@@ -3,9 +3,6 @@
 @section('main')
     <div class="space-y-5">
         <x-card title="{{ $project->name }}">
-            <x-slot:titleAside>
-                <x-help-trigger topic="projects" />
-            </x-slot:titleAside>
             <x-slot:toolbar>
                 <div class="flex flex-wrap items-center gap-2">
                     @if (entity_can('Project', 'update'))
@@ -20,25 +17,58 @@
                             data-modal-url="{{ model_modal_path('Project', 'edit', $project->id) }}"
                         ></x-button>
                     @endif
-                    <x-button
-                        type="link"
-                        href="{{ route('projects.babok.index', $project) }}"
-                        icon="book"
-                        color="light"
-                        activeColor="primary"
-                    >
-                        {{ __('ui.babok_documents') }}
-                    </x-button>
-                    <x-button
-                        type="link"
-                        href="{{ route('projects.export', $project) }}"
-                        icon="file-down"
-                        color="primary"
-                        activeColor="primary"
-                        target="_blank"
-                    >
-                        {{ __('ui.export_pack') }}
-                    </x-button>
+                    @php
+                        $downloadMenuItems = [];
+                        foreach (config('babok_documents.documents', []) as $docKey => $docMeta) {
+                            $downloadMenuItems[] = [
+                                'label' => __($docMeta['title']),
+                                'url' => route('projects.babok.show', [$project, $docKey]),
+                                'target' => '_blank',
+                            ];
+                        }
+                        $downloadMenuItems[] = [
+                            'label' => __('ui.babok_documents'),
+                            'url' => route('projects.babok.index', $project),
+                        ];
+                        $downloadMenuItems[] = [
+                            'label' => __('ui.export_pack'),
+                            'url' => route('projects.export', $project),
+                            'target' => '_blank',
+                        ];
+                    @endphp
+                    <div class="create-split-btn inline-flex items-stretch">
+                        <x-button
+                            type="link"
+                            href="{{ route('projects.export', $project) }}"
+                            icon="{{ entity_icon('export_pack') }}"
+                            color="primary"
+                            activeColor="primary"
+                            class="create-split-btn__main"
+                            target="_blank"
+                        >
+                            {{ __('ui.project_downloads') }}
+                        </x-button>
+                        <div class="inline-flex" data-kt-dropdown="true" data-kt-dropdown-trigger="click">
+                            <button
+                                type="button"
+                                class="kt-btn kt-btn-icon kt-btn-primary create-split-btn__toggle"
+                                data-kt-dropdown-toggle="true"
+                                aria-label="{{ __('ui.project_downloads') }}"
+                            >
+                                <i class="ki-filled ki-down text-xs"></i>
+                            </button>
+                            <div class="kt-dropdown-menu min-w-[240px]" data-kt-dropdown-menu="true">
+                                @foreach ($downloadMenuItems as $item)
+                                    <a
+                                        href="{{ $item['url'] }}"
+                                        class="kt-dropdown-menu-link"
+                                        @if (! empty($item['target'])) target="{{ $item['target'] }}" rel="noopener" @endif
+                                        data-kt-dropdown-dismiss="true"
+                                    >{{ $item['label'] }}</a>
+                                @endforeach
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </x-slot:toolbar>
 
@@ -62,6 +92,9 @@
         </x-card>
 
         <x-card :title="__('ui.project_readiness')">
+            <x-slot:titleAside>
+                <x-help-trigger topic="readiness" />
+            </x-slot:titleAside>
             <x-slot:toolbar>
                 <span class="kt-badge kt-badge-outline">
                     {{ __('ui.readiness_gap_count', ['count' => $readiness['total_gaps'] ?? 0]) }}

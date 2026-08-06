@@ -238,8 +238,8 @@ class NavTreeBuilder
             return [
                 'label' => $options['nav_label'] ?? Str::plural($model),
                 'route' => model_route_name($model, 'index'),
-                'icon' => $options['nav_icon'] ?? 'element-11',
-                'icon_v8' => $options['nav_icon_v8'] ?? ($options['nav_icon'] ?? 'element-11'),
+                'icon' => entity_icon($model, $options['nav_icon'] ?? 'element-11'),
+                'icon_v8' => entity_icon($model, $options['nav_icon_v8'] ?? ($options['nav_icon'] ?? 'element-11')),
                 'entity' => $model,
             ];
         }
@@ -253,11 +253,26 @@ class NavTreeBuilder
             return null;
         }
 
+        $surfaceKey = match ($route) {
+            'solution_requirements.index' => 'solution_requirements',
+            'diagrams.index' => 'diagrams',
+            'change_requests.index' => 'change_requests',
+            'traceability.index' => 'traceability',
+            'acceptance-plan.index' => 'acceptance_plan',
+            'strategic_baselines.for-project' => 'strategic_baseline',
+            default => null,
+        };
+
+        $fallbackIcon = $childDef['icon'] ?? 'element-11';
+        $icon = $surfaceKey !== null
+            ? entity_icon($surfaceKey, is_string($fallbackIcon) ? $fallbackIcon : 'element-11')
+            : $fallbackIcon;
+
         $leaf = [
             'label' => $childDef['label'] ?? $route,
             'route' => $route,
-            'icon' => $childDef['icon'] ?? 'element-11',
-            'icon_v8' => $childDef['icon_v8'] ?? ($childDef['icon'] ?? 'element-11'),
+            'icon' => $icon,
+            'icon_v8' => $childDef['icon_v8'] ?? $icon,
         ];
 
         $projectParam = $childDef['route_project_param'] ?? null;

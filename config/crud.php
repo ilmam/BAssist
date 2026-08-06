@@ -69,20 +69,21 @@ return [
             'nav_icon_v8' => 'abstract-26',
         ],
 
+        // Icons: config/entity_icons.php (overlaid onto nav_icon by CrudEntityRegistry).
         'BusinessObjective' => [
             'home' => true,
             'nav' => false,
             'nav_label' => 'Business Objectives',
-            'nav_icon' => 'chart-line-up',
-            'nav_icon_v8' => 'chart-line-up',
+            'nav_icon' => 'focus',
+            'nav_icon_v8' => 'focus',
         ],
 
         'BusinessNeed' => [
             'home' => true,
             'nav' => false,
             'nav_label' => 'Business Needs',
-            'nav_icon' => 'questionnaire-tablet',
-            'nav_icon_v8' => 'questionnaire-tablet',
+            'nav_icon' => 'electricity',
+            'nav_icon_v8' => 'electricity',
         ],
 
         'Stakeholder' => [
@@ -97,8 +98,8 @@ return [
             'home' => true,
             'nav' => false,
             'nav_label' => 'Stakeholder Needs',
-            'nav_icon' => 'profile-user',
-            'nav_icon_v8' => 'profile-user',
+            'nav_icon' => 'message-text',
+            'nav_icon_v8' => 'message-text',
         ],
 
         'Feature' => [
@@ -131,8 +132,8 @@ return [
             'home' => true,
             'nav' => false,
             'nav_label' => 'Risk Assessment',
-            'nav_icon' => 'information-3',
-            'nav_icon_v8' => 'information-3',
+            'nav_icon' => 'shield-cross',
+            'nav_icon_v8' => 'shield-cross',
         ],
 
         // Routes kept for edit/delete; create/view UX is Feature-centric.
@@ -177,24 +178,24 @@ return [
             'home' => false,
             'nav' => false,
             'nav_label' => 'Assumptions',
-            'nav_icon' => 'questionnaire-tablet',
-            'nav_icon_v8' => 'questionnaire-tablet',
+            'nav_icon' => 'question-2',
+            'nav_icon_v8' => 'question-2',
         ],
 
         'Constraint' => [
             'home' => false,
             'nav' => false,
             'nav_label' => 'Constraints',
-            'nav_icon' => 'shield-tick',
-            'nav_icon_v8' => 'shield-tick',
+            'nav_icon' => 'lock-2',
+            'nav_icon_v8' => 'lock-2',
         ],
 
         'BusinessRule' => [
             'home' => false,
             'nav' => false,
             'nav_label' => 'Business Rules',
-            'nav_icon' => 'book',
-            'nav_icon_v8' => 'book',
+            'nav_icon' => 'scroll',
+            'nav_icon_v8' => 'scroll',
         ],
 
         'StrategicBaseline' => [

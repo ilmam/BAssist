@@ -25,12 +25,10 @@
         $relationColumns = [
             ListUi::childLinkColumn('BusinessObjective', 'business_need_id', 'business_objectives_count', [
                 'title' => __('ui.business_objectives'),
-                'icon' => 'chart-line-up-2',
                 'preserve' => $preserve,
             ]),
             ListUi::childLinkColumn('StakeholderNeed', 'business_need_id', 'stakeholder_needs_count', [
                 'title' => __('ui.stakeholder_needs'),
-                'icon' => 'questionnaire-tablet',
                 'preserve' => $preserve,
             ]),
         ];

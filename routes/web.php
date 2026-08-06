@@ -43,6 +43,7 @@ Route::middleware('auth')->group(function (): void {
     Route::get('guardrails/help', [HelpController::class, 'show'])->defaults('helpKey', 'guardrails')->name('guardrails.help');
     Route::get('strategy', [StrategyController::class, 'index'])->name('strategy.index');
     Route::get('strategy/help', [HelpController::class, 'show'])->defaults('helpKey', 'strategy')->name('strategy.help');
+    Route::get('readiness/help', [HelpController::class, 'show'])->defaults('helpKey', 'readiness')->name('readiness.help');
     Route::get('solution-requirements', [SolutionRequirementsController::class, 'index'])->name('solution_requirements.index');
     Route::get('solution-requirements/help', [HelpController::class, 'show'])->defaults('helpKey', 'solution_requirements')->name('solution_requirements.help');
     Route::get('functional-requirements/help', [HelpController::class, 'show'])->defaults('helpKey', 'functional_requirements')->name('functional_requirements.help');

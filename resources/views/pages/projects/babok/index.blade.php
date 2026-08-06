@@ -17,7 +17,7 @@
                     <x-button
                         type="link"
                         href="{{ $fullPackUrl }}"
-                        icon="file-down"
+                        icon="{{ entity_icon('export_pack') }}"
                         color="light"
                         activeColor="primary"
                         target="_blank"

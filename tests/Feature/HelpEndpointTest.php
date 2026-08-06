@@ -24,6 +24,16 @@ class HelpEndpointTest extends TestCase
         $response->assertSee('Strategy', false);
     }
 
+    public function test_readiness_help_route_returns_rendered_guide(): void
+    {
+        $response = $this->withoutMiddleware()->get(route('readiness.help'));
+
+        $response->assertOk();
+        $response->assertSee('data-help-title', false);
+        $response->assertSee('Assess enterprise readiness', false);
+        $response->assertSee('Gap analysis', false);
+    }
+
     public function test_help_route_without_markdown_file_returns_not_found(): void
     {
         $response = $this->withoutMiddleware()->get(route('stakeholders.help'));
@@ -40,18 +50,12 @@ class HelpEndpointTest extends TestCase
         $this->assertStringContainsString('<x-help-trigger :model="$model" />', $blade);
     }
 
-    public function test_hub_section_toolbars_include_per_entity_help_trigger(): void
+    public function test_project_dashboard_wires_readiness_help_not_title_help(): void
     {
-        foreach (['guardrails', 'strategy', 'diagrams'] as $hub) {
-            $blade = file_get_contents(dirname(__DIR__, 2)."/resources/views/pages/{$hub}/index.blade.php");
+        $blade = file_get_contents(dirname(__DIR__, 2).'/resources/views/pages/projects/dashboard.blade.php');
 
-            $this->assertIsString($blade);
-            $this->assertStringContainsString('<x-slot:titleAside>', $blade);
-            $this->assertStringContainsString(
-                '<x-help-trigger :model="$section[\'model\']" />',
-                $blade,
-                "Expected per-section help trigger on {$hub} hub."
-            );
-        }
+        $this->assertIsString($blade);
+        $this->assertStringContainsString('<x-help-trigger topic="readiness" />', $blade);
+        $this->assertStringNotContainsString('<x-help-trigger topic="projects" />', $blade);
     }
 }

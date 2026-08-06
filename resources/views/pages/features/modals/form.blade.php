@@ -143,4 +143,17 @@
             <x-button type="submit" color="primary">Save</x-button>
         </div>
     {{ Form::close() }}
+
+    @if (! $isCreate && ($dto->id ?? null))
+        <div class="mt-6 border-t border-border pt-6">
+            @include('pages.features.partials.scenarios-panel', [
+                'featureId' => $dto->id,
+                'scenarios' => $scenarios ?? collect(),
+                'compact' => true,
+                'editorSuffix' => '_modal_edit',
+            ])
+        </div>
+    @elseif ($isCreate)
+        <p class="mt-4 text-xs text-muted-foreground">{{ __('ui.feature_scenarios_after_create_help') }}</p>
+    @endif
 </x-modal-content>

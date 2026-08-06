@@ -229,12 +229,8 @@
                     @endif
                     {{ $objective->title }}
                 </h3>
-                <div class="artifact__panel">
-                    <div class="artifact__meta">
-                        <span><strong>{{ __('ui.status') }}</strong>{{ $objective->status?->name ?: '—' }}</span>
-                        <span><strong>{{ __('ui.priority') }}</strong>{{ $objective->priority?->name ?: '—' }}</span>
-                    </div>
-                    @if ($objective->success_measure || $objective->potential_value)
+                @if ($objective->success_measure || $objective->potential_value)
+                    <div class="artifact__panel">
                         <dl class="kv">
                             @if ($objective->success_measure)
                                 <dt>{{ __('ui.success_measure') }}</dt>
@@ -245,8 +241,8 @@
                                 <dd>{{ $objective->potential_value }}</dd>
                             @endif
                         </dl>
-                    @endif
-                </div>
+                    </div>
+                @endif
                 @if ($objective->description)
                     <p class="prose">{{ $objective->description }}</p>
                 @endif
@@ -265,10 +261,6 @@
                     {{ $need->title }}
                 </h3>
                 <div class="artifact__panel">
-                    <div class="artifact__meta">
-                        <span><strong>{{ __('ui.status') }}</strong>{{ $need->status?->name ?: '—' }}</span>
-                        <span><strong>{{ __('ui.priority') }}</strong>{{ $need->priority?->name ?: '—' }}</span>
-                    </div>
                     <dl class="kv">
                         @if ($need->need_type)
                             <dt>{{ __('ui.need_type') }}</dt>

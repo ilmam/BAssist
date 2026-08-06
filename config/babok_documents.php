@@ -10,7 +10,7 @@ return [
     'documents' => [
         'strategy-analysis' => [
             'title' => 'ui.babok_package_strategy',
-            'babok' => 'BABOK Chapter 6 — Strategy Analysis',
+            'babok' => 'Chapter 6 — Strategy Analysis',
             'purpose' => 'ui.babok_package_strategy_help',
             'sections' => [
                 [
@@ -45,7 +45,7 @@ return [
         ],
         'requirements-design' => [
             'title' => 'ui.babok_package_requirements',
-            'babok' => 'BABOK Chapter 7 — Requirements Analysis & Design Definition',
+            'babok' => 'Chapter 7 — Requirements Analysis & Design Definition',
             'purpose' => 'ui.babok_package_requirements_help',
             'sections' => [
                 [
@@ -80,7 +80,7 @@ return [
         ],
         'traceability-governance' => [
             'title' => 'ui.babok_package_proof',
-            'babok' => 'BABOK Chapters 3 & 5 — Planning, Monitoring & Traceability',
+            'babok' => 'Chapters 3 & 5 — Planning, Monitoring & Traceability',
             'purpose' => 'ui.babok_package_proof_help',
             'sections' => [
                 [

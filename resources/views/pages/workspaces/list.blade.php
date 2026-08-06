@@ -9,7 +9,6 @@
         $relationColumns = [
             ListUi::childLinkColumn('Project', 'workspace_id', 'projects_count', [
                 'title' => __('ui.projects'),
-                'icon' => 'abstract-26',
                 'preserve' => $preserve,
             ]),
         ];

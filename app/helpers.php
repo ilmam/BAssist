@@ -507,6 +507,40 @@ if (! function_exists('help_url')) {
     }
 }
 
+if (! function_exists('entity_icon')) {
+    /**
+     * Keenicon slug for a CRUD model or named surface (config/entity_icons.php).
+     *
+     * Accepts model class names ("BusinessNeed"), short names, or surface keys
+     * ("traceability", "babok_documents"). Returns the bare icon name (no "ki-").
+     */
+    function entity_icon(string $modelOrSurface, ?string $fallback = null): string
+    {
+        $key = class_basename($modelOrSurface);
+        $default = $fallback ?? (string) config('entity_icons.default', 'element-11');
+
+        $modelIcon = config('entity_icons.models.'.$key);
+        if (is_string($modelIcon) && $modelIcon !== '') {
+            return $modelIcon;
+        }
+
+        $surfaceIcon = config('entity_icons.surfaces.'.$key);
+        if (is_string($surfaceIcon) && $surfaceIcon !== '') {
+            return $surfaceIcon;
+        }
+
+        // Allow snake_case surface keys that match the raw argument.
+        if ($key !== $modelOrSurface) {
+            $surfaceIcon = config('entity_icons.surfaces.'.$modelOrSurface);
+            if (is_string($surfaceIcon) && $surfaceIcon !== '') {
+                return $surfaceIcon;
+            }
+        }
+
+        return $default;
+    }
+}
+
 if (! function_exists('entity_can')) {
     function entity_can(string $entity, string $ability): bool
     {
