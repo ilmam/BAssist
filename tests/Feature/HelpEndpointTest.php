@@ -58,4 +58,27 @@ class HelpEndpointTest extends TestCase
         $this->assertStringContainsString('<x-help-trigger topic="readiness" />', $blade);
         $this->assertStringNotContainsString('<x-help-trigger topic="projects" />', $blade);
     }
+
+    public function test_strategic_baseline_help_route_returns_rendered_guide(): void
+    {
+        $response = $this->withoutMiddleware()->get(route('strategic_baselines.help'));
+
+        $response->assertOk();
+        $response->assertSee('data-help-title', false);
+        $response->assertSee('Strategic Baseline', false);
+        $response->assertSee('Current state', false);
+        $response->assertSee('Change strategy', false);
+        $response->assertSee('help-guide', false);
+    }
+
+    public function test_strategic_baseline_form_and_details_wire_help_trigger(): void
+    {
+        $form = file_get_contents(dirname(__DIR__, 2).'/resources/views/pages/strategic_baselines/form.blade.php');
+        $details = file_get_contents(dirname(__DIR__, 2).'/resources/views/pages/strategic_baselines/details.blade.php');
+
+        $this->assertIsString($form);
+        $this->assertIsString($details);
+        $this->assertStringContainsString('<x-help-trigger model="StrategicBaseline" />', $form);
+        $this->assertStringContainsString('<x-help-trigger model="StrategicBaseline" />', $details);
+    }
 }

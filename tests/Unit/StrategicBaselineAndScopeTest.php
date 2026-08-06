@@ -61,6 +61,8 @@ class StrategicBaselineAndScopeTest extends TestCase
         $this->assertStringContainsString("route('strategy.index')", $blade);
         $this->assertStringContainsString("__('ui.strategy')", $blade);
         $this->assertStringContainsString('$section[\'items\']', $blade);
+        $this->assertStringContainsString('<x-help-trigger :model="$section[\'model\']" />', $blade);
+        $this->assertStringContainsString('<x-help-trigger topic="strategy" />', $blade);
     }
 
     public function test_strategic_baseline_has_strategy_content(): void

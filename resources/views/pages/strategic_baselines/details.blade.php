@@ -8,6 +8,9 @@
 
     <div class="strategic-baseline-doc">
     <x-card :title="$modelName.' Details'">
+        <x-slot:titleAside>
+            <x-help-trigger model="StrategicBaseline" />
+        </x-slot:titleAside>
         <x-slot:toolbar>
             @if (entity_can($model, 'update'))
                 <x-button type="link" href="{{ model_route($model, 'edit', $dto->id) }}" icon="pencil" iconOnly="true" color="primary" activeColor="primary"></x-button>

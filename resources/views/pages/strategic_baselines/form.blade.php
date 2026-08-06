@@ -12,6 +12,9 @@
 
     <div class="strategic-baseline-doc">
     <x-form-card :title="$title">
+        <x-slot:titleAside>
+            <x-help-trigger model="StrategicBaseline" />
+        </x-slot:titleAside>
         <x-slot:toolbar>
             <x-button type="link" href="{{ $cancelRoute }}" icon="arrow-left" iconOnly="true" color="ghost" size="sm" activeColor="primary"></x-button>
         </x-slot>
