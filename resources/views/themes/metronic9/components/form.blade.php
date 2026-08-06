@@ -82,6 +82,10 @@
                         $options['data-field-help'] = $field['help'];
                     }
 
+                    if (array_key_exists('kt_select', $field)) {
+                        $options['kt_select'] = (bool) $field['kt_select'];
+                    }
+
                     // Multi-stop spans via container queries (ui-layout.css).
                     // Defaults: sm:12 md:6 lg:6 (half width) — textarea/code/dropzone stay 12 at all stops.
                     $clamp = static fn (int $n): int => max(1, min(12, $n));
@@ -117,14 +121,14 @@
     </div>
     <div class="{{ $inModal ? 'flex justify-end gap-2.5 mt-4' : 'kt-card-footer flex justify-end gap-2.5 border-t border-border p-5 lg:p-7.5' }}">
         @if ($quickCreate)
-            <button type="button" class="kt-btn kt-btn-outline hidden" data-qc-cancel-edit>{{ __('ui.cancel_edit') }}</button>
-            <button type="button" class="kt-btn kt-btn-outline" data-kt-modal-dismiss="true">{{ __('ui.done') }}</button>
-            <button type="submit" class="kt-btn kt-btn-primary" data-qc-submit>{{ __('ui.add_another') }}</button>
+            <x-button type="button" color="outline" class="hidden" data-qc-cancel-edit>{{ __('ui.cancel_edit') }}</x-button>
+            <x-button type="button" color="outline" data-kt-modal-dismiss="true">{{ __('ui.done') }}</x-button>
+            <x-button type="submit" color="primary" data-qc-submit>{{ __('ui.add_another') }}</x-button>
         @elseif ($inModal)
-            <button type="button" class="kt-btn kt-btn-outline" data-kt-modal-dismiss="true">Cancel</button>
+            <x-button type="button" color="outline" data-kt-modal-dismiss="true">Cancel</x-button>
             <x-button type="submit" color="primary">Save</x-button>
         @else
-            <x-button type="link" href="{{ $cancelRoute }}" color="secondary">Cancel</x-button>
+            <x-button type="link" href="{{ $cancelRoute }}" color="outline">Cancel</x-button>
             <x-button type="submit" color="primary">Save</x-button>
         @endif
     </div>

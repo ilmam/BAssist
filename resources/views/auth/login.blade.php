@@ -1,69 +1,74 @@
 @extends('auth.layout')
 
 @section('title', 'Sign In - '.config('app.name'))
-@section('aside-title', 'Welcome back')
-@section('aside-description', 'Use your account credentials to access the application.')
 
 @section('content')
-    <div class="mb-8">
-        <h2 class="text-2xl font-semibold text-foreground mb-2">Sign in</h2>
-        <p class="text-secondary-foreground text-sm">
-            Enter your email and password to continue.
-        </p>
-    </div>
-
-    @include('auth.partials.alerts')
-
-    <form method="POST" action="{{ route('login') }}" class="space-y-1">
+    <form method="POST" action="{{ route('login') }}" class="kt-card-content flex flex-col gap-5 p-10" id="sign_in_form">
         @csrf
 
-        <div class="flex flex-col gap-1 mb-5">
-            <label class="text-sm font-medium text-foreground" for="email">Email</label>
+        <div class="text-center mb-2.5">
+            <h3 class="text-lg font-medium text-mono leading-none mb-2.5">
+                Sign in
+            </h3>
+        </div>
+
+        @include('auth.partials.alerts')
+
+        <div class="flex flex-col gap-1">
+            <label class="kt-form-label font-normal text-mono" for="email">
+                Email
+            </label>
             <input
                 id="email"
+                class="kt-input"
                 type="email"
                 name="email"
                 value="{{ old('email') }}"
+                placeholder="email@email.com"
                 required
                 autofocus
                 autocomplete="username"
-                class="kt-input w-full"
             />
         </div>
 
-        <div class="flex flex-col gap-1 mb-5">
-            <div class="flex items-center justify-between gap-2">
-                <label class="text-sm font-medium text-foreground" for="password">Password</label>
+        <div class="flex flex-col gap-1">
+            <div class="flex items-center justify-between gap-1">
+                <label class="kt-form-label font-normal text-mono" for="password">
+                    Password
+                </label>
                 @if (Route::has('password.request'))
-                    <a href="{{ route('password.request') }}" class="text-sm text-primary hover:underline">
-                        Forgot password?
+                    <a class="text-sm kt-link shrink-0" href="{{ route('password.request') }}">
+                        Forgot Password?
                     </a>
                 @endif
             </div>
-            <input
-                id="password"
-                type="password"
-                name="password"
-                required
-                autocomplete="current-password"
-                class="kt-input w-full"
-            />
+            <div class="kt-input" data-kt-toggle-password="true">
+                <input
+                    id="password"
+                    name="password"
+                    placeholder="Enter Password"
+                    type="password"
+                    required
+                    autocomplete="current-password"
+                />
+                <button class="kt-btn kt-btn-sm kt-btn-ghost kt-btn-icon bg-transparent! -me-1.5" data-kt-toggle-password-trigger="true" type="button">
+                    <span class="kt-toggle-password-active:hidden">
+                        <i class="ki-filled ki-eye text-muted-foreground"></i>
+                    </span>
+                    <span class="hidden kt-toggle-password-active:block">
+                        <i class="ki-filled ki-eye-slash text-muted-foreground"></i>
+                    </span>
+                </button>
+            </div>
         </div>
 
-        <label class="flex items-center gap-2.5 mb-6 cursor-pointer">
-            <input type="checkbox" name="remember" class="kt-checkbox" {{ old('remember') ? 'checked' : '' }} />
-            <span class="text-sm text-foreground">Remember me</span>
+        <label class="kt-label">
+            <input class="kt-checkbox kt-checkbox-sm" name="remember" type="checkbox" value="1" {{ old('remember') ? 'checked' : '' }}>
+            Remember me
         </label>
 
-        <button type="submit" class="kt-btn kt-btn-primary w-full justify-center">
-            Sign in
+        <button type="submit" class="kt-btn kt-btn-primary flex justify-center grow">
+            Sign In
         </button>
     </form>
-
-    @if (Route::has('register'))
-        <p class="text-sm text-secondary-foreground text-center mt-6">
-            Don't have an account?
-            <a href="{{ route('register') }}" class="text-primary font-medium hover:underline">Create one</a>
-        </p>
-    @endif
 @endsection

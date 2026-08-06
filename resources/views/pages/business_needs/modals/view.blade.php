@@ -12,7 +12,6 @@
     </div>
 
     <x-slot:footer>
-        @include('pages.change_requests.partials.request-change-button', ['dto' => $dto])
         <x-modal-dismiss text="Close" />
     </x-slot:footer>
 </x-modal-content>

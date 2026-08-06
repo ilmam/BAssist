@@ -14,15 +14,19 @@ class Button extends Component
         public string $text = '',
         public string $icon = '',
         public string $iconOnly = '',
-        public string $color = 'light',
+        public string $color = 'outline',
         public string $activeColor = 'primary',
-        public string $size = 'md',
+        public string $size = '',
         public string $width = '',
         public string $height = '',
         public string $class = '',
         public string $href = '',
         public string $onclick = ''
-    ) {}
+    ) {
+        if ($this->size === '') {
+            $this->size = (string) config('ui.buttons.size', 'md');
+        }
+    }
 
     public function render()
     {

@@ -13,7 +13,7 @@
     <div class="strategic-baseline-doc">
     <x-form-card :title="$title">
         <x-slot:toolbar>
-            <x-button type="link" href="{{ $cancelRoute }}" icon="arrow-left" iconOnly="true" color="light" activeColor="primary"></x-button>
+            <x-button type="link" href="{{ $cancelRoute }}" icon="arrow-left" iconOnly="true" color="ghost" size="sm" activeColor="primary"></x-button>
         </x-slot>
         <x-form
             id="form1"

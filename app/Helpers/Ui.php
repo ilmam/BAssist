@@ -123,8 +123,16 @@ class Ui
         }
     }
 
-    public static function TableActionCol($options)
+    /**
+     * @param  list<array<string, mixed>|null>  $options
+     * @param  bool  $collapsed  When true, render a single ⋮ kt-menu instead of inline icons.
+     */
+    public static function TableActionCol($options, bool $collapsed = false)
     {
+        if ($collapsed) {
+            return self::tableActionCollapsedMenu(is_array($options) ? $options : []);
+        }
+
         $colValue = '';
         $theme = function_exists('ui_theme') ? ui_theme() : 'metronic8';
         $wrapperClass = $theme === 'metronic9' ? 'flex items-center gap-1' : '';
@@ -145,6 +153,125 @@ class Ui
         }
 
         return $openWrapper.$colValue.$closeWrapper;
+    }
+
+    /**
+     * Metronic ⋮ action menu for dense action columns.
+     *
+     * @param  list<array<string, mixed>|null>  $options
+     */
+    protected static function tableActionCollapsedMenu(array $options): string
+    {
+        $theme = function_exists('ui_theme') ? ui_theme() : 'metronic8';
+        $itemsHtml = '';
+        $pendingSeparator = false;
+
+        foreach ($options as $option) {
+            if (! is_array($option)) {
+                continue;
+            }
+
+            $action = (string) self::keyset($option, 'action', '');
+            $isDelete = $action === 'delete';
+
+            if ($isDelete && $itemsHtml !== '') {
+                // Tag with data-action=delete so system-row cleanup removes it with the item.
+                $itemsHtml .= '<div class="kt-menu-separator" data-action="delete"></div>';
+            } elseif ($pendingSeparator && $itemsHtml !== '') {
+                $itemsHtml .= '<div class="kt-menu-separator"></div>';
+            }
+            $pendingSeparator = ! empty($option['separatorAfter']);
+
+            $itemsHtml .= self::tableActionCollapsedMenuItem($option, $theme);
+        }
+
+        if ($itemsHtml === '') {
+            return '';
+        }
+
+        if ($theme !== 'metronic9') {
+            return '<div class="dropdown">'
+                .'<button type="button" class="btn btn-sm btn-icon btn-light btn-active-light-primary" data-bs-toggle="dropdown" aria-expanded="false" aria-label="'.e(__('ui.actions')).'">'
+                .'<i class="bi bi-three-dots-vertical"></i>'
+                .'</button>'
+                .'<ul class="dropdown-menu dropdown-menu-end">'.$itemsHtml.'</ul>'
+                .'</div>';
+        }
+
+        return '<div class="kt-menu flex justify-end" data-kt-menu="true">'
+            .'<div class="kt-menu-item kt-menu-item-dropdown"'
+            .' data-kt-menu-item-offset="0, 10px"'
+            .' data-kt-menu-item-placement="bottom-end"'
+            .' data-kt-menu-item-placement-rtl="bottom-start"'
+            .' data-kt-menu-item-toggle="dropdown"'
+            .' data-kt-menu-item-trigger="click">'
+            .'<button class="kt-menu-toggle kt-btn kt-btn-sm kt-btn-icon kt-btn-ghost" type="button" aria-label="'.e(__('ui.actions')).'">'
+            .'<i class="ki-filled ki-dots-vertical text-lg"></i>'
+            .'</button>'
+            .'<div class="kt-menu-dropdown kt-menu-default w-full max-w-[175px]" data-kt-menu-dismiss="true">'
+            .$itemsHtml
+            .'</div>'
+            .'</div>'
+            .'</div>';
+    }
+
+    /**
+     * @param  array<string, mixed>  $option
+     */
+    protected static function tableActionCollapsedMenuItem(array $option, string $theme): string
+    {
+        $link = (string) self::keyset($option, 'link', '#');
+        $icon = self::keyset($option, 'icon');
+        $modalUrl = self::keyset($option, 'modalUrl');
+        $action = (string) self::keyset($option, 'action', '');
+        $target = self::keyset($option, 'target');
+        $label = self::tableActionLabel($option);
+        $iconClass = self::tableActionIcon($icon, $theme);
+        $actionAttr = $action !== '' ? ' data-action="'.e($action).'"' : '';
+        $targetAttr = $target ? ' target="'.e($target).'" rel="noopener"' : '';
+        $modalClass = $modalUrl ? ' js-open-modal' : '';
+        $modalAttr = $modalUrl ? ' data-modal-url="'.e($modalUrl).'"' : '';
+
+        if ($theme !== 'metronic9') {
+            return '<li'.$actionAttr.'><a class="dropdown-item'.$modalClass.'" href="'.$link.'"'.$modalAttr.$targetAttr.'>'
+                .e($label)
+                .'</a></li>';
+        }
+
+        return '<div class="kt-menu-item"'.$actionAttr.'>'
+            .'<a class="kt-menu-link'.$modalClass.'" href="'.$link.'"'.$modalAttr.$targetAttr.'>'
+            .($iconClass !== '' ? '<span class="kt-menu-icon"><i class="'.$iconClass.'"></i></span>' : '')
+            .'<span class="kt-menu-title">'.e($label).'</span>'
+            .'</a>'
+            .'</div>';
+    }
+
+    /**
+     * @param  array<string, mixed>  $option
+     */
+    protected static function tableActionLabel(array $option): string
+    {
+        $text = trim((string) self::keyset($option, 'text', ''));
+        if ($text !== '') {
+            return $text;
+        }
+
+        $title = trim((string) self::keyset($option, 'title', ''));
+        if ($title !== '') {
+            return $title;
+        }
+
+        $label = trim((string) self::keyset($option, 'label', ''));
+        if ($label !== '') {
+            return $label;
+        }
+
+        return match ((string) self::keyset($option, 'action', '')) {
+            'show', 'view' => (string) __('ui.view'),
+            'edit' => (string) __('ui.edit'),
+            'delete' => (string) __('ui.delete'),
+            default => self::fieldLabel((string) self::keyset($option, 'action', 'action')),
+        };
     }
 
     protected static function tableActionButton(array $option, string $theme): string

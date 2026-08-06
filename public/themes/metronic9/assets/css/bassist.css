@@ -58,12 +58,71 @@ body.modal-sheet-push .kt-header {
 }
 
 /**
+ * Detail/view field values: same size/chrome as a single-line .kt-input.
+ * Do not put .kt-input on a div — Metronic's .kt-input:not(input) is a
+ * flex addon wrapper and blows out height/padding.
+ */
+.kt-input-view {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: calc(var(--spacing) * 8.5);
+  border: 1px solid var(--input);
+  border-radius: calc(var(--radius) - 2px);
+  padding-inline: calc(var(--spacing) * 3);
+  font-size: 0.8125rem;
+  line-height: var(--text-sm--line-height, 1.25rem);
+  background-color: var(--muted);
+  color: var(--foreground);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: default;
+  user-select: text;
+  box-shadow: none;
+}
+
+.kt-input-view--multiline {
+  display: block;
+  height: auto;
+  min-height: calc(var(--spacing) * 8.5);
+  padding-block: calc(var(--spacing) * 2);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  overflow: visible;
+  text-overflow: unset;
+}
+
+/**
  * App utilities missing from Metronic's prebuilt Tailwind bundle.
  * Quick Create uses a 12-col grid (grid-cols-12 + gap utilities).
  */
 @layer utilities {
+  .grid-cols-4 {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
   .grid-cols-12 {
     grid-template-columns: repeat(12, minmax(0, 1fr));
+  }
+
+  @media (min-width: 40rem) {
+    .sm\:grid-cols-2 {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (min-width: 48rem) {
+    .md\:grid-cols-3 {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  @media (min-width: 80rem) {
+    .xl\:grid-cols-4 {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
   }
 
   .gap-y-3 {

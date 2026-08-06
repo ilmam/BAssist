@@ -30,6 +30,10 @@
                 @include('pages.partials.create-toolbar-button', ['model' => $model])
             </div>
         </x-slot>
-        <x-datatable :options="$options" :defaultButtons="true" />
+        <x-datatable
+            :options="$options"
+            :defaultButtons="true"
+            :collapsedActions="$options['collapsedActions'] ?? null"
+        />
     </x-card>
 @endsection

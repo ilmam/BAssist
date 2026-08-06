@@ -20,7 +20,7 @@
             ]),
         ];
 
-        $toolbarExtras = '<a href="'.e($orphans['url']).'" class="kt-btn kt-btn-sm '.($orphans['active'] ? 'kt-btn-warning' : 'kt-btn-outline').'">'
+        $toolbarExtras = '<a href="'.e($orphans['url']).'" class="'.e(ui_btn_classes($orphans['active'] ? 'primary' : 'outline')).'">'
             .e(__('ui.show_orphans'))
             .'</a>';
     @endphp

@@ -40,7 +40,7 @@ class DtoMetadata
     /**
      * Form fields keyed by property name, values are Form/ListForm type args (e.g. ['text'] or ['select', 'Project']).
      *
-     * @return array<string, array{0: string, 1?: string, readonly?: bool, language?: string, help?: string}>
+     * @return array<string, array{0: string, 1?: string, readonly?: bool, language?: string, help?: string, kt_select?: bool}>
      */
     public function formFields(): array
     {
@@ -50,7 +50,7 @@ class DtoMetadata
     /**
      * Form fields that should appear as visible inputs on Quick Create.
      *
-     * @return array<string, array{0: string, 1?: string, readonly?: bool, language?: string, help?: string}>
+     * @return array<string, array{0: string, 1?: string, readonly?: bool, language?: string, help?: string, kt_select?: bool}>
      */
     public function quickCreateVisibleFormFields(): array
     {
@@ -206,7 +206,7 @@ class DtoMetadata
 
     /**
      * @return array{
-     *     form_fields: array<string, array{0: string, 1?: string, readonly?: bool, language?: string, help?: string}>,
+     *     form_fields: array<string, array{0: string, 1?: string, readonly?: bool, language?: string, help?: string, kt_select?: bool}>,
      *     value_fields: list<string>,
      *     list_fields: list<string>,
      *     quick_create: array<string, array{hidden: bool, default: mixed, has_default: bool}>
@@ -300,7 +300,7 @@ class DtoMetadata
     }
 
     /**
-     * @return array<string, array{0: string, 1?: string, readonly?: bool, language?: string, help?: string}>
+     * @return array<string, array{0: string, 1?: string, readonly?: bool, language?: string, help?: string, kt_select?: bool}>
      */
     protected static function discoverFormFields(string $class): array
     {
@@ -488,7 +488,7 @@ class DtoMetadata
 
     /**
      * @param  ReflectionAttribute<Form|ListForm>  $attribute
-     * @return array{0: string, 1?: string, readonly?: bool, language?: string, help?: string}
+     * @return array{0: string, 1?: string, readonly?: bool, language?: string, help?: string, kt_select?: bool}
      */
     protected static function normalizeFormArgs(ReflectionAttribute $attribute): array
     {
@@ -509,6 +509,12 @@ class DtoMetadata
 
         if ($instance->help !== '') {
             $args['help'] = $instance->help;
+        }
+
+        if ($instance->type === 'kt-select') {
+            $args['kt_select'] = true;
+        } elseif ($instance->type === 'select' && $instance->ktSelect !== null) {
+            $args['kt_select'] = $instance->ktSelect;
         }
 
         return $args;

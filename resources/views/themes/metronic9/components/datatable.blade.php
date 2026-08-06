@@ -54,8 +54,9 @@
                 ajax: ajaxUrl,
                 columns: [
                     @foreach ($options['columns'] as $col)
-                        @if (! is_array($col))
-                            { data: '{{ $col }}' },
+                        @php $dataField = \App\Helpers\DatatableUi::columnDataField($col); @endphp
+                        @if ($dataField !== null)
+                            { data: '{{ $dataField }}' },
                         @else
                             {
                                 orderable: false,
@@ -63,8 +64,8 @@
                                 data: null,
                                 defaultContent: '',
                                 render: function(data, type, row, meta) {
-                                    @if (array_key_exists('buttons', $col))
-                                        var str = {!! json_encode(\App\Helpers\Ui::TableActionCol($col['buttons'])) !!};
+                                    @if (is_array($col) && array_key_exists('buttons', $col))
+                                        var str = {!! json_encode(\App\Helpers\Ui::TableActionCol($col['buttons'], (bool) ($col['collapsed'] ?? false))) !!};
                                         @foreach (array_unique($options['keys'] ?? ['id']) as $key)
                                             str = str.split('{{ '{'.$key.'}' }}').join(String(row.{{ $key }}));
                                         @endforeach
@@ -76,7 +77,7 @@
                                             str = wrap.innerHTML;
                                         }
                                         return str;
-                                    @elseif (array_key_exists('template', $col))
+                                    @elseif (is_array($col) && array_key_exists('template', $col))
                                         var str = {!! json_encode($col['template']) !!};
                                         @if (array_key_exists('field', $col))
                                             @php $fields = [$col['field']]; @endphp
@@ -124,6 +125,9 @@
                     });
                     if (typeof KTDropdown !== 'undefined' && typeof KTDropdown.createInstances === 'function') {
                         KTDropdown.createInstances();
+                    }
+                    if (typeof KTMenu !== 'undefined' && typeof KTMenu.createInstances === 'function') {
+                        KTMenu.createInstances();
                     }
                 }
             });

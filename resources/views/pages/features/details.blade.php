@@ -43,8 +43,7 @@
         ])
 
         <x-slot:footer>
-            <x-button type="link" href="{{ model_route($model, 'index') }}" color="light">{{ __('ui.back_to_list') }}</x-button>
-            @include('pages.change_requests.partials.request-change-button', ['dto' => $dto])
+            <x-button type="link" href="{{ model_route($model, 'index') }}" color="outline">{{ __('ui.back_to_list') }}</x-button>
             @if (entity_can('Scenario', 'create'))
                 <x-button
                     type="link"

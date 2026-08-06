@@ -1,10 +1,18 @@
 @php
+    /**
+     * Allowed Metronic button vocabulary:
+     *   color: primary | secondary | outline | ghost | destructive | mono
+     *   size:  md (default, matches kt-input height) | sm (toolbars/chrome) | lg
+     * Aliases: light→ghost, danger→destructive
+     */
     $tag = $type === 'link' ? 'a' : 'button';
     $variant = match ($color) {
         'primary' => 'kt-btn-primary',
-        'danger' => 'kt-btn-destructive',
         'secondary' => 'kt-btn-secondary',
-        'light' => 'kt-btn-ghost',
+        'outline' => 'kt-btn-outline',
+        'ghost', 'light' => 'kt-btn-ghost',
+        'destructive', 'danger' => 'kt-btn-destructive',
+        'mono' => 'kt-btn-mono',
         default => 'kt-btn-outline',
     };
     $sizeClass = match ($size) {

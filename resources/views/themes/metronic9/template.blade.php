@@ -154,7 +154,7 @@
                 }
 
                 button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
-                button.classList.toggle('kt-btn-light', isActive);
+                button.classList.toggle('kt-btn-secondary', isActive);
                 button.classList.toggle('kt-btn-ghost', !isActive);
             });
         }
@@ -177,7 +177,7 @@
             toggle.setAttribute('aria-pressed', clear ? 'true' : 'false');
             toggle.setAttribute('title', label);
             toggle.setAttribute('aria-label', label);
-            toggle.classList.toggle('kt-btn-light', clear);
+            toggle.classList.toggle('kt-btn-secondary', clear);
             toggle.classList.toggle('kt-btn-ghost', !clear);
 
             if (icon) {

@@ -19,7 +19,7 @@
         </x-slot:titleAside>
         <x-slot:toolbar>
             <div class="flex flex-wrap items-center gap-2">
-                <x-button type="link" href="{{ $exportMdUrl }}" icon="file-down" color="light" activeColor="primary">
+                <x-button type="link" href="{{ $exportMdUrl }}" icon="file-down" color="ghost" size="sm" activeColor="primary">
                     {{ __('ui.export_markdown') }}
                 </x-button>
                 <x-button type="link" href="{{ $exportCsvUrl }}" icon="file-down" color="primary" activeColor="primary">

@@ -100,7 +100,7 @@
                                     <td class="text-end font-medium">{{ $gap['count'] }}</td>
                                     <td class="text-end">
                                         @if (! empty($gap['url']))
-                                            <x-button type="link" href="{{ $gap['url'] }}" color="light" activeColor="primary">
+                                            <x-button type="link" href="{{ $gap['url'] }}" color="ghost" size="sm" activeColor="primary">
                                                 {{ __('ui.view') }}
                                             </x-button>
                                         @endif
@@ -116,7 +116,7 @@
         @if ($counts !== [])
             <div>
                 <h3 class="text-sm font-medium text-foreground mb-3">{{ __('ui.project_dashboard_summary') }}</h3>
-                <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
                     @foreach ($counts as $item)
                         <a href="{{ $item['url'] }}" class="kt-card hover:border-primary transition-colors block">
                             <div class="kt-card-body p-4 flex items-center gap-3">

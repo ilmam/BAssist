@@ -11,7 +11,7 @@
 
     <x-form-card :title="__('ui.feature_import_confirm_title')">
         <x-slot:toolbar>
-            <x-button type="link" href="{{ $backUrl }}" icon="arrow-left" iconOnly="true" color="light" activeColor="primary"></x-button>
+            <x-button type="link" href="{{ $backUrl }}" icon="arrow-left" iconOnly="true" color="ghost" size="sm" activeColor="primary"></x-button>
         </x-slot>
 
         <div class="kt-card-body border-t border-border p-5 lg:p-7.5 space-y-6">
@@ -110,7 +110,7 @@
         </div>
 
         <div class="kt-card-footer flex flex-wrap justify-end gap-2.5 border-t border-border p-5 lg:p-7.5">
-            <x-button type="link" href="{{ $cancelUrl }}" color="secondary">Cancel</x-button>
+            <x-button type="link" href="{{ $cancelUrl }}" color="outline">Cancel</x-button>
             <x-button type="link" href="{{ $backUrl }}" color="light">{{ __('ui.feature_import_choose_another') }}</x-button>
             <x-button type="submit" form="feature-import-confirm-form" color="primary">{{ __('ui.feature_import_confirm') }}</x-button>
         </div>

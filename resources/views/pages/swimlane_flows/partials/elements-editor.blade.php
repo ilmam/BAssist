@@ -204,7 +204,7 @@
                                     <div class="flex items-center justify-end gap-1">
                                         <button
                                             type="button"
-                                            class="kt-btn kt-btn-sm kt-btn-light"
+                                            class="kt-btn kt-btn-sm kt-btn-secondary"
                                             data-add-element
                                             title="{{ __('ui.add_element_row') }}"
                                             aria-label="{{ __('ui.add_element_row') }}"
@@ -265,7 +265,7 @@
                 </td>
                 <td>
                     <div class="flex items-center justify-end gap-1">
-                        <button type="button" class="kt-btn kt-btn-sm kt-btn-light" data-add-element title="{{ __('ui.add_element_row') }}" aria-label="{{ __('ui.add_element_row') }}">
+                        <button type="button" class="kt-btn kt-btn-sm kt-btn-secondary" data-add-element title="{{ __('ui.add_element_row') }}" aria-label="{{ __('ui.add_element_row') }}">
                             {{ __('ui.add_element_row') }}
                         </button>
                         <button type="button" class="kt-btn kt-btn-sm kt-btn-ghost kt-btn-icon" data-remove-element title="{{ __('ui.remove_element_row') }}" aria-label="{{ __('ui.remove_element_row') }}">

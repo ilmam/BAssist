@@ -54,5 +54,9 @@
         'clearAllUrl' => $clearAllUrl,
     ])
 
-    <x-datatable :options="$options" :defaultButtons="true" />
+    <x-datatable
+        :options="$options"
+        :defaultButtons="true"
+        :collapsedActions="$options['collapsedActions'] ?? null"
+    />
 </x-card>

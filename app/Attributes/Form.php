@@ -8,7 +8,7 @@ use Attribute;
  * Declares a create/edit form control for a property.
  *
  * Arguments:
- * - $type: control type (text, textarea, code, select, …)
+ * - $type: control type (text, textarea, code, select, kt-select, …)
  * - $model: related entity name for select options (e.g. 'Project')
  * - $hideQuick: when true, omit from Quick Create UI (submitted as hidden
  *   using the DTO property default). Default false = show.
@@ -17,6 +17,9 @@ use Attribute;
  * - $language: syntax language for type=code (e.g. 'gherkin', 'javascript').
  *   Ignored for other types. Default 'plaintext'.
  * - $help: optional short help text shown under the control.
+ * - $ktSelect: for type=select only — null uses config('ui.forms.select');
+ *   true forces Metronic KTSelect; false forces native kt-input select.
+ *   Type kt-select always forces enhanced (same as ktSelect: true).
  *
  * Quick Create column spans are theme defaults (sm:12 / md:6 / lg:4;
  * textarea/code/dropzone stay 12) — not set here. Rare overrides use
@@ -25,6 +28,8 @@ use Attribute;
  * Examples:
  *   #[Form('text')]
  *   #[Form('select', 'Project')]
+ *   #[Form('select', 'Project', ktSelect: false)]
+ *   #[Form('kt-select', 'Priority')]
  *   #[Form('textarea', hideQuick: true)]
  *   #[Form('code', language: 'gherkin')]
  *   #[Form('code', language: 'javascript', hideQuick: true)]
@@ -48,5 +53,6 @@ class Form
         public bool $readonly = false,
         public string $language = 'plaintext',
         public string $help = '',
+        public ?bool $ktSelect = null,
     ) {}
 }

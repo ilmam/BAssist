@@ -3,7 +3,7 @@
 @section('main')
     <x-form-card :title="__('ui.import_feature_file')">
         <x-slot:toolbar>
-            <x-button type="link" href="{{ $backUrl }}" icon="arrow-left" iconOnly="true" color="light" activeColor="primary"></x-button>
+            <x-button type="link" href="{{ $backUrl }}" icon="arrow-left" iconOnly="true" color="ghost" size="sm" activeColor="primary"></x-button>
         </x-slot>
 
         <form
@@ -50,7 +50,7 @@
         </form>
 
         <div class="kt-card-footer flex justify-end gap-2.5 border-t border-border p-5 lg:p-7.5">
-            <x-button type="link" href="{{ $backUrl }}" color="secondary">Cancel</x-button>
+            <x-button type="link" href="{{ $backUrl }}" color="outline">Cancel</x-button>
             <x-button type="submit" form="feature-import-form" color="primary">{{ __('ui.feature_import_review') }}</x-button>
         </div>
     </x-form-card>

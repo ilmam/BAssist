@@ -23,7 +23,7 @@
 
     <x-form-card :title="$title">
         <x-slot:toolbar>
-            <x-button type="link" href="{{ $cancelRoute }}" icon="arrow-left" iconOnly="true" color="light" activeColor="primary"></x-button>
+            <x-button type="link" href="{{ $cancelRoute }}" icon="arrow-left" iconOnly="true" color="ghost" size="sm" activeColor="primary"></x-button>
         </x-slot>
 
         {{ Form::open(array_merge($formRoute, ['id' => 'form1', 'files' => true, 'method' => 'post'])) }}
@@ -142,7 +142,7 @@
             </div>
 
             <div class="kt-card-footer flex justify-end gap-2.5 border-t border-border p-5 lg:p-7.5">
-                <x-button type="link" href="{{ $cancelRoute }}" color="secondary">Cancel</x-button>
+                <x-button type="link" href="{{ $cancelRoute }}" color="outline">Cancel</x-button>
                 <x-button type="submit" color="primary">Save</x-button>
             </div>
         {{ Form::close() }}

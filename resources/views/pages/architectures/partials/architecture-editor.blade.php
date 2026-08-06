@@ -175,8 +175,8 @@
             @if ($editable)
                 <div class="flex flex-wrap gap-2">
                     <button type="button" class="kt-btn kt-btn-sm kt-btn-primary" data-add-kind="system">{{ __('ui.c4_add_system') }}</button>
-                    <button type="button" class="kt-btn kt-btn-sm kt-btn-light" data-add-kind="system" data-external="1">{{ __('ui.c4_add_external') }}</button>
-                    <button type="button" class="kt-btn kt-btn-sm kt-btn-light" data-add-kind="person">{{ __('ui.c4_add_person') }}</button>
+                    <button type="button" class="kt-btn kt-btn-sm kt-btn-secondary" data-add-kind="system" data-external="1">{{ __('ui.c4_add_external') }}</button>
+                    <button type="button" class="kt-btn kt-btn-sm kt-btn-secondary" data-add-kind="person">{{ __('ui.c4_add_person') }}</button>
                     <button type="button" class="kt-btn kt-btn-sm kt-btn-ghost" data-add-kind="group">{{ __('ui.c4_add_group') }}</button>
                 </div>
             @endif
@@ -219,7 +219,7 @@
     <x-card :title="__('ui.c4_relationships')">
         <x-slot:toolbar>
             @if ($editable)
-                <button type="button" class="kt-btn kt-btn-sm kt-btn-light" data-add-relationship>{{ __('ui.c4_add_relationship') }}</button>
+                <button type="button" class="kt-btn kt-btn-sm kt-btn-secondary" data-add-relationship>{{ __('ui.c4_add_relationship') }}</button>
             @endif
         </x-slot:toolbar>
 
@@ -331,10 +331,10 @@
                 @endif
                 <button type="button" class="kt-btn kt-btn-sm kt-btn-ghost" data-toggle-mermaid-source>{{ __('ui.c4_show_source') }}</button>
                 @if ($exportDslUrl)
-                    <a class="kt-btn kt-btn-sm kt-btn-light" href="{{ $exportDslUrl }}">{{ __('ui.c4_export_dsl') }}</a>
+                    <a class="kt-btn kt-btn-sm kt-btn-secondary" href="{{ $exportDslUrl }}">{{ __('ui.c4_export_dsl') }}</a>
                 @endif
                 @if ($exportJsonUrl)
-                    <a class="kt-btn kt-btn-sm kt-btn-light" href="{{ $exportJsonUrl }}">{{ __('ui.c4_export_json') }}</a>
+                    <a class="kt-btn kt-btn-sm kt-btn-secondary" href="{{ $exportJsonUrl }}">{{ __('ui.c4_export_json') }}</a>
                 @endif
             </div>
         </x-slot:toolbar>
@@ -343,7 +343,7 @@
 
         <div class="flex flex-col gap-3 mb-4" data-preview-controls>
             <div class="flex flex-wrap gap-1 c4-level-tabs" role="tablist">
-                <button type="button" class="kt-btn kt-btn-sm kt-btn-light" data-c4-level="context" aria-selected="true">{{ __('ui.c4_level_context') }}</button>
+                <button type="button" class="kt-btn kt-btn-sm kt-btn-secondary" data-c4-level="context" aria-selected="true">{{ __('ui.c4_level_context') }}</button>
                 <button type="button" class="kt-btn kt-btn-sm kt-btn-ghost" data-c4-level="container" aria-selected="false">{{ __('ui.c4_level_container') }}</button>
                 <button type="button" class="kt-btn kt-btn-sm kt-btn-ghost" data-c4-level="component" aria-selected="false">{{ __('ui.c4_level_component') }}</button>
             </div>

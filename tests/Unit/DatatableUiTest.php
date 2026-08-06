@@ -31,6 +31,36 @@ class DatatableUiTest extends TestCase
     }
 
     #[Test]
+    public function explicit_identity_width_style_opts_out_of_leftover_absorption(): void
+    {
+        $style = DatatableUi::columnStyle([
+            'data' => 'title',
+            'style' => DatatableUi::identityWidthStyle(),
+        ], 1);
+
+        $this->assertStringContainsString('width: '.DatatableUi::IDENTITY_WIDTH, $style);
+        $this->assertStringContainsString('min-width: '.DatatableUi::IDENTITY_MIN_WIDTH, $style);
+    }
+
+    #[Test]
+    public function plain_data_column_arrays_are_not_treated_as_custom(): void
+    {
+        $this->assertFalse(DatatableUi::isCustomColumn([
+            'data' => 'title',
+            'style' => DatatableUi::identityWidthStyle(),
+        ]));
+        $this->assertSame('title', DatatableUi::columnDataField([
+            'data' => 'title',
+            'style' => DatatableUi::identityWidthStyle(),
+        ]));
+        $this->assertNull(DatatableUi::columnDataField([
+            'custom' => true,
+            'name' => 'score_label',
+            'template' => '{score_label}',
+        ]));
+    }
+
+    #[Test]
     public function identity_column_min_width_floor_still_wraps_not_nowrap(): void
     {
         // Wide Risks-style header (many later columns) — identity must still
@@ -102,6 +132,19 @@ class DatatableUiTest extends TestCase
         // 4 slots × 2.1rem = 8.4rem
         $this->assertStringContainsString('width: 8.4rem', $style);
         $this->assertStringContainsString('min-width: 8.4rem', $style);
+    }
+
+    #[Test]
+    public function collapsed_actions_column_is_single_slot_width(): void
+    {
+        $style = DatatableUi::actionsStyle([
+            ['action' => 'show'],
+            ['action' => 'edit', 'menu' => true],
+            ['action' => 'delete'],
+        ], collapsed: true);
+
+        $this->assertStringContainsString('width: 3.75rem', $style);
+        $this->assertStringContainsString('min-width: 3.75rem', $style);
     }
 
     #[Test]

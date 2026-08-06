@@ -265,6 +265,90 @@ if (! function_exists('ui_form_view')) {
     }
 }
 
+if (! function_exists('ui_form_use_kt_select')) {
+    /**
+     * Whether a select should use Metronic KTSelect (data-kt-select).
+     *
+     * @param  bool|null  $override  Explicit per-field preference; null uses config('ui.forms.select').
+     */
+    function ui_form_use_kt_select(?bool $override = null): bool
+    {
+        if ($override !== null) {
+            return $override;
+        }
+
+        return config('ui.forms.select', 'kt') === 'kt';
+    }
+}
+
+if (! function_exists('ui_form_select_attrs')) {
+    /**
+     * Class + data attributes for a form select given an optional ktSelect override.
+     *
+     * @param  array<string, mixed>  $attributes
+     * @return array{0: array<string, mixed>, 1: array<string, mixed>} [selectAttrs, remainingAttributes]
+     */
+    function ui_form_select_attrs(array $attributes = [], ?bool $forceKtSelect = null): array
+    {
+        $override = $forceKtSelect;
+
+        if ($override === null && array_key_exists('kt_select', $attributes)) {
+            $override = (bool) $attributes['kt_select'];
+        }
+
+        if ($override === null && array_key_exists('data-kt-select', $attributes)) {
+            $raw = $attributes['data-kt-select'];
+            $override = $raw === true || $raw === 1 || $raw === '1' || $raw === 'true';
+        }
+
+        unset($attributes['kt_select'], $attributes['data-kt-select'], $attributes['layout'], $attributes['data-field-help'], $attributes['help']);
+
+        $useKt = ui_form_use_kt_select($override);
+
+        $selectAttrs = $useKt
+            ? ['class' => 'kt-select', 'data-kt-select' => 'true']
+            : ['class' => 'kt-input'];
+
+        return [$selectAttrs, $attributes];
+    }
+}
+
+if (! function_exists('ui_btn_classes')) {
+    /**
+     * Canonical Metronic button class string for blades/JS templates.
+     *
+     * @param  string  $variant  primary|secondary|outline|ghost|destructive|mono (aliases: light, danger)
+     * @param  string|null  $size  sm|md|lg; null uses config('ui.buttons.size')
+     */
+    function ui_btn_classes(string $variant = 'primary', ?string $size = null, bool $icon = false, string $extra = ''): string
+    {
+        $variantClass = match ($variant) {
+            'primary' => 'kt-btn-primary',
+            'secondary' => 'kt-btn-secondary',
+            'outline' => 'kt-btn-outline',
+            'ghost', 'light' => 'kt-btn-ghost',
+            'destructive', 'danger' => 'kt-btn-destructive',
+            'mono' => 'kt-btn-mono',
+            default => 'kt-btn-outline',
+        };
+
+        $resolvedSize = $size ?? (string) config('ui.buttons.size', 'md');
+        $sizeClass = match ($resolvedSize) {
+            'sm' => 'kt-btn-sm',
+            'lg' => 'kt-btn-lg',
+            default => '',
+        };
+
+        return trim(implode(' ', array_filter([
+            'kt-btn',
+            $variantClass,
+            $sizeClass,
+            $icon ? 'kt-btn-icon' : '',
+            $extra,
+        ])));
+    }
+}
+
 if (! function_exists('ui_form_field_layout_vars')) {
     /**
      * Shared layout defaults for Metronic form controls.

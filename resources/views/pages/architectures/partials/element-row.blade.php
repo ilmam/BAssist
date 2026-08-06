@@ -141,26 +141,26 @@
                 @endif
             </div>
             <div class="flex flex-wrap gap-1 ms-auto pb-0.5" data-element-actions>
-                <button type="button" class="kt-btn kt-btn-xs kt-btn-ghost" data-toggle-style>{{ __('ui.c4_style') }}</button>
+                <button type="button" class="kt-btn kt-btn-sm kt-btn-ghost" data-toggle-style>{{ __('ui.c4_style') }}</button>
             </div>
         @endif
 
         @if ($editable)
             <div class="flex flex-wrap gap-1 ms-auto pb-0.5" data-element-actions>
                 @if ($kind === 'group')
-                    <button type="button" class="kt-btn kt-btn-xs kt-btn-light" data-add-child="system">{{ __('ui.c4_add_system') }}</button>
-                    <button type="button" class="kt-btn kt-btn-xs kt-btn-light" data-add-child="person">{{ __('ui.c4_add_person') }}</button>
+                    <button type="button" class="kt-btn kt-btn-sm kt-btn-secondary" data-add-child="system">{{ __('ui.c4_add_system') }}</button>
+                    <button type="button" class="kt-btn kt-btn-sm kt-btn-secondary" data-add-child="person">{{ __('ui.c4_add_person') }}</button>
                 @endif
                 @if ($kind === 'system' && ! $external)
-                    <button type="button" class="kt-btn kt-btn-xs kt-btn-light" data-add-child="container">{{ __('ui.c4_add_container') }}</button>
+                    <button type="button" class="kt-btn kt-btn-sm kt-btn-secondary" data-add-child="container">{{ __('ui.c4_add_container') }}</button>
                 @endif
                 @if ($kind === 'container')
-                    <button type="button" class="kt-btn kt-btn-xs kt-btn-light" data-add-child="component">{{ __('ui.c4_add_component') }}</button>
+                    <button type="button" class="kt-btn kt-btn-sm kt-btn-secondary" data-add-child="component">{{ __('ui.c4_add_component') }}</button>
                 @endif
-                <button type="button" class="kt-btn kt-btn-xs kt-btn-ghost" data-move-element="up" title="{{ __('ui.c4_move_up') }}">↑</button>
-                <button type="button" class="kt-btn kt-btn-xs kt-btn-ghost" data-move-element="down" title="{{ __('ui.c4_move_down') }}">↓</button>
-                <button type="button" class="kt-btn kt-btn-xs kt-btn-ghost" data-toggle-style>{{ __('ui.c4_style') }}</button>
-                <button type="button" class="kt-btn kt-btn-xs kt-btn-ghost" data-remove-element>{{ __('ui.delete') }}</button>
+                <button type="button" class="kt-btn kt-btn-sm kt-btn-ghost" data-move-element="up" title="{{ __('ui.c4_move_up') }}">↑</button>
+                <button type="button" class="kt-btn kt-btn-sm kt-btn-ghost" data-move-element="down" title="{{ __('ui.c4_move_down') }}">↓</button>
+                <button type="button" class="kt-btn kt-btn-sm kt-btn-ghost" data-toggle-style>{{ __('ui.c4_style') }}</button>
+                <button type="button" class="kt-btn kt-btn-sm kt-btn-ghost" data-remove-element>{{ __('ui.delete') }}</button>
             </div>
         @endif
     </div>

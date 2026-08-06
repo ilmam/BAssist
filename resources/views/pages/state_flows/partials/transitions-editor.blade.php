@@ -170,7 +170,7 @@
                                     <div class="flex items-center justify-end gap-1">
                                         <button
                                             type="button"
-                                            class="kt-btn kt-btn-sm kt-btn-light"
+                                            class="kt-btn kt-btn-sm kt-btn-secondary"
                                             data-add-transition
                                             title="{{ __('ui.add_transition_row') }}"
                                             aria-label="{{ __('ui.add_transition_row') }}"
@@ -210,7 +210,7 @@
                 </td>
                 <td>
                     <div class="flex items-center justify-end gap-1">
-                        <button type="button" class="kt-btn kt-btn-sm kt-btn-light" data-add-transition title="{{ __('ui.add_transition_row') }}" aria-label="{{ __('ui.add_transition_row') }}">
+                        <button type="button" class="kt-btn kt-btn-sm kt-btn-secondary" data-add-transition title="{{ __('ui.add_transition_row') }}" aria-label="{{ __('ui.add_transition_row') }}">
                             {{ __('ui.add_transition_row') }}
                         </button>
                         <button type="button" class="kt-btn kt-btn-sm kt-btn-ghost kt-btn-icon" data-remove-transition title="{{ __('ui.remove_transition_row') }}" aria-label="{{ __('ui.remove_transition_row') }}">

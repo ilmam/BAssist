@@ -43,7 +43,7 @@
         </form>
 
         <x-slot:footer>
-            <x-button type="link" href="{{ model_route('ChangeRequest', 'show', $changeRequest->id) }}" color="light">Cancel</x-button>
+            <x-button type="link" href="{{ model_route('ChangeRequest', 'show', $changeRequest->id) }}" color="outline">Cancel</x-button>
             <x-button type="submit" color="primary" form="approveTaintPageForm">{{ __('ui.change_request_confirm_approve') }}</x-button>
         </x-slot:footer>
     </x-card>

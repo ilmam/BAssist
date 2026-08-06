@@ -773,7 +773,7 @@ function syncRowChrome(row, kind, external = false) {
         const addBtn = (childKind, label) => {
             const btn = document.createElement('button');
             btn.type = 'button';
-            btn.className = 'kt-btn kt-btn-xs kt-btn-light';
+            btn.className = 'kt-btn kt-btn-sm kt-btn-secondary';
             btn.setAttribute('data-add-child', childKind);
             btn.textContent = label;
             actions.insertBefore(btn, insertBefore);
@@ -1054,7 +1054,7 @@ function bindEditor(root) {
             root.querySelectorAll('[data-c4-level]').forEach((btn) => {
                 const selected = btn === levelBtn;
                 btn.setAttribute('aria-selected', selected ? 'true' : 'false');
-                btn.classList.toggle('kt-btn-light', selected);
+                btn.classList.toggle('kt-btn-secondary', selected);
                 btn.classList.toggle('kt-btn-ghost', !selected);
             });
             previewNow();

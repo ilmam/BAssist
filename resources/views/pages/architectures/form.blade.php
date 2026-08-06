@@ -37,7 +37,7 @@
         <div class="space-y-5">
             <x-card :title="$title">
                 <x-slot:toolbar>
-                    <x-button type="link" href="{{ $cancelRoute }}" icon="arrow-left" iconOnly="true" color="light" activeColor="primary"></x-button>
+                    <x-button type="link" href="{{ $cancelRoute }}" icon="arrow-left" iconOnly="true" color="ghost" size="sm" activeColor="primary"></x-button>
                 </x-slot:toolbar>
 
                 <div class="space-y-5">
@@ -68,7 +68,7 @@
             ])
 
             <div class="flex justify-end gap-2.5">
-                <x-button type="link" href="{{ $cancelRoute }}" color="secondary">Cancel</x-button>
+                <x-button type="link" href="{{ $cancelRoute }}" color="outline">Cancel</x-button>
                 <x-button type="submit" color="primary">Save</x-button>
             </div>
         </div>

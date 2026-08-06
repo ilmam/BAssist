@@ -36,6 +36,12 @@ class DatatableUi
      */
     public const IDENTITY_MIN_WIDTH = '14rem';
 
+    /**
+     * Preferred identity width when a list opts out of leftover absorption
+     * (pass as column `style` so other columns can breathe).
+     */
+    public const IDENTITY_WIDTH = '16rem';
+
     /** Approximate width of one icon button (incl. gap). */
     public const ACTION_SLOT_WIDTH = 2.1;
 
@@ -90,7 +96,7 @@ class DatatableUi
         if (is_array($col) && (($col['name'] ?? '') === 'actions' || array_key_exists('buttons', $col))) {
             $buttons = is_array($col['buttons'] ?? null) ? $col['buttons'] : [];
 
-            return self::actionsStyle($buttons);
+            return self::actionsStyle($buttons, (bool) ($col['collapsed'] ?? false));
         }
 
         // Honor an explicit width from the column definition (still strip nowrap for headers).
@@ -178,11 +184,16 @@ class DatatableUi
 
     /**
      * Actions column: compact control strip; body cells stay nowrap (headers wrap).
+     * Collapsed mode is a single ⋮ control (~60px).
      *
      * @param  list<array<string, mixed>|null>  $buttons
      */
-    public static function actionsStyle(array $buttons = []): string
+    public static function actionsStyle(array $buttons = [], bool $collapsed = false): string
     {
+        if ($collapsed) {
+            return 'width: 3.75rem; min-width: 3.75rem; white-space: nowrap';
+        }
+
         $slots = self::actionButtonSlots($buttons);
         $rem = max(self::ACTIONS_MIN_WIDTH, $slots * self::ACTION_SLOT_WIDTH);
 
@@ -222,6 +233,51 @@ class DatatableUi
     public static function compactStyle(): string
     {
         return '';
+    }
+
+    /**
+     * Explicit identity width for lists where leftover absorption crowds siblings.
+     */
+    public static function identityWidthStyle(?string $width = null): string
+    {
+        return 'width: '.($width ?? self::IDENTITY_WIDTH).'; min-width: '.self::IDENTITY_MIN_WIDTH;
+    }
+
+    /**
+     * True when the column is a custom render column (actions / template),
+     * not a plain data field that happens to carry metadata (e.g. style).
+     *
+     * @param  string|array<string, mixed>  $col
+     */
+    public static function isCustomColumn(string|array $col): bool
+    {
+        if (! is_array($col)) {
+            return false;
+        }
+
+        return array_key_exists('buttons', $col)
+            || array_key_exists('template', $col)
+            || ! empty($col['custom']);
+    }
+
+    /**
+     * DataTables `data` property for a column definition.
+     *
+     * @param  string|array<string, mixed>  $col
+     */
+    public static function columnDataField(string|array $col): ?string
+    {
+        if (! is_array($col)) {
+            return (string) $col;
+        }
+
+        if (self::isCustomColumn($col)) {
+            return null;
+        }
+
+        $data = $col['data'] ?? $col['name'] ?? null;
+
+        return is_string($data) && $data !== '' && $data !== 'actions' ? $data : null;
     }
 
     protected static function withoutNowrap(string $style): string

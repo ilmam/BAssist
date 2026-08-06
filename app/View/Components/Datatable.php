@@ -27,9 +27,19 @@ class Datatable extends Component
         public array $options,
         public string $id = 'datatable',
         public string $class = 'table',
-        public bool $defaultButtons = false
+        public bool $defaultButtons = false,
+        public ?bool $collapsedActions = null,
     ) {
         $this->options = array_merge($this->defaultOptions, $options);
+
+        if ($this->collapsedActions === null) {
+            if (array_key_exists('collapsedActions', $this->options)) {
+                $this->collapsedActions = (bool) $this->options['collapsedActions'];
+            } else {
+                $this->collapsedActions = (bool) config('ui.datatables.collapsed_actions', false);
+            }
+        }
+
         $this->prepareDatatable();
     }
 
@@ -63,7 +73,8 @@ class Datatable extends Component
                 'icon' => 'pencil',
                 'link' => $baseUrl.'/{id}/edit',
                 'modalUrl' => ($useModals && config('ui.modal_edit', true)) ? $modalEditUrl : null,
-                'menu' => $useModals && config('ui.modal_edit', true),
+                // Split "Open / Open in new page" only when actions are shown inline.
+                'menu' => ! $this->collapsedActions && $useModals && config('ui.modal_edit', true),
             ],
             [
                 'action' => 'delete',
@@ -111,8 +122,9 @@ class Datatable extends Component
                     'custom' => true,
                     'name' => 'actions',
                     'title' => '',
-                    'style' => \App\Helpers\DatatableUi::actionsStyle($buttons),
+                    'style' => \App\Helpers\DatatableUi::actionsStyle($buttons, $this->collapsedActions),
                     'buttons' => $buttons,
+                    'collapsed' => $this->collapsedActions,
                 ];
             }
         }

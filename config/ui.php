@@ -29,6 +29,56 @@ return [
     'modal_create' => env('UI_MODAL_CREATE', true),
     'modal_quick_create' => env('UI_MODAL_QUICK_CREATE', true),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Form Controls
+    |--------------------------------------------------------------------------
+    |
+    | select: default select rendering for Form/ListForm type "select".
+    |   - kt     → Metronic KTSelect (class kt-select + data-kt-select)
+    |   - native → plain select styled as kt-input
+    |
+    | Override per field with #[Form('select', 'Project', ktSelect: true|false)]
+    | or type "kt-select" (always enhanced).
+    |
+    */
+
+    'forms' => [
+        'select' => env('UI_FORM_SELECT', 'kt'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Buttons
+    |--------------------------------------------------------------------------
+    |
+    | Default size for <x-button> / ui_btn_classes() when size is omitted.
+    | md matches Metronic default .kt-btn and .kt-input height (8.5 spacing).
+    | Use sm only for toolbars, table chrome, and dense editors.
+    |
+    | Variants: primary, secondary, outline, ghost, destructive, mono
+    |
+    */
+
+    'buttons' => [
+        'size' => env('UI_BUTTON_SIZE', 'md'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | DataTables
+    |--------------------------------------------------------------------------
+    |
+    | collapsed_actions: when true, row actions render as a single ⋮ menu
+    | instead of inline icon buttons. Override per table via
+    | <x-datatable collapsedActions="true" /> or options['collapsedActions'].
+    |
+    */
+
+    'datatables' => [
+        'collapsed_actions' => env('UI_DATATABLE_COLLAPSED_ACTIONS', false),
+    ],
+
     'themes' => [
         'metronic8' => [
             'layout' => 'themes.metronic8.template',

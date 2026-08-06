@@ -39,7 +39,7 @@
 
         <div class="flex justify-end gap-2.5">
             <x-modal-dismiss text="Cancel" />
-            <button type="submit" class="kt-btn kt-btn-primary">{{ __('ui.change_request_confirm_approve') }}</button>
+            <button type="submit" class="{{ ui_btn_classes('primary') }}">{{ __('ui.change_request_confirm_approve') }}</button>
         </div>
     </form>
 </x-modal-content>

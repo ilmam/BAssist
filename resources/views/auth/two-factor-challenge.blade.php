@@ -1,53 +1,53 @@
 @extends('auth.layout')
 
 @section('title', 'Two-Factor Challenge - '.config('app.name'))
-@section('aside-title', 'Two-factor authentication')
-@section('aside-description', 'Enter the code from your authenticator app or use a recovery code.')
 
 @section('content')
-    <div class="mb-8">
-        <h2 class="text-2xl font-semibold text-foreground mb-2">Confirm your identity</h2>
-        <p class="text-secondary-foreground text-sm" id="two-factor-description">
-            Enter the authentication code from your authenticator app.
-        </p>
-    </div>
-
-    @include('auth.partials.alerts')
-
-    <form method="POST" action="{{ route('two-factor.login.store') }}" id="two-factor-form">
-        @csrf
-
-        <div id="code-field" class="flex flex-col gap-1 mb-6">
-            <label class="text-sm font-medium text-foreground" for="code">Authentication code</label>
-            <input
-                id="code"
-                type="text"
-                name="code"
-                inputmode="numeric"
-                autocomplete="one-time-code"
-                class="kt-input w-full"
-            />
+    <div class="kt-card-content flex flex-col gap-5 p-10">
+        <div class="text-center mb-2.5">
+            <h3 class="text-lg font-medium text-mono leading-none mb-2.5">Confirm your identity</h3>
+            <p class="text-sm text-secondary-foreground" id="two-factor-description">
+                Enter the authentication code from your authenticator app.
+            </p>
         </div>
 
-        <div id="recovery-field" class="hidden flex flex-col gap-1 mb-6">
-            <label class="text-sm font-medium text-foreground" for="recovery_code">Recovery code</label>
-            <input
-                id="recovery_code"
-                type="text"
-                name="recovery_code"
-                autocomplete="one-time-code"
-                class="kt-input w-full"
-            />
-        </div>
+        @include('auth.partials.alerts')
 
-        <button type="submit" class="kt-btn kt-btn-primary w-full justify-center mb-4">
-            Continue
+        <form method="POST" action="{{ route('two-factor.login.store') }}" id="two-factor-form" class="flex flex-col gap-5">
+            @csrf
+
+            <div id="code-field" class="flex flex-col gap-1">
+                <label class="kt-form-label font-normal text-mono" for="code">Authentication code</label>
+                <input
+                    id="code"
+                    type="text"
+                    name="code"
+                    inputmode="numeric"
+                    autocomplete="one-time-code"
+                    class="kt-input"
+                />
+            </div>
+
+            <div id="recovery-field" class="hidden flex flex-col gap-1">
+                <label class="kt-form-label font-normal text-mono" for="recovery_code">Recovery code</label>
+                <input
+                    id="recovery_code"
+                    type="text"
+                    name="recovery_code"
+                    autocomplete="one-time-code"
+                    class="kt-input"
+                />
+            </div>
+
+            <button type="submit" class="kt-btn kt-btn-primary flex justify-center grow">
+                Continue
+            </button>
+        </form>
+
+        <button type="button" id="toggle-recovery" class="text-sm kt-link text-center">
+            Use a recovery code
         </button>
-    </form>
-
-    <button type="button" id="toggle-recovery" class="text-sm text-primary font-medium hover:underline">
-        Use a recovery code
-    </button>
+    </div>
 @endsection
 
 @push('scripts')

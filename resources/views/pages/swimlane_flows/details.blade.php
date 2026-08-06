@@ -23,7 +23,7 @@
         ])
 
         <x-slot:footer>
-            <x-button type="link" href="{{ model_route($model, 'index') }}" color="light">Back to list</x-button>
+            <x-button type="link" href="{{ model_route($model, 'index') }}" color="outline">Back to list</x-button>
             @if (entity_can($model, 'update'))
                 <x-button type="link" href="{{ model_route($model, 'edit', $dto->id) }}" color="primary">Edit</x-button>
             @endif

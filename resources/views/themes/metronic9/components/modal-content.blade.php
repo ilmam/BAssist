@@ -55,7 +55,7 @@
                     @endphp
                     <button
                         type="button"
-                        class="kt-btn kt-btn-sm kt-btn-icon {{ $isActive ? 'kt-btn-light' : 'kt-btn-ghost' }}"
+                        class="kt-btn kt-btn-sm kt-btn-icon {{ $isActive ? 'kt-btn-secondary' : 'kt-btn-ghost' }}"
                         data-modal-size-set="{{ $mode }}"
                         aria-pressed="{{ $isActive ? 'true' : 'false' }}"
                         title="{{ $meta['label'] }}"

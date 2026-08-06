@@ -38,7 +38,7 @@
         <x-slot:toolbar>
             <div class="flex flex-wrap items-center gap-2">
                 <a href="{{ $orphansToggle }}"
-                   class="kt-btn kt-btn-sm {{ ($filters['orphans_only'] ?? false) ? 'kt-btn-warning' : 'kt-btn-outline' }}">
+                   class="{{ ui_btn_classes(($filters['orphans_only'] ?? false) ? 'primary' : 'outline') }}">
                     {{ __('ui.show_gaps') }}
                 </a>
                 <x-button type="link" href="{{ $exportUrl }}" icon="file-down" color="primary" activeColor="primary">

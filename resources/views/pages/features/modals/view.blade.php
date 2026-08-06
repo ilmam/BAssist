@@ -18,7 +18,6 @@
     ])
 
     <x-slot:footer>
-        @include('pages.change_requests.partials.request-change-button', ['dto' => $dto])
         @if (entity_can('Scenario', 'create'))
             <x-button
                 type="link"

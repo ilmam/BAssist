@@ -50,7 +50,7 @@
                     <x-slot:toolbar>
                         <div class="flex flex-wrap items-center gap-2">
                             <span class="kt-badge kt-badge-outline">{{ $section['count'] }}</span>
-                            <x-button type="link" href="{{ $section['index_url'] }}" color="light" activeColor="primary">
+                            <x-button type="link" href="{{ $section['index_url'] }}" color="ghost" size="sm" activeColor="primary">
                                 {{ __('ui.view_all') }}
                             </x-button>
                             @if ($section['can_create'] && $section['create_modal_url'])

@@ -20,12 +20,14 @@ Short PHP attributes drive list columns, detail values, forms, Quick Create, and
 ```php
 #[Form('text')]
 #[Form('select', 'Project')]
+#[Form('select', 'Project', ktSelect: false)] // native kt-input select
 #[Form('textarea', hideQuick: true)]
 #[Form('text', readonly: true)]
 ```
 
 - Every `Form` / `ListForm` field **appears in Quick Create by default**.
 - `hideQuick: true` opts out: the field is not shown in the Quick Create UI and is submitted as a hidden input using the DTO property default.
+- Select fields default to Metronic KTSelect (`config('ui.forms.select')` = `kt`). Override per field with `ktSelect: true|false`, or use type `kt-select` to force enhanced.
 - Column spans are **not** Form / ListForm arguments (no `span` / `quickSpan`). Theme type defaults apply (`sm:12` / `md:6` / `lg:6`, i.e. half width on tablet+; `textarea` / `dropzone` stay `12`) — for Quick Create, modal, and full page create/edit alike. Rare `$field['ui_span']` overrides — see [ui-views.md](ui-views.md#override-spans).
 - `readonly: true` renders the control disabled/readonly (not submitted). Empty readonly values are omitted from create forms.
 - Full create/edit forms show all form fields, laid out half-width like Quick Create (span applies there too).

@@ -56,7 +56,7 @@
         </div>
 
         <div class="flex justify-end gap-2.5 mt-4">
-            <button type="button" class="kt-btn kt-btn-outline" data-kt-modal-dismiss="true">Cancel</button>
+            <x-button type="button" color="outline" data-kt-modal-dismiss="true">Cancel</x-button>
             <x-button type="submit" color="primary">Save</x-button>
         </div>
     {{ Form::close() }}

@@ -25,7 +25,7 @@
             @endforeach
         </div>
         <x-slot:footer>
-            <x-button type="link" href="{{ model_route($model, 'index') }}" color="light">Back to list</x-button>
+            <x-button type="link" href="{{ model_route($model, 'index') }}" color="outline">Back to list</x-button>
         </x-slot:footer>
     </x-card>
     </div>

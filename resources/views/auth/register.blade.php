@@ -1,80 +1,80 @@
 @extends('auth.layout')
 
 @section('title', 'Sign Up - '.config('app.name'))
-@section('aside-title', 'Create your account')
-@section('aside-description', 'Register to start using the application and manage your data.')
 
 @section('content')
-    <div class="mb-8">
-        <h2 class="text-2xl font-semibold text-foreground mb-2">Sign up</h2>
-        <p class="text-secondary-foreground text-sm">
-            Fill in your details to create a new account.
+    <div class="kt-card-content flex flex-col gap-5 p-10">
+        <div class="text-center mb-2.5">
+            <h3 class="text-lg font-medium text-mono leading-none mb-2.5">Sign up</h3>
+            <p class="text-sm text-secondary-foreground">
+                Fill in your details to create a new account.
+            </p>
+        </div>
+
+        @include('auth.partials.alerts')
+
+        <form method="POST" action="{{ route('register') }}" class="flex flex-col gap-5">
+            @csrf
+
+            <div class="flex flex-col gap-1">
+                <label class="kt-form-label font-normal text-mono" for="name">Name</label>
+                <input
+                    id="name"
+                    type="text"
+                    name="name"
+                    value="{{ old('name') }}"
+                    required
+                    autofocus
+                    autocomplete="name"
+                    class="kt-input"
+                />
+            </div>
+
+            <div class="flex flex-col gap-1">
+                <label class="kt-form-label font-normal text-mono" for="email">Email</label>
+                <input
+                    id="email"
+                    type="email"
+                    name="email"
+                    value="{{ old('email') }}"
+                    required
+                    autocomplete="username"
+                    class="kt-input"
+                />
+            </div>
+
+            <div class="flex flex-col gap-1">
+                <label class="kt-form-label font-normal text-mono" for="password">Password</label>
+                <input
+                    id="password"
+                    type="password"
+                    name="password"
+                    required
+                    autocomplete="new-password"
+                    class="kt-input"
+                />
+            </div>
+
+            <div class="flex flex-col gap-1">
+                <label class="kt-form-label font-normal text-mono" for="password_confirmation">Confirm password</label>
+                <input
+                    id="password_confirmation"
+                    type="password"
+                    name="password_confirmation"
+                    required
+                    autocomplete="new-password"
+                    class="kt-input"
+                />
+            </div>
+
+            <button type="submit" class="kt-btn kt-btn-primary flex justify-center grow">
+                Create account
+            </button>
+        </form>
+
+        <p class="text-sm text-secondary-foreground text-center">
+            Already have an account?
+            <a href="{{ route('login') }}" class="text-sm kt-link">Sign in</a>
         </p>
     </div>
-
-    @include('auth.partials.alerts')
-
-    <form method="POST" action="{{ route('register') }}" class="space-y-1">
-        @csrf
-
-        <div class="flex flex-col gap-1 mb-5">
-            <label class="text-sm font-medium text-foreground" for="name">Name</label>
-            <input
-                id="name"
-                type="text"
-                name="name"
-                value="{{ old('name') }}"
-                required
-                autofocus
-                autocomplete="name"
-                class="kt-input w-full"
-            />
-        </div>
-
-        <div class="flex flex-col gap-1 mb-5">
-            <label class="text-sm font-medium text-foreground" for="email">Email</label>
-            <input
-                id="email"
-                type="email"
-                name="email"
-                value="{{ old('email') }}"
-                required
-                autocomplete="username"
-                class="kt-input w-full"
-            />
-        </div>
-
-        <div class="flex flex-col gap-1 mb-5">
-            <label class="text-sm font-medium text-foreground" for="password">Password</label>
-            <input
-                id="password"
-                type="password"
-                name="password"
-                required
-                autocomplete="new-password"
-                class="kt-input w-full"
-            />
-        </div>
-
-        <div class="flex flex-col gap-1 mb-6">
-            <label class="text-sm font-medium text-foreground" for="password_confirmation">Confirm password</label>
-            <input
-                id="password_confirmation"
-                type="password"
-                name="password_confirmation"
-                required
-                autocomplete="new-password"
-                class="kt-input w-full"
-            />
-        </div>
-
-        <button type="submit" class="kt-btn kt-btn-primary w-full justify-center">
-            Create account
-        </button>
-    </form>
-
-    <p class="text-sm text-secondary-foreground text-center mt-6">
-        Already have an account?
-        <a href="{{ route('login') }}" class="text-primary font-medium hover:underline">Sign in</a>
-    </p>
 @endsection

@@ -56,7 +56,7 @@
                                 {{ __('ui.open_strategic_baseline') }}
                             </x-button>
                         @else
-                            <x-button type="link" href="{{ $section['index_url'] }}" color="light" activeColor="primary">
+                            <x-button type="link" href="{{ $section['index_url'] }}" color="ghost" size="sm" activeColor="primary">
                                 {{ __('ui.view_all') }}
                             </x-button>
                             @if ($section['can_create'] && $section['create_modal_url'])

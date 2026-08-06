@@ -18,6 +18,9 @@ use Attribute;
  *   #[ListForm('select', 'Status', hideQuick: true)]
  *   public ?int $status_id = null;
  *
+ *   #[ListForm('select', 'Priority', ktSelect: false)]
+ *   public ?int $priority_id = null;
+ *
  *   #[ListForm('code', language: 'gherkin', hideQuick: true)]
  *   public ?string $body = null;
  *
@@ -35,5 +38,6 @@ class ListForm
         public bool $readonly = false,
         public string $language = 'plaintext',
         public string $help = '',
+        public ?bool $ktSelect = null,
     ) {}
 }
