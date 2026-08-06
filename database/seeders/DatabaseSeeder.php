@@ -18,6 +18,7 @@ class DatabaseSeeder extends Seeder
             RoleSeeder::class,
             StatusPrioritySeeder::class,
             NeedSpineSeeder::class,
+            DemoProjectSeeder::class,
         ]);
     }
 }
