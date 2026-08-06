@@ -14,8 +14,6 @@ return new class extends Migration
             $table->foreignId('project_id')->constrained();
             $table->text('description')->nullable();
             $table->text('success_measure')->nullable();
-            $table->foreignId('priority_id')->nullable()->constrained('priorities');
-            $table->foreignId('status_id')->nullable()->constrained('statuses');
             $table->timestamps();
             $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
             $table->foreignId('updated_by')->nullable()->constrained('users')->nullOnDelete();

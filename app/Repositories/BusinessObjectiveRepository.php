@@ -15,8 +15,6 @@ class BusinessObjectiveRepository extends BaseRepository
 
     protected array $listFilters = [
         'project_id',
-        'status_id',
-        'priority_id',
     ];
 
     protected array $listRelationFilters = [

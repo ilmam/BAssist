@@ -5,11 +5,9 @@ namespace App\Repositories;
 use App\Data\BusinessNeedData;
 use App\Data\BusinessNeedViewData;
 use App\Models\BusinessNeed;
-use App\Support\EntityStatus;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\ValidationException;
 
 class BusinessNeedRepository extends BaseRepository
 {
@@ -19,8 +17,6 @@ class BusinessNeedRepository extends BaseRepository
 
     protected array $listFilters = [
         'project_id',
-        'status_id',
-        'priority_id',
     ];
 
     protected array $listRelationFilters = [
@@ -76,9 +72,6 @@ class BusinessNeedRepository extends BaseRepository
     {
         return DB::transaction(function () use ($data) {
             $objectiveId = $this->extractObjectiveId($data);
-            $statusId = isset($data['status_id']) ? (int) $data['status_id'] : EntityStatus::defaultId();
-
-            $this->assertAgreedHasObjective($statusId, $objectiveId, []);
 
             /** @var BusinessNeed $need */
             $need = $this->model::create($data);
@@ -98,12 +91,7 @@ class BusinessNeedRepository extends BaseRepository
 
             /** @var BusinessNeed $need */
             $need = $this->model::findOrFail($id);
-            $statusId = array_key_exists('status_id', $newData)
-                ? (int) $newData['status_id']
-                : (int) $need->status_id;
             $existingIds = $need->businessObjectives()->pluck('business_objectives.id')->all();
-
-            $this->assertAgreedHasObjective($statusId, $objectiveId, $existingIds);
 
             $need->update($newData);
 
@@ -126,25 +114,6 @@ class BusinessNeedRepository extends BaseRepository
         }
 
         return (int) $raw;
-    }
-
-    /**
-     * @param  list<int>  $existingObjectiveIds
-     */
-    protected function assertAgreedHasObjective(?int $statusId, ?int $objectiveId, array $existingObjectiveIds): void
-    {
-        if (! EntityStatus::is(EntityStatus::AGREED, $statusId)) {
-            return;
-        }
-
-        if ($objectiveId !== null || count($existingObjectiveIds) > 0) {
-            return;
-        }
-
-        throw ValidationException::withMessages([
-            'primary_business_objective_id' => 'An agreed business need must link to at least one business objective.',
-            'status_id' => 'Set status to draft until a business objective is linked, or link an objective first.',
-        ]);
     }
 
     /**

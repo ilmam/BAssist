@@ -15,32 +15,32 @@
             </x-slot:titleAside>
             <p class="text-sm text-muted-foreground mb-5">{{ __('ui.guardrails_help') }}</p>
 
-            <form method="GET" action="{{ route('guardrails.index') }}" class="flex flex-wrap items-end gap-3">
-                <div class="flex flex-col gap-1 min-w-[220px]">
-                    <label for="project_id" class="text-sm text-muted-foreground">{{ __('ui.project') }}</label>
-                    <select name="project_id" id="project_id" class="kt-select" data-kt-select="true">
-                        <option value="">{{ __('ui.all_projects') }}</option>
-                        @foreach ($projects as $project)
-                            <option value="{{ $project->id }}" @selected((int) ($filters['project_id'] ?? 0) === (int) $project->id)>
-                                {{ $project->name }}@if ($project->code) ({{ $project->code }})@endif
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
+            <x-list-filter-panel
+                :active-count="! empty($filters['project_id']) ? 1 : 0"
+                :clear-url="! empty($filters['project_id']) ? route('guardrails.index', array_filter(['workspace_id' => $filters['workspace_id'] ?? null, 'clear_project' => 1])) : null"
+            >
+                <form method="GET" action="{{ route('guardrails.index') }}" class="list-filter-panel__form" data-list-filter-form>
+                    <div class="list-filter-panel__field">
+                        <label for="project_id" class="text-sm text-muted-foreground">{{ __('ui.project') }}</label>
+                        <select name="project_id" id="project_id" class="kt-select" data-kt-select="true">
+                            <option value="">{{ __('ui.all_projects') }}</option>
+                            @foreach ($projects as $project)
+                                <option value="{{ $project->id }}" @selected((int) ($filters['project_id'] ?? 0) === (int) $project->id)>
+                                    {{ $project->name }}@if ($project->code) ({{ $project->code }})@endif
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
 
-                @if (! empty($filters['workspace_id']))
-                    <input type="hidden" name="workspace_id" value="{{ $filters['workspace_id'] }}">
-                @endif
+                    @if (! empty($filters['workspace_id']))
+                        <input type="hidden" name="workspace_id" value="{{ $filters['workspace_id'] }}">
+                    @endif
 
-                <x-button type="submit" color="primary">{{ __('ui.apply_filters') }}</x-button>
-
-                @if (! empty($filters['project_id']))
-                    <a href="{{ route('guardrails.index', array_filter(['workspace_id' => $filters['workspace_id'] ?? null])) }}"
-                       class="kt-btn kt-btn-ghost">
-                        {{ __('ui.clear_project') }}
-                    </a>
-                @endif
-            </form>
+                    <div class="list-filter-panel__actions">
+                        <x-button type="submit" color="primary">{{ __('ui.apply_filters') }}</x-button>
+                    </div>
+                </form>
+            </x-list-filter-panel>
         </x-card>
 
         @forelse ($sections as $section)

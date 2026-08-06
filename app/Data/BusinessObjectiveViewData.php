@@ -26,12 +26,6 @@ class BusinessObjectiveViewData extends BaseData
         public ?string $description = null,
         public ?string $success_measure = null,
         public ?string $potential_value = null,
-        public ?int $priority_id = null,
-        #[InList]
-        public ?PriorityViewData $priority = null,
-        public ?int $status_id = null,
-        #[InList]
-        public ?StatusViewData $status = null,
         #[Hide]
         public ?int $business_needs_count = null,
         #[Hide]

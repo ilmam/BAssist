@@ -16,16 +16,16 @@ class FunctionalRequirementData extends BaseData
         #[ListForm('text')]
         public string $title = '',
 
-        #[Form('select', 'Project')]
+        #[Form('select', 'Project', hideQuick: true)]
         public int $project_id = 0,
 
-        #[Form('select', 'StakeholderNeed', help: 'Parent lineage: pick a Stakeholder Need OR an approved Change Request (not both).')]
+        #[Form('select', 'StakeholderNeed', help: 'Parent lineage: pick a Stakeholder Need OR an approved Change Request (not both).', section: 'traceability', uiSpan: 12)]
         public ?int $stakeholder_need_id = null,
 
-        #[Form('select', 'ChangeRequest', help: 'Approved CRs only. Parent under a CR instead of directly under an SN (CR remains the lasting extension of its SN).')]
+        #[Form('select', 'ChangeRequest', help: 'Approved CRs only. Parent under a CR instead of directly under an SN (CR remains the lasting extension of its SN).', section: 'traceability')]
         public ?int $change_request_id = null,
 
-        #[Form('select', 'SwimlaneFlowStep', help: 'Optional BPD process/decision step this FR elaborates (coverage only).')]
+        #[Form('select', 'SwimlaneFlowStep', help: 'Optional BPD process/decision step this FR elaborates (coverage only).', section: 'traceability')]
         public ?int $swimlane_flow_step_id = null,
 
         #[Form('textarea', hideQuick: true)]

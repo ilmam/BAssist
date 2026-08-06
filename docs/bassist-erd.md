@@ -47,12 +47,8 @@ erDiagram
     BUSINESS_NEEDS ||--o{ SCOPE_ITEMS : optional_link
 
     STATUSES ||--o{ PROJECTS : status
-    STATUSES ||--o{ BUSINESS_OBJECTIVES : status
-    STATUSES ||--o{ BUSINESS_NEEDS : status
     STATUSES ||--o{ STAKEHOLDER_NEEDS : status
     STATUSES ||--o{ FEATURES : status
-    PRIORITIES ||--o{ BUSINESS_OBJECTIVES : moscow
-    PRIORITIES ||--o{ BUSINESS_NEEDS : moscow
     PRIORITIES ||--o{ STAKEHOLDER_NEEDS : moscow
     PRIORITIES ||--o{ FEATURES : moscow
     PRIORITIES ||--o{ FUNCTIONAL_REQUIREMENTS : moscow
@@ -82,8 +78,6 @@ erDiagram
         text success_measure
         text potential_value
         int project_id FK
-        int priority_id FK
-        int status_id FK
     }
     BUSINESS_NEEDS {
         int id PK
@@ -94,8 +88,6 @@ erDiagram
         text impact
         text do_nothing_consequence
         int project_id FK
-        int priority_id FK
-        int status_id FK
     }
     STAKEHOLDERS {
         int id PK

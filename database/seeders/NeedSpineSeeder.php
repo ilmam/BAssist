@@ -28,7 +28,6 @@ class NeedSpineSeeder extends Seeder
 
         $agreedId = EntityStatus::id(EntityStatus::AGREED);
         $draftId = EntityStatus::id(EntityStatus::DRAFT);
-        $mustId = EntityPriority::id(EntityPriority::MUST);
         $shouldId = EntityPriority::id(EntityPriority::SHOULD);
 
         $project = Project::query()->updateOrCreate(
@@ -54,8 +53,6 @@ class NeedSpineSeeder extends Seeder
                 'description' => 'Make need-to-delivery provenance visible across teams.',
                 'success_measure' => 'Every active story traces to a business need and objective.',
                 'potential_value' => 'Fewer orphan tickets and clearer provenance for audits.',
-                'priority_id' => $mustId,
-                'status_id' => $agreedId,
             ],
         );
 
@@ -70,8 +67,6 @@ class NeedSpineSeeder extends Seeder
                 'rationale' => 'Wikis and tickets lose provenance over time.',
                 'impact' => 'Delivery work loses strategic alignment.',
                 'do_nothing_consequence' => 'Teams keep optimizing tickets without a living need spine.',
-                'priority_id' => $mustId,
-                'status_id' => $agreedId,
             ],
         );
 
@@ -88,8 +83,6 @@ class NeedSpineSeeder extends Seeder
                 'need_type' => 'problem',
                 'description' => 'Example of need-first drafting before an objective is chosen.',
                 'rationale' => 'Bottom-up discovery is valid in BABOK Strategy Analysis.',
-                'priority_id' => $shouldId,
-                'status_id' => $draftId,
             ],
         );
         $draftNeed->businessObjectives()->sync([]);

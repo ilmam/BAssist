@@ -19,7 +19,7 @@ class ChangeRequestData extends BaseData
         #[ListForm('text')]
         public string $title = '',
 
-        #[Form('select', 'Project')]
+        #[Form('select', 'Project', hideQuick: true)]
         public int $project_id = 0,
 
         #[Form('textarea', hideQuick: true, help: 'What is wrong or missing in the current behaviour? Why is change needed?')]
@@ -37,7 +37,7 @@ class ChangeRequestData extends BaseData
         #[Form('textarea', hideQuick: true, help: 'Brief impact notes. Required when impact is High.')]
         public ?string $impact_notes = null,
 
-        #[ListForm('select', 'StakeholderNeed', help: 'Anchor this change to a Stakeholder Need (5 Whys). Create the SN first if this change invents a new need.')]
+        #[ListForm('select', 'StakeholderNeed', help: 'Anchor this change to a Stakeholder Need (5 Whys). Create the SN first if this change invents a new need.', section: 'traceability')]
         public ?int $stakeholder_need_id = null,
 
         #[Form('select', 'Priority')]

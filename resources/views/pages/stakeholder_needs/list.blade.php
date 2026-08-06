@@ -2,10 +2,25 @@
 
 @section('main')
     @php
+        use App\Helpers\DatatableUi;
         use App\Helpers\ListUi;
 
         $preserve = ListUi::contextFilters($listFilters ?? []);
         $orphans = ListUi::orphansToggle(model_route($model, 'index'), $listFilters ?? []);
+
+        // Title normally absorbs leftover space; give it a fixed share so
+        // other columns aren't crowded on this list.
+        $columns = collect($columns)->map(function ($col) {
+            if ($col !== 'title') {
+                return $col;
+            }
+
+            return [
+                'data' => 'title',
+                'name' => 'title',
+                'style' => DatatableUi::identityWidthStyle(),
+            ];
+        })->all();
 
         $relationColumns = [
             ListUi::childLinkColumn('BusinessNeed', 'stakeholder_need_id', 'business_needs_count', [
@@ -26,6 +41,7 @@
     @endphp
 
     @include('pages.partials.entity-list', [
+        'columns' => $columns,
         'listHelp' => __('ui.babok_doc_stakeholder_requirements_note'),
     ])
 @endsection

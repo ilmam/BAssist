@@ -129,8 +129,6 @@ Business problems/opportunities; coded BN-n.
 | `project_id` | INTEGER | NO | FK→projects.id |  |
 | `description` | TEXT | YES |  |  |
 | `rationale` | TEXT | YES |  |  |
-| `priority_id` | INTEGER | YES | FK→priorities.id |  |
-| `status_id` | INTEGER | YES | FK→statuses.id |  |
 | `created_at` | datetime | YES |  |  |
 | `updated_at` | datetime | YES |  |  |
 | `created_by` | INTEGER | YES | FK→users.id |  |
@@ -147,9 +145,9 @@ Business problems/opportunities; coded BN-n.
 - `deleted_by` → `users.id`
 - `updated_by` → `users.id`
 - `created_by` → `users.id`
-- `status_id` → `statuses.id`
-- `priority_id` → `priorities.id`
 - `project_id` → `projects.id`
+
+> No requirements `status_id` or MoSCoW `priority_id` — a Business Need is a raw problem/opportunity (BACCM), not a managed requirements lifecycle artifact.
 
 ### `business_objectives`
 
@@ -162,8 +160,6 @@ Measurable outcomes (SMART); coded BO-n.
 | `project_id` | INTEGER | NO | FK→projects.id |  |
 | `description` | TEXT | YES |  |  |
 | `success_measure` | TEXT | YES |  |  |
-| `priority_id` | INTEGER | YES | FK→priorities.id |  |
-| `status_id` | INTEGER | YES | FK→statuses.id |  |
 | `created_at` | datetime | YES |  |  |
 | `updated_at` | datetime | YES |  |  |
 | `created_by` | INTEGER | YES | FK→users.id |  |
@@ -178,9 +174,9 @@ Measurable outcomes (SMART); coded BO-n.
 - `deleted_by` → `users.id`
 - `updated_by` → `users.id`
 - `created_by` → `users.id`
-- `status_id` → `statuses.id`
-- `priority_id` → `priorities.id`
 - `project_id` → `projects.id`
+
+> No requirements `status_id` or MoSCoW `priority_id` — objectives are strategic intent (BABOK §6.2), not backlog sequencing or requirements states.
 
 ### `business_rules`
 

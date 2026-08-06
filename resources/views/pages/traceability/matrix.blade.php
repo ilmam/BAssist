@@ -49,35 +49,39 @@
 
         <p class="text-sm text-muted-foreground mb-5">{{ __('ui.babok_doc_traceability_matrix_note') }}</p>
 
+        @php
+            $traceabilityActive = filled($filters['project_id'] ?? null) ? 1 : 0;
+        @endphp
+
         {{-- Explicit Filter submit: KTSelect fires change on init, so onchange→submit loops forever. --}}
-        <form method="GET" action="{{ route('traceability.index') }}" class="mb-5 flex flex-wrap items-end gap-3">
-            @if ($filters['orphans_only'] ?? false)
-                <input type="hidden" name="orphans_only" value="1">
-            @endif
+        <x-list-filter-panel
+            :active-count="$traceabilityActive"
+            :clear-url="$traceabilityActive > 0 ? route('traceability.index', array_filter(['orphans_only' => ($filters['orphans_only'] ?? false) ? 1 : null])) : null"
+        >
+            <form method="GET" action="{{ route('traceability.index') }}" class="list-filter-panel__form" data-list-filter-form>
+                @if ($filters['orphans_only'] ?? false)
+                    <input type="hidden" name="orphans_only" value="1">
+                @endif
 
-            <div class="flex flex-col gap-1 min-w-[220px]">
-                <label for="project_id" class="text-sm text-muted-foreground">{{ __('ui.project') }}</label>
-                <select name="project_id" id="project_id" class="kt-select" data-kt-select="true">
-                    <option value="">{{ __('ui.all_projects') }}</option>
-                    @foreach ($projects as $project)
-                        <option value="{{ $project->id }}" @selected((int) ($filters['project_id'] ?? 0) === (int) $project->id)>
-                            {{ $project->name }}@if ($project->code) ({{ $project->code }})@endif
-                        </option>
-                    @endforeach
-                </select>
-            </div>
+                <div class="list-filter-panel__field">
+                    <label for="project_id" class="text-sm text-muted-foreground">{{ __('ui.project') }}</label>
+                    <select name="project_id" id="project_id" class="kt-select" data-kt-select="true">
+                        <option value="">{{ __('ui.all_projects') }}</option>
+                        @foreach ($projects as $project)
+                            <option value="{{ $project->id }}" @selected((int) ($filters['project_id'] ?? 0) === (int) $project->id)>
+                                {{ $project->name }}@if ($project->code) ({{ $project->code }})@endif
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
 
-            <x-button type="submit" color="primary" activeColor="primary">
-                {{ __('ui.apply_filters') }}
-            </x-button>
-
-            @if ($filters['project_id'] ?? null)
-                <a href="{{ route('traceability.index', array_filter(['orphans_only' => ($filters['orphans_only'] ?? false) ? 1 : null])) }}"
-                   class="text-sm text-primary underline-offset-2 hover:underline">
-                    {{ __('ui.clear_filter') }}
-                </a>
-            @endif
-        </form>
+                <div class="list-filter-panel__actions">
+                    <x-button type="submit" color="primary" activeColor="primary">
+                        {{ __('ui.apply_filters') }}
+                    </x-button>
+                </div>
+            </form>
+        </x-list-filter-panel>
 
         <div class="mb-5 flex flex-wrap gap-3 text-sm">
             <span class="kt-badge kt-badge-outline">{{ __('ui.matrix_total') }}: {{ $summary['total'] }}</span>

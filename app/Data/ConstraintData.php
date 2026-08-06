@@ -13,7 +13,7 @@ class ConstraintData extends BaseData
         public ?int $id = null,
         #[ListForm('text')]
         public string $title = '',
-        #[Form('select', 'Project')]
+        #[Form('select', 'Project', hideQuick: true)]
         public int $project_id = 0,
         #[Form('textarea', hideQuick: true)]
         public ?string $description = null,

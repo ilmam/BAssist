@@ -21,6 +21,9 @@ use Attribute;
  *   #[ListForm('select', 'Priority', ktSelect: false)]
  *   public ?int $priority_id = null;
  *
+ *   #[ListForm('select', 'StakeholderNeed', section: 'traceability')]
+ *   public ?int $stakeholder_need_id = null;
+ *
  *   #[ListForm('code', language: 'gherkin', hideQuick: true)]
  *   public ?string $body = null;
  *
@@ -39,5 +42,7 @@ class ListForm
         public string $language = 'plaintext',
         public string $help = '',
         public ?bool $ktSelect = null,
+        public string $section = '',
+        public int|array|null $uiSpan = null,
     ) {}
 }

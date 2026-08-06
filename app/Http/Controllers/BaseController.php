@@ -92,6 +92,7 @@ class BaseController extends Controller
 
     public function store(Request $request)
     {
+        $this->mergeStickyContextIntoRequest($request);
         $data = $this->getData($request);
         $created = $this->modelRepository->create($data->toArray());
 
@@ -171,6 +172,7 @@ class BaseController extends Controller
 
     public function update(Request $request, $id)
     {
+        $this->mergeStickyContextIntoRequest($request);
         $data = $this->getData($request);
         $updated = $this->modelRepository->update($id, $data->toArray());
 
@@ -323,6 +325,27 @@ class BaseController extends Controller
         }
 
         return $dto::from($payload);
+    }
+
+    /**
+     * Inject sticky project/workspace into the request when the submitted
+     * payload omitted them (project is no longer a visible form control).
+     */
+    protected function mergeStickyContextIntoRequest(Request $request): void
+    {
+        if (! $request->filled('project_id')) {
+            $projectId = app(ProjectContext::class)->id();
+            if ($projectId !== null) {
+                $request->merge(['project_id' => $projectId]);
+            }
+        }
+
+        if (! $request->filled('workspace_id')) {
+            $workspaceId = app(WorkspaceContext::class)->id();
+            if ($workspaceId !== null) {
+                $request->merge(['workspace_id' => $workspaceId]);
+            }
+        }
     }
 
     protected function buildEditForm($id): array

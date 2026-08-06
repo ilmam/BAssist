@@ -12,7 +12,7 @@ class StrategicBaselineData extends BaseData
     public function __construct(
         public ?int $id = null,
 
-        #[Form('select', 'Project')]
+        #[Form('select', 'Project', hideQuick: true)]
         public int $project_id = 0,
 
         #[Form('textarea', hideQuick: true)]

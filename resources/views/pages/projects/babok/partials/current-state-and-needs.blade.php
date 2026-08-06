@@ -34,7 +34,7 @@
                 <dl class="kv">
                     @if ($need->need_type)
                         <dt>{{ __('ui.need_type') }}</dt>
-                        <dd>{{ $need->need_type }}</dd>
+                        <dd>{{ \App\Support\NeedType::label((string) $need->need_type) }}</dd>
                     @endif
                     @if ($need->rationale)
                         <dt>{{ __('ui.rationale') }}</dt>

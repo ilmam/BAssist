@@ -13,8 +13,8 @@ class DatatableUi
     /** Relation label columns (workspace, project, …). */
     public const RELATION_WIDTH = '12rem';
 
-    /** Child-link / count columns: icon + number. */
-    public const COUNT_WIDTH = '5.5rem';
+    /** Child-link / count columns: icon + number (header wraps at spaces). */
+    public const COUNT_WIDTH = '8.5rem';
 
     /**
      * Floor for the identity column (name/title), applied as `min-width` only

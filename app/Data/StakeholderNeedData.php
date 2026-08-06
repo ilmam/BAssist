@@ -13,11 +13,11 @@ class StakeholderNeedData extends BaseData
         public ?string $code = null,
         #[ListForm('text')]
         public string $title = '',
-        #[Form('select', 'Project')]
+        #[Form('select', 'Project', hideQuick: true)]
         public int $project_id = 0,
-        #[Form('select', 'BusinessNeed')]
+        #[Form('select', 'BusinessNeed', section: 'traceability')]
         public int $business_need_id = 0,
-        #[Form('select', 'Stakeholder')]
+        #[Form('select', 'Stakeholder', section: 'traceability')]
         public int $stakeholder_id = 0,
         #[Form('textarea', hideQuick: true)]
         public ?string $description = null,

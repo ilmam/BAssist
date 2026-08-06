@@ -8,7 +8,6 @@
     $listHelp = $listHelp ?? null;
     $contextFilters = ListUi::contextFilters($listFilters);
     $indexUrl = model_route($model, 'index');
-    $filterChips = ListUi::activeFilters($listFilters, $allowedListFilters, $indexUrl);
 
     // Clear-all drops relation/orphan filters but keeps sticky workspace/project scope.
     $clearAllUrl = $contextFilters === []
@@ -48,10 +47,12 @@
         <p class="text-sm text-muted-foreground mb-4">{{ $listHelp }}</p>
     @endif
 
-    @include('pages.partials.list-filter-banner', [
-        'filterChips' => $filterChips,
+    @include('pages.partials.list-filter-form', [
         'model' => $model,
-        'clearAllUrl' => $clearAllUrl,
+        'listFilters' => $listFilters,
+        'allowedListFilters' => $allowedListFilters,
+        'action' => $indexUrl,
+        'clearUrl' => $clearAllUrl,
     ])
 
     <x-datatable

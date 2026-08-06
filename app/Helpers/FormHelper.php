@@ -72,6 +72,9 @@ class FormHelper
             if (array_key_exists('kt_select', $args)) {
                 $fieldOptions['kt_select'] = (bool) $args['kt_select'];
             }
+            if (! empty($args['section'])) {
+                $fieldOptions['section'] = (string) $args['section'];
+            }
             $formFields[$fild] = $fieldOptions;
 
         }

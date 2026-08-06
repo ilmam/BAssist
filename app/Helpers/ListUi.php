@@ -153,7 +153,7 @@ class ListUi
     }
 
     /**
-     * Resolve active list filters into a banner-friendly summary.
+     * Resolve active list filters into a summary (count / legacy chip rows).
      *
      * @param  array<string, mixed>  $query
      * @param  list<string>  $allowed
@@ -199,6 +199,175 @@ class ListUi
         }
 
         return $chips;
+    }
+
+    /**
+     * Dropdown field definitions for the unified list filter panel.
+     *
+     * @param  list<string>  $allowed
+     * @param  array<string, mixed>  $current
+     * @return list<array{
+     *   name: string,
+     *   label: string,
+     *   empty_label: string,
+     *   value: string,
+     *   options: list<array{value: string, label: string}>
+     * }>
+     */
+    public static function filterFormFields(array $allowed, array $current): array
+    {
+        $priority = [
+            'workspace_id' => 10,
+            'project_id' => 20,
+            'status_id' => 30,
+            'priority_id' => 40,
+            'orphans' => 900,
+        ];
+
+        $params = array_values(array_unique($allowed));
+        usort($params, static function (string $a, string $b) use ($priority): int {
+            return ($priority[$a] ?? 100) <=> ($priority[$b] ?? 100);
+        });
+
+        $fields = [];
+
+        foreach ($params as $param) {
+            if ($param === 'orphans') {
+                $active = in_array($current['orphans'] ?? null, [1, '1', true, 'true'], true);
+                $fields[] = [
+                    'name' => 'orphans',
+                    'label' => __('ui.orphans_only'),
+                    'empty_label' => __('ui.no'),
+                    'value' => $active ? '1' : '',
+                    'options' => [
+                        ['value' => '1', 'label' => __('ui.yes')],
+                    ],
+                ];
+
+                continue;
+            }
+
+            $options = self::optionsForFilterParam($param, $current);
+            $hasCurrent = array_key_exists($param, $current)
+                && $current[$param] !== null
+                && $current[$param] !== '';
+
+            // Relation drills without a catalog: only show when already applied (so they can be cleared).
+            if ($options === [] && ! $hasCurrent && ! in_array($param, ['workspace_id', 'project_id', 'status_id', 'priority_id'], true)) {
+                continue;
+            }
+
+            if ($hasCurrent && $options !== []) {
+                $currentValue = (string) $current[$param];
+                $known = false;
+                foreach ($options as $option) {
+                    if ((string) $option['value'] === $currentValue) {
+                        $known = true;
+                        break;
+                    }
+                }
+                if (! $known) {
+                    array_unshift($options, [
+                        'value' => $currentValue,
+                        'label' => self::resolveFilterValue($param, $current[$param]),
+                    ]);
+                }
+            } elseif ($hasCurrent && $options === []) {
+                $options = [[
+                    'value' => (string) $current[$param],
+                    'label' => self::resolveFilterValue($param, $current[$param]),
+                ]];
+            }
+
+            $fields[] = [
+                'name' => $param,
+                'label' => self::filterLabel($param),
+                'empty_label' => self::emptyFilterLabel($param),
+                'value' => $hasCurrent ? (string) $current[$param] : '',
+                'options' => $options,
+            ];
+        }
+
+        return $fields;
+    }
+
+    /**
+     * @param  array<string, mixed>  $current
+     * @return list<array{value: string, label: string}>
+     */
+    protected static function optionsForFilterParam(string $param, array $current): array
+    {
+        $tenantId = auth()->user()?->tenant_id;
+
+        return match ($param) {
+            'workspace_id' => self::mapOptions(
+                \App\Models\Workspace::query()
+                    ->when($tenantId !== null, fn ($q) => $q->where('tenant_id', $tenantId))
+                    ->orderBy('name')
+                    ->get(['id', 'name'])
+            ),
+            'project_id' => self::mapOptions(
+                \App\Models\Project::query()
+                    ->when(
+                        $tenantId !== null,
+                        fn ($q) => $q->whereHas('workspace', fn ($w) => $w->where('tenant_id', $tenantId))
+                    )
+                    ->when(
+                        filled($current['workspace_id'] ?? null),
+                        fn ($q) => $q->where('workspace_id', (int) $current['workspace_id'])
+                    )
+                    ->orderBy('name')
+                    ->get(['id', 'name', 'code'])
+            ),
+            'status_id' => self::mapOptions(
+                \App\Models\Status::query()->orderBy('sort_order')->orderBy('name')->get(['id', 'name'])
+            ),
+            'priority_id' => self::mapOptions(
+                \App\Models\Priority::query()->orderBy('sort_order')->orderBy('name')->get(['id', 'name'])
+            ),
+            default => [],
+        };
+    }
+
+    /**
+     * @param  \Illuminate\Support\Collection<int, Model>|\Illuminate\Database\Eloquent\Collection<int, Model>  $rows
+     * @return list<array{value: string, label: string}>
+     */
+    protected static function mapOptions($rows): array
+    {
+        $options = [];
+
+        foreach ($rows as $row) {
+            $label = (string) (
+                $row->getAttribute('title')
+                ?? $row->getAttribute('name')
+                ?? $row->getAttribute($row->getKeyName())
+            );
+            $code = $row->getAttribute('code');
+            if (filled($code)) {
+                $label = $label.' ('.$code.')';
+            }
+
+            $options[] = [
+                'value' => (string) $row->getKey(),
+                'label' => $label,
+            ];
+        }
+
+        return $options;
+    }
+
+    protected static function emptyFilterLabel(string $param): string
+    {
+        return match ($param) {
+            'workspace_id' => __('ui.all_workspaces'),
+            'project_id' => __('ui.all_projects'),
+            'status_id' => __('ui.all_statuses'),
+            'priority_id' => __('ui.all_priorities'),
+            'feature_id' => __('ui.all_features'),
+            'type' => __('ui.all_types'),
+            default => __('ui.any'),
+        };
     }
 
     /**
@@ -272,6 +441,11 @@ class ListUi
             'business_need_id' => \App\Models\BusinessNeed::class,
             'stakeholder_id' => \App\Models\Stakeholder::class,
             'stakeholder_need_id' => \App\Models\StakeholderNeed::class,
+            'feature_id' => \App\Models\Feature::class,
+            'change_request_id' => \App\Models\ChangeRequest::class,
+            'status_id' => \App\Models\Status::class,
+            'priority_id' => \App\Models\Priority::class,
+            'functional_requirement_id' => \App\Models\FunctionalRequirement::class,
         ];
 
         return $map[$param] ?? null;

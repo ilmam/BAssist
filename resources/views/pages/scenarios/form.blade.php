@@ -19,7 +19,8 @@
             ? ['route' => $route]
             : ['route' => [$route, $dto->id]];
 
-        $metaFields = ['title', 'feature_id', 'status_id', 'is_outline'];
+        $metaFields = ['title', 'status_id', 'is_outline'];
+        $traceabilityFields = ['feature_id'];
         $documentFields = ['body'];
     @endphp
 
@@ -45,6 +46,27 @@
                     </div>
                 <div class="form-fields-grid grid grid-cols-12">
                     @foreach ($metaFields as $fieldName)
+                            @continue(! array_key_exists($fieldName, $formFields))
+                            @php
+                                $field = $formFields[$fieldName];
+                                $type = FormHelper::getFieldType($field);
+                                $fieldValue = $dto->{$fieldName} ?? null;
+                                $list = $field['list'] ?? null;
+                                $options = [];
+                                if (! empty($field['help'])) {
+                                    $options['data-field-help'] = $field['help'];
+                                }
+                            @endphp
+                            <div data-ui-span="12" data-ui-span-md="6" data-ui-span-lg="6">
+                                {{ Form::field($type, $fieldName, $fieldValue, $list, $options ?: null) }}
+                            </div>
+                        @endforeach
+                    </div>
+                </section>
+
+                <section class="form-section-box form-section-box--traceability">
+                    <div class="form-fields-grid grid grid-cols-12">
+                        @foreach ($traceabilityFields as $fieldName)
                             @continue(! array_key_exists($fieldName, $formFields))
                             @php
                                 $field = $formFields[$fieldName];

@@ -16,16 +16,16 @@ class FeatureData extends BaseData
         #[ListForm('text', help: 'List label. Synced from the Feature: line in the document on save when present.')]
         public string $title = '',
 
-        #[Form('select', 'Project')]
+        #[Form('select', 'Project', hideQuick: true)]
         public int $project_id = 0,
 
-        #[Form('select', 'StakeholderNeed', help: 'Parent lineage: pick a Stakeholder Need OR an approved Change Request (not both). SN also saves as @need:{code} in the Feature document.')]
+        #[Form('select', 'StakeholderNeed', help: 'Parent lineage: pick a Stakeholder Need OR an approved Change Request (not both). SN also saves as @need:{code} in the Feature document.', section: 'traceability', uiSpan: 12)]
         public ?int $stakeholder_need_id = null,
 
-        #[Form('select', 'ChangeRequest', help: 'Approved CRs only. Parent under a CR instead of directly under an SN.')]
+        #[Form('select', 'ChangeRequest', help: 'Approved CRs only. Parent under a CR instead of directly under an SN.', section: 'traceability')]
         public ?int $change_request_id = null,
 
-        #[Form('select', 'SwimlaneFlowStep', help: 'Optional BPD process/decision step this feature elaborates (coverage only).')]
+        #[Form('select', 'SwimlaneFlowStep', help: 'Optional BPD process/decision step this feature elaborates (coverage only).', section: 'traceability')]
         public ?int $swimlane_flow_step_id = null,
 
         /**

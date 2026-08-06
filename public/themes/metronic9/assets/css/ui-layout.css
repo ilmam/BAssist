@@ -316,6 +316,38 @@
   margin-top: 0.25rem;
 }
 
+/* Bordered group for Need Spine / lineage fields on create/edit forms. */
+.form-section-box {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md, 0.5rem);
+  background-color: color-mix(in oklab, var(--muted) 35%, transparent);
+}
+
+.form-section-box .form-section-intro {
+  padding-bottom: 0.75rem;
+}
+
+.form-section-box > .form-fields-grid:first-child {
+  /* No intro heading — keep fields flush inside the light panel. */
+  margin-top: 0;
+}
+
+.form-section-box .form-fields-grid {
+  margin-top: 0;
+}
+
+/* Stack main field grids + traceability boxes (Metronic lacks space-y-*). */
+.form-body-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+
 /* ---- Compact density (stack path) ---- */
 .kt-form[data-form-density="compact"] .kt-form-item,
 .kt-form--compact .kt-form-item,

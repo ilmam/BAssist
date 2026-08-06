@@ -20,6 +20,10 @@ use Attribute;
  * - $ktSelect: for type=select only — null uses config('ui.forms.select');
  *   true forces Metronic KTSelect; false forces native kt-input select.
  *   Type kt-select always forces enhanced (same as ktSelect: true).
+ * - $section: optional form group key. Use `traceability` to render Need Spine
+ *   / lineage fields in the shared bordered panel on create/edit forms.
+ * - $uiSpan: rare column span override (int 1–12 for all breakpoints, or
+ *   ['sm'=>…,'md'=>…,'lg'=>…]). Null keeps type defaults (half width / full for textarea).
  *
  * Quick Create column spans are theme defaults (sm:12 / md:6 / lg:4;
  * textarea/code/dropzone stay 12) — not set here. Rare overrides use
@@ -34,7 +38,9 @@ use Attribute;
  *   #[Form('code', language: 'gherkin')]
  *   #[Form('code', language: 'javascript', hideQuick: true)]
  *   #[Form('text', hideQuick: true, readonly: true)]
- *   #[Form('select', 'StakeholderNeed', help: 'Need Spine link for the matrix.')]
+ *   #[Form('select', 'StakeholderNeed', help: 'Need Spine link for the matrix.', section: 'traceability')]
+ *   #[Form('radio', 'NeedType')]
+ *   #[Form('text', uiSpan: 12)]
  *
  * Status/priority defaults: leave null on the DTO. Models with HasEntityStatus
  * apply EntityStatus::defaultId() on create; models with priority_id use
@@ -46,6 +52,8 @@ use Attribute;
 #[Attribute(Attribute::TARGET_PROPERTY)]
 class Form
 {
+    public const SECTION_TRACEABILITY = 'traceability';
+
     public function __construct(
         public string $type,
         public string $model = '',
@@ -54,5 +62,7 @@ class Form
         public string $language = 'plaintext',
         public string $help = '',
         public ?bool $ktSelect = null,
+        public string $section = '',
+        public int|array|null $uiSpan = null,
     ) {}
 }

@@ -13,7 +13,7 @@ class ScenarioData extends BaseData
         #[ListForm('text', help: 'List label. Synced from the Scenario: / Scenario Outline: line on save when present.')]
         public string $title = '',
 
-        #[Form('select', 'Feature')]
+        #[Form('select', 'Feature', section: 'traceability')]
         public int $feature_id = 0,
 
         /**

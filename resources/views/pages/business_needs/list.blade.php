@@ -9,7 +9,7 @@
         $orphans = ListUi::orphansToggle(model_route($model, 'index'), $listFilters ?? []);
 
         // Title normally absorbs leftover space; give it a fixed share so
-        // project / priority / status / counts aren't crowded on this list.
+        // project / counts aren't crowded on this list.
         $columns = collect($columns)->map(function ($col) {
             if ($col !== 'title') {
                 return $col;

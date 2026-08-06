@@ -11,7 +11,7 @@ class StakeholderData extends BaseData
         public ?int $id = null,
         #[ListForm('text')]
         public string $name = '',
-        #[Form('select', 'Project')]
+        #[Form('select', 'Project', hideQuick: true)]
         public int $project_id = 0,
         #[Form('text')]
         public ?string $type = null,

@@ -19,14 +19,17 @@
     table.dataTable thead th {
         height: auto;
         white-space: normal !important;
-        overflow-wrap: break-word;
+        overflow: hidden;
+        overflow-wrap: normal;
         word-break: normal;
+        hyphens: none;
     }
     table.dataTable th,
     table.dataTable td {
         white-space: normal;
-        overflow-wrap: break-word;
+        overflow-wrap: normal;
         word-break: normal;
+        hyphens: none;
     }
     table.dataTable tbody td.dt-nowrap {
         white-space: nowrap;

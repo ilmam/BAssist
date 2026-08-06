@@ -517,6 +517,14 @@ class DtoMetadata
             $args['kt_select'] = $instance->ktSelect;
         }
 
+        if ($instance->section !== '') {
+            $args['section'] = $instance->section;
+        }
+
+        if ($instance->uiSpan !== null) {
+            $args['ui_span'] = $instance->uiSpan;
+        }
+
         return $args;
     }
 

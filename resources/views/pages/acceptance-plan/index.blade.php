@@ -30,60 +30,68 @@
 
         <p class="text-sm text-muted-foreground mb-5">{{ __('ui.babok_doc_acceptance_criteria_note') }}</p>
 
+        @php
+            $acceptanceActive = collect([
+                $filters['project_id'] ?? null,
+                $filters['feature_id'] ?? null,
+                $filters['type'] ?? null,
+            ])->filter(fn ($v) => $v !== null && $v !== '')->count();
+        @endphp
+
         {{-- Explicit Filter submit: KTSelect fires change on init, so onchange→submit loops forever. --}}
-        <form method="GET" action="{{ route('acceptance-plan.index') }}" class="mb-5 flex flex-wrap items-end gap-3">
-            <div class="flex flex-col gap-1 min-w-[220px]">
-                <label for="project_id" class="text-sm text-muted-foreground">{{ __('ui.project') }}</label>
-                <select name="project_id" id="project_id" class="kt-select" data-kt-select="true">
-                    <option value="">{{ __('ui.all_projects') }}</option>
-                    @foreach ($projects as $project)
-                        <option value="{{ $project->id }}" @selected((int) ($filters['project_id'] ?? 0) === (int) $project->id)>
-                            {{ $project->name }}@if ($project->code) ({{ $project->code }})@endif
+        <x-list-filter-panel
+            :active-count="$acceptanceActive"
+            :clear-url="$acceptanceActive > 0 ? route('acceptance-plan.index', ['clear_project' => 1]) : null"
+        >
+            <form method="GET" action="{{ route('acceptance-plan.index') }}" class="list-filter-panel__form" data-list-filter-form>
+                <div class="list-filter-panel__field">
+                    <label for="project_id" class="text-sm text-muted-foreground">{{ __('ui.project') }}</label>
+                    <select name="project_id" id="project_id" class="kt-select" data-kt-select="true">
+                        <option value="">{{ __('ui.all_projects') }}</option>
+                        @foreach ($projects as $project)
+                            <option value="{{ $project->id }}" @selected((int) ($filters['project_id'] ?? 0) === (int) $project->id)>
+                                {{ $project->name }}@if ($project->code) ({{ $project->code }})@endif
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="list-filter-panel__field">
+                    <label for="feature_id" class="text-sm text-muted-foreground">{{ __('ui.feature') }}</label>
+                    <select name="feature_id" id="feature_id" class="kt-select" data-kt-select="true"
+                            @disabled(empty($features) || $features->isEmpty())>
+                        <option value="">{{ __('ui.all_features') }}</option>
+                        @foreach ($features as $feature)
+                            <option value="{{ $feature->id }}" @selected((int) ($filters['feature_id'] ?? 0) === (int) $feature->id)>
+                                @if ($feature->code)
+                                    {{ $feature->code }} —
+                                @endif
+                                {{ $feature->title }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="list-filter-panel__field">
+                    <label for="type" class="text-sm text-muted-foreground">{{ __('ui.type') }}</label>
+                    <select name="type" id="type" class="kt-select" data-kt-select="true">
+                        <option value="">{{ __('ui.all_types') }}</option>
+                        <option value="happy_path" @selected(($filters['type'] ?? null) === 'Happy Path')>
+                            {{ __('ui.happy_path') }}
                         </option>
-                    @endforeach
-                </select>
-            </div>
-
-            <div class="flex flex-col gap-1 min-w-[220px]">
-                <label for="feature_id" class="text-sm text-muted-foreground">{{ __('ui.feature') }}</label>
-                <select name="feature_id" id="feature_id" class="kt-select" data-kt-select="true"
-                        @disabled(empty($features) || $features->isEmpty())>
-                    <option value="">{{ __('ui.all_features') }}</option>
-                    @foreach ($features as $feature)
-                        <option value="{{ $feature->id }}" @selected((int) ($filters['feature_id'] ?? 0) === (int) $feature->id)>
-                            @if ($feature->code)
-                                {{ $feature->code }} —
-                            @endif
-                            {{ $feature->title }}
+                        <option value="edge_case" @selected(($filters['type'] ?? null) === 'Edge Case')>
+                            {{ __('ui.edge_case') }}
                         </option>
-                    @endforeach
-                </select>
-            </div>
+                    </select>
+                </div>
 
-            <div class="flex flex-col gap-1 min-w-[180px]">
-                <label for="type" class="text-sm text-muted-foreground">{{ __('ui.type') }}</label>
-                <select name="type" id="type" class="kt-select" data-kt-select="true">
-                    <option value="">{{ __('ui.all_types') }}</option>
-                    <option value="happy_path" @selected(($filters['type'] ?? null) === 'Happy Path')>
-                        {{ __('ui.happy_path') }}
-                    </option>
-                    <option value="edge_case" @selected(($filters['type'] ?? null) === 'Edge Case')>
-                        {{ __('ui.edge_case') }}
-                    </option>
-                </select>
-            </div>
-
-            <x-button type="submit" color="primary" activeColor="primary">
-                {{ __('ui.apply_filters') }}
-            </x-button>
-
-            @if (($filters['project_id'] ?? null) || ($filters['feature_id'] ?? null) || ($filters['type'] ?? null))
-                <a href="{{ route('acceptance-plan.index', ['clear_project' => 1]) }}"
-                   class="text-sm text-primary underline-offset-2 hover:underline">
-                    {{ __('ui.clear_filter') }}
-                </a>
-            @endif
-        </form>
+                <div class="list-filter-panel__actions">
+                    <x-button type="submit" color="primary" activeColor="primary">
+                        {{ __('ui.apply_filters') }}
+                    </x-button>
+                </div>
+            </form>
+        </x-list-filter-panel>
 
         <div class="mb-5 flex flex-wrap gap-3 text-sm">
             <span class="kt-badge kt-badge-outline">{{ __('ui.matrix_total') }}: {{ $summary['total'] }}</span>
@@ -120,16 +128,18 @@
                                 </td>
                                 <td>
                                     @if (! empty($row['feature_id']))
-                                        <a href="{{ model_route('Feature', 'show', $row['feature_id']) }}"
-                                           class="text-primary hover:underline">
+                                        <a href="{{ model_modal_path('Feature', 'view', $row['feature_id']) }}"
+                                           class="text-primary hover:underline js-open-modal"
+                                           data-modal-url="{{ model_modal_path('Feature', 'view', $row['feature_id']) }}">
                                             @if (! empty($row['feature_code']))
                                                 <span class="text-muted-foreground text-xs me-1">{{ $row['feature_code'] }}</span>
                                             @endif
                                             {{ $row['feature_title'] }}
                                         </a>
                                     @elseif (! empty($row['functional_requirement_id']))
-                                        <a href="{{ model_route('FunctionalRequirement', 'show', $row['functional_requirement_id']) }}"
-                                           class="text-primary hover:underline">
+                                        <a href="{{ model_modal_path('FunctionalRequirement', 'view', $row['functional_requirement_id']) }}"
+                                           class="text-primary hover:underline js-open-modal"
+                                           data-modal-url="{{ model_modal_path('FunctionalRequirement', 'view', $row['functional_requirement_id']) }}">
                                             @if (! empty($row['feature_code']))
                                                 <span class="text-muted-foreground text-xs me-1">{{ $row['feature_code'] }}</span>
                                             @endif
@@ -148,8 +158,9 @@
                                 </td>
                                 <td>
                                     @if (! empty($row['scenario_id']))
-                                        <a href="{{ model_route('Scenario', 'show', $row['scenario_id']) }}"
-                                           class="text-primary hover:underline">
+                                        <a href="{{ model_modal_path('Scenario', 'view', $row['scenario_id']) }}"
+                                           class="text-primary hover:underline js-open-modal"
+                                           data-modal-url="{{ model_modal_path('Scenario', 'view', $row['scenario_id']) }}">
                                             {{ $row['scenario_title'] }}
                                         </a>
                                     @elseif (($row['scenario_title'] ?? '') !== '')

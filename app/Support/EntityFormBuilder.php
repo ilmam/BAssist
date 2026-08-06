@@ -53,7 +53,7 @@ class EntityFormBuilder
             $type = $options[0] ?? null;
             $relatedModel = $options[1] ?? null;
 
-            if (! in_array($type, ['select', 'kt-select'], true) || empty($relatedModel)) {
+            if (! in_array($type, ['select', 'kt-select', 'radio'], true) || empty($relatedModel)) {
                 continue;
             }
 

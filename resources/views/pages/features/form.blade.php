@@ -36,13 +36,15 @@
                     {{ Form::hidden('id', $dto->id) }}
                 @endif
 
+                {{ Form::hidden('project_id', $dto->project_id ?? '') }}
+
                 <section class="space-y-4">
                     <div class="form-section-intro">
                         <h3 class="text-base font-semibold text-foreground">{{ __('ui.metadata') }}</h3>
                         <p class="text-sm text-muted-foreground">{{ __('ui.feature_traceability_help') }}</p>
                     </div>
                     <div class="form-fields-grid grid grid-cols-12">
-                        @foreach (['code', 'title', 'project_id', 'priority_id', 'status_id'] as $fieldName)
+                        @foreach (['code', 'title', 'priority_id', 'status_id'] as $fieldName)
                             @continue(! array_key_exists($fieldName, $formFields))
                             @php
                                 $field = $formFields[$fieldName];
@@ -68,11 +70,8 @@
                     </div>
                 </section>
 
-                <section class="space-y-4 rounded-lg border border-primary/30 bg-muted/20 p-4">
-                    <div class="form-section-intro">
-                        <h3 class="text-base font-semibold text-foreground">{{ __('ui.traceability') }} · {{ __('ui.stakeholder_need') }}</h3>
-                        <p class="text-sm text-muted-foreground">{{ __('ui.traceability_section_help') }}</p>
-                    </div>
+                <section class="form-section-box form-section-box--traceability">
+                    <div class="form-fields-grid grid grid-cols-12">
                     @if (array_key_exists('stakeholder_need_id', $formFields))
                         @php
                             $field = $formFields['stakeholder_need_id'];
@@ -83,7 +82,9 @@
                                 'data-field-help' => __('ui.stakeholder_need_field_help'),
                             ];
                         @endphp
-                        {{ Form::field($type, 'stakeholder_need_id', $fieldValue, $list, $options) }}
+                        <div data-ui-span="12" data-ui-span-md="12" data-ui-span-lg="12">
+                            {{ Form::field($type, 'stakeholder_need_id', $fieldValue, $list, $options) }}
+                        </div>
                     @else
                         <p class="text-sm text-danger">{{ __('ui.stakeholder_need') }} field is missing from the form definition.</p>
                     @endif
@@ -98,7 +99,9 @@
                                 $options['data-field-help'] = $field['help'];
                             }
                         @endphp
-                        {{ Form::field($type, 'change_request_id', $fieldValue, $list, $options ?: null) }}
+                        <div data-ui-span="12" data-ui-span-md="6" data-ui-span-lg="6">
+                            {{ Form::field($type, 'change_request_id', $fieldValue, $list, $options ?: null) }}
+                        </div>
                     @endif
                     @if (array_key_exists('swimlane_flow_step_id', $formFields))
                         @php
@@ -111,8 +114,11 @@
                                 $options['data-field-help'] = $field['help'];
                             }
                         @endphp
-                        {{ Form::field($type, 'swimlane_flow_step_id', $fieldValue, $list, $options ?: null) }}
+                        <div data-ui-span="12" data-ui-span-md="6" data-ui-span-lg="6">
+                            {{ Form::field($type, 'swimlane_flow_step_id', $fieldValue, $list, $options ?: null) }}
+                        </div>
                     @endif
+                    </div>
                 </section>
 
                 <section class="space-y-4">

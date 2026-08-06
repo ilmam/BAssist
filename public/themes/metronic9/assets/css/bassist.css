@@ -480,21 +480,98 @@ table.dataTable {
 table.dataTable thead th {
   height: auto;
   white-space: normal !important;
-  overflow-wrap: break-word;
+  /* Prefer wrapping at spaces. Avoid overflow-wrap:anywhere / break-word —
+     those split mid-word (e.g. "Stakeholde" / "r Needs"). Clip if a single
+     unbreakable token still exceeds the fixed column width. */
+  overflow: hidden;
+  overflow-wrap: normal;
   word-break: normal;
+  hyphens: none;
 }
 
 table.dataTable th,
 table.dataTable td {
   white-space: normal;
-  overflow-wrap: break-word;
+  overflow-wrap: normal;
   word-break: normal;
+  hyphens: none;
 }
 
 table.dataTable tbody td.dt-nowrap {
   white-space: nowrap;
   overflow-wrap: normal;
   word-break: normal;
+}
+
+/* Unified collapsible list filters (entity lists + matrix-style pages). */
+.list-filter-panel {
+  margin-bottom: calc(var(--spacing) * 5);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md, 0.5rem);
+  background: var(--card, transparent);
+}
+
+.list-filter-panel__summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: calc(var(--spacing) * 2);
+  padding: calc(var(--spacing) * 3) calc(var(--spacing) * 4);
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+}
+
+.list-filter-panel__summary::-webkit-details-marker {
+  display: none;
+}
+
+.list-filter-panel__title {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(var(--spacing) * 2);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--foreground);
+}
+
+.list-filter-panel__chevron {
+  transition: transform 0.15s ease;
+}
+
+.list-filter-panel[open] > .list-filter-panel__summary .list-filter-panel__chevron {
+  transform: rotate(180deg);
+}
+
+.list-filter-panel__body {
+  padding: 0 calc(var(--spacing) * 4) calc(var(--spacing) * 4);
+  border-top: 1px solid var(--border);
+}
+
+.list-filter-panel__form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: calc(var(--spacing) * 3);
+  padding-top: calc(var(--spacing) * 4);
+}
+
+.list-filter-panel__field {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--spacing) * 1);
+  min-width: 220px;
+}
+
+.list-filter-panel__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: calc(var(--spacing) * 2);
+}
+
+.list-filter-panel__clear {
+  margin-top: calc(var(--spacing) * 3);
 }
 
 

@@ -28,10 +28,13 @@ Short PHP attributes drive list columns, detail values, forms, Quick Create, and
 - Every `Form` / `ListForm` field **appears in Quick Create by default**.
 - `hideQuick: true` opts out: the field is not shown in the Quick Create UI and is submitted as a hidden input using the DTO property default.
 - Select fields default to Metronic KTSelect (`config('ui.forms.select')` = `kt`). Override per field with `ktSelect: true|false`, or use type `kt-select` to force enhanced.
-- Column spans are **not** Form / ListForm arguments (no `span` / `quickSpan`). Theme type defaults apply (`sm:12` / `md:6` / `lg:6`, i.e. half width on tablet+; `textarea` / `dropzone` stay `12`) — for Quick Create, modal, and full page create/edit alike. Rare `$field['ui_span']` overrides — see [ui-views.md](ui-views.md#override-spans).
+- `section: 'traceability'` groups Need Spine / lineage fields into a bordered panel (no section title — fields flow naturally inside the box).
+- `project_id` is not shown on create/edit forms; it is submitted as a hidden input from the sticky project context.
+- Column spans are **not** required on Form / ListForm (type defaults apply). Rare override: `uiSpan: 12` or `uiSpan: ['md' => 6, 'lg' => 4]`.
 - `readonly: true` renders the control disabled/readonly (not submitted). Empty readonly values are omitted from create forms.
 - Full create/edit forms show all form fields, laid out half-width like Quick Create (span applies there too).
 - **Status / priority:** leave `status_id` / `priority_id` as `null` on the DTO (with `hideQuick: true` if hidden). On create, models with `HasEntityStatus` set draft via `EntityStatus::defaultId()`; models with `priority_id` use `AppliesDefaultPriority` (`EntityPriority::defaultId()` = should / MoSCoW). Entities with their own string lifecycle (e.g. Assumption) do not use `HasEntityStatus`.
+- **BABOK scope (who gets Status / MoSCoW):** apply requirements lifecycle `status_id` and MoSCoW `priority_id` to **Stakeholder Needs**, **Solution Requirements** (Functional / Features), and **Change Requests** (CR uses its own status enum + MoSCoW priority). Do **not** put Status or MoSCoW on **Business Objectives** (strategic intent, §6.2) or **Business Needs** (raw problem/opportunity input to Strategy Analysis).
 
 `ListForm` accepts the same arguments as `Form`:
 
