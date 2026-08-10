@@ -28,6 +28,9 @@
                     <div class="content flex-row-fluid" id="kt_content">
                         <div class="row g-5 g-xl-10 mb-5 mb-xl-10">
                             <div class="col-12">
+                                @if (session('status'))
+                                    <div class="alert alert-success mb-5">{{ session('status') }}</div>
+                                @endif
                                 @yield('main')
                             </div>
                         </div>
@@ -52,15 +55,32 @@
     @stack('scripts')
     <script>
         let modalReturnUrl = null;
+        let allowBootstrapModalHide = false;
+
+        @include('pages.partials.modal-record-nav-script')
+        @include('pages.partials.modal-close-guard-script')
 
         document.addEventListener('click', function (event) {
+            if (handleModalRecordNavButtonClick(event, openModal)) {
+                return;
+            }
+
             const trigger = event.target.closest('[data-modal-url]');
             if (!trigger) {
                 return;
             }
 
             event.preventDefault();
-            openModal(trigger.getAttribute('data-modal-url'));
+
+            if (!guardOpenModalAgainstDirtyForm()) {
+                return;
+            }
+
+            const url = trigger.getAttribute('data-modal-url');
+
+            captureModalRecordNavForOpen(trigger, url).then(function (preserve) {
+                openModal(url, { preserveRecordNav: !!preserve });
+            });
         });
 
         window.addEventListener('popstate', function () {
@@ -90,6 +110,8 @@
                 return;
             }
 
+            clearModalRecordNav();
+
             if (typeof bootstrap !== 'undefined') {
                 const instance = bootstrap.Modal.getInstance(modalEl);
                 if (instance) {
@@ -103,18 +125,27 @@
             }
         }
 
-        function closeModal() {
+        function closeModal(options) {
+            const opts = options || {};
+            if (!opts.force && isModalEditFormDirty() && !confirmDiscardModalEdits()) {
+                return false;
+            }
+
+            clearModalFormBaseline();
+
             const modalEl = document.getElementById('mianModal');
             if (typeof bootstrap !== 'undefined' && modalEl) {
+                allowBootstrapModalHide = true;
                 bootstrap.Modal.getInstance(modalEl)?.hide();
-                return;
+                return true;
             }
 
             restoreListUrl();
             hideModalUi();
+            return true;
         }
 
-        function openModal(url) {
+        function openModal(url, sizeOrOptions, maybeOptions) {
             const modalEl = document.getElementById('mianModal');
             const container = modalEl?.querySelector('[data-modal-container], .modal-content');
 
@@ -122,7 +153,23 @@
                 return;
             }
 
-            modalReturnUrl = window.location.href;
+            const opts = (sizeOrOptions && typeof sizeOrOptions === 'object' && !Array.isArray(sizeOrOptions))
+                ? sizeOrOptions
+                : (maybeOptions || {});
+
+            if (!opts.force && !opts.preserveRecordNav && isModalHostOpen(modalEl) && isModalEditFormDirty()) {
+                if (!confirmDiscardModalEdits()) {
+                    return;
+                }
+                clearModalFormBaseline();
+            }
+
+            if (!opts.preserveRecordNav) {
+                clearModalRecordNav();
+            }
+
+            clearModalFormBaseline();
+            modalReturnUrl = modalRecordNavHistoryReturnUrl(opts);
 
             fetch(url, {
                 headers: {
@@ -141,7 +188,7 @@
                         oldScript.replaceWith(script);
                     });
                     if (typeof bootstrap !== 'undefined') {
-                        bootstrap.Modal.getOrCreateInstance(modalEl).show();
+                        bootstrap.Modal.getOrCreateInstance(modalEl, { keyboard: false }).show();
                     }
                     history.pushState({ modal: true, returnUrl: modalReturnUrl }, '', url);
                     document.dispatchEvent(new CustomEvent('bassist:modal-loaded', {
@@ -150,7 +197,24 @@
                 });
         }
 
+        document.getElementById('mianModal')?.addEventListener('hide.bs.modal', function (event) {
+            if (allowBootstrapModalHide) {
+                allowBootstrapModalHide = false;
+                return;
+            }
+
+            if (isModalEditFormDirty()) {
+                if (!confirmDiscardModalEdits()) {
+                    event.preventDefault();
+                    return;
+                }
+                clearModalFormBaseline();
+            }
+        });
+
         document.getElementById('mianModal')?.addEventListener('hidden.bs.modal', function () {
+            allowBootstrapModalHide = false;
+            clearModalFormBaseline();
             restoreListUrl();
             hideModalUi();
         });
@@ -566,7 +630,7 @@
                     }
 
                     reloadDataTables();
-                    closeModal();
+                    closeModal({ force: true });
 
                     const hasLiveTable = typeof $ !== 'undefined'
                         && $.fn.dataTable

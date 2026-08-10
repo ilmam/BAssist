@@ -30,6 +30,13 @@ return [
     'modal_quick_create' => env('UI_MODAL_QUICK_CREATE', true),
 
     /*
+    | When true, detail view modals opened from a DataTable show Prev/Next
+    | controls for the current filtered/sorted list (not only the visible page).
+    | Cross-entity links should set data-modal-nav="off".
+    */
+    'modal_record_nav' => env('UI_MODAL_RECORD_NAV', true),
+
+    /*
     |--------------------------------------------------------------------------
     | Form Controls
     |--------------------------------------------------------------------------

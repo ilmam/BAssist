@@ -12,6 +12,7 @@
     </div>
 
     <x-slot:footer>
+        @include('pages.partials.modal-record-nav')
         @include('pages.change_requests.partials.request-change-button', [
             'dto' => $dto,
             'stakeholderNeedId' => (int) $dto->id,

@@ -10,6 +10,7 @@
     ])
 
     <x-slot:footer>
+        @include('pages.partials.modal-record-nav')
         @if (entity_can($model, 'update'))
             <x-button
                 type="link"

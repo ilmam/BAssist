@@ -12,6 +12,7 @@
     </div>
 
     <x-slot:footer>
+        @include('pages.partials.modal-record-nav')
         <x-modal-dismiss text="Close" />
     </x-slot:footer>
 </x-modal-content>

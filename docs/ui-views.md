@@ -173,6 +173,94 @@ This is the **only built-in duplication** in the view layer: thin wrappers aroun
 
 Modal fallback behavior (`RespondsWithModal` trait): opening a modal URL directly in the browser renders the equivalent **full page** instead of a fragment.
 
+### Escape and unsaved edit forms
+
+`Escape` closes the shared modal. Script: `pages/partials/modal-close-guard-script.blade.php` (included from theme templates).
+
+If the open modal is an **edit** form (`data-modal-form` with PUT/PATCH) and the field values differ from the baseline captured on `bassist:modal-loaded`, Cancel / backdrop / Escape / X ask for confirmation before discarding changes. Successful save closes with `closeModal({ force: true })` and skips that prompt. Opening another modal URL while an edit is dirty uses the same confirmation.
+
+### Record Prev/Next in view modals
+
+Framework-level navigation between detail **view** modals for the current list context. Enabled by `config('ui.modal_record_nav')` (env: `UI_MODAL_RECORD_NAV`, default `true`).
+
+#### How previous / next are determined
+
+Siblings are **not** `id ± 1` and not raw DB insertion order.
+
+When a view modal opens from a list row, the nearest DataTable already defines the sequence the user is looking at:
+
+1. Repository filters on the ajax URL (workspace/project, relation filters, orphans, …)
+2. DataTables global search
+3. DataTables column sort
+
+Those are available client-side via `table.ajax.params()` / `table.ajax.url()`.
+
+**Sibling rule:** one request to the **same list API** with the same params, but `start=0` and `length=-1` (all rows), then:
+
+```text
+ids = response.data.map(row => row.id)
+index = ids.indexOf(currentId)
+prev = ids[index - 1]
+next = ids[index + 1]
+```
+
+That is the full filtered/sorted result set (not only the visible page), aligned with whatever column the user sorted by. `BaseApiController::index` already loads the filtered collection for Yajra; the id materialization reuses that endpoint (no separate neighbors API).
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant ThemeJS as Theme_openModal
+    participant DT as DataTables
+    participant Api as List_API
+    participant Modal as modalView
+
+    User->>ThemeJS: click eye data-modal-url
+    ThemeJS->>DT: ajax.url + ajax.params
+    ThemeJS->>Api: same query start=0 length=-1
+    Api-->>ThemeJS: ordered rows
+    ThemeJS->>ThemeJS: cache ids + index
+    ThemeJS->>Modal: GET /modal/{id}/view
+    User->>ThemeJS: Prev / Next
+    ThemeJS->>Modal: openModal(/modal/{neighborId}/view)
+```
+
+#### Behavior contract
+
+| Case | Nav |
+|------|-----|
+| View modal opened from a DataTable eye / show action | Prev/Next over full filtered+sorted id list |
+| Edit / create / delete modal | No record nav |
+| Cross-entity link (`ListUi::relatedEntityCell`, traceability matrix, etc.) | Opt out with `data-modal-nav="off"` |
+| Deep link / open without a surrounding DataTable | Controls stay hidden |
+| Full-page details route | No record nav |
+| DataTable redraw / filter change | Cached fingerprint invalidated; next open from the list refetches ids |
+
+Keyboard: **ArrowLeft** / **ArrowRight** move prev/next while a view modal with nav context is open (ignored in inputs).
+
+#### Extension points (files)
+
+| Piece | Path | Role |
+|-------|------|------|
+| Theme JS | `pages/partials/modal-record-nav-script.blade.php` (included in metronic9/8 `template.blade.php`) | Capture DT ids, cache state, wire Prev/Next / keys, sync UI on `bassist:modal-loaded` |
+| Footer mount | `pages/partials/modal-record-nav.blade.php` | Prev / Next buttons + `n / total` label (`hidden` until JS has siblings) |
+| Default view modal | `pages/modals/view.blade.php` | Includes the nav partial in the footer |
+| Entity overrides | `pages/{resource}/modals/view.blade.php` | Must `@include('pages.partials.modal-record-nav')` in the footer if they replace it |
+| Scaffold stub | `stubs/entity/modal-view.stub` | Same include for new entities |
+| Opt-out | `ListUi::relatedEntityCell`, ad-hoc `data-modal-nav="off"` | Do not treat host-table rows as siblings |
+| Config | `config/ui.php` → `modal_record_nav` | Feature flag |
+
+On `[data-modal-url]` click, if the URL matches `.../modal/{id}/view` and the trigger is not `data-modal-nav="off"`, theme JS finds the nearest DataTable, builds `{ ids, index, urlForId, returnUrl }`, and reuses `openModal(neighborUrl)` with `preserveRecordNav: true` so history still returns to the list. Closing the modal clears nav state.
+
+#### Hub pages (multi-section lists)
+
+Grouped hubs (e.g. Solution Requirements, Guardrails) should embed standard `<x-datatable defaultButtons>` per section via `pages/partials/hub-entity-section.blade.php` so eye actions open view modals and participate in record nav. Avoid hand-built tables that link to full-page `show` without `data-modal-url`.
+
+#### Non-goals
+
+- No dedicated neighbors/prev-next API (reuse the list DataTables endpoint)
+- No record nav on full-page details
+- No automatic DataTables page-turn UX beyond the one-time full id list fetch
+
 ---
 
 ## Theme system
@@ -450,11 +538,14 @@ App-specific modal quirks (e.g. clear-backdrop side sheets) stay in `bassist.css
 | `app/Http/Controllers/BaseController.php` | CRUD + modal actions |
 | `app/Http/Controllers/CrudController.php` | Route-driven model resolution |
 | `app/Http/Controllers/Concerns/RespondsWithModal.php` | AJAX fragment vs full page |
-| `config/ui.php` | Active theme and theme registry |
+| `config/ui.php` | Active theme, modal flags (`modal_view`, `modal_record_nav`, …) |
 | `config/crud.php` | Model overrides, nav, optional view paths |
 | `app/Support/CrudEntityRegistry.php` | Auto-discovery of routable models |
 | `app/Support/EntityFormBuilder.php` | Runtime form field assembly (virtual entities) |
 | `app/Support/EntityFormMaterializer.php` | Generates explicit `Form::field` lines for hybrid form blades |
+| `resources/views/pages/partials/modal-record-nav*.blade.php` | View-modal Prev/Next UI + theme JS |
+| `resources/views/pages/partials/modal-close-guard-script.blade.php` | Escape + dirty-edit close confirmation |
+| `resources/views/pages/partials/hub-entity-section.blade.php` | Hub section card with standard DataTable |
 | `public/themes/*/assets/css/ui-layout.css` | Framework container-query layout (`data-ui-*`) |
 | `public/themes/metronic9/assets/css/bassist.css` | BAssist-only UI tweaks |
 

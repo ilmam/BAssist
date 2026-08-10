@@ -42,6 +42,9 @@
 
             <main class="grow pt-5" id="content" role="content">
                 <div class="kt-container-fluid" id="contentContainer">
+                    @if (session('status'))
+                        <div class="kt-alert kt-alert-success mb-5">{{ session('status') }}</div>
+                    @endif
                     @yield('main')
                 </div>
             </main>
@@ -337,7 +340,14 @@
             });
         }
 
+        @include('pages.partials.modal-record-nav-script')
+        @include('pages.partials.modal-close-guard-script')
+
         document.addEventListener('click', function (event) {
+            if (handleModalRecordNavButtonClick(event, openModal)) {
+                return;
+            }
+
             const trigger = event.target.closest('[data-modal-url]');
             if (!trigger) {
                 return;
@@ -345,10 +355,17 @@
 
             event.preventDefault();
             hideOpenDropdowns(trigger);
-            openModal(
-                trigger.getAttribute('data-modal-url'),
-                trigger.getAttribute('data-modal-size')
-            );
+
+            if (!guardOpenModalAgainstDirtyForm()) {
+                return;
+            }
+
+            const url = trigger.getAttribute('data-modal-url');
+            const size = trigger.getAttribute('data-modal-size');
+
+            captureModalRecordNavForOpen(trigger, url).then(function (preserve) {
+                openModal(url, size, { preserveRecordNav: !!preserve });
+            });
         });
 
         window.addEventListener('popstate', function () {
@@ -378,6 +395,8 @@
                 return;
             }
 
+            clearModalRecordNav();
+
             modal.classList.remove('open');
             modal.setAttribute('aria-hidden', 'true');
             modal.setAttribute('data-modal-clear-backdrop', '0');
@@ -397,12 +416,19 @@
             }
         }
 
-        function closeModal() {
+        function closeModal(options) {
+            const opts = options || {};
+            if (!opts.force && isModalEditFormDirty() && !confirmDiscardModalEdits()) {
+                return false;
+            }
+
+            clearModalFormBaseline();
             restoreListUrl();
             hideModalUi();
+            return true;
         }
 
-        function openModal(url, sizeFromTrigger) {
+        function openModal(url, sizeFromTrigger, options) {
             const modal = document.getElementById('mianModal');
             const container = modal?.querySelector('[data-modal-container]');
 
@@ -414,7 +440,20 @@
                 modal.setAttribute('data-modal-default-size', modal.getAttribute('data-modal-size') || 'full');
             }
 
-            modalReturnUrl = window.location.href;
+            const opts = options || {};
+            if (!opts.force && !opts.preserveRecordNav && isModalHostOpen(modal) && isModalEditFormDirty()) {
+                if (!confirmDiscardModalEdits()) {
+                    return;
+                }
+                clearModalFormBaseline();
+            }
+
+            if (!opts.preserveRecordNav) {
+                clearModalRecordNav();
+            }
+
+            clearModalFormBaseline();
+            modalReturnUrl = modalRecordNavHistoryReturnUrl(opts);
 
             fetch(url, {
                 headers: {
@@ -501,7 +540,7 @@
             }
 
             if (event.target.closest('[data-kt-modal-dismiss]')) {
-                closeModal();
+                requestCloseModal();
             }
         });
 
@@ -935,7 +974,7 @@
                     }
 
                     reloadDataTables();
-                    closeModal();
+                    closeModal({ force: true });
 
                     // Details pages (e.g. Feature) need a full refresh; lists already ajax-reload.
                     const hasLiveTable = typeof $ !== 'undefined'

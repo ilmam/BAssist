@@ -18,6 +18,7 @@
     ])
 
     <x-slot:footer>
+        @include('pages.partials.modal-record-nav')
         @if (entity_can('Scenario', 'create'))
             <x-button
                 type="link"

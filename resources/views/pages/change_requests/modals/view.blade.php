@@ -12,6 +12,7 @@
     @include('pages.change_requests.partials.cascade', ['cascade' => $cascade ?? []])
 
     <x-slot:footer>
+        @include('pages.partials.modal-record-nav')
         @if (! empty($canApprove) && ! empty($approveUrl))
             <x-button
                 type="link"
