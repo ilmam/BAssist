@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Scenario;
 use App\Services\GherkinFeatureAssembler;
-use Illuminate\Http\Request;
 
 class ScenarioController extends CrudController
 {
@@ -63,48 +62,10 @@ class ScenarioController extends CrudController
         return $dto::from($payload);
     }
 
-    protected function respondAfterMutation(Request $request, mixed $record = null)
-    {
-        if ($request->ajax() || $request->wantsJson()) {
-            return parent::respondAfterMutation($request, $record);
-        }
-
-        $featureId = $this->resolveFeatureIdFromRecord($record)
-            ?? (int) $request->input('feature_id', 0);
-
-        if ($featureId > 0) {
-            return redirect()->route('features.show', $featureId);
-        }
-
-        return parent::respondAfterMutation($request, $record);
-    }
-
     protected function loadScenario(int $id): Scenario
     {
         return Scenario::query()
             ->with(['feature.project', 'status'])
             ->findOrFail($id);
-    }
-
-    protected function resolveFeatureIdFromRecord(mixed $record): ?int
-    {
-        if (is_object($record)) {
-            if (isset($record->feature_id) && (int) $record->feature_id > 0) {
-                return (int) $record->feature_id;
-            }
-
-            if (method_exists($record, 'toArray')) {
-                $values = $record->toArray();
-                if (! empty($values['feature_id'])) {
-                    return (int) $values['feature_id'];
-                }
-            }
-        }
-
-        if (is_array($record) && ! empty($record['feature_id'])) {
-            return (int) $record['feature_id'];
-        }
-
-        return null;
     }
 }

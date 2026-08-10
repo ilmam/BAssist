@@ -115,26 +115,6 @@ class FeatureController extends CrudController
         return $data;
     }
 
-    protected function respondAfterMutation(Request $request, mixed $record = null)
-    {
-        if ($request->ajax() || $request->wantsJson()) {
-            return parent::respondAfterMutation($request, $record);
-        }
-
-        $id = null;
-        if (is_object($record) && isset($record->id)) {
-            $id = (int) $record->id;
-        } elseif (is_array($record) && ! empty($record['id'])) {
-            $id = (int) $record['id'];
-        }
-
-        if ($id > 0) {
-            return redirect()->route('features.show', $id);
-        }
-
-        return parent::respondAfterMutation($request, $record);
-    }
-
     public function importForm($id): View
     {
         $feature = $this->loadFeature((int) $id);
