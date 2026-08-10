@@ -5,15 +5,14 @@ namespace App\Http\Controllers;
 use App\Models\Assumption;
 use App\Models\BusinessRule;
 use App\Models\Constraint;
-use App\Models\Project;
-use App\Support\AssumptionStatus;
-use App\Support\BusinessRuleStatus;
-use App\Support\ConstraintStatus;
+use App\Support\DtoMetadata;
 use App\Support\EntityAccess;
 use App\Support\ProjectContext;
+use App\Support\RepositoryResolver;
 use App\Support\WorkspaceContext;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class GuardrailsController extends Controller
@@ -26,16 +25,6 @@ class GuardrailsController extends Controller
         $projectId = $this->resolveProjectId($request);
         $workspaceId = $this->resolveWorkspaceId($request);
 
-        $projects = Project::query()
-            ->with('workspace')
-            ->when($tenantId !== null, fn ($q) => $q->whereHas(
-                'workspace',
-                fn ($w) => $w->where('tenant_id', $tenantId)
-            ))
-            ->when($workspaceId !== null, fn ($q) => $q->where('workspace_id', $workspaceId))
-            ->orderBy('name')
-            ->get(['id', 'name', 'code', 'workspace_id']);
-
         $sections = [];
 
         if (entity_can('Assumption', EntityAccess::VIEW)) {
@@ -47,7 +36,6 @@ class GuardrailsController extends Controller
                 projectId: $projectId,
                 workspaceId: $workspaceId,
                 tenantId: $tenantId,
-                statusLabelResolver: fn (object $item) => AssumptionStatus::label((string) $item->status),
             );
         }
 
@@ -60,7 +48,6 @@ class GuardrailsController extends Controller
                 projectId: $projectId,
                 workspaceId: $workspaceId,
                 tenantId: $tenantId,
-                statusLabelResolver: fn (object $item) => ConstraintStatus::label((string) $item->status),
             );
         }
 
@@ -73,22 +60,32 @@ class GuardrailsController extends Controller
                 projectId: $projectId,
                 workspaceId: $workspaceId,
                 tenantId: $tenantId,
-                statusLabelResolver: fn (object $item) => BusinessRuleStatus::label((string) $item->status),
             );
         }
 
+        $filters = array_filter([
+            'project_id' => $projectId,
+            'workspace_id' => $workspaceId,
+        ], fn ($v) => $v !== null && $v !== '');
+
+        $indexUrl = route('guardrails.index');
+        $clearUrl = ! empty($filters['project_id'])
+            ? route('guardrails.index', array_filter([
+                'workspace_id' => $filters['workspace_id'] ?? null,
+                'clear_project' => 1,
+            ]))
+            : null;
+
         return view('pages.guardrails.index', [
             'sections' => $sections,
-            'projects' => $projects,
-            'filters' => [
-                'project_id' => $projectId,
-                'workspace_id' => $workspaceId,
-            ],
+            'filters' => $filters,
+            'filterAction' => $indexUrl,
+            'filterClearUrl' => $clearUrl,
+            'allowedListFilters' => ['project_id'],
         ]);
     }
 
     /**
-     * @param  callable(object): string  $statusLabelResolver
      * @return array<string, mixed>
      */
     protected function section(
@@ -99,21 +96,8 @@ class GuardrailsController extends Controller
         ?int $projectId,
         ?int $workspaceId,
         mixed $tenantId,
-        callable $statusLabelResolver,
     ): array {
-        $query = $this->baseQuery($model, $projectId, $workspaceId, $tenantId);
-
-        $count = (clone $query)->count();
-        $items = (clone $query)
-            ->orderByDesc('updated_at')
-            ->orderBy('title')
-            ->limit(50)
-            ->get()
-            ->map(function (object $item) use ($statusLabelResolver) {
-                $item->status_label = $statusLabelResolver($item);
-
-                return $item;
-            });
+        $count = $this->baseQuery($model, $projectId, $workspaceId, $tenantId)->count();
 
         $scopeQuery = array_filter([
             'workspace_id' => $workspaceId,
@@ -125,27 +109,43 @@ class GuardrailsController extends Controller
             $indexUrl .= '?'.http_build_query($scopeQuery);
         }
 
+        $ajaxUrl = route('api.'.Str::snake($model).'.index', ['modelName' => $model]);
+        if ($scopeQuery !== []) {
+            $ajaxUrl .= (str_contains($ajaxUrl, '?') ? '&' : '?').http_build_query($scopeQuery);
+        }
+
+        $createModalUrl = entity_can($model, EntityAccess::CREATE)
+            ? model_modal_path($model, 'create')
+            : null;
+        if ($createModalUrl && $scopeQuery !== []) {
+            $createModalUrl .= (str_contains($createModalUrl, '?') ? '&' : '?').http_build_query($scopeQuery);
+        }
+
+        $repository = RepositoryResolver::make($model);
+        $columns = DtoMetadata::for($repository->viewDto)->listColumns(withPrefix: true);
+
         return [
             'model' => $model,
             'label' => $label,
             'description' => $description,
             'icon' => $icon,
             'count' => $count,
-            'items' => $items,
+            'columns' => $columns,
+            'ajax_url' => $ajaxUrl,
             'index_url' => $indexUrl,
-            'create_modal_url' => entity_can($model, EntityAccess::CREATE)
-                ? model_modal_path($model, 'create')
-                : null,
+            'create_modal_url' => $createModalUrl,
             'can_create' => entity_can($model, EntityAccess::CREATE),
+            'table_id' => 'hub-'.Str::snake($model),
+            'page_length' => 10,
         ];
     }
 
     protected function baseQuery(string $model, ?int $projectId, ?int $workspaceId, mixed $tenantId): Builder
     {
         $query = match ($model) {
-            'Assumption' => Assumption::query()->with('project'),
-            'Constraint' => Constraint::query()->with('project'),
-            'BusinessRule' => BusinessRule::query()->with('project'),
+            'Assumption' => Assumption::query(),
+            'Constraint' => Constraint::query(),
+            'BusinessRule' => BusinessRule::query(),
             default => throw new \InvalidArgumentException("Unknown guardrail model [{$model}]."),
         };
 

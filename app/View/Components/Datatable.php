@@ -32,6 +32,16 @@ class Datatable extends Component
     ) {
         $this->options = array_merge($this->defaultOptions, $options);
 
+        // Keep component id and options['id'] aligned so multiple tables on one page work.
+        if (($this->options['id'] ?? null) !== null && $this->options['id'] !== '') {
+            $this->id = (string) $this->options['id'];
+        } elseif ($this->id !== '' && $this->id !== 'datatable') {
+            $this->options['id'] = $this->id;
+        } else {
+            $this->options['id'] = $this->options['id'] ?? 'datatable';
+            $this->id = (string) $this->options['id'];
+        }
+
         if ($this->collapsedActions === null) {
             if (array_key_exists('collapsedActions', $this->options)) {
                 $this->collapsedActions = (bool) $this->options['collapsedActions'];

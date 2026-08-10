@@ -5,6 +5,7 @@
      width-less identity column being crushed. --}}
 @php
     $tableMinWidth = \App\Helpers\DatatableUi::minTableWidth($options['columns']);
+    $tableDomId = (string) ($options['id'] ?? (is_string($id) && $id !== '' ? $id : 'datatable'));
 @endphp
 @push('styles')
 <style>
@@ -41,7 +42,7 @@
 
 <div class="table-responsive">
     <table class="table align-middle table-row-dashed fs-6 gy-5 dataTable no-footer {{ $class }}"
-        id="{{ \App\Helpers\Ui::keyset($id, 'id', 'datatable') }}"
+        id="{{ $tableDomId }}"
         style="width: 100%;@if ($tableMinWidth !== '') {{ ' '.$tableMinWidth.';' }}@endif">
         <thead>
             <tr class="text-start text-muted fw-bolder fs-7 text-uppercase gs-0">
@@ -71,15 +72,17 @@
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         $(function() {
-            var dtid = '#{{ \App\Helpers\Ui::keyset($options, 'id', 'datatable') }}';
+            var dtid = '#{{ $tableDomId }}';
             var ajaxUrl = {!! json_encode($options['ajaxUrl'] ?? route($options['dataRoute'], $options['dataRoutParameters'])) !!};
             var rowClassField = {!! json_encode($options['rowClassField'] ?? null) !!};
             var rowClass = {!! json_encode($options['rowClass'] ?? 'is-orphan-row') !!};
             var autoWidth = {!! json_encode((bool) ($options['autoWidth'] ?? false)) !!};
+            var pageLength = {!! json_encode((int) ($options['pageLength'] ?? 10)) !!};
             var table = $(dtid).DataTable({
                 processing: true,
                 serverSide: true,
                 autoWidth: autoWidth,
+                pageLength: pageLength,
                 ajax: ajaxUrl,
                 columns: [
                     @foreach ($options['columns'] as $col)

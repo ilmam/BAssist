@@ -47,7 +47,8 @@ class Phase1xGuardrailsTest extends TestCase
         $this->assertIsString($blade);
         $this->assertStringContainsString("route('guardrails.index')", $blade);
         $this->assertStringContainsString("__('ui.guardrails')", $blade);
-        $this->assertStringContainsString('$section[\'items\']', $blade);
+        $this->assertStringContainsString("pages.partials.hub-entity-section", $blade);
+        $this->assertStringContainsString("pages.partials.list-filter-form", $blade);
     }
 
     public function test_project_dashboard_includes_readiness_card(): void

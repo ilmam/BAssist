@@ -6,12 +6,13 @@
 
 @php
     $tableMinWidth = \App\Helpers\DatatableUi::minTableWidth($options['columns']);
+    $tableDomId = (string) ($options['id'] ?? (is_string($id) && $id !== '' ? $id : 'datatable'));
 @endphp
 
 <div class="kt-card-table">
     <div class="kt-table-wrapper">
         <table class="kt-table kt-table-border w-full dataTable no-footer {{ $class }}"
-            id="{{ \App\Helpers\Ui::keyset($id, 'id', 'datatable') }}"
+            id="{{ $tableDomId }}"
             style="width: 100%;@if ($tableMinWidth !== '') {{ ' '.$tableMinWidth.';' }}@endif">
             <thead>
                 <tr>
@@ -42,15 +43,17 @@
 <script>
     document.addEventListener("DOMContentLoaded", function() {
         $(function() {
-            var dtid = '#{{ \App\Helpers\Ui::keyset($options, 'id', 'datatable') }}';
+            var dtid = '#{{ $tableDomId }}';
             var ajaxUrl = {!! json_encode($options['ajaxUrl'] ?? route($options['dataRoute'], $options['dataRoutParameters'])) !!};
             var rowClassField = {!! json_encode($options['rowClassField'] ?? null) !!};
             var rowClass = {!! json_encode($options['rowClass'] ?? 'is-orphan-row') !!};
             var autoWidth = {!! json_encode((bool) ($options['autoWidth'] ?? false)) !!};
+            var pageLength = {!! json_encode((int) ($options['pageLength'] ?? 10)) !!};
             var table = $(dtid).DataTable({
                 processing: true,
                 serverSide: true,
                 autoWidth: autoWidth,
+                pageLength: pageLength,
                 ajax: ajaxUrl,
                 columns: [
                     @foreach ($options['columns'] as $col)
