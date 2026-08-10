@@ -62,6 +62,22 @@ class FeatureController extends CrudController
         );
     }
 
+    /**
+     * Lightweight modal with assembled .feature content (list "View raw" action).
+     */
+    public function modalRaw($id): View
+    {
+        $feature = $this->loadFeature((int) $id);
+        $assembler = app(GherkinFeatureAssembler::class);
+
+        return view('pages.features.modals.raw', [
+            'feature' => $feature,
+            'assembledGherkin' => $assembler->assembleFeature($feature),
+            'exportUrl' => route('features.export', $feature->id),
+            'printUrl' => route('features.print', $feature->id),
+        ]);
+    }
+
     public function edit($id)
     {
         $form = $this->buildEditForm($id);

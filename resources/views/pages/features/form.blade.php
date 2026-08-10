@@ -82,7 +82,7 @@
                                 'data-field-help' => __('ui.stakeholder_need_field_help'),
                             ];
                         @endphp
-                        <div data-ui-span="12" data-ui-span-md="12" data-ui-span-lg="12">
+                        <div data-ui-span="12" data-ui-span-md="6" data-ui-span-lg="6">
                             {{ Form::field($type, 'stakeholder_need_id', $fieldValue, $list, $options) }}
                         </div>
                     @else

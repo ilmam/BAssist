@@ -40,19 +40,25 @@
                         <x-button
                             type="link"
                             href="{{ $editScenarioModalUrl }}"
-                            color="primary"
+                            icon="pencil"
+                            iconOnly="true"
+                            color="outline"
+                            activeColor="primary"
                             class="js-open-modal"
                             data-modal-url="{{ $editScenarioModalUrl }}"
-                        >{{ __('ui.edit') }}</x-button>
+                        ></x-button>
                     @endif
                     @if (entity_can('Scenario', 'delete'))
                         <x-button
                             type="link"
                             href="{{ model_modal_path('Scenario', 'delete', $child->id) }}"
-                            color="danger"
+                            icon="trash"
+                            iconOnly="true"
+                            color="outline"
+                            activeColor="primary"
                             class="js-open-modal"
                             data-modal-url="{{ model_modal_path('Scenario', 'delete', $child->id) }}"
-                        >{{ __('ui.delete') }}</x-button>
+                        ></x-button>
                     @endif
                 </div>
             </div>

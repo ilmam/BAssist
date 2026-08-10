@@ -139,6 +139,10 @@ body.modal-sheet-push .kt-header {
   }
 
   @media (min-width: 48rem) {
+    .md\:grid-cols-2 {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
     .md\:grid-cols-3 {
       grid-template-columns: repeat(3, minmax(0, 1fr));
     }
@@ -152,6 +156,10 @@ body.modal-sheet-push .kt-header {
 
   .gap-y-3 {
     row-gap: calc(var(--spacing) * 3);
+  }
+
+  .gap-y-4 {
+    row-gap: calc(var(--spacing) * 4);
   }
 
   .col-span-3 {
@@ -930,6 +938,53 @@ table.dataTable tbody td.dt-nowrap {
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
+}
+
+/* Change Request plug-in node on the CR-step matrix copy */
+.quick-guide__chain-node--cr {
+  --qg-cr: #c2410c;
+  --qg-cr-soft: #fff1eb;
+  --qg-cr-border: #e07a4f;
+  border-color: var(--qg-cr-border);
+  background: linear-gradient(160deg, var(--qg-cr-soft) 0%, #fff 100%);
+}
+
+.quick-guide__chain-node--cr .quick-guide__chain-label {
+  color: var(--qg-cr);
+  font-weight: 600;
+}
+
+.quick-guide__chain-node--cr .quick-guide__chain-code {
+  color: color-mix(in srgb, var(--qg-cr) 70%, #6b7280);
+}
+
+/* Changed SN / new SR flanking the CR node (amber orange — CR stays coral/red) */
+.quick-guide__chain-node--changed {
+  --qg-changed-ink: #b45309;
+  --qg-changed-soft: #fff7ed;
+  --qg-changed-border: #f59e0b;
+  border-color: var(--qg-changed-border);
+  background: linear-gradient(160deg, var(--qg-changed-soft) 0%, #fff 100%);
+}
+
+.quick-guide__chain-node--changed .quick-guide__chain-label {
+  color: var(--qg-changed-ink);
+  font-weight: 600;
+}
+
+.quick-guide__chain-node--changed .quick-guide__chain-code {
+  color: color-mix(in srgb, var(--qg-changed-ink) 55%, #6b7280);
+}
+
+.quick-guide__chain-node--changed .quick-guide__chain-detail {
+  color: #d97706;
+  font-weight: 600;
+}
+
+.quick-guide__hint--cr-chain {
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+  color: #9a3412;
 }
 
 .quick-guide__chain-label {

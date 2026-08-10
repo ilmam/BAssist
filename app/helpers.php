@@ -367,10 +367,16 @@ if (! function_exists('ui_form_field_layout_vars')) {
     {
         $attributes = $attributes ?? [];
 
+        // Optional per-call override: Form::field(..., ['label' => 'Custom']) or '' to hide.
+        $labelText = array_key_exists('label', $attributes)
+            ? (string) $attributes['label']
+            : Ui::fieldLabel($name);
+        unset($attributes['label']);
+
         return [
             'attributes' => $attributes,
             'horizontal' => ($attributes['layout'] ?? 'v') === 'h',
-            'labelText' => Ui::fieldLabel($name),
+            'labelText' => $labelText,
             'fieldStackClass' => 'kt-form-item',
             'fieldRowClass' => 'kt-form-field-row flex flex-col lg:flex-row lg:items-start gap-2.5',
         ];

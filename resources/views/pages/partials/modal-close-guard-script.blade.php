@@ -161,6 +161,12 @@ document.addEventListener('keydown', function (event) {
         }
     }
 
+    // Nested <dialog> (e.g. Feature View raw) owns Escape first — do not dismiss the host modal.
+    const openDialog = document.querySelector('dialog[open]');
+    if (openDialog) {
+        return;
+    }
+
     if (!isModalHostOpen()) {
         return;
     }

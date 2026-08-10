@@ -342,6 +342,7 @@
 
         @include('pages.partials.modal-record-nav-script')
         @include('pages.partials.modal-close-guard-script')
+        @include('pages.partials.modal-stack-script')
 
         document.addEventListener('click', function (event) {
             if (handleModalRecordNavButtonClick(event, openModal)) {
@@ -370,10 +371,12 @@
         });
 
         window.addEventListener('popstate', function () {
-            if (!history.state?.modal) {
-                hideModalUi();
-                modalReturnUrl = null;
+            if (handleModalStackPopState()) {
+                return;
             }
+
+            hideModalUi();
+            modalReturnUrl = null;
         });
 
         function restoreListUrl() {
@@ -397,6 +400,7 @@
             }
 
             clearModalRecordNav();
+            clearModalStack();
 
             modal.classList.remove('open');
             modal.setAttribute('aria-hidden', 'true');
@@ -418,15 +422,10 @@
         }
 
         function closeModal(options) {
-            const opts = options || {};
-            if (!opts.force && isModalEditFormDirty() && !confirmDiscardModalEdits()) {
-                return false;
-            }
-
-            clearModalFormBaseline();
-            restoreListUrl();
-            hideModalUi();
-            return true;
+            return closeModalWithStack(options, function () {
+                restoreListUrl();
+                hideModalUi();
+            }) !== false;
         }
 
         function openModal(url, sizeFromTrigger, options) {
@@ -449,13 +448,17 @@
                 clearModalFormBaseline();
             }
 
+            const stacked = pushModalStackIfNeeded(modal, container, opts);
+
             if (!opts.preserveRecordNav) {
                 clearModalRecordNav();
             }
 
             clearModalFormBaseline();
-            const skipHistory = !!opts.noHistory;
-            modalReturnUrl = skipHistory ? null : modalRecordNavHistoryReturnUrl(opts);
+            const skipHistory = !!opts.noHistory || !!opts.fromStack;
+            if (!opts.fromStack) {
+                modalReturnUrl = skipHistory ? null : modalRecordNavHistoryReturnUrl(opts);
+            }
 
             fetch(url, {
                 headers: {
@@ -493,6 +496,7 @@
                     if (!skipHistory) {
                         history.pushState({ modal: true, returnUrl: modalReturnUrl }, '', url);
                     }
+                    rememberOpenedModal(url, opts);
 
                     if (typeof KTSelect !== 'undefined' && typeof KTSelect.createInstances === 'function') {
                         KTSelect.createInstances();
@@ -503,6 +507,9 @@
                     }));
                 })
                 .catch((error) => {
+                    if (stacked) {
+                        modalStack.pop();
+                    }
                     console.error(error);
                     window.alert('Could not open the editor. Please try again.');
                 });

@@ -69,6 +69,7 @@ Route::middleware('auth')->group(function (): void {
     });
 
     Route::middleware('entity.access')->group(function (): void {
+        Route::get('features/modal/{id}/raw', [FeatureController::class, 'modalRaw'])->name('features.modal.raw');
         Route::get('features/{id}/export', [FeatureController::class, 'export'])->name('features.export');
         Route::get('features/{id}/print', [FeatureController::class, 'print'])->name('features.print');
         Route::get('features/{id}/import', [FeatureController::class, 'importForm'])->name('features.import');

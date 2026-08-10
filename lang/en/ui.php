@@ -570,6 +570,7 @@ return [
     'quick_guide_trail_bo' => 'Business Objective',
     'quick_guide_trail_stakeholder' => 'Stakeholders',
     'quick_guide_trail_sn' => 'Stakeholder Need',
+    'quick_guide_trail_cr' => 'Change Request',
     'quick_guide_trail_solution' => 'Solution Requirements',
     'quick_guide_trail_trace' => 'Traceability Matrix',
 
@@ -579,6 +580,7 @@ return [
     'quick_guide_ba_bo' => 'Business Objective',
     'quick_guide_ba_stakeholder' => 'Stakeholders',
     'quick_guide_ba_sn' => 'Stakeholder Need',
+    'quick_guide_ba_cr' => 'Change Request',
     'quick_guide_ba_solution' => 'Solution Requirements',
     'quick_guide_ba_trace' => 'Traceability Matrix',
 
@@ -588,6 +590,7 @@ return [
     'quick_guide_q_bo' => 'What does success look like?',
     'quick_guide_q_stakeholder' => 'Who is involved or impacted?',
     'quick_guide_q_sn' => 'What do they require?',
+    'quick_guide_q_cr' => 'How do changing needs drive new requirements?',
     'quick_guide_q_solution' => 'How must the solution behave?',
     'quick_guide_q_trace' => 'Can you see the whole chain?',
 
@@ -597,6 +600,9 @@ return [
     'quick_guide_hint_bo' => 'Turn the pain into a measurable target the business can check after go-live.',
     'quick_guide_hint_stakeholder' => 'List the roles that care about the outcome — requesters, approvers, and anyone who keeps the process honest.',
     'quick_guide_hint_sn' => 'For each role, capture what they must be able to do or know — not the screen design yet.',
+    'quick_guide_hint_cr' => 'A Change Request becomes the base for the new Solution Requirement.',
+    'quick_guide_hint_cr_chain' => 'The red node is the change that must cascade before or along Solution Requirements.',
+    'quick_guide_cr_chain_label' => 'Traceability chain with Change Request',
     'quick_guide_hint_solution' => 'Capture Solution Requirements as FR, NFR, and Scenarios — what the solution must do, how well it must perform, and Given / When / Then proofs.',
     'quick_guide_hint_trace' => 'Walk the chain end to end — every requirement should hang under a need and a why.',
 
@@ -632,6 +638,10 @@ return [
     'quick_guide_sample_sn_title' => 'Submit once and see live status',
     'quick_guide_sample_sn_body' => 'Requester must submit a complete leave request once and see balance remaining, pending, approved, or rejected without follow-up emails.',
 
+    'quick_guide_sample_cr_kicker' => 'Change Request · CR-01',
+    'quick_guide_sample_cr_title' => 'Doctor note required for leave over 3 days',
+    'quick_guide_sample_cr_body' => 'Policy change: sick leave over 3 days now needs a doctor’s note. Raise CR-01 so the updated Stakeholder Need and the new Solution Requirement (upload + validation) are traced — not slipped in quietly.',
+
     'quick_guide_sample_solution_kicker' => 'Solution Requirements · SR-01',
     'quick_guide_sample_solution_title' => 'Confirm request and notify manager on submit',
     'quick_guide_sample_solution_body' => 'FR: On submit, create a pending request, freeze the balance, and notify the manager. NFR: Approval notice reaches the manager within 1 minute. Scenario: Given an employee with 5 days remaining enters 2 days of annual leave, When they submit, Then the request shows Pending and the manager receives an approval notice.',
@@ -645,8 +655,18 @@ return [
     'quick_guide_chain_bo' => '100% leave via portal; approve under 24h',
     'quick_guide_chain_sn_code' => 'SN-01',
     'quick_guide_chain_sn' => 'Submit leave once and track status',
+    'quick_guide_chain_cr_code' => 'CR-01',
+    'quick_guide_chain_cr' => 'Doctor note required for leave over 3 days',
     'quick_guide_chain_solution_code' => 'SR-01',
     'quick_guide_chain_solution' => 'create leave ticket on submit',
+
+    // Step 8 CR cascade — distinct SN/SR titles (post-change), not step 7 baseline
+    'quick_guide_chain_cr_sn_code' => 'SN-02',
+    'quick_guide_chain_cr_sn' => 'Prove sick leave over 3 days with a doctor note',
+    'quick_guide_chain_cr_sn_badge' => 'Updated need',
+    'quick_guide_chain_cr_solution_code' => 'SR-02',
+    'quick_guide_chain_cr_solution' => 'Require doctor-note upload & block submit if missing',
+    'quick_guide_chain_cr_solution_badge' => 'New from CR',
 
     'quick_guide_matrix_takeaway_coverage' => '<strong>Forward Traceability (Completeness):</strong> Every business/stakeholder need maps forward to a solution requirement to guarantee 100% functional coverage.',
     'quick_guide_matrix_takeaway_lineage' => '<strong>Backward Traceability (Justification):</strong> Every solution requirement maps backward to a validated business need to eliminate scope creep and gold-plating.',
@@ -662,7 +682,7 @@ return [
     'feature_as_gherkin' => 'Feature (Gherkin)',
     'scenario_as_gherkin' => 'Scenario (Gherkin)',
     'feature_document' => 'Feature document',
-    'scenario_document' => 'Scenario document',
+    'scenario_document' => 'Scenario Content',
     'edit_feature_document' => 'Edit feature',
     'feature_traceability_help' => 'Status and priority for this Feature.',
     'feature_document_edit_help' => 'Feature header only (tags, Feature:, story, Background). Scenarios are edited as child records below.',
@@ -712,7 +732,6 @@ return [
     'gherkin_feature_body_help' => 'Feature header only. Include @tags, Feature:, As a / I want / In order to, and Background:. Scenarios are separate.',
     'gherkin_feature_body_example' => "@epic:orders\nFeature: Place an order\n  As a customer\n  I want to checkout\n  In order to receive my items\n\n  Background:\n    Given I am signed in",
     'gherkin_scenario_body_help' => 'Full scenario block as in a .feature file. Include @tags, Scenario: or Scenario Outline:, steps, and Examples:.',
-    'gherkin_scenario_body_example' => "@smoke\nScenario: Happy path checkout\n  Given I have items in my cart\n  When I confirm payment\n  Then I see an order confirmation",
     'copy_gherkin' => 'Copy',
     'download_feature' => 'Download .feature',
     'print_feature' => 'Print',

@@ -1,7 +1,8 @@
 @include(ui_form_view('_vars'))
 
 @php
-    $list = $list ?? ['1' => ''];
+    // field.blade.php normalizes null list to []; treat empty as the single-toggle default.
+    $list = ! empty($list) ? $list : ['1' => ''];
     $inline = Ui::keyset($attributes, 'inline') !== null && $attributes['inline'] == true;
     $listClass = $inline ? 'd-flex flex-wrap gap-5' : 'd-flex flex-column gap-3';
 @endphp

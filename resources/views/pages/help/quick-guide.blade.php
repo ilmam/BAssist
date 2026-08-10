@@ -33,6 +33,10 @@
                     <span class="quick-guide__trail-connector" aria-hidden="true">→</span>
                     <span class="quick-guide__trail-label">{{ __('ui.quick_guide_trail_trace') }}</span>
                 </li>
+                <li class="quick-guide__trail-item" data-qg-trail-item="7" hidden>
+                    <span class="quick-guide__trail-connector" aria-hidden="true">→</span>
+                    <span class="quick-guide__trail-label">{{ __('ui.quick_guide_trail_cr') }}</span>
+                </li>
             </ol>
         </nav>
 
@@ -144,7 +148,7 @@
                     </div>
                 </section>
 
-                {{-- 7. Traceability Matrix --}}
+                {{-- 7. Traceability Matrix (spine only — no Change Request node) --}}
                 <section class="quick-guide__panel" data-qg-panel="6" hidden>
                     <header class="quick-guide__panel-head">
                         <span class="quick-guide__ba">{{ __('ui.quick_guide_ba_trace') }}</span>
@@ -186,6 +190,61 @@
                     <div class="quick-guide__takeaway">
                         <p class="quick-guide__takeaway-line">{!! __('ui.quick_guide_matrix_takeaway_coverage') !!}</p>
                         <p class="quick-guide__takeaway-line">{!! __('ui.quick_guide_matrix_takeaway_lineage') !!}</p>
+                    </div>
+                </section>
+
+                {{-- 8. Change Request (last — sample + matrix copy with red CR between SN and SR) --}}
+                <section class="quick-guide__panel" data-qg-panel="7" hidden>
+                    <header class="quick-guide__panel-head">
+                        <span class="quick-guide__ba">{{ __('ui.quick_guide_ba_cr') }}</span>
+                        <h4 class="quick-guide__question">{{ __('ui.quick_guide_q_cr') }}</h4>
+                    </header>
+                    <p class="quick-guide__hint">{{ __('ui.quick_guide_hint_cr') }}</p>
+                    <div class="quick-guide__card">
+                        <div class="quick-guide__card-kicker">{{ __('ui.quick_guide_sample_cr_kicker') }}</div>
+                        <div class="quick-guide__card-title">{{ __('ui.quick_guide_sample_cr_title') }}</div>
+                        <p class="quick-guide__card-body">{{ __('ui.quick_guide_sample_cr_body') }}</p>
+                    </div>
+                    <p class="quick-guide__hint quick-guide__hint--cr-chain">{{ __('ui.quick_guide_hint_cr_chain') }}</p>
+                    {{-- Post-change matrix: same project/BN/BO, updated SN, red CR, new SR driven by the CR --}}
+                    <div class="quick-guide__chain" aria-label="{{ __('ui.quick_guide_cr_chain_label') }}">
+                        <div class="quick-guide__chain-node">
+                            <span class="quick-guide__chain-label">{{ __('ui.quick_guide_trail_project') }}</span>
+                            <span class="quick-guide__chain-code">{{ __('ui.quick_guide_chain_project_code') }}</span>
+                            <span class="quick-guide__chain-value">{{ __('ui.quick_guide_chain_project') }}</span>
+                        </div>
+                        <div class="quick-guide__chain-link" aria-hidden="true"><span>&gt;</span><span>&lt;</span></div>
+                        <div class="quick-guide__chain-node">
+                            <span class="quick-guide__chain-label">{{ __('ui.quick_guide_trail_bn') }}</span>
+                            <span class="quick-guide__chain-code">{{ __('ui.quick_guide_chain_bn_code') }}</span>
+                            <span class="quick-guide__chain-value">{{ __('ui.quick_guide_chain_bn') }}</span>
+                        </div>
+                        <div class="quick-guide__chain-link" aria-hidden="true"><span>&gt;</span><span>&lt;</span></div>
+                        <div class="quick-guide__chain-node">
+                            <span class="quick-guide__chain-label">{{ __('ui.quick_guide_trail_bo') }}</span>
+                            <span class="quick-guide__chain-code">{{ __('ui.quick_guide_chain_bo_code') }}</span>
+                            <span class="quick-guide__chain-value">{{ __('ui.quick_guide_chain_bo') }}</span>
+                        </div>
+                        <div class="quick-guide__chain-link" aria-hidden="true"><span>&gt;</span><span>&lt;</span></div>
+                        <div class="quick-guide__chain-node quick-guide__chain-node--changed">
+                            <span class="quick-guide__chain-label">{{ __('ui.quick_guide_trail_sn') }}</span>
+                            <span class="quick-guide__chain-code">{{ __('ui.quick_guide_chain_cr_sn_code') }}</span>
+                            <span class="quick-guide__chain-value">{{ __('ui.quick_guide_chain_cr_sn') }}</span>
+                            <span class="quick-guide__chain-detail">{{ __('ui.quick_guide_chain_cr_sn_badge') }}</span>
+                        </div>
+                        <div class="quick-guide__chain-link" aria-hidden="true"><span>&gt;</span><span>&lt;</span></div>
+                        <div class="quick-guide__chain-node quick-guide__chain-node--cr">
+                            <span class="quick-guide__chain-label">{{ __('ui.quick_guide_trail_cr') }}</span>
+                            <span class="quick-guide__chain-code">{{ __('ui.quick_guide_chain_cr_code') }}</span>
+                            <span class="quick-guide__chain-value">{{ __('ui.quick_guide_chain_cr') }}</span>
+                        </div>
+                        <div class="quick-guide__chain-link" aria-hidden="true"><span>&gt;</span><span>&lt;</span></div>
+                        <div class="quick-guide__chain-node quick-guide__chain-node--changed">
+                            <span class="quick-guide__chain-label">{{ __('ui.quick_guide_trail_solution') }}</span>
+                            <span class="quick-guide__chain-code">{{ __('ui.quick_guide_chain_cr_solution_code') }}</span>
+                            <span class="quick-guide__chain-value">{{ __('ui.quick_guide_chain_cr_solution') }}</span>
+                            <span class="quick-guide__chain-detail">{{ __('ui.quick_guide_chain_cr_solution_badge') }}</span>
+                        </div>
                     </div>
                 </section>
             </div>

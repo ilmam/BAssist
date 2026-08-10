@@ -1,7 +1,6 @@
 @php
     $featureBody = (string) ($feature->body ?? '');
     $assembledGherkin = $assembledGherkin ?? '';
-    $editFeatureModalUrl = model_modal_path($model, 'edit', $dto->id);
     $rawDialogId = 'feature_raw_'.$dto->id;
     $assembledExportId = 'assembled_export_'.$dto->id;
     $modelName = class_basename($model);
@@ -19,11 +18,11 @@
     {{-- Feature-specific actions (copy / download / print live in the raw dialog) --}}
     <div class="flex flex-wrap gap-2">
         @if (filled($assembledGherkin))
-            <button
+            <x-button
                 type="button"
-                class="kt-btn kt-btn-sm kt-btn-primary"
+                color="primary"
                 data-feature-raw-open="{{ $rawDialogId }}"
-            >{{ __('ui.view_raw') }}</button>
+            >{{ __('ui.view_raw') }}</x-button>
         @endif
         @if (! empty($importUrl) && entity_can($model, 'update'))
             <x-button type="link" href="{{ $importUrl }}" color="primary">{{ __('ui.import_feature_file') }}</x-button>
@@ -35,20 +34,7 @@
 
     {{-- Feature body document --}}
     <section class="space-y-3">
-        <div class="flex flex-wrap items-start justify-between gap-3">
-            <h3 class="text-base font-semibold text-foreground">{{ __('ui.feature_document') }}</h3>
-            <div class="flex flex-wrap gap-2">
-                @if (entity_can($model, 'update'))
-                    <x-button
-                        type="link"
-                        href="{{ $editFeatureModalUrl }}"
-                        color="primary"
-                        class="js-open-modal"
-                        data-modal-url="{{ $editFeatureModalUrl }}"
-                    >{{ __('ui.edit') }}</x-button>
-                @endif
-            </div>
-        </div>
+        <h3 class="text-base font-semibold text-foreground">{{ __('ui.feature_document') }}</h3>
 
         @include('pages.partials.gherkin-document', [
             'source' => $featureBody,

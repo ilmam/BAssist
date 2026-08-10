@@ -88,7 +88,6 @@
                 <section class="space-y-4">
                     <div class="form-section-intro">
                         <h3 class="text-base font-semibold text-foreground">{{ __('ui.scenario_document') }}</h3>
-                        <p class="text-sm text-muted-foreground">{{ __('ui.scenario_document_edit_help') }}</p>
                     </div>
                     <div class="form-fields">
                         @foreach ($documentFields as $fieldName)
@@ -97,13 +96,16 @@
                                 $field = $formFields[$fieldName];
                                 $type = FormHelper::getFieldType($field);
                                 $fieldValue = $dto->{$fieldName} ?? null;
-                                $options = ['data-language' => $field['language'] ?? 'gherkin'];
-                                $options['data-field-help'] = __('ui.gherkin_scenario_body_help');
+                                $options = [
+                                    'data-language' => $field['language'] ?? 'gherkin',
+                                    'data-field-help' => __('ui.gherkin_scenario_body_help'),
+                                    // Section heading is the single title; hide redundant ui.body ("Document").
+                                    'label' => '',
+                                ];
                             @endphp
                             {{ Form::field($type, $fieldName, $fieldValue, null, $options) }}
                         @endforeach
                     </div>
-                    <pre class="field-help whitespace-pre-wrap text-xs font-mono bg-muted/40 border border-border rounded-md p-3">{{ __('ui.gherkin_scenario_body_example') }}</pre>
                 </section>
             </div>
 

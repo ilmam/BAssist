@@ -84,7 +84,6 @@
             <section class="space-y-4">
                 <div class="form-section-intro">
                     <h3 class="text-sm font-semibold text-foreground">{{ __('ui.scenario_document') }}</h3>
-                    <p class="text-xs text-muted-foreground">{{ __('ui.scenario_document_edit_help') }}</p>
                 </div>
                 @foreach ($documentFields as $fieldName)
                     @continue(! array_key_exists($fieldName, $formFields))
@@ -95,6 +94,8 @@
                         $options = [
                             'data-language' => $field['language'] ?? 'gherkin',
                             'data-field-help' => __('ui.gherkin_scenario_body_help'),
+                            // Section heading is the single title; hide redundant ui.body ("Document").
+                            'label' => '',
                         ];
                     @endphp
                     {{ Form::field($type, $fieldName, $fieldValue, null, $options) }}

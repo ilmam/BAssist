@@ -55,6 +55,50 @@ class FeatureFormTest extends TestCase
         $this->assertStringContainsString("__('ui.print_feature')", $rawDialog);
     }
 
+    public function test_details_view_two_column_utility_exists(): void
+    {
+        $detailsView = file_get_contents(dirname(__DIR__, 2).'/resources/views/themes/metronic9/components/details-view.blade.php');
+        $css = file_get_contents(dirname(__DIR__, 2).'/public/themes/metronic9/assets/css/bassist.css');
+
+        $this->assertIsString($detailsView);
+        $this->assertIsString($css);
+        $this->assertStringContainsString('md:grid-cols-2', $detailsView);
+        $this->assertMatchesRegularExpression('/\.md\\\\:grid-cols-2\s*\{/', $css);
+    }
+
+    public function test_form_blades_use_half_width_for_non_gherkin_fields(): void
+    {
+        $page = file_get_contents(dirname(__DIR__, 2).'/resources/views/pages/features/form.blade.php');
+        $modal = file_get_contents(dirname(__DIR__, 2).'/resources/views/pages/features/modals/form.blade.php');
+        $dtoSource = file_get_contents(dirname(__DIR__, 2).'/app/Data/FeatureData.php');
+
+        $this->assertIsString($page);
+        $this->assertIsString($modal);
+        $this->assertIsString($dtoSource);
+
+        // Stakeholder Need must follow the default half-width span (not force full row).
+        $this->assertDoesNotMatchRegularExpression(
+            "/stakeholder_need_id[\s\S]{0,400}data-ui-span-md=\"12\"/",
+            $page
+        );
+        $this->assertDoesNotMatchRegularExpression(
+            "/stakeholder_need_id[\s\S]{0,400}data-ui-span-md=\"12\"/",
+            $modal
+        );
+        $this->assertMatchesRegularExpression(
+            "/stakeholder_need_id[\s\S]{0,400}data-ui-span-md=\"6\"/",
+            $page
+        );
+        $this->assertMatchesRegularExpression(
+            "/stakeholder_need_id[\s\S]{0,400}data-ui-span-md=\"6\"/",
+            $modal
+        );
+        $this->assertDoesNotMatchRegularExpression(
+            "/StakeholderNeed[^\n]*uiSpan:\s*12/",
+            $dtoSource
+        );
+    }
+
     public function test_scenarios_panel_skips_view_and_goes_to_edit(): void
     {
         $panel = file_get_contents(dirname(__DIR__, 2).'/resources/views/pages/features/partials/scenarios-panel.blade.php');
@@ -64,5 +108,32 @@ class FeatureFormTest extends TestCase
         $this->assertStringContainsString("model_modal_path('Scenario', 'edit'", $panel);
         $this->assertStringContainsString('space-y-6', $panel);
         $this->assertStringContainsString('space-y-5', $panel);
+        $this->assertMatchesRegularExpression('/editScenarioModalUrl[\s\S]*?color="outline"/', $panel);
+        $this->assertMatchesRegularExpression("/Scenario', 'delete'[\s\S]*?color=\"outline\"/", $panel);
+        $this->assertDoesNotMatchRegularExpression('/editScenarioModalUrl[\s\S]*?color="primary"/', $panel);
+        $this->assertDoesNotMatchRegularExpression("/Scenario', 'delete'[\s\S]*?color=\"danger\"/", $panel);
+    }
+
+    public function test_view_content_has_no_mid_page_feature_edit(): void
+    {
+        $partial = file_get_contents(dirname(__DIR__, 2).'/resources/views/pages/features/partials/view-content.blade.php');
+
+        $this->assertIsString($partial);
+        $this->assertStringNotContainsString('editFeatureModalUrl', $partial);
+        $this->assertStringNotContainsString("__('ui.edit')", $partial);
+    }
+
+    public function test_list_view_action_offers_view_raw_split_menu(): void
+    {
+        $list = file_get_contents(dirname(__DIR__, 2).'/resources/views/pages/features/list.blade.php');
+        $rawModal = file_get_contents(dirname(__DIR__, 2).'/resources/views/pages/features/modals/raw.blade.php');
+
+        $this->assertIsString($list);
+        $this->assertIsString($rawModal);
+        $this->assertStringContainsString("'actionOverrides'", $list);
+        $this->assertStringContainsString("__('ui.view_raw')", $list);
+        $this->assertStringContainsString("features/modal/{id}/raw", $list);
+        $this->assertStringContainsString('gherkin-document', $rawModal);
+        $this->assertStringContainsString("__('ui.view_raw_help')", $rawModal);
     }
 }

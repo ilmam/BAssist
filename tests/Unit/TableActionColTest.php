@@ -38,4 +38,37 @@ class TableActionColTest extends TestCase
         $this->assertStringNotContainsString('data-kt-menu="true"', $html);
         $this->assertStringNotContainsString('ki-dots-vertical', $html);
     }
+
+    public function test_show_split_menu_renders_custom_items_with_id_placeholders(): void
+    {
+        $html = Ui::TableActionCol([
+            [
+                'action' => 'show',
+                'icon' => 'eye',
+                'link' => '/features/{id}',
+                'modalUrl' => '/features/modal/{id}/view',
+                'text' => '',
+                'menu' => true,
+                'menuItems' => [
+                    [
+                        'label' => 'View',
+                        'link' => '/features/{id}',
+                        'modalUrl' => '/features/modal/{id}/view',
+                    ],
+                    [
+                        'label' => 'View raw',
+                        'link' => '/features/{id}',
+                        'modalUrl' => '/features/modal/{id}/raw',
+                    ],
+                ],
+            ],
+        ], collapsed: false);
+
+        $this->assertStringContainsString('data-kt-dropdown="true"', $html);
+        $this->assertStringContainsString('action-split-btn', $html);
+        $this->assertStringContainsString('View raw', $html);
+        $this->assertStringContainsString('/features/modal/{id}/raw', $html);
+        $this->assertStringContainsString('js-open-modal', $html);
+        $this->assertStringContainsString('data-modal-url="/features/modal/{id}/raw"', $html);
+    }
 }

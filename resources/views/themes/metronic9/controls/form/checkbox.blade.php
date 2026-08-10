@@ -2,7 +2,8 @@
 
 @php
     extract(ui_form_field_layout_vars((string) ($name ?? ''), $attributes ?? []), EXTR_SKIP);
-    $list = $list ?? ['1' => ''];
+    // field.blade.php normalizes null list to []; treat empty as the single-toggle default.
+    $list = ! empty($list) ? $list : ['1' => ''];
     $fieldHelp = (string) ($attributes['data-field-help'] ?? $attributes['help'] ?? '');
     $inline = isset($attributes['inline']) && $attributes['inline'] == true;
     unset($attributes['data-field-help'], $attributes['help'], $attributes['inline'], $attributes['layout']);

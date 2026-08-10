@@ -1,6 +1,10 @@
 @include(ui_form_view('_vars'))
 
 @php
+    if (is_array($attributes ?? null) && array_key_exists('label', $attributes)) {
+        $labelText = (string) $attributes['label'];
+        unset($attributes['label']);
+    }
     $language = strtolower((string) ($attributes['data-language'] ?? $attributes['language'] ?? 'plaintext'));
     $fieldHelp = (string) ($attributes['data-field-help'] ?? $attributes['help'] ?? '');
     unset($attributes['language'], $attributes['data-language'], $attributes['data-field-help'], $attributes['help']);
@@ -29,7 +33,9 @@
 
 @if ($horizontal)
     <div class="flex flex-col lg:flex-row lg:items-start gap-2.5">
-        <label class="kt-form-label lg:w-1/4 lg:pt-2.5" for="{{ $editorId }}">{{ $labelText }}</label>
+        @if ($labelText !== '')
+            <label class="kt-form-label lg:w-1/4 lg:pt-2.5" for="{{ $editorId }}">{{ $labelText }}</label>
+        @endif
         <div class="lg:flex-1">
             <div class="code-editor" data-code-editor data-language="{{ $language }}">
                 <div class="code-editor__chrome">
@@ -46,7 +52,9 @@
     </div>
 @else
     <div class="kt-form-item">
-        <label class="kt-form-label" for="{{ $editorId }}">{{ $labelText }}</label>
+        @if ($labelText !== '')
+            <label class="kt-form-label" for="{{ $editorId }}">{{ $labelText }}</label>
+        @endif
         <div class="code-editor" data-code-editor data-language="{{ $language }}">
             <div class="code-editor__chrome">
                 <span class="code-editor__lang">{{ $langLabel }}</span>

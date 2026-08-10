@@ -2,10 +2,25 @@
 
 namespace Tests\Unit;
 
+use App\Facades\Form;
 use Tests\TestCase;
 
 class UiFormControlsTest extends TestCase
 {
+    public function test_checkbox_with_empty_list_renders_default_input(): void
+    {
+        // Mimics Form('checkbox') fields (e.g. ScenarioData::$is_outline): field.blade.php
+        // sets $list = $list ?? [], so the checkbox control receives [] instead of null.
+        $html = (string) Form::field('checkbox', 'is_outline', false, [], [
+            'help' => 'Usually derived from the document.',
+        ]);
+
+        $this->assertStringContainsString('type="checkbox"', $html);
+        $this->assertStringContainsString('name="is_outline"', $html);
+        $this->assertStringContainsString('value="1"', $html);
+        $this->assertStringContainsString('Usually derived from the document.', $html);
+    }
+
     public function test_select_defaults_to_kt_select_when_configured(): void
     {
         config(['ui.forms.select' => 'kt']);

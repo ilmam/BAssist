@@ -18,6 +18,12 @@ class ModalRecordNavTest extends TestCase
         $this->assertStringContainsString('data-modal-record-nav="prev"', $html);
         $this->assertStringContainsString('data-modal-record-nav="next"', $html);
         $this->assertStringContainsString('data-modal-record-nav-label', $html);
+        $this->assertStringContainsString('ki-outline ki-black-left', $html);
+        $this->assertStringContainsString('ki-outline ki-black-right', $html);
+        $this->assertStringContainsString('aria-label="'.__('ui.previous_record').'"', $html);
+        $this->assertStringContainsString('aria-label="'.__('ui.next_record').'"', $html);
+        $this->assertStringNotContainsString('>'.__('ui.previous_record').'</button>', $html);
+        $this->assertStringNotContainsString('>'.__('ui.next_record').'</button>', $html);
     }
 
     #[Test]

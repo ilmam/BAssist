@@ -59,6 +59,7 @@
 
         @include('pages.partials.modal-record-nav-script')
         @include('pages.partials.modal-close-guard-script')
+        @include('pages.partials.modal-stack-script')
 
         document.addEventListener('click', function (event) {
             if (handleModalRecordNavButtonClick(event, openModal)) {
@@ -77,17 +78,20 @@
             }
 
             const url = trigger.getAttribute('data-modal-url');
+            const noHistory = trigger.getAttribute('data-modal-no-history') === '1';
 
             captureModalRecordNavForOpen(trigger, url).then(function (preserve) {
-                openModal(url, { preserveRecordNav: !!preserve });
+                openModal(url, { preserveRecordNav: !!preserve, noHistory });
             });
         });
 
         window.addEventListener('popstate', function () {
-            if (!history.state?.modal) {
-                hideModalUi();
-                modalReturnUrl = null;
+            if (handleModalStackPopState()) {
+                return;
             }
+
+            hideModalUi();
+            modalReturnUrl = null;
         });
 
         function restoreListUrl() {
@@ -111,6 +115,7 @@
             }
 
             clearModalRecordNav();
+            clearModalStack();
 
             if (typeof bootstrap !== 'undefined') {
                 const instance = bootstrap.Modal.getInstance(modalEl);
@@ -126,23 +131,17 @@
         }
 
         function closeModal(options) {
-            const opts = options || {};
-            if (!opts.force && isModalEditFormDirty() && !confirmDiscardModalEdits()) {
-                return false;
-            }
+            return closeModalWithStack(options, function () {
+                const modalEl = document.getElementById('mianModal');
+                if (typeof bootstrap !== 'undefined' && modalEl) {
+                    allowBootstrapModalHide = true;
+                    bootstrap.Modal.getInstance(modalEl)?.hide();
+                    return;
+                }
 
-            clearModalFormBaseline();
-
-            const modalEl = document.getElementById('mianModal');
-            if (typeof bootstrap !== 'undefined' && modalEl) {
-                allowBootstrapModalHide = true;
-                bootstrap.Modal.getInstance(modalEl)?.hide();
-                return true;
-            }
-
-            restoreListUrl();
-            hideModalUi();
-            return true;
+                restoreListUrl();
+                hideModalUi();
+            }) !== false;
         }
 
         function openModal(url, sizeOrOptions, maybeOptions) {
@@ -164,12 +163,17 @@
                 clearModalFormBaseline();
             }
 
+            const stacked = pushModalStackIfNeeded(modalEl, container, opts);
+
             if (!opts.preserveRecordNav) {
                 clearModalRecordNav();
             }
 
             clearModalFormBaseline();
-            modalReturnUrl = modalRecordNavHistoryReturnUrl(opts);
+            const skipHistory = !!opts.noHistory || !!opts.fromStack;
+            if (!opts.fromStack) {
+                modalReturnUrl = skipHistory ? null : modalRecordNavHistoryReturnUrl(opts);
+            }
 
             fetch(url, {
                 headers: {
@@ -190,10 +194,19 @@
                     if (typeof bootstrap !== 'undefined') {
                         bootstrap.Modal.getOrCreateInstance(modalEl, { keyboard: false }).show();
                     }
-                    history.pushState({ modal: true, returnUrl: modalReturnUrl }, '', url);
+                    if (!skipHistory) {
+                        history.pushState({ modal: true, returnUrl: modalReturnUrl }, '', url);
+                    }
+                    rememberOpenedModal(url, opts);
                     document.dispatchEvent(new CustomEvent('bassist:modal-loaded', {
                         detail: { container },
                     }));
+                })
+                .catch((error) => {
+                    if (stacked) {
+                        modalStack.pop();
+                    }
+                    console.error(error);
                 });
         }
 

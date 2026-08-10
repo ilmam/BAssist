@@ -19,7 +19,7 @@ class FeatureData extends BaseData
         #[Form('select', 'Project', hideQuick: true)]
         public int $project_id = 0,
 
-        #[Form('select', 'StakeholderNeed', help: 'Spine parent — choose this OR an approved Change Request (not both). SN also saves as @need:{code} in the Feature document.', section: 'traceability', uiSpan: 12)]
+        #[Form('select', 'StakeholderNeed', help: 'Spine parent — choose this OR an approved Change Request (not both). SN also saves as @need:{code} in the Feature document.', section: 'traceability')]
         public ?int $stakeholder_need_id = null,
 
         #[Form('select', 'ChangeRequest', help: 'Approved CRs only — choose this OR a Stakeholder Need as parent (not both).', section: 'traceability')]

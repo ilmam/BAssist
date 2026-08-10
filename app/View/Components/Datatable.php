@@ -101,6 +101,8 @@ class Datatable extends Component
             ],
         ];
 
+        $this->applyActionOverrides();
+
         $this->options['columns'] = array_diff($this->options['columns'], $this->options['exclude']);
 
         if ($this->defaultButtons) {
@@ -143,6 +145,32 @@ class Datatable extends Component
                     'collapsed' => $this->collapsedActions,
                 ];
             }
+        }
+    }
+
+    /**
+     * Merge per-action overrides from options (e.g. Features View → split + View raw).
+     * Split menus are stripped when actions are collapsed (same as edit).
+     */
+    protected function applyActionOverrides(): void
+    {
+        $overrides = $this->options['actionOverrides'] ?? null;
+        if (! is_array($overrides) || $overrides === []) {
+            return;
+        }
+
+        foreach ($this->buttons as $index => $button) {
+            $action = (string) ($button['action'] ?? '');
+            if ($action === '' || ! isset($overrides[$action]) || ! is_array($overrides[$action])) {
+                continue;
+            }
+
+            $override = $overrides[$action];
+            if ($this->collapsedActions) {
+                unset($override['menu'], $override['menuItems']);
+            }
+
+            $this->buttons[$index] = array_merge($button, $override);
         }
     }
 }

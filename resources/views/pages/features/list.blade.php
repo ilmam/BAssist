@@ -43,6 +43,30 @@
                 'fields' => ['scenarios_count'],
             ],
         ];
+
+        // Features-only: View becomes a split button (like Edit) with View raw.
+        $featureViewUrl = url('features/{id}');
+        $featureViewModalUrl = url('features/modal/{id}/view');
+        $featureRawModalUrl = url('features/modal/{id}/raw');
+        $datatableOptions = [
+            'actionOverrides' => [
+                'show' => [
+                    'menu' => true,
+                    'menuItems' => [
+                        [
+                            'label' => __('ui.view'),
+                            'link' => $featureViewUrl,
+                            'modalUrl' => $featureViewModalUrl,
+                        ],
+                        [
+                            'label' => __('ui.view_raw'),
+                            'link' => $featureViewUrl,
+                            'modalUrl' => $featureRawModalUrl,
+                        ],
+                    ],
+                ],
+            ],
+        ];
     @endphp
 
     @include('pages.partials.entity-list', [
@@ -53,5 +77,6 @@
         'listFilters' => $listFilters ?? [],
         'allowedListFilters' => $allowedListFilters ?? [],
         'listHelp' => __('ui.babok_doc_acceptance_criteria_note'),
+        'datatableOptions' => $datatableOptions,
     ])
 @endsection
