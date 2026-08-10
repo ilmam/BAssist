@@ -6,10 +6,6 @@
             <x-button type="link" href="{{ route('admin.roles.create') }}" icon="plus" iconOnly="true" color="primary" activeColor="primary"></x-button>
         </x-slot>
 
-        @if (session('status'))
-            <x-alert>{{ session('status') }}</x-alert>
-        @endif
-
         @if ($errors->any())
             <div class="kt-alert kt-alert-destructive mb-5">
                 <ul class="list-disc ps-5 space-y-1">

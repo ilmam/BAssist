@@ -26,10 +26,6 @@
             @endif
         </x-slot>
 
-        @if (session('status'))
-            <div class="kt-alert kt-alert-success mb-5">{{ session('status') }}</div>
-        @endif
-
         @include('pages.features.partials.view-content', [
             'dto' => $dto,
             'model' => $model,

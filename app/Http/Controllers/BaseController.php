@@ -203,7 +203,35 @@ class BaseController extends Controller
             return response()->json($payload);
         }
 
+        $id = $this->mutationRecordId($record);
+
+        // Full-page create/update: stay on the edit form for continued work.
+        // Modal saves use AJAX above and keep their close/reload flow.
+        // Destroy (no record) falls through to the list.
+        if ($id !== null) {
+            return redirect()
+                ->route(model_route_name($this->modelName, 'edit'), $id)
+                ->with('status', __('ui.record_saved'));
+        }
+
         return redirect()->route(model_route_name($this->modelName, 'index'));
+    }
+
+    protected function mutationRecordId(mixed $record): ?int
+    {
+        if (is_object($record) && isset($record->id) && is_numeric($record->id)) {
+            $id = (int) $record->id;
+
+            return $id > 0 ? $id : null;
+        }
+
+        if (is_array($record) && isset($record['id']) && is_numeric($record['id'])) {
+            $id = (int) $record['id'];
+
+            return $id > 0 ? $id : null;
+        }
+
+        return null;
     }
 
     /**
