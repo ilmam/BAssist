@@ -12,7 +12,8 @@ class DetailsView extends Component
     public function __construct(
         public string $model,
         public object $dto,
-        public array $fields
+        public array $fields,
+        public int $columns = 1,
     ) {}
 
     public function render()

@@ -42,13 +42,13 @@ class StateFlowRepository extends BaseRepository
         /** @var StateFlow $flow */
         $flow = $this->model::findOrFail($Id);
         $dto = StateFlowData::from($flow);
-        $split = $this->mermaid->splitTerminals($flow->transitions ?? []);
 
+        // Terminals live in the transition table as `*` (not separate initial/final fields).
         return StateFlowData::from([
             ...$dto->toArray(),
-            'transitions' => $split['transitions'],
-            'initial_state' => $split['initial'],
-            'final_states' => implode(', ', $split['finals']),
+            'transitions' => $this->mermaid->toEditorRows($flow->transitions ?? []),
+            'initial_state' => null,
+            'final_states' => null,
         ]);
     }
 
@@ -76,6 +76,7 @@ class StateFlowRepository extends BaseRepository
      */
     protected function normalizeTransitionsPayload(array $data): array
     {
+        // Legacy form fields (no longer in UI) — still fold into transitions if posted.
         $initial = $data['initial_state'] ?? null;
         $finals = $data['final_states'] ?? null;
         unset($data['initial_state'], $data['final_states']);
@@ -85,6 +86,7 @@ class StateFlowRepository extends BaseRepository
         }
 
         $rows = is_array($data['transitions'] ?? null) ? $data['transitions'] : [];
+        // Maps *, blank, start, end → [*]; legacy initial/final prepend/append if present.
         $data['transitions'] = $this->mermaid->composeFromForm($rows, $initial, $finals);
 
         return $data;

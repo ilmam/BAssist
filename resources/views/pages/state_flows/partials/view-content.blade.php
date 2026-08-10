@@ -1,9 +1,6 @@
 @php
-    use App\Services\StateDiagramMermaidGenerator;
-
     $modelName = class_basename($model);
     $transitions = is_array($dto->transitions ?? null) ? $dto->transitions : [];
-    $split = app(StateDiagramMermaidGenerator::class)->splitTerminals($transitions);
 @endphp
 
 <div class="space-y-8">
@@ -17,9 +14,7 @@
     </section>
 
     @include('pages.state_flows.partials.transitions-editor', [
-        'transitions' => $split['transitions'],
-        'initialState' => $split['initial'],
-        'finalStates' => implode(', ', $split['finals']),
+        'transitions' => $transitions,
         'bodyOnly' => true,
         'editable' => false,
         'autoRender' => true,

@@ -4,10 +4,24 @@ namespace App\Services;
 
 /**
  * Converts a From/To/Trigger state table into Mermaid stateDiagram-v2 text.
+ *
+ * Mermaid terminal symbol is always [*]. User aliases that map to [*] on either side:
+ * - `*` / `start` / `end` (case-insensitive)
+ * - empty from/to, or [*], [start], [end]
+ *
+ * Terminals come from transition From/To aliases only (never graph inference).
+ * Optional initial/final arguments remain for legacy compose/generate only.
  */
 class StateDiagramMermaidGenerator
 {
     public const TERMINAL = '[*]';
+
+    public const START_KEYWORD = 'start';
+
+    public const END_KEYWORD = 'end';
+
+    /** User-facing alias shown in the transition editor for [*] endpoints. */
+    public const EDITOR_TERMINAL = '*';
 
     /**
      * @param  list<array{from?: string|null, to?: string|null, trigger?: string|null}>  $transitions
@@ -22,7 +36,13 @@ class StateDiagramMermaidGenerator
         // Title belongs in page UI; omit YAML frontmatter so Mermaid start/end shapes render.
         unset($title);
 
-        $rows = $finals !== null || ($initial !== null && trim($initial) !== '')
+        $hasLegacyInitial = $initial !== null && trim((string) $initial) !== '';
+        $hasLegacyFinals = $finals !== null && (
+            (is_string($finals) && trim($finals) !== '') ||
+            (is_array($finals) && $finals !== [])
+        );
+
+        $rows = $hasLegacyInitial || $hasLegacyFinals
             ? $this->composeFromForm($transitions, $initial, $finals ?? [])
             : $this->normalizeRows($transitions);
 
@@ -47,7 +67,31 @@ class StateDiagramMermaidGenerator
     }
 
     /**
+     * Stored transitions → editor rows with `*` for Mermaid [*] terminals.
+     *
+     * @param  list<array{from?: string|null, to?: string|null, trigger?: string|null}>  $transitions
+     * @return list<array{from: string, to: string, trigger: string|null}>
+     */
+    public function toEditorRows(array $transitions): array
+    {
+        $rows = [];
+
+        foreach ($this->normalizeRows($transitions) as $row) {
+            $rows[] = [
+                'from' => $this->isTerminal($row['from']) ? self::EDITOR_TERMINAL : $row['from'],
+                'to' => $this->isTerminal($row['to']) ? self::EDITOR_TERMINAL : $row['to'],
+                'trigger' => $row['trigger'],
+            ];
+        }
+
+        return $rows;
+    }
+
+    /**
      * Split stored transitions into optional initial/finals + body rows (no [*]).
+     *
+     * Kept for legacy callers / tests. The UI no longer uses initial/final fields;
+     * prefer toEditorRows() so terminals stay in the transition table as `*`.
      *
      * @param  list<array{from?: string|null, to?: string|null, trigger?: string|null}>  $transitions
      * @return array{initial: ?string, finals: list<string>, transitions: list<array{from: string, to: string, trigger: string|null}>}
@@ -62,20 +106,37 @@ class StateDiagramMermaidGenerator
         foreach ($rows as $row) {
             $fromTerminal = $this->isTerminal($row['from']);
             $toTerminal = $this->isTerminal($row['to']);
+            $hasTrigger = $row['trigger'] !== null && $row['trigger'] !== '';
 
             if ($fromTerminal && ! $toTerminal) {
-                $initial ??= $row['to'];
+                if (! $hasTrigger) {
+                    $initial ??= $row['to'];
+
+                    continue;
+                }
+
+                $body[] = ['from' => self::START_KEYWORD, 'to' => $row['to'], 'trigger' => $row['trigger']];
 
                 continue;
             }
 
             if ($toTerminal && ! $fromTerminal) {
-                $finals[] = $row['from'];
+                if (! $hasTrigger) {
+                    $finals[] = $row['from'];
+
+                    continue;
+                }
+
+                $body[] = ['from' => $row['from'], 'to' => self::END_KEYWORD, 'trigger' => $row['trigger']];
 
                 continue;
             }
 
             if ($fromTerminal && $toTerminal) {
+                if ($hasTrigger) {
+                    $body[] = $row;
+                }
+
                 continue;
             }
 
@@ -92,19 +153,16 @@ class StateDiagramMermaidGenerator
     /**
      * Body transitions + optional initial/finals → full transition list including [*].
      *
+     * Body keywords `start`/`end` (or blank from/to) become [*] (UML start/end).
+     * Optional initial/final fields still add unlabeled terminal edges.
+     *
      * @param  list<array{from?: string|null, to?: string|null, trigger?: string|null}>  $bodyTransitions
      * @param  list<string>|string|null  $finals
      * @return list<array{from: string, to: string, trigger: string|null}>
      */
     public function composeFromForm(array $bodyTransitions, ?string $initial = null, array|string|null $finals = []): array
     {
-        $body = [];
-        foreach ($this->normalizeRows($bodyTransitions) as $row) {
-            if ($this->isTerminal($row['from']) || $this->isTerminal($row['to'])) {
-                continue;
-            }
-            $body[] = $row;
-        }
+        $body = $this->normalizeRows($bodyTransitions);
 
         $initial = trim((string) $initial);
         $initial = $initial !== '' ? $initial : null;
@@ -149,12 +207,16 @@ class StateDiagramMermaidGenerator
                 continue;
             }
 
-            $from = $this->normalizeLabel((string) ($row['from'] ?? ''));
-            $to = $this->normalizeLabel((string) ($row['to'] ?? ''));
+            $fromRaw = trim((string) ($row['from'] ?? ''));
+            $toRaw = trim((string) ($row['to'] ?? ''));
 
-            if ($from === '' || $to === '') {
+            // Blank placeholder row — skip. A single blank / start / end endpoint means [*].
+            if ($fromRaw === '' && $toRaw === '') {
                 continue;
             }
+
+            $from = $this->normalizeEndpoint($fromRaw);
+            $to = $this->normalizeEndpoint($toRaw);
 
             $trigger = trim((string) ($row['trigger'] ?? ''));
 
@@ -172,10 +234,18 @@ class StateDiagramMermaidGenerator
     {
         $normalized = strtolower(trim($label));
 
-        return in_array($normalized, ['[*]', '*', '[start]', '[end]'], true);
+        return $normalized === ''
+            || in_array($normalized, ['[*]', '*', '[start]', '[end]', self::START_KEYWORD, self::END_KEYWORD], true);
     }
 
-    public function normalizeLabel(string $label): string
+    /**
+     * Map an endpoint to [*] when it is a terminal marker.
+     *
+     * Preferred keywords: source `start`, destination `end` (case-insensitive).
+     * Empty and Mermaid aliases ([*], *, [start], [end]) also map to [*].
+     * Either keyword on either side maps to [*] so neither becomes a literal Mermaid state.
+     */
+    public function normalizeEndpoint(string $label): string
     {
         $label = trim($label);
 
@@ -184,6 +254,11 @@ class StateDiagramMermaidGenerator
         }
 
         return $label;
+    }
+
+    public function normalizeLabel(string $label): string
+    {
+        return $this->normalizeEndpoint($label);
     }
 
     /**

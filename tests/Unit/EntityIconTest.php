@@ -20,6 +20,7 @@ class EntityIconTest extends TestCase
         $this->assertSame('book', entity_icon('babok_documents'));
         $this->assertSame('file-down', entity_icon('export_pack'));
         $this->assertSame('share', entity_icon('diagrams'));
+        $this->assertSame('scroll', entity_icon('guardrails'));
     }
 
     #[Test]

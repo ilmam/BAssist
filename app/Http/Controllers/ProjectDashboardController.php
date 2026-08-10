@@ -247,6 +247,7 @@ class ProjectDashboardController extends Controller
     protected function surfaceKeyForRoute(string $route): string
     {
         return match ($route) {
+            'guardrails.index' => 'guardrails',
             'solution_requirements.index' => 'solution_requirements',
             'diagrams.index' => 'diagrams',
             'change_requests.index' => 'change_requests',

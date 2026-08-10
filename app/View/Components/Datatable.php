@@ -69,6 +69,12 @@ class Datatable extends Component
         $modalEditUrl = $baseUrl.'/modal/{id}/edit';
         $modalDeleteUrl = $baseUrl.'/modal/{id}/delete';
 
+        // Code column opens the same view modal as the eye action (all lists).
+        $this->options['codePageUrl'] = $baseUrl.'/{id}';
+        $this->options['codeModalUrl'] = ($useModals && config('ui.modal_view', true))
+            ? $modalViewUrl
+            : null;
+
         $this->buttons = [
             [
                 'action' => 'show',

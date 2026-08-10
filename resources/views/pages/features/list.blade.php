@@ -2,23 +2,35 @@
 
 @section('main')
     @php
-        use App\Helpers\DatatableUi;
-        use App\Helpers\ListUi;
-
-        $preserve = ListUi::contextFilters($listFilters ?? []);
         $theme = function_exists('ui_theme') ? ui_theme() : 'metronic8';
-        $showHref = e(url('features/{id}'));
+        $narrow = 'width: 6.5rem';
+
+        // Keep title breathing room; shrink code / project / status.
+        $columns = collect($columns)->map(function ($col) use ($narrow) {
+            $name = is_array($col) ? (string) ($col['data'] ?? $col['name'] ?? '') : (string) $col;
+            $root = str_contains($name, '.') ? explode('.', $name, 2)[0] : $name;
+
+            if (! in_array($root, ['code', 'project', 'status'], true)) {
+                return $col;
+            }
+
+            return [
+                'data' => $name,
+                'name' => $name,
+                'style' => $narrow,
+            ];
+        })->all();
 
         if ($theme === 'metronic9') {
-            $scenariosTemplate = '<a href="'.$showHref.'" class="kt-btn kt-btn-sm kt-btn-ghost gap-1" title="'.e(__('ui.scenarios')).'">'
+            $scenariosTemplate = '<span class="inline-flex items-center gap-1 text-xs font-medium text-foreground" title="'.e(__('ui.scenarios')).'">'
                 .'<i class="ki-filled ki-'.e(entity_icon('Scenario')).'"></i>'
-                .'<span class="text-xs font-medium">{scenarios_count}</span>'
-                .'</a>';
+                .'<span>{scenarios_count}</span>'
+                .'</span>';
         } else {
-            $scenariosTemplate = '<a href="'.$showHref.'" class="btn btn-sm btn-light btn-active-light-primary" title="'.e(__('ui.scenarios')).'">'
+            $scenariosTemplate = '<span title="'.e(__('ui.scenarios')).'">'
                 .'<i class="fa fa-list"></i> '
                 .'<span>{scenarios_count}</span>'
-                .'</a>';
+                .'</span>';
         }
 
         $relationColumns = [
@@ -26,9 +38,9 @@
                 'custom' => true,
                 'name' => 'scenarios_count',
                 'title' => __('ui.scenarios'),
-                'style' => DatatableUi::compactStyle(),
+                'style' => 'width: 5.5rem; white-space: nowrap',
                 'template' => $scenariosTemplate,
-                'fields' => ['id', 'scenarios_count'],
+                'fields' => ['scenarios_count'],
             ],
         ];
     @endphp

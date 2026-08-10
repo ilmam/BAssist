@@ -54,12 +54,15 @@ class StateFlowData extends BaseData
                     $to = trim((string) ($value['to'] ?? ''));
                     $trigger = trim((string) ($value['trigger'] ?? ''));
 
+                    // Blank placeholder row.
                     if ($from === '' && $to === '' && $trigger === '') {
                         return;
                     }
 
-                    if ($from === '' || $to === '') {
-                        $fail('Each transition row needs both From and To.');
+                    // Empty / * / start / end endpoints are allowed — they map to Mermaid [*].
+                    // Only reject a trigger with no endpoints at all.
+                    if ($from === '' && $to === '') {
+                        $fail('Each transition needs a From and/or To state (use start, end, or * for terminals).');
                     }
                 },
             ],

@@ -9,7 +9,7 @@
         : null;
 @endphp
 
-<section class="space-y-4" data-feature-scenarios>
+<section class="space-y-6" data-feature-scenarios>
     <div class="flex flex-wrap items-start justify-between gap-3">
         <div class="form-section-intro space-y-1">
             <h3 class="{{ $headingClass }}">{{ __('ui.scenarios') }}</h3>
@@ -28,22 +28,14 @@
 
     @forelse ($scenarios as $child)
         @php
-            $viewScenarioModalUrl = model_modal_path('Scenario', 'view', $child->id);
             $editScenarioModalUrl = model_modal_path('Scenario', 'edit', $child->id);
         @endphp
-        <div class="rounded-lg border border-border bg-muted/20 p-4 space-y-3">
+        <div class="rounded-lg border border-border bg-muted/20 p-4 space-y-5">
             <div class="flex flex-wrap items-start justify-between gap-3">
                 <h4 class="{{ $headingClass }}">
                     {{ $child->gherkinKeyword() }}: {{ $child->title }}
                 </h4>
                 <div class="flex flex-wrap gap-2">
-                    <x-button
-                        type="link"
-                        href="{{ $viewScenarioModalUrl }}"
-                        color="light"
-                        class="js-open-modal"
-                        data-modal-url="{{ $viewScenarioModalUrl }}"
-                    >{{ __('ui.view') }}</x-button>
                     @if (entity_can('Scenario', 'update'))
                         <x-button
                             type="link"
@@ -65,11 +57,13 @@
                 </div>
             </div>
 
-            @include('pages.partials.gherkin-document', [
-                'source' => (string) ($child->body ?? ''),
-                'showCopy' => true,
-                'editorId' => 'scenario_body_'.$child->id.($editorSuffix ?? ''),
-            ])
+            <div class="pt-1">
+                @include('pages.partials.gherkin-document', [
+                    'source' => (string) ($child->body ?? ''),
+                    'showCopy' => true,
+                    'editorId' => 'scenario_body_'.$child->id.($editorSuffix ?? ''),
+                ])
+            </div>
         </div>
     @empty
         <p class="{{ $helpClass }}">{{ __('ui.no_scenarios_yet') }}</p>

@@ -43,7 +43,7 @@
             <main class="grow pt-5" id="content" role="content">
                 <div class="kt-container-fluid" id="contentContainer">
                     @if (session('status'))
-                        <div class="kt-alert kt-alert-success mb-5">{{ session('status') }}</div>
+                        <div class="kt-alert kt-alert-success mb-5" data-bassist-auto-dismiss="4000" role="status">{{ session('status') }}</div>
                     @endif
                     @yield('main')
                 </div>
@@ -1195,10 +1195,11 @@
                 if (!navigateGuideFromShortcut('prev')) {
                     hideHelpDrawer(drawer);
                 }
-            } else if (event.key === 'ArrowUp' || event.key === 'Home') {
+            } else             if (event.key === 'ArrowUp' || event.key === 'Home') {
                 navigateGuideFromShortcut('toc');
             }
         });
     </script>
+    @include('partials.auto-dismiss-alerts')
 </body>
 </html>

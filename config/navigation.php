@@ -97,7 +97,7 @@ return [
                 'label' => 'Requirements Modeling',
                 'short' => 'Modeling',
                 'babok' => 'KA 7 — Requirements Analysis & Design Definition',
-                'purpose' => 'Actors → elicitation → constraints → assumptions → business rules → solution requirements → diagrams.',
+                'purpose' => 'Actors → elicitation → rules & assumptions → solution requirements → diagrams.',
                 'icon' => 'abstract-26',
                 'icon_v8' => 'abstract-26',
                 'badge_tone' => 'radd',
@@ -110,18 +110,13 @@ return [
                         'entity' => 'StakeholderNeed',
                         'progress' => 'entity_agreed',
                     ],
-                    // Constraints and Assumptions stay separate entity leaves (never merge; guardrails hub stays out of nav).
                     [
-                        'entity' => 'Constraint',
-                        'progress' => 'entity_present',
-                    ],
-                    [
-                        'entity' => 'Assumption',
-                        'progress' => 'entity_present',
-                    ],
-                    [
-                        'entity' => 'BusinessRule',
-                        'progress' => 'entity_present',
+                        'label' => 'Rules & Assumptions',
+                        'route' => 'guardrails.index',
+                        'icon' => 'scroll',
+                        'icon_v8' => 'scroll',
+                        'entities' => ['Assumption', 'Constraint', 'BusinessRule'],
+                        'progress' => 'guardrails_hub',
                     ],
                     [
                         'label' => 'Solution Requirements',

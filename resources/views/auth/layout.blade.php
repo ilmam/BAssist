@@ -54,5 +54,6 @@
     <script src="{{ ui_asset('js/core.bundle.js') }}"></script>
     <script src="{{ ui_asset('vendors/ktui/ktui.min.js') }}"></script>
     @stack('scripts')
+    @include('partials.auto-dismiss-alerts')
 </body>
 </html>

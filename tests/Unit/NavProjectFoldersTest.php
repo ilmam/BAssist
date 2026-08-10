@@ -29,13 +29,20 @@ class NavProjectFoldersTest extends TestCase
             [
                 'Stakeholder',
                 'StakeholderNeed',
-                'Constraint',
-                'Assumption',
-                'BusinessRule',
+                'guardrails.index',
                 'solution_requirements.index',
                 'diagrams.index',
             ],
             $this->childKeys($folders['radd']['children'])
+        );
+
+        $guardrails = collect($folders['radd']['children'])
+            ->first(fn (array $child): bool => ($child['route'] ?? null) === 'guardrails.index');
+        $this->assertIsArray($guardrails);
+        $this->assertSame('Rules & Assumptions', $guardrails['label'] ?? null);
+        $this->assertEqualsCanonicalizing(
+            ['Assumption', 'Constraint', 'BusinessRule'],
+            $guardrails['entities'] ?? []
         );
         $this->assertSame(
             ['change_requests.index', 'traceability.index'],
@@ -66,7 +73,7 @@ class NavProjectFoldersTest extends TestCase
         }
     }
 
-    public function test_diagrams_hub_is_kept_while_strategy_and_guardrails_hubs_are_removed(): void
+    public function test_diagrams_and_guardrails_hubs_are_kept_while_strategy_hub_is_removed(): void
     {
         $routes = collect(config('navigation.hierarchy.project_folders'))
             ->flatMap(fn ($folder) => $folder['children'] ?? [])
@@ -76,8 +83,8 @@ class NavProjectFoldersTest extends TestCase
             ->all();
 
         $this->assertContains('diagrams.index', $routes);
+        $this->assertContains('guardrails.index', $routes);
         $this->assertNotContains('strategy.index', $routes);
-        $this->assertNotContains('guardrails.index', $routes);
         $this->assertContains('strategic_baselines.for-project', $routes);
     }
 

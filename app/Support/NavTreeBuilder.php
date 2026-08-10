@@ -254,6 +254,7 @@ class NavTreeBuilder
         }
 
         $surfaceKey = match ($route) {
+            'guardrails.index' => 'guardrails',
             'solution_requirements.index' => 'solution_requirements',
             'diagrams.index' => 'diagrams',
             'change_requests.index' => 'change_requests',

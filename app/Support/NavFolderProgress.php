@@ -102,6 +102,7 @@ class NavFolderProgress
             'entity_agreed' => $this->entityAgreed($project, (string) ($definition['entity'] ?? '')),
             'entity_present' => $this->entityPresent($project, (string) ($definition['entity'] ?? '')),
             'strategic_baseline' => $this->strategicBaselineReady($project),
+            'guardrails_hub' => $this->guardrailsHubReady($project),
             'solution_hub' => $this->solutionHubReady($project),
             'diagrams_hub' => $this->diagramsHubReady($project),
             'change_requests_hub' => $this->changeRequestsHubReady($project),
@@ -167,6 +168,13 @@ class NavFolderProgress
                 $baseline->status === StrategicBaselineStatus::APPROVED
                 || $baseline->hasStrategyContent()
             );
+    }
+
+    protected function guardrailsHubReady(Project $project): bool
+    {
+        return Assumption::query()->where('project_id', $project->id)->exists()
+            || Constraint::query()->where('project_id', $project->id)->exists()
+            || BusinessRule::query()->where('project_id', $project->id)->exists();
     }
 
     protected function solutionHubReady(Project $project): bool

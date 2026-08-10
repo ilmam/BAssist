@@ -5,15 +5,18 @@
     $rawTransitions = is_array($transitions ?? null) ? $transitions : [];
     $bodyOnly = (bool) ($bodyOnly ?? false);
 
+    // Prefer showing terminals in the table as `*`. Legacy initial/final (if passed)
+    // are folded into rows so the separate fields are no longer needed.
     if ($bodyOnly) {
-        $initialState = $initialState ?? null;
-        $finalStates = $finalStates ?? '';
-        $transitionRows = $rawTransitions;
+        $transitionRows = $generator->toEditorRows(
+            $generator->composeFromForm(
+                $rawTransitions,
+                $initialState ?? null,
+                $finalStates ?? null
+            )
+        );
     } else {
-        $split = $generator->splitTerminals($rawTransitions);
-        $initialState = $initialState ?? $split['initial'];
-        $finalStates = $finalStates ?? implode(', ', $split['finals']);
-        $transitionRows = $split['transitions'];
+        $transitionRows = $generator->toEditorRows($rawTransitions);
     }
 
     if ($transitionRows === []) {
@@ -57,53 +60,15 @@
     data-state-flow-editor
     @if ($autoRender) data-auto-render="1" @endif
     @if ($flowTitle !== '') data-flow-title-value="{{ $flowTitle }}" @endif
-    data-initial-state="{{ $initialState ?? '' }}"
-    data-final-states="{{ $finalStates ?? '' }}"
     class="space-y-5"
 >
     @if ($showTitleField)
         <input type="hidden" data-flow-title value="{{ $flowTitle }}">
     @endif
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-            <label class="kt-form-label mb-1.5" for="initial_state">{{ __('ui.initial_state') }}</label>
-            @if ($editable)
-                <input
-                    id="initial_state"
-                    type="text"
-                    class="kt-input"
-                    name="initial_state"
-                    value="{{ $initialState ?? '' }}"
-                    placeholder="{{ __('ui.initial_state_placeholder') }}"
-                    autocomplete="off"
-                >
-            @else
-                <div class="text-sm">{{ filled($initialState) ? $initialState : '—' }}</div>
-            @endif
-            <div class="text-xs text-muted-foreground mt-1">{{ __('ui.initial_state_hint') }}</div>
-        </div>
-        <div>
-            <label class="kt-form-label mb-1.5" for="final_states">{{ __('ui.final_states') }}</label>
-            @if ($editable)
-                <input
-                    id="final_states"
-                    type="text"
-                    class="kt-input"
-                    name="final_states"
-                    value="{{ $finalStates ?? '' }}"
-                    placeholder="{{ __('ui.final_states_placeholder') }}"
-                    autocomplete="off"
-                >
-            @else
-                <div class="text-sm">{{ filled($finalStates) ? $finalStates : '—' }}</div>
-            @endif
-            <div class="text-xs text-muted-foreground mt-1">{{ __('ui.final_states_hint') }}</div>
-        </div>
-    </div>
-
     <div>
-        <h4 class="text-sm font-semibold text-foreground mb-3">{{ __('ui.transitions') }}</h4>
+        <h4 class="text-sm font-semibold text-foreground mb-1">{{ __('ui.transitions') }}</h4>
+        <p class="text-xs text-muted-foreground mb-3">{{ __('ui.transitions_terminal_hint') }}</p>
 
         <div class="overflow-x-auto border border-border rounded-lg">
             <table class="kt-table table-auto w-full" data-transitions-table>
@@ -128,7 +93,7 @@
                                         data-field="from"
                                         name="transitions[{{ $index }}][from]"
                                         value="{{ $row['from'] ?? '' }}"
-                                        placeholder="Still"
+                                        placeholder="{{ __('ui.transition_from_placeholder') }}"
                                         autocomplete="off"
                                     >
                                 @else
@@ -143,7 +108,7 @@
                                         data-field="to"
                                         name="transitions[{{ $index }}][to]"
                                         value="{{ $row['to'] ?? '' }}"
-                                        placeholder="Moving"
+                                        placeholder="{{ __('ui.transition_to_placeholder') }}"
                                         autocomplete="off"
                                     >
                                 @else
@@ -158,7 +123,7 @@
                                         data-field="trigger"
                                         name="transitions[{{ $index }}][trigger]"
                                         value="{{ $row['trigger'] ?? '' }}"
-                                        placeholder="Approve"
+                                        placeholder="{{ __('ui.transition_trigger_placeholder') }}"
                                         autocomplete="off"
                                     >
                                 @else
@@ -200,13 +165,13 @@
         <template data-transition-row-template>
             <tr data-transition-row>
                 <td>
-                    <input type="text" class="kt-input" data-field="from" name="transitions[__INDEX__][from]" value="" placeholder="Still" autocomplete="off">
+                    <input type="text" class="kt-input" data-field="from" name="transitions[__INDEX__][from]" value="" placeholder="{{ __('ui.transition_from_placeholder') }}" autocomplete="off">
                 </td>
                 <td>
-                    <input type="text" class="kt-input" data-field="to" name="transitions[__INDEX__][to]" value="" placeholder="Moving" autocomplete="off">
+                    <input type="text" class="kt-input" data-field="to" name="transitions[__INDEX__][to]" value="" placeholder="{{ __('ui.transition_to_placeholder') }}" autocomplete="off">
                 </td>
                 <td>
-                    <input type="text" class="kt-input" data-field="trigger" name="transitions[__INDEX__][trigger]" value="" placeholder="Approve" autocomplete="off">
+                    <input type="text" class="kt-input" data-field="trigger" name="transitions[__INDEX__][trigger]" value="" placeholder="{{ __('ui.transition_trigger_placeholder') }}" autocomplete="off">
                 </td>
                 <td>
                     <div class="flex items-center justify-end gap-1">

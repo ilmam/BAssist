@@ -29,7 +29,7 @@
                         <div class="row g-5 g-xl-10 mb-5 mb-xl-10">
                             <div class="col-12">
                                 @if (session('status'))
-                                    <div class="alert alert-success mb-5">{{ session('status') }}</div>
+                                    <div class="alert alert-success mb-5" data-bassist-auto-dismiss="4000" role="status">{{ session('status') }}</div>
                                 @endif
                                 @yield('main')
                             </div>
@@ -654,5 +654,6 @@
                 });
         });
     </script>
+    @include('partials.auto-dismiss-alerts')
 </body>
 </html>

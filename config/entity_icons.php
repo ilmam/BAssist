@@ -55,6 +55,7 @@ return [
     | Hub pages and non-CRUD surfaces (keys are stable app identifiers).
     */
     'surfaces' => [
+        'guardrails' => 'scroll',                // rules / assumptions / constraints hub
         'solution_requirements' => 'subtitle',
         'diagrams' => 'share',                   // connected-node / flow diagram
         'change_requests' => 'arrow-mix',

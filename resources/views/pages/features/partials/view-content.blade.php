@@ -13,9 +13,10 @@
         model="{{ $modelName }}"
         :dto="$dto"
         :fields="$fields"
+        :columns="2"
     />
 
-    {{-- Feature-specific export / import actions --}}
+    {{-- Feature-specific actions (copy / download / print live in the raw dialog) --}}
     <div class="flex flex-wrap gap-2">
         @if (filled($assembledGherkin))
             <button
@@ -23,17 +24,6 @@
                 class="kt-btn kt-btn-sm kt-btn-primary"
                 data-feature-raw-open="{{ $rawDialogId }}"
             >{{ __('ui.view_raw') }}</button>
-            <button
-                type="button"
-                class="kt-btn kt-btn-sm kt-btn-outline"
-                data-clipboard-from="#{{ $assembledExportId }}"
-            >{{ __('ui.copy_gherkin') }}</button>
-        @endif
-        @if (! empty($exportUrl))
-            <x-button type="link" href="{{ $exportUrl }}" color="light">{{ __('ui.download_feature') }}</x-button>
-        @endif
-        @if (! empty($printUrl))
-            <x-button type="link" href="{{ $printUrl }}" color="light" target="_blank">{{ __('ui.print_feature') }}</x-button>
         @endif
         @if (! empty($importUrl) && entity_can($model, 'update'))
             <x-button type="link" href="{{ $importUrl }}" color="primary">{{ __('ui.import_feature_file') }}</x-button>

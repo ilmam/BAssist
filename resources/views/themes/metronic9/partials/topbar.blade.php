@@ -1,12 +1,8 @@
-<span class="text-sm text-secondary-foreground font-medium hidden md:inline">
-    {{ config('app.name') }}
-</span>
-
 @auth
     <div class="flex items-center gap-3">
         <button
             type="button"
-            class="kt-btn kt-btn-ghost kt-btn-sm gap-1.5"
+            class="kt-btn kt-btn-ghost kt-btn-sm gap-1.5 topbar-quick-guide"
             title="{{ __('ui.quick_guide') }}"
             aria-label="{{ __('ui.quick_guide') }}"
             data-modal-url="{{ route('help.quick-guide') }}"
@@ -26,15 +22,31 @@
             <i class="ki-filled ki-book text-base"></i>
             <span>{{ __('ui.ba_guide') }}</span>
         </button>
-        <span class="text-sm text-foreground hidden sm:inline">{{ auth()->user()->name }}</span>
-        <form method="POST" action="{{ route('logout') }}">
-            @csrf
-            <button type="submit" class="kt-btn kt-btn-sm kt-btn-outline">
-                Sign out
+        <div class="inline-flex" data-kt-dropdown="true" data-kt-dropdown-trigger="click">
+            <button
+                type="button"
+                class="kt-btn kt-btn-ghost kt-btn-sm gap-1.5"
+                data-kt-dropdown-toggle="true"
+                aria-label="{{ auth()->user()->name }}"
+                aria-haspopup="menu"
+            >
+                <span class="text-sm text-foreground">{{ auth()->user()->name }}</span>
+                <i class="ki-filled ki-down text-xs text-muted-foreground"></i>
             </button>
-        </form>
+            <div class="kt-dropdown-menu min-w-[160px]" data-kt-dropdown-menu="true">
+                <form method="POST" action="{{ route('logout') }}">
+                    @csrf
+                    <button type="submit" class="kt-dropdown-menu-link w-full text-start" data-kt-dropdown-dismiss="true">
+                        Sign out
+                    </button>
+                </form>
+            </div>
+        </div>
     </div>
 @else
+    <span class="text-sm text-secondary-foreground font-medium hidden md:inline">
+        {{ config('app.name') }}
+    </span>
     <a href="{{ route('login') }}" class="kt-btn kt-btn-sm kt-btn-primary">
         Sign in
     </a>

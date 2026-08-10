@@ -56,7 +56,9 @@ class StateFlow extends BaseModel
                 $from = trim((string) ($row['from'] ?? ''));
                 $to = trim((string) ($row['to'] ?? ''));
 
-                if ($from === '' || $to === '') {
+                // Blank placeholder only. Single empty / start / end endpoints are kept
+                // for Mermaid ([*]); the generator maps those keywords — do not drop them.
+                if ($from === '' && $to === '') {
                     return null;
                 }
 

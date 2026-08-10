@@ -48,8 +48,6 @@
 
             @include('pages.state_flows.partials.transitions-editor', [
                 'transitions' => $transitions,
-                'initialState' => $dto->initial_state,
-                'finalStates' => $dto->final_states,
                 'bodyOnly' => true,
                 'editable' => true,
             ])

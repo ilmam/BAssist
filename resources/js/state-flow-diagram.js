@@ -1,16 +1,31 @@
 /**
  * Client-side From/To/Trigger → Mermaid stateDiagram-v2 (mirrors PHP StateDiagramMermaidGenerator).
+ *
+ * UML start/end marker in Mermaid is always [*]. User-facing aliases that map to [*]:
+ * - `*` or `start` or `end` (case-insensitive) on either side
+ * - empty from/to, or [*], [start], [end]
+ *
+ * Do not invent terminals from graph sources/sinks — only explicit aliases / empty.
  */
 const TERMINAL = '[*]';
+const START_KEYWORD = 'start';
+const END_KEYWORD = 'end';
 
 function isTerminal(label) {
     const normalized = String(label ?? '').trim().toLowerCase();
-    return ['[*]', '*', '[start]', '[end]'].includes(normalized);
+    return (
+        normalized === '' ||
+        ['[*]', '*', '[start]', '[end]', START_KEYWORD, END_KEYWORD].includes(normalized)
+    );
+}
+
+function normalizeEndpoint(label) {
+    const trimmed = String(label ?? '').trim();
+    return isTerminal(trimmed) ? TERMINAL : trimmed;
 }
 
 function normalizeLabel(label) {
-    const trimmed = String(label ?? '').trim();
-    return isTerminal(trimmed) ? TERMINAL : trimmed;
+    return normalizeEndpoint(label);
 }
 
 function toStateId(label) {
@@ -43,16 +58,23 @@ function parseFinals(value) {
         .filter((part) => part !== '' && !isTerminal(part));
 }
 
-export function composeTransitions(bodyTransitions, initial, finals) {
-    const body = (bodyTransitions || [])
+function normalizeRows(transitions) {
+    return (transitions || [])
+        .map((row) => {
+            const fromRaw = String(row?.from ?? '').trim();
+            const toRaw = String(row?.to ?? '').trim();
+            return { fromRaw, toRaw, trigger: String(row?.trigger ?? '').trim() };
+        })
+        .filter((row) => !(row.fromRaw === '' && row.toRaw === ''))
         .map((row) => ({
-            from: normalizeLabel(row?.from),
-            to: normalizeLabel(row?.to),
-            trigger: String(row?.trigger ?? '').trim(),
-        }))
-        .filter((row) => row.from !== '' && row.to !== '')
-        .filter((row) => !isTerminal(row.from) && !isTerminal(row.to));
+            from: normalizeLabel(row.fromRaw),
+            to: normalizeLabel(row.toRaw),
+            trigger: row.trigger,
+        }));
+}
 
+export function composeTransitions(bodyTransitions, initial, finals) {
+    const body = normalizeRows(bodyTransitions);
     const start = String(initial ?? '').trim();
     const endStates = Array.isArray(finals) ? finals : parseFinals(finals);
     const rows = [];
@@ -64,23 +86,27 @@ export function composeTransitions(bodyTransitions, initial, finals) {
     rows.push(...body);
 
     endStates.forEach((state) => {
-        rows.push({ from: state, to: TERMINAL, trigger: '' });
+        const trimmed = String(state ?? '').trim();
+        if (trimmed !== '' && !isTerminal(trimmed)) {
+            rows.push({ from: trimmed, to: TERMINAL, trigger: '' });
+        }
     });
 
     return rows;
 }
 
 export function generateStateDiagramMermaid(title, transitions, initial = null, finals = null) {
+    const hasLegacyInitial = initial != null && String(initial).trim() !== '';
+    const hasLegacyFinals =
+        finals != null &&
+        ((Array.isArray(finals) && finals.length > 0) ||
+            (typeof finals === 'string' && finals.trim() !== ''));
+
+    // Prefer terminals from transition From/To only; legacy initial/final still honored if non-empty.
     const rows =
-        initial != null || finals != null
+        hasLegacyInitial || hasLegacyFinals
             ? composeTransitions(transitions, initial, finals)
-            : (transitions || [])
-                .map((row) => ({
-                    from: normalizeLabel(row?.from),
-                    to: normalizeLabel(row?.to),
-                    trigger: String(row?.trigger ?? '').trim(),
-                }))
-                .filter((row) => row.from !== '' && row.to !== '');
+            : normalizeRows(transitions);
 
     // Title stays in page UI — avoid YAML frontmatter so [*] start/end shapes render.
     void title;
@@ -212,8 +238,6 @@ export function bindStateFlowEditor(root) {
         root.querySelector('[data-flow-title]') ||
         form?.querySelector('[name="title"]') ||
         document.querySelector('[name="title"]');
-    const initialInput = root.querySelector('[name="initial_state"]');
-    const finalsInput = root.querySelector('[name="final_states"]');
     let preview = root.querySelector('[data-mermaid-preview]');
     const source = root.querySelector('[data-mermaid-source]');
     const template = root.querySelector('template[data-transition-row-template]');
@@ -223,30 +247,23 @@ export function bindStateFlowEditor(root) {
         return;
     }
 
+    const buildMermaid = () =>
+        generateStateDiagramMermaid(
+            titleInput?.value ?? root.getAttribute('data-flow-title-value') ?? '',
+            readTransitionsFromTable(table)
+        );
+
     const refresh = async () => {
         preview = root.querySelector('[data-mermaid-preview]');
         if (!preview) {
             return;
         }
 
-        const mermaidText = generateStateDiagramMermaid(
-            titleInput?.value ?? root.getAttribute('data-flow-title-value') ?? '',
-            readTransitionsFromTable(table),
-            initialInput?.value ?? root.getAttribute('data-initial-state') ?? '',
-            finalsInput?.value ?? root.getAttribute('data-final-states') ?? ''
-        );
-
-        await renderMermaid(preview, source, mermaidText);
+        await renderMermaid(preview, source, buildMermaid());
     };
 
     const syncMermaidSource = () => {
-        const mermaidText = generateStateDiagramMermaid(
-            titleInput?.value ?? root.getAttribute('data-flow-title-value') ?? '',
-            readTransitionsFromTable(table),
-            initialInput?.value ?? root.getAttribute('data-initial-state') ?? '',
-            finalsInput?.value ?? root.getAttribute('data-final-states') ?? ''
-        );
-        writeMermaidSource(source, mermaidText);
+        writeMermaidSource(source, buildMermaid());
     };
 
     const sourceDetails = source?.closest('details');
@@ -283,6 +300,19 @@ export function bindStateFlowEditor(root) {
         });
     };
 
+    const readFieldValue = (row, field) => {
+        const el = row?.querySelector(`[data-field="${field}"]`);
+        if (!el) {
+            return '';
+        }
+
+        if ('value' in el && el.value !== undefined && el.tagName !== 'SPAN') {
+            return el.value ?? '';
+        }
+
+        return el.getAttribute('data-value') ?? el.textContent ?? '';
+    };
+
     const addRow = (afterRow = null) => {
         if (!template || !tbody) {
             return null;
@@ -300,8 +330,15 @@ export function bindStateFlowEditor(root) {
             tbody.appendChild(row);
         }
 
+        // Chain rows: new From = previous To (including empty / end / *).
+        const fromInput = row.querySelector('[data-field="from"]');
+        const toInput = row.querySelector('[data-field="to"]');
+        if (afterRow && fromInput && 'value' in fromInput) {
+            fromInput.value = readFieldValue(afterRow, 'to');
+        }
+
         reindexRows();
-        row.querySelector('[data-field="from"]')?.focus();
+        (afterRow ? toInput : fromInput)?.focus();
 
         return row;
     };
@@ -311,8 +348,6 @@ export function bindStateFlowEditor(root) {
         refresh();
     });
 
-    initialInput?.addEventListener('input', maybeSyncMermaidSource);
-    finalsInput?.addEventListener('input', maybeSyncMermaidSource);
     titleInput?.addEventListener('input', maybeSyncMermaidSource);
 
     tbody?.addEventListener('click', (event) => {

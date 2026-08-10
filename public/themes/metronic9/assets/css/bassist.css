@@ -4,6 +4,31 @@
  */
 
 /**
+ * Topbar Quick Guide: subtle attention pulse (opacity + soft glow).
+ */
+@keyframes topbar-quick-guide-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    box-shadow: 0 0 0 0 color-mix(in oklab, var(--primary) 0%, transparent);
+  }
+  50% {
+    opacity: 0.72;
+    box-shadow: 0 0 0 4px color-mix(in oklab, var(--primary) 18%, transparent);
+  }
+}
+
+.topbar-quick-guide {
+  animation: topbar-quick-guide-pulse 2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .topbar-quick-guide {
+    animation: none;
+  }
+}
+
+/**
  * Clear-backdrop side sheets: keep the page visible/interactive behind the panel.
  */
 .kt-modal[data-modal-clear-backdrop="1"] {

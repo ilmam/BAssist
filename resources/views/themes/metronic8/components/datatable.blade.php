@@ -78,6 +78,8 @@
             var rowClass = {!! json_encode($options['rowClass'] ?? 'is-orphan-row') !!};
             var autoWidth = {!! json_encode((bool) ($options['autoWidth'] ?? false)) !!};
             var pageLength = {!! json_encode((int) ($options['pageLength'] ?? 10)) !!};
+            var codeModalUrl = {!! json_encode($options['codeModalUrl'] ?? null) !!};
+            var codePageUrl = {!! json_encode($options['codePageUrl'] ?? null) !!};
             var table = $(dtid).DataTable({
                 processing: true,
                 serverSide: true,
@@ -87,7 +89,26 @@
                 columns: [
                     @foreach ($options['columns'] as $col)
                         @php $dataField = \App\Helpers\DatatableUi::columnDataField($col); @endphp
-                        @if ($dataField !== null)
+                        @if ($dataField !== null && $dataField === 'code')
+                            {
+                                data: 'code',
+                                render: function(data, type, row) {
+                                    if (type !== 'display') {
+                                        return data;
+                                    }
+                                    if (data === null || data === undefined || data === '') {
+                                        return '';
+                                    }
+                                    var text = $('<div>').text(String(data)).html();
+                                    if (!codeModalUrl || !codePageUrl || !row.id) {
+                                        return text;
+                                    }
+                                    var modalUrl = String(codeModalUrl).split('{id}').join(String(row.id));
+                                    var pageUrl = String(codePageUrl).split('{id}').join(String(row.id));
+                                    return '<a href="' + pageUrl + '" class="text-primary js-open-modal" data-modal-url="' + modalUrl + '">' + text + '</a>';
+                                }
+                            },
+                        @elseif ($dataField !== null)
                             { data: '{{ $dataField }}' },
                         @else
                             {

@@ -44,6 +44,25 @@ class FeatureFormTest extends TestCase
 
         $this->assertIsString($partial);
         $this->assertStringContainsString('x-details-view', $partial);
+        $this->assertStringContainsString(':columns="2"', $partial);
         $this->assertStringNotContainsString("__('ui.traceability') · __('ui.stakeholder_need')", $partial);
+
+        [$beforeRaw, $rawDialog] = array_pad(explode('<dialog', $partial, 2), 2, '');
+        // Copy / download / print belong in the raw dialog only.
+        $this->assertStringNotContainsString('data-clipboard-from', $beforeRaw);
+        $this->assertStringNotContainsString("__('ui.download_feature')", $beforeRaw);
+        $this->assertStringNotContainsString("__('ui.print_feature')", $beforeRaw);
+        $this->assertStringContainsString("__('ui.print_feature')", $rawDialog);
+    }
+
+    public function test_scenarios_panel_skips_view_and_goes_to_edit(): void
+    {
+        $panel = file_get_contents(dirname(__DIR__, 2).'/resources/views/pages/features/partials/scenarios-panel.blade.php');
+
+        $this->assertIsString($panel);
+        $this->assertStringNotContainsString("model_modal_path('Scenario', 'view'", $panel);
+        $this->assertStringContainsString("model_modal_path('Scenario', 'edit'", $panel);
+        $this->assertStringContainsString('space-y-6', $panel);
+        $this->assertStringContainsString('space-y-5', $panel);
     }
 }
