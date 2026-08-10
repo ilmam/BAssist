@@ -15,6 +15,8 @@ class BusinessObjectiveData extends BaseData
         public string $title = '',
         #[Form('select', 'Project', hideQuick: true)]
         public int $project_id = 0,
+        #[Form('select', 'BusinessNeed', hideQuick: true, section: 'traceability')]
+        public ?int $primary_business_need_id = null,
         #[Form('textarea', hideQuick: true)]
         public ?string $description = null,
         #[Form('text', hideQuick: true)]
@@ -29,6 +31,7 @@ class BusinessObjectiveData extends BaseData
         return [
             'title' => ['required', 'string', 'max:255'],
             'project_id' => ['required', 'integer', 'exists:projects,id'],
+            'primary_business_need_id' => ['nullable', 'integer', 'exists:business_needs,id'],
         ];
     }
 }

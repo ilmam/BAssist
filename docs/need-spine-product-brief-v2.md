@@ -1,9 +1,9 @@
-**Reverse provenance:** Code maps to a scenario, which belongs to a story governed by specific business rules, fulfilling a business need, which ultimately achieves a strategic business objective.
+**Reverse provenance:** Code maps to a scenario, which belongs to a story governed by specific business rules, fulfilling a business need (why), which is measured by a strategic business objective (what).
 
 ### 3.2 Non-negotiables (SOP)
 
 1. No user story without a **business need**.
-2. No business need without a parent **business objective**.
+2. No business objective without a parent **business need**.
 3. No “ready for build” without **scenarios** under that story.
 4. Unvalidated assumptions act as soft blocks to readiness.
 5. **Change starts on the spine**, then flows to tests and code.
@@ -12,7 +12,7 @@
 
 | System does | Culture / SOP does |
 |-------------|-------------------|
-| Makes the path visible and easy | Requires teams to start from objectives |
+| Makes the path visible and easy | Requires teams to start from needs |
 | Centralizes rules and constraints | Insists on validating assumptions before building |
 | Exports for Reqnroll, checklists, matrices | Devs import/run tests in the codebase |
 | Shows gaps to managers | Treats gaps as coaching / governance topics |

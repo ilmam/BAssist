@@ -18,7 +18,7 @@ Projects fail long before delivery when requirements are gathered in an echo cha
 
 ## The Bigger Picture & Downstream Links
 
-- **Upstream (The Foundation):** Stakeholders sit alongside Business Objectives as a foundational entity. They ground the entire elicitation and collaboration process during Strategy Analysis and Solution Delivery.
+- **Upstream (The Foundation):** Stakeholders sit alongside Business Needs as a foundational elicitation entity. They ground collaboration during Strategy Analysis and Solution Delivery.
 - **Downstream (The Drivers):** Directly shapes Stakeholder Requirements (defining what each specific group needs from the solution). Informs who must be engaged for User Acceptance Testing (UAT), validation, and final release decisions.
 - **The Rule of Integrity:** A system feature, requirement, or acceptance scenario with no identifiable stakeholder owner is "orphan analysis." It means you are building a solution without a voice that can actually confirm its value or accept the outcome. Treat these as incomplete coverage and challenge them in review before work proceeds.
 

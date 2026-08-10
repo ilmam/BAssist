@@ -23,12 +23,12 @@
                         @endphp
                         {{ $linkedStakeholders->isNotEmpty() ? $linkedStakeholders->implode('; ') : '—' }}
                     </dd>
-                    <dt>{{ __('ui.business_needs') }}</dt>
+                    <dt>{{ __('ui.business_objectives') }}</dt>
                     <dd>
                         @php
-                            $linkedNeeds = $sn->businessNeeds->pluck('title')->filter()->values();
+                            $linkedObjectives = $sn->businessObjectives->pluck('title')->filter()->values();
                         @endphp
-                        {{ $linkedNeeds->isNotEmpty() ? $linkedNeeds->implode('; ') : '—' }}
+                        {{ $linkedObjectives->isNotEmpty() ? $linkedObjectives->implode('; ') : '—' }}
                     </dd>
                 </dl>
             </div>

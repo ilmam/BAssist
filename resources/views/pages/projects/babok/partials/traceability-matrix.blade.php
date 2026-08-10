@@ -13,8 +13,8 @@
     <table class="matrix">
         <thead>
             <tr>
-                <th>{{ __('ui.business_objective') }}</th>
                 <th>{{ __('ui.business_need') }}</th>
+                <th>{{ __('ui.business_objective') }}</th>
                 <th>{{ __('ui.stakeholder_need') }}</th>
                 <th>{{ __('ui.functional_requirement_short') }}</th>
                 <th>{{ __('ui.features') }}</th>
@@ -26,21 +26,21 @@
             @foreach ($matrixRows as $row)
                 <tr @class(['has-gap' => ! empty($row['has_gap'])])>
                     <td>
-                        @if (! empty($row['objective_code']) || ! empty($row['objective_title']))
-                            @if (! empty($row['objective_code']))
-                                <span class="artifact__code">{{ $row['objective_code'] }}</span>
-                            @endif
-                            {{ $row['objective_title'] ?? '' }}
-                        @else
-                            —
-                        @endif
-                    </td>
-                    <td>
                         @if (! empty($row['need_code']) || ! empty($row['need_title']))
                             @if (! empty($row['need_code']))
                                 <span class="artifact__code">{{ $row['need_code'] }}</span>
                             @endif
                             {{ $row['need_title'] ?? '' }}
+                        @else
+                            —
+                        @endif
+                    </td>
+                    <td>
+                        @if (! empty($row['objective_code']) || ! empty($row['objective_title']))
+                            @if (! empty($row['objective_code']))
+                                <span class="artifact__code">{{ $row['objective_code'] }}</span>
+                            @endif
+                            {{ $row['objective_title'] ?? '' }}
                         @else
                             —
                         @endif

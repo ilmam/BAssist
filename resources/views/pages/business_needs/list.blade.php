@@ -27,10 +27,6 @@
                 'title' => __('ui.business_objectives'),
                 'preserve' => $preserve,
             ]),
-            ListUi::childLinkColumn('StakeholderNeed', 'business_need_id', 'stakeholder_needs_count', [
-                'title' => __('ui.stakeholder_needs'),
-                'preserve' => $preserve,
-            ]),
         ];
 
         $toolbarExtras = '<a href="'.e($orphans['url']).'" class="'.e(ui_btn_classes($orphans['active'] ? 'primary' : 'outline')).'">'

@@ -23,9 +23,8 @@
         })->all();
 
         $relationColumns = [
-            ListUi::childLinkColumn('BusinessNeed', 'stakeholder_need_id', 'business_needs_count', [
-                'title' => __('ui.business_needs'),
-                'preserve' => $preserve,
+            ListUi::relatedLinkColumn('primary_business_objective_cell', [
+                'title' => __('ui.business_objective'),
             ]),
             ListUi::childLinkColumn('Stakeholder', 'stakeholder_need_id', 'stakeholders_count', [
                 'title' => __('ui.stakeholders'),

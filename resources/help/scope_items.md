@@ -23,7 +23,7 @@ Unbounded projects die from "scope creep"—the silent, continuous accumulation 
 
 ## The Bigger Picture & Downstream Links
 
-- **Upstream (The Justification):** Derived directly from Strategy Analysis (Business Objectives and Business Needs). Scope is the container that holds the solution to those needs.
+- **Upstream (The Justification):** Derived directly from Strategy Analysis (Business Needs and Business Objectives). Scope is the container that holds the solution to those needs.
 - **Downstream (The Execution):** Dictates the absolute limits for Stakeholder Requirements, Functional Requirements, Solution Design, and BDD Scenarios.
 - **The Rule of Integrity:** If a developer or BA tries to write a User Story or BDD feature for something that falls into the "Out-of-Scope" bucket, it should be treated as an immediate compliance failure and challenged before work proceeds.
 

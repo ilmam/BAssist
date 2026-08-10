@@ -13,18 +13,19 @@ Companion files:
 Tenant → Workspace → Project
   ├─ StrategicBaseline (1:1)
   ├─ ScopeItem, Assumption, Constraint, BusinessRule
-  ├─ BusinessObjective ←M:N→ BusinessNeed ←M:N→ StakeholderNeed
-  │                              ↑ M:N
-  │                         Stakeholder
+  ├─ BusinessNeed ←M:N→ BusinessObjective ←M:N→ StakeholderNeed
+  │                                          ↑ M:N
+  │                                     Stakeholder
   ├─ Risk (project-scoped; optional related_to text)
   ├─ StakeholderNeed → FunctionalRequirement (FR)
+  ├─ StakeholderNeed → NonFunctionalRequirement (NFR)
   ├─ StakeholderNeed → Feature → Scenario (BDD)
   ├─ StateFlow, SwimlaneFlow, Architecture
   └─ ChangeRequest (optional affected subject)
 ```
 
 Traceability lineage (Package 3 RTM):
-**Business Objective → Business Need → Stakeholder Need → Functional Requirement / BDD Feature**.
+**Business Need → Business Objective → Stakeholder Need → Functional Requirement / BDD Feature**.
 
 ## Tables (domain)
 
@@ -101,14 +102,14 @@ M:N — Need ↔ Objective.
 - `business_objective_id` → `business_objectives.id`
 - `business_need_id` → `business_needs.id`
 
-### `business_need_stakeholder_need`
+### `business_objective_stakeholder_need`
 
-M:N — Business Need ↔ Stakeholder Need.
+M:N — Business Objective ↔ Stakeholder Need.
 
 | Column | Type | Null | Key | Default |
 | --- | --- | --- | --- | --- |
 | `id` | INTEGER | NO | PK |  |
-| `business_need_id` | INTEGER | NO | FK→business_needs.id |  |
+| `business_objective_id` | INTEGER | NO | FK→business_objectives.id |  |
 | `stakeholder_need_id` | INTEGER | NO | FK→stakeholder_needs.id |  |
 | `created_at` | datetime | YES |  |  |
 | `updated_at` | datetime | YES |  |  |
@@ -116,7 +117,7 @@ M:N — Business Need ↔ Stakeholder Need.
 **Foreign keys**
 
 - `stakeholder_need_id` → `stakeholder_needs.id`
-- `business_need_id` → `business_needs.id`
+- `business_objective_id` → `business_objectives.id`
 
 ### `business_needs`
 
@@ -325,6 +326,41 @@ Solution functional requirements; coded FR-n.
 - `created_by` → `users.id`
 - `status_id` → `statuses.id`
 - `priority_id` → `priorities.id`
+- `stakeholder_need_id` → `stakeholder_needs.id`
+- `project_id` → `projects.id`
+
+### `non_functional_requirements`
+
+Solution quality-of-service requirements; coded NFR-n. Sibling of FR under Stakeholder Need (or approved Change Request).
+
+| Column | Type | Null | Key | Default |
+| --- | --- | --- | --- | --- |
+| `id` | INTEGER | NO | PK |  |
+| `number` | INTEGER | YES |  |  |
+| `title` | varchar | NO |  |  |
+| `project_id` | INTEGER | NO | FK→projects.id |  |
+| `stakeholder_need_id` | INTEGER | YES | FK→stakeholder_needs.id |  |
+| `change_request_id` | INTEGER | YES | FK→change_requests.id |  |
+| `category` | varchar(64) | NO |  |  |
+| `description` | TEXT | NO |  |  |
+| `acceptance_criteria` | TEXT | YES |  |  |
+| `priority_id` | INTEGER | YES | FK→priorities.id |  |
+| `status_id` | INTEGER | YES | FK→statuses.id |  |
+| `created_at` | datetime | YES |  |  |
+| `updated_at` | datetime | YES |  |  |
+| `created_by` | INTEGER | YES | FK→users.id |  |
+| `updated_by` | INTEGER | YES | FK→users.id |  |
+| `deleted_by` | INTEGER | YES | FK→users.id |  |
+| `deleted_at` | datetime | YES |  |  |
+
+**Foreign keys**
+
+- `deleted_by` → `users.id`
+- `updated_by` → `users.id`
+- `created_by` → `users.id`
+- `status_id` → `statuses.id`
+- `priority_id` → `priorities.id`
+- `change_request_id` → `change_requests.id`
 - `stakeholder_need_id` → `stakeholder_needs.id`
 - `project_id` → `projects.id`
 

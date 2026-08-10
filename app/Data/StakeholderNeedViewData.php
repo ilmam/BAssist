@@ -31,7 +31,9 @@ class StakeholderNeedViewData extends BaseData
         #[InList]
         public ?StatusViewData $status = null,
         #[Hide]
-        public ?int $business_needs_count = null,
+        public ?int $business_objectives_count = null,
+        #[Hide]
+        public ?string $primary_business_objective_cell = null,
         #[Hide]
         public ?int $stakeholders_count = null,
         #[Hide]

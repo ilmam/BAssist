@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Helpers\ListUi;
 use App\Http\Controllers\Concerns\ResolvesListFilters;
 use Illuminate\Http\Request;
 use App\Support\CollectionFlattener;
@@ -21,7 +22,13 @@ class BaseApiController extends \App\Http\Controllers\Controller
         $result = $this->modelRepository->getAll($filters);
         $result = app(CollectionFlattener::class)->flatten($result);
 
-        return DataTables::of($result)->make(true);
+        $datatable = DataTables::of($result);
+        $rawColumns = ListUi::rawHtmlColumns($result);
+        if ($rawColumns !== []) {
+            $datatable->rawColumns($rawColumns);
+        }
+
+        return $datatable->make(true);
     }
 
     public function store(Request $request)

@@ -32,8 +32,6 @@ class BusinessNeedViewData extends BaseData
         #[Hide]
         public ?int $business_objectives_count = null,
         #[Hide]
-        public ?int $stakeholder_needs_count = null,
-        #[Hide]
         public bool $is_orphan = false,
     ) {
     }

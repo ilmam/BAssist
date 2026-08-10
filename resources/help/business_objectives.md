@@ -4,28 +4,29 @@ title: Business Objectives
 
 ## Context & Definition
 
-A Business Objective is the high-level strategic goal of an enterprise, division, or business unit. It answers the fundamental BABOK question: *Why do we want to undertake this change, and what value are we trying to capture or create?*
+A Business Objective is a measurable enterprise outcome — the **what** we must achieve to address a Business Need. In BABOK® terms this aligns with Business Requirements: goals and objectives that define success for the change. Objectives answer: *What measurable result proves we have responded to the need?*
 
-Objectives are permanent or long-term markers of success (e.g., “Increase spare parts digital fulfillment speed by 30% over the next fiscal year”). They do not describe software features, UI layouts, or project tasks; they describe the desired future state of the business value stream.
+Objectives are SMART markers of success (e.g., “Increase spare parts digital fulfillment speed by 30% over the next fiscal year”). They do not describe software features, UI layouts, or project tasks; they describe the desired future-state business value.
 
 ## Why It Matters
 
-Business analysts often make the critical mistake of accepting vague stakeholder requests as gospel (e.g., “We need a new tracking dashboard” or “We need a mobile app”). Without clear Business Objectives, initiatives produce "orphan work"—features that consume budget, time, and engineering effort without moving any strategic needle. Capturing the business objective forces a strategic pause: it anchors the initiative to leadership’s vision so every single requirement that follows can be traced back to a measurable enterprise outcome.
+Without clear Business Objectives, initiatives produce "orphan work"—features that consume budget without proving they moved the needle on the need. Capturing objectives forces a strategic pause after the why is known: every requirement that follows should roll up to a measurable enterprise outcome that satisfies an approved Business Need.
 
 ## How to Use
 
-1. **Define the Destination:** State the strategic milestone using strong, outcome-oriented language. Focus entirely on what changes for the enterprise, never on how software will achieve it.
-2. **Quantify Success:** Attach measurable metrics or KPIs where possible (e.g., target turnaround times, cost reduction percentages, or revenue growth targets). If you cannot measure it, it is a wish, not an objective.
-3. **Avoid Implementation Language:** Keep the objective strictly free of technical terms like screens, buttons, databases, APIs, or software systems. Stay locked on enterprise strategy.
+1. **Anchor to the Need:** Link every objective to the Business Need (why) it satisfies. An objective with no parent need is strategic drift.
+2. **Define the Destination:** State the strategic milestone using strong, outcome-oriented language. Focus entirely on what changes for the enterprise, never on how software will achieve it.
+3. **Quantify Success:** Attach measurable metrics or KPIs where possible (e.g., target turnaround times, cost reduction percentages, or revenue growth targets). If you cannot measure it, it is a wish, not an objective.
+4. **Avoid Implementation Language:** Keep the objective strictly free of technical terms like screens, buttons, databases, APIs, or software systems.
 
 ## The Bigger Picture & Downstream Links
 
-- **Upstream (The Apex):** None. Business Objectives sit at the very top of the need chain. They are justified by executive strategy and market realities, not by other system entities.
-- **Downstream (The Drivers):** Each Business Objective directly feeds one or more Business Needs and informs the Strategic Baseline.
-- **The Rule of Integrity:** A Business Objective with no supporting Business Needs—or an objective where downstream features cannot trace back to it—represents unsupported strategic drift. Features that do not roll up to a valid Business Objective should be treated as unapproved scope creep and challenged; orphan features may also surface as readiness warnings.
+- **Upstream (The Why):** Justified by one or more Business Needs. Objectives sit under needs in the need spine — they are the measurable response, not the apex.
+- **Downstream (The Drivers):** Each Business Objective drives one or more Stakeholder Needs and informs the Strategic Baseline future state and potential value. Solution requirements should remain consistent with those stakeholder needs.
+- **The Rule of Integrity:** A Business Objective with no parent Business Need — or an objective where downstream features cannot trace back through the spine — represents unsupported strategic drift and should be challenged.
 
-**Practical tip:** Think of a Business Objective as the destination on a GPS. The software features you eventually build are just the roads you take to get there. If you don't force stakeholders to plug in a measurable destination first, your development team will just be driving around wasting gas.
+**Practical tip:** Think of a Business Need as why you started the journey, and a Business Objective as the destination pin on the GPS. Features are just the roads. Without a need, you are traveling for no reason; without an objective, you cannot tell when you have arrived.
 
 ---
 
-*BABOK® Guide Section 6.2 Define Future State & BACCM™ (Value / Enterprise).*
+*IIBA® and BABOK® are registered trademarks of International Institute of Business Analysis.*

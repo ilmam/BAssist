@@ -22,7 +22,7 @@ class NavProjectFoldersTest extends TestCase
         $folders = collect(config('navigation.hierarchy.project_folders'))->keyBy('key');
 
         $this->assertSame(
-            ['BusinessObjective', 'BusinessNeed', 'Risk', 'strategic_baselines.for-project', 'ScopeItem'],
+            ['BusinessNeed', 'BusinessObjective', 'Risk', 'strategic_baselines.for-project', 'ScopeItem'],
             $this->childKeys($folders['strategy']['children'])
         );
         $this->assertSame(

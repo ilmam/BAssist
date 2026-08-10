@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 
 namespace Database\Seeders;
 
@@ -44,7 +44,7 @@ use App\Support\StrategicBaselineStatus;
 use Illuminate\Database\Seeder;
 
 /**
- * Full demo pack: strategy ΓåÆ need spine ΓåÆ packaging ΓåÆ diagrams ΓåÆ governance.
+ * Full demo pack: strategy → need spine → packaging → diagrams → governance.
  *
  * Project code: DEMO-PACK (idempotent via updateOrCreate on stable titles).
  */
@@ -119,30 +119,6 @@ TXT,
         int $mustId,
         int $shouldId,
     ): array {
-        $boRework = BusinessObjective::query()->updateOrCreate(
-            [
-                'project_id' => $project->id,
-                'title' => 'Reduce incomplete inquiry rework',
-            ],
-            [
-                'description' => 'Stop procurement from acting on incomplete parts requests.',
-                'success_measure' => 'Fewer than 5% of submitted inquiries returned for missing mandatory fields within 90 days of go-live.',
-                'potential_value' => 'Less re-keying, fewer delayed orders, clearer audit trail from ask to queue.',
-            ],
-        );
-
-        $boCycle = BusinessObjective::query()->updateOrCreate(
-            [
-                'project_id' => $project->id,
-                'title' => 'Shorten inquiry-to-procurement cycle time',
-            ],
-            [
-                'description' => 'Move complete inquiries into the procurement queue without manual triage delays.',
-                'success_measure' => 'Median time from agent submit to procurement-visible status under 15 minutes for complete inquiries.',
-                'potential_value' => 'Faster parts fulfilment for dealers and better SLA credibility.',
-            ],
-        );
-
         $bnIntake = BusinessNeed::query()->updateOrCreate(
             [
                 'project_id' => $project->id,
@@ -171,12 +147,36 @@ TXT,
             ],
         );
 
-        $bnIntake->businessObjectives()->sync([
-            $boRework->id => ['is_primary' => true],
-            $boCycle->id => ['is_primary' => false],
+        $boRework = BusinessObjective::query()->updateOrCreate(
+            [
+                'project_id' => $project->id,
+                'title' => 'Reduce incomplete inquiry rework',
+            ],
+            [
+                'description' => 'Stop procurement from acting on incomplete parts requests.',
+                'success_measure' => 'Fewer than 5% of submitted inquiries returned for missing mandatory fields within 90 days of go-live.',
+                'potential_value' => 'Less re-keying, fewer delayed orders, clearer audit trail from ask to queue.',
+            ],
+        );
+
+        $boCycle = BusinessObjective::query()->updateOrCreate(
+            [
+                'project_id' => $project->id,
+                'title' => 'Shorten inquiry-to-procurement cycle time',
+            ],
+            [
+                'description' => 'Move complete inquiries into the procurement queue without manual triage delays.',
+                'success_measure' => 'Median time from agent submit to procurement-visible status under 15 minutes for complete inquiries.',
+                'potential_value' => 'Faster parts fulfilment for dealers and better SLA credibility.',
+            ],
+        );
+
+        $boRework->businessNeeds()->sync([
+            $bnIntake->id => ['is_primary' => true],
+            $bnComplete->id => ['is_primary' => false],
         ]);
-        $bnComplete->businessObjectives()->sync([
-            $boRework->id => ['is_primary' => true],
+        $boCycle->businessNeeds()->sync([
+            $bnIntake->id => ['is_primary' => true],
         ]);
 
         $endUser = Stakeholder::query()
@@ -230,7 +230,7 @@ TXT,
                 'status_id' => $agreedId,
             ],
         );
-        $snSubmit->businessNeeds()->sync([$bnIntake->id, $bnComplete->id]);
+        $snSubmit->businessObjectives()->sync([$boRework->id, $boCycle->id]);
         $snSubmit->stakeholders()->sync([$fieldAgent->id, $endUser->id]);
 
         $snStatus = StakeholderNeed::query()->updateOrCreate(
@@ -244,7 +244,7 @@ TXT,
                 'status_id' => $agreedId,
             ],
         );
-        $snStatus->businessNeeds()->sync([$bnIntake->id]);
+        $snStatus->businessObjectives()->sync([$boCycle->id]);
         $snStatus->stakeholders()->sync([$fieldAgent->id]);
 
         $snQueue = StakeholderNeed::query()->updateOrCreate(
@@ -258,26 +258,26 @@ TXT,
                 'status_id' => $agreedId,
             ],
         );
-        $snQueue->businessNeeds()->sync([$bnComplete->id]);
+        $snQueue->businessObjectives()->sync([$boRework->id]);
         $stakeholderIds = [$procurementLead->id];
         if ($sponsor !== null) {
             $stakeholderIds[] = $sponsor->id;
         }
         $snQueue->stakeholders()->sync($stakeholderIds);
 
-        // Teaching orphan (draft, unlinked) ΓÇö mirrors NeedSpineSeeder patterns.
+        // Teaching orphan (draft, unlinked) — mirrors NeedSpineSeeder patterns.
         $orphan = StakeholderNeed::query()->updateOrCreate(
             [
                 'project_id' => $project->id,
                 'title' => 'WhatsApp photo of damaged part (untriaged ask)',
             ],
             [
-                'description' => 'Example orphan stakeholder need captured from the floor before linking to a business need.',
+                'description' => 'Example orphan stakeholder need captured from the floor before linking to a business objective.',
                 'priority_id' => $shouldId,
                 'status_id' => $draftId,
             ],
         );
-        $orphan->businessNeeds()->sync([]);
+        $orphan->businessObjectives()->sync([]);
         $orphan->stakeholders()->sync([]);
 
         return [$bnIntake, $bnComplete];
@@ -343,7 +343,7 @@ TXT,
             [
                 'description' => 'Field agents have a smartphone or tablet with network access during dealer visits.',
                 'status' => AssumptionStatus::VALIDATED,
-                'source' => 'Pilot interviews ΓÇö Q2',
+                'source' => 'Pilot interviews — Q2',
             ],
         );
 
@@ -552,7 +552,7 @@ TXT,
         Architecture::query()->updateOrCreate(
             ['project_id' => $project->id],
             [
-                'title' => 'Parts inquiry intake ΓÇö C4 context & containers',
+                'title' => 'Parts inquiry intake — C4 context & containers',
                 'description' => 'Context and container view for the digital intake initiative. ERP remains external system of record.',
                 'status_id' => $draftId,
                 'layout' => [

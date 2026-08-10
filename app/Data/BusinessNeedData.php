@@ -25,9 +25,6 @@ class BusinessNeedData extends BaseData
         #[Form('select', 'Project', hideQuick: true)]
         public int $project_id = 0,
 
-        #[Form('select', 'BusinessObjective', hideQuick: true, section: 'traceability')]
-        public ?int $primary_business_objective_id = null,
-
         #[Form('textarea', hideQuick: true)]
         public ?string $description = null,
 
@@ -48,7 +45,6 @@ class BusinessNeedData extends BaseData
             'title' => ['required', 'string', 'max:255'],
             'need_type' => ['nullable', 'string', Rule::in(NeedType::values())],
             'project_id' => ['required', 'integer', 'exists:projects,id'],
-            'primary_business_objective_id' => ['nullable', 'integer', 'exists:business_objectives,id'],
         ];
     }
 }

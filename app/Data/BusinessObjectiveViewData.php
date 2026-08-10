@@ -29,6 +29,10 @@ class BusinessObjectiveViewData extends BaseData
         #[Hide]
         public ?int $business_needs_count = null,
         #[Hide]
+        public ?string $primary_business_need_cell = null,
+        #[Hide]
+        public ?int $stakeholder_needs_count = null,
+        #[Hide]
         public bool $is_orphan = false,
     ) {
     }

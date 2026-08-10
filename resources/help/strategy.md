@@ -8,7 +8,7 @@ title: Strategy
 
 ## How it fits
 
-Strategy frames the need spine. The baseline explains *why* the work exists and how change will happen; Scope Items and guardrails (assumptions, constraints, risks) keep boundaries concrete. Business Objectives and Business Needs carry measurable outcomes and problems—the baseline should stay consistent with them, not replace them.
+Strategy frames the need spine. The baseline explains *why* the work exists and how change will happen; Scope Items and guardrails (assumptions, constraints, risks) keep boundaries concrete. Business Needs carry the why (problems/opportunities) and Business Objectives carry the measurable what—the baseline should stay consistent with them, not replace them.
 
 ## Guidance
 

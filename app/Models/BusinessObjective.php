@@ -43,4 +43,26 @@ class BusinessObjective extends BaseModel
             ->withPivot('is_primary')
             ->withTimestamps();
     }
+
+    #[Relation('BelongsToMany')]
+    public function stakeholderNeeds(): BelongsToMany
+    {
+        return $this->belongsToMany(StakeholderNeed::class)
+            ->withTimestamps();
+    }
+
+    /**
+     * Primary parent business need (the "why") for this objective.
+     * Pivot is_primary marks the primary need for the objective.
+     */
+    public function primaryBusinessNeed(): ?BusinessNeed
+    {
+        return $this->businessNeeds()->wherePivot('is_primary', true)->first()
+            ?? $this->businessNeeds()->first();
+    }
+
+    public function hasNeeds(): bool
+    {
+        return $this->businessNeeds()->exists();
+    }
 }

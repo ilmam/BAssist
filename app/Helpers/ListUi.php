@@ -103,6 +103,80 @@ class ListUi
     }
 
     /**
+     * Column that shows a related entity label (not a child count).
+     * Pass a prebuilt HTML cell field (see relatedEntityCell).
+     *
+     * @param  array{title?: string, header?: string, style?: string}  $options
+     */
+    public static function relatedLinkColumn(string $cellField, array $options = []): array
+    {
+        $title = $options['title'] ?? Str::headline($cellField);
+        $header = $options['header'] ?? '';
+        $style = $options['style'] ?? ('width: '.DatatableUi::RELATION_WIDTH);
+
+        return [
+            'custom' => true,
+            'name' => $cellField,
+            'title' => $header !== '' ? $header : $title,
+            'style' => $style,
+            'template' => '{'.$cellField.'}',
+            'fields' => [$cellField],
+        ];
+    }
+
+    /**
+     * Modal-link cell HTML for a related entity, or an em dash when missing.
+     */
+    public static function relatedEntityCell(string $model, ?int $id, ?string $label): string
+    {
+        $text = trim((string) $label);
+        if ($id === null || $id <= 0 || $text === '') {
+            return '<span class="text-muted-foreground">—</span>';
+        }
+
+        $modalUrl = e(model_modal_path($model, 'view', $id));
+        $safeLabel = e($text);
+        $theme = function_exists('ui_theme') ? ui_theme() : 'metronic8';
+
+        if ($theme === 'metronic9') {
+            return '<a href="'.$modalUrl.'" class="text-primary hover:underline js-open-modal" data-modal-url="'.$modalUrl.'" data-modal-nav="off" title="'.$safeLabel.'">'
+                .$safeLabel
+                .'</a>';
+        }
+
+        return '<a href="'.$modalUrl.'" class="text-primary js-open-modal" data-modal-url="'.$modalUrl.'" data-modal-nav="off" title="'.$safeLabel.'">'
+            .$safeLabel
+            .'</a>';
+    }
+
+    /**
+     * Flattened list-row keys that carry trusted HTML from relatedEntityCell().
+     * Yajra DataTables escapes every string by default; these must be passed to
+     * rawColumns() or the modal link markup is rendered as plain text.
+     *
+     * @param  array<int, array<string, mixed>>  $rows
+     * @return list<string>
+     */
+    public static function rawHtmlColumns(array $rows): array
+    {
+        foreach ($rows as $row) {
+            $found = [];
+
+            foreach ($row as $key => $value) {
+                if (is_string($key) && str_ends_with($key, '_cell')) {
+                    $found[] = $key;
+                }
+            }
+
+            if ($found !== []) {
+                return array_values(array_unique($found));
+            }
+        }
+
+        return [];
+    }
+
+    /**
      * Parent-scope filters that stay sticky while drilling relation filters.
      *
      * @param  array<string, mixed>  $filters

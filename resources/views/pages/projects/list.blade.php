@@ -7,12 +7,12 @@
         $preserve = ListUi::contextFilters($listFilters ?? []);
 
         $relationColumns = [
-            ListUi::childLinkColumn('BusinessObjective', 'project_id', 'business_objectives_count', [
-                'title' => __('ui.business_objectives'),
-                'preserve' => $preserve,
-            ]),
             ListUi::childLinkColumn('BusinessNeed', 'project_id', 'business_needs_count', [
                 'title' => __('ui.business_needs'),
+                'preserve' => $preserve,
+            ]),
+            ListUi::childLinkColumn('BusinessObjective', 'project_id', 'business_objectives_count', [
+                'title' => __('ui.business_objectives'),
                 'preserve' => $preserve,
             ]),
             ListUi::childLinkColumn('Stakeholder', 'project_id', 'stakeholders_count', [

@@ -105,6 +105,63 @@ class DatatableUiTest extends TestCase
     }
 
     #[Test]
+    public function related_link_column_uses_relation_width_not_count_width(): void
+    {
+        $col = ListUi::relatedLinkColumn('primary_business_need_cell', [
+            'title' => 'Business Need',
+        ]);
+
+        $this->assertSame('primary_business_need_cell', $col['name']);
+        $this->assertSame('{primary_business_need_cell}', $col['template']);
+        $this->assertStringContainsString(DatatableUi::RELATION_WIDTH, $col['style']);
+
+        $style = DatatableUi::columnStyle($col, 3);
+        $this->assertStringContainsString('width: '.DatatableUi::RELATION_WIDTH, $style);
+        $this->assertStringNotContainsString(DatatableUi::COUNT_WIDTH, $style);
+    }
+
+    #[Test]
+    public function related_entity_cell_renders_dash_when_missing_and_link_when_present(): void
+    {
+        $empty = ListUi::relatedEntityCell('BusinessNeed', null, null);
+        $this->assertStringContainsString('—', $empty);
+        $this->assertStringNotContainsString('js-open-modal', $empty);
+
+        $cell = ListUi::relatedEntityCell('BusinessNeed', 12, 'BN-1 Process standardization');
+        $this->assertStringContainsString('js-open-modal', $cell);
+        $this->assertStringContainsString('data-modal-nav="off"', $cell);
+        $this->assertStringContainsString('BN-1 Process standardization', $cell);
+        $this->assertStringContainsString((string) 12, $cell);
+    }
+
+    #[Test]
+    public function raw_html_columns_detect_related_entity_cell_fields(): void
+    {
+        $this->assertSame([], ListUi::rawHtmlColumns([]));
+        $this->assertSame([], ListUi::rawHtmlColumns([['title' => 'x', 'code' => 'BO-1']]));
+
+        $cols = ListUi::rawHtmlColumns([
+            [
+                'title' => 'Objective',
+                'primary_business_need_cell' => '<a href="#">BN</a>',
+                'stakeholder_needs_count' => 2,
+            ],
+            [
+                'title' => 'Need',
+                'primary_business_objective_cell' => '<a href="#">BO</a>',
+            ],
+        ]);
+
+        // First non-empty row wins — both BO→BN and SN→BO lists use *_cell fields.
+        $this->assertSame(['primary_business_need_cell'], $cols);
+
+        $snCols = ListUi::rawHtmlColumns([
+            ['primary_business_objective_cell' => '<a href="#">BO</a>'],
+        ]);
+        $this->assertSame(['primary_business_objective_cell'], $snCols);
+    }
+
+    #[Test]
     public function risk_enum_columns_get_compact_short_width_not_relation_width(): void
     {
         // Risks has far more columns than other lists (code, title, project,

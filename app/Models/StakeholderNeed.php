@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 
 namespace App\Models;
 
@@ -54,9 +54,9 @@ class StakeholderNeed extends BaseModel
     }
 
     #[Relation('BelongsToMany')]
-    public function businessNeeds(): BelongsToMany
+    public function businessObjectives(): BelongsToMany
     {
-        return $this->belongsToMany(BusinessNeed::class)
+        return $this->belongsToMany(BusinessObjective::class)
             ->withTimestamps();
     }
 

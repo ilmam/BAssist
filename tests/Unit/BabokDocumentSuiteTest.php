@@ -101,7 +101,7 @@ class BabokDocumentSuiteTest extends TestCase
         $this->assertStringNotContainsString('doc-note', $blade);
     }
 
-    public function test_traceability_matrix_uses_objective_first_lineage(): void
+    public function test_traceability_matrix_uses_need_first_lineage(): void
     {
         $blade = file_get_contents(
             resource_path('views/pages/projects/babok/partials/traceability-matrix.blade.php')
@@ -112,14 +112,14 @@ class BabokDocumentSuiteTest extends TestCase
         $needPos = strpos($blade, "__('ui.business_need')");
         $this->assertNotFalse($objectivePos);
         $this->assertNotFalse($needPos);
-        $this->assertLessThan($needPos, $objectivePos);
+        $this->assertLessThan($objectivePos, $needPos);
 
         $this->assertNotSame(
             'ui.babok_doc_traceability_matrix_note',
             __('ui.babok_doc_traceability_matrix_note')
         );
         $this->assertStringContainsString(
-            'Business Objective → Business Need',
+            'Business Need → Business Objective',
             __('ui.babok_doc_traceability_matrix_note')
         );
         $this->assertStringContainsString(

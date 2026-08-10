@@ -4,9 +4,11 @@ namespace App\Repositories;
 
 use App\Data\StakeholderNeedData;
 use App\Data\StakeholderNeedViewData;
+use App\Helpers\ListUi;
 use App\Models\StakeholderNeed;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -23,7 +25,7 @@ class StakeholderNeedRepository extends BaseRepository
     ];
 
     protected array $listRelationFilters = [
-        'business_need_id' => 'businessNeeds',
+        'business_objective_id' => 'businessObjectives',
         'stakeholder_id' => 'stakeholders',
     ];
 
@@ -38,7 +40,7 @@ class StakeholderNeedRepository extends BaseRepository
     ];
 
     protected array $listWithCounts = [
-        'businessNeeds',
+        'businessObjectives',
         'stakeholders',
     ];
 
@@ -64,26 +66,49 @@ class StakeholderNeedRepository extends BaseRepository
     protected function applyOrphanConstraint(Builder $query): void
     {
         $query->where(function (Builder $inner) {
-            $inner->whereDoesntHave('businessNeeds')
+            $inner->whereDoesntHave('businessObjectives')
                 ->orWhereDoesntHave('stakeholders');
         });
     }
 
     protected function isOrphan(Model $model): bool
     {
-        return (int) ($model->getAttribute('business_needs_count') ?? 0) === 0
+        return (int) ($model->getAttribute('business_objectives_count') ?? 0) === 0
             || (int) ($model->getAttribute('stakeholders_count') ?? 0) === 0;
+    }
+
+    /**
+     * @param  Collection<int, Model>  $collection
+     */
+    protected function enrichListCollection(Collection $collection): void
+    {
+        $collection->load('businessObjectives');
+
+        parent::enrichListCollection($collection);
+
+        $collection->each(function (Model $model): void {
+            /** @var StakeholderNeed $model */
+            $primary = $model->businessObjectives->first();
+            $label = $primary
+                ? trim(($primary->code ? $primary->code.' ' : '').$primary->title)
+                : null;
+
+            $model->setAttribute(
+                'primary_business_objective_cell',
+                ListUi::relatedEntityCell('BusinessObjective', $primary?->id, $label)
+            );
+        });
     }
 
     public function editById($Id)
     {
         /** @var StakeholderNeed $need */
-        $need = $this->model::with(['businessNeeds', 'stakeholders'])->findOrFail($Id);
+        $need = $this->model::with(['businessObjectives', 'stakeholders'])->findOrFail($Id);
         $dto = StakeholderNeedData::from($need);
 
         return StakeholderNeedData::from([
             ...$dto->toArray(),
-            'business_need_id' => $need->businessNeeds->first()?->id ?? 0,
+            'business_objective_id' => $need->businessObjectives->first()?->id ?? 0,
             'stakeholder_id' => $need->stakeholders->first()?->id ?? 0,
         ]);
     }
@@ -91,11 +116,11 @@ class StakeholderNeedRepository extends BaseRepository
     public function create(array $data)
     {
         return DB::transaction(function () use ($data) {
-            [$businessNeedId, $stakeholderId] = $this->extractLinks($data);
+            [$businessObjectiveId, $stakeholderId] = $this->extractLinks($data);
 
             /** @var StakeholderNeed $need */
             $need = $this->model::create($data);
-            $need->businessNeeds()->sync([$businessNeedId]);
+            $need->businessObjectives()->sync([$businessObjectiveId]);
             $need->stakeholders()->sync([$stakeholderId]);
 
             return $need;
@@ -105,12 +130,12 @@ class StakeholderNeedRepository extends BaseRepository
     public function update($id, array $newData)
     {
         return DB::transaction(function () use ($id, $newData) {
-            [$businessNeedId, $stakeholderId] = $this->extractLinks($newData);
+            [$businessObjectiveId, $stakeholderId] = $this->extractLinks($newData);
 
             /** @var StakeholderNeed $need */
             $need = $this->model::findOrFail($id);
             $need->update($newData);
-            $need->businessNeeds()->sync([$businessNeedId]);
+            $need->businessObjectives()->sync([$businessObjectiveId]);
             $need->stakeholders()->sync([$stakeholderId]);
 
             return $need;
@@ -122,17 +147,17 @@ class StakeholderNeedRepository extends BaseRepository
      */
     protected function extractLinks(array &$data): array
     {
-        $businessNeedId = (int) ($data['business_need_id'] ?? 0);
+        $businessObjectiveId = (int) ($data['business_objective_id'] ?? 0);
         $stakeholderId = (int) ($data['stakeholder_id'] ?? 0);
-        unset($data['business_need_id'], $data['stakeholder_id']);
+        unset($data['business_objective_id'], $data['stakeholder_id']);
 
-        if ($businessNeedId <= 0 || $stakeholderId <= 0) {
+        if ($businessObjectiveId <= 0 || $stakeholderId <= 0) {
             throw ValidationException::withMessages([
-                'business_need_id' => 'A business need is required.',
+                'business_objective_id' => 'A business objective is required.',
                 'stakeholder_id' => 'A stakeholder is required.',
             ]);
         }
 
-        return [$businessNeedId, $stakeholderId];
+        return [$businessObjectiveId, $stakeholderId];
     }
 }

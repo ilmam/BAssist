@@ -44,6 +44,20 @@ class NeedSpineSeeder extends Seeder
 
         app(SystemStakeholderSeeder::class)->seedForProject($project);
 
+        $need = BusinessNeed::query()->updateOrCreate(
+            [
+                'project_id' => $project->id,
+                'title' => 'Living spine from needs to stakeholder requirements',
+            ],
+            [
+                'need_type' => 'opportunity',
+                'description' => 'Capture needs (why), objectives (what), and stakeholder needs in one cascade.',
+                'rationale' => 'Wikis and tickets lose provenance over time.',
+                'impact' => 'Delivery work loses strategic alignment.',
+                'do_nothing_consequence' => 'Teams keep optimizing tickets without a living need spine.',
+            ],
+        );
+
         $objective = BusinessObjective::query()->updateOrCreate(
             [
                 'project_id' => $project->id,
@@ -56,22 +70,8 @@ class NeedSpineSeeder extends Seeder
             ],
         );
 
-        $need = BusinessNeed::query()->updateOrCreate(
-            [
-                'project_id' => $project->id,
-                'title' => 'Living spine from objectives to stakeholder needs',
-            ],
-            [
-                'need_type' => 'opportunity',
-                'description' => 'Capture objectives, needs, and stakeholder needs in one cascade.',
-                'rationale' => 'Wikis and tickets lose provenance over time.',
-                'impact' => 'Delivery work loses strategic alignment.',
-                'do_nothing_consequence' => 'Teams keep optimizing tickets without a living need spine.',
-            ],
-        );
-
-        $need->businessObjectives()->sync([
-            $objective->id => ['is_primary' => true],
+        $objective->businessNeeds()->sync([
+            $need->id => ['is_primary' => true],
         ]);
 
         $draftNeed = BusinessNeed::query()->updateOrCreate(
@@ -81,11 +81,10 @@ class NeedSpineSeeder extends Seeder
             ],
             [
                 'need_type' => 'problem',
-                'description' => 'Example of need-first drafting before an objective is chosen.',
+                'description' => 'Example of need-first drafting before an objective is defined.',
                 'rationale' => 'Bottom-up discovery is valid in BABOK Strategy Analysis.',
             ],
         );
-        $draftNeed->businessObjectives()->sync([]);
 
         $endUser = Stakeholder::query()
             ->where('project_id', $project->id)
@@ -117,7 +116,7 @@ class NeedSpineSeeder extends Seeder
             ],
         );
 
-        $stakeholderNeed->businessNeeds()->sync([$need->id]);
+        $stakeholderNeed->businessObjectives()->sync([$objective->id]);
         $stakeholderNeed->stakeholders()->sync([$endUser->id, $customStakeholder->id]);
 
         $orphanStakeholderNeed = StakeholderNeed::query()->updateOrCreate(
@@ -126,12 +125,12 @@ class NeedSpineSeeder extends Seeder
                 'title' => 'Unlinked ask from the floor (orphan)',
             ],
             [
-                'description' => 'Example orphan stakeholder need with no business need or stakeholder yet.',
+                'description' => 'Example orphan stakeholder need with no business objective or stakeholder yet.',
                 'priority_id' => $shouldId,
                 'status_id' => $draftId,
             ],
         );
-        $orphanStakeholderNeed->businessNeeds()->sync([]);
+        $orphanStakeholderNeed->businessObjectives()->sync([]);
         $orphanStakeholderNeed->stakeholders()->sync([]);
     }
 }
