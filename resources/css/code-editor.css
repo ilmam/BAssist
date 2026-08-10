@@ -63,6 +63,15 @@
     min-height: 120px;
 }
 
+.code-editor--compact .code-editor__mount {
+    min-height: 100px;
+    max-height: 16rem;
+}
+
+.code-editor--compact .cm-scroller {
+    max-height: 16rem;
+}
+
 .code-editor .cm-editor,
 .code-editor .cm-scroller {
     background: transparent !important;

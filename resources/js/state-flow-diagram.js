@@ -142,10 +142,28 @@ export function readTransitionsFromTable(table) {
     }));
 }
 
-async function renderMermaid(preview, source, mermaidText) {
-    if (source) {
-        source.textContent = mermaidText;
+function writeMermaidSource(source, mermaidText) {
+    if (!source) {
+        return;
     }
+
+    if (window.bassistCodeEditor?.setText) {
+        window.bassistCodeEditor.setText(source, mermaidText);
+        window.bassistCodeEditor.refresh?.(source);
+        return;
+    }
+
+    const input = source.querySelector?.('[data-code-input]');
+    if (input instanceof HTMLTextAreaElement) {
+        input.value = mermaidText;
+        return;
+    }
+
+    source.textContent = mermaidText;
+}
+
+async function renderMermaid(preview, source, mermaidText) {
+    writeMermaidSource(source, mermaidText);
 
     const host = preview.parentElement;
     if (!host) {
@@ -221,6 +239,35 @@ export function bindStateFlowEditor(root) {
         await renderMermaid(preview, source, mermaidText);
     };
 
+    const syncMermaidSource = () => {
+        const mermaidText = generateStateDiagramMermaid(
+            titleInput?.value ?? root.getAttribute('data-flow-title-value') ?? '',
+            readTransitionsFromTable(table),
+            initialInput?.value ?? root.getAttribute('data-initial-state') ?? '',
+            finalsInput?.value ?? root.getAttribute('data-final-states') ?? ''
+        );
+        writeMermaidSource(source, mermaidText);
+    };
+
+    const sourceDetails = source?.closest('details');
+    const isSourcePanelOpen = () => {
+        if (sourceDetails) {
+            return sourceDetails.open;
+        }
+        return Boolean(source) && !source.classList.contains('hidden');
+    };
+    const maybeSyncMermaidSource = () => {
+        if (isSourcePanelOpen()) {
+            syncMermaidSource();
+        }
+    };
+
+    sourceDetails?.addEventListener('toggle', () => {
+        if (sourceDetails.open) {
+            syncMermaidSource();
+        }
+    });
+
     const reindexRows = () => {
         if (!tbody) {
             return;
@@ -264,11 +311,16 @@ export function bindStateFlowEditor(root) {
         refresh();
     });
 
+    initialInput?.addEventListener('input', maybeSyncMermaidSource);
+    finalsInput?.addEventListener('input', maybeSyncMermaidSource);
+    titleInput?.addEventListener('input', maybeSyncMermaidSource);
+
     tbody?.addEventListener('click', (event) => {
         const addBtn = event.target.closest('[data-add-transition]');
         if (addBtn) {
             event.preventDefault();
             addRow(addBtn.closest('tr[data-transition-row]'));
+            maybeSyncMermaidSource();
             return;
         }
 
@@ -286,7 +338,11 @@ export function bindStateFlowEditor(root) {
         } else {
             reindexRows();
         }
+        maybeSyncMermaidSource();
     });
+
+    tbody?.addEventListener('input', maybeSyncMermaidSource);
+    tbody?.addEventListener('change', maybeSyncMermaidSource);
 
     tbody?.addEventListener('keydown', (event) => {
         if (event.key !== 'Enter') {
@@ -300,6 +356,7 @@ export function bindStateFlowEditor(root) {
 
         event.preventDefault();
         addRow(addBtn.closest('tr[data-transition-row]'));
+        maybeSyncMermaidSource();
     });
 
     reindexRows();

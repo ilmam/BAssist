@@ -14,6 +14,7 @@ import { javascript, json } from '@codemirror/legacy-modes/mode/javascript';
 import { standardSQL } from '@codemirror/legacy-modes/mode/sql';
 import { yaml } from '@codemirror/legacy-modes/mode/yaml';
 import { gherkinFragment } from './gherkin-mode.js';
+import { mermaidFragment } from './mermaid-mode.js';
 import '../css/code-editor.css';
 
 const READY_ATTR = 'data-code-ready';
@@ -47,6 +48,7 @@ const codeHighlightStyle = HighlightStyle.define([
  */
 const LANGUAGE_EXTENSIONS = {
     gherkin: () => new LanguageSupport(StreamLanguage.define(gherkinFragment)),
+    mermaid: () => new LanguageSupport(StreamLanguage.define(mermaidFragment)),
     javascript: () => new LanguageSupport(StreamLanguage.define(javascript)),
     js: () => new LanguageSupport(StreamLanguage.define(javascript)),
     typescript: () => new LanguageSupport(StreamLanguage.define(javascript)),
@@ -286,6 +288,7 @@ function bindCodeEditor(root) {
         parent: mount,
     });
 
+    root._codeEditorView = view;
     bindCopyButton(root, view);
 
     const form = textarea.closest('form');
@@ -300,13 +303,84 @@ function bindCodeEditor(root) {
         form?.removeEventListener('submit', onSubmit);
         view.destroy();
         root.removeAttribute(READY_ATTR);
+        delete root._codeEditorView;
         delete root._codeEditorDestroy;
     };
+}
+
+/**
+ * Update a CodeMirror-backed code document (or nested host) with new text.
+ * Used by diagram previews that refresh Mermaid source on each render.
+ */
+export function setCodeEditorText(host, text) {
+    if (!host) {
+        return;
+    }
+
+    const value = text ?? '';
+    const editorRoot = host.matches?.('[data-code-editor]')
+        ? host
+        : host.querySelector?.('[data-code-editor]');
+    const textarea = editorRoot?.querySelector?.('[data-code-input]')
+        ?? (host instanceof HTMLTextAreaElement && host.hasAttribute('data-code-input')
+            ? host
+            : host.querySelector?.('[data-code-input]'));
+
+    if (textarea instanceof HTMLTextAreaElement) {
+        textarea.value = value;
+    }
+
+    const view = editorRoot?._codeEditorView;
+    if (view) {
+        const current = view.state.doc.toString();
+        if (current !== value) {
+            view.dispatch({
+                changes: { from: 0, to: view.state.doc.length, insert: value },
+            });
+        }
+        return;
+    }
+
+    if (editorRoot && !editorRoot.hasAttribute(READY_ATTR)) {
+        initCodeEditors(editorRoot.parentElement instanceof HTMLElement
+            ? editorRoot.parentElement
+            : document);
+        return;
+    }
+
+    if (!editorRoot) {
+        host.textContent = value;
+    }
 }
 
 function initCodeEditors(scope = document) {
     scope.querySelectorAll?.(`[data-code-editor]:not([${READY_ATTR}])`).forEach((root) => {
         bindCodeEditor(root);
+    });
+}
+
+/** Re-measure CodeMirror after a hidden/collapsed host becomes visible. */
+export function refreshCodeEditors(host = document) {
+    const roots = host instanceof HTMLElement && host.matches?.('[data-code-editor]')
+        ? [host]
+        : [...(host?.querySelectorAll?.('[data-code-editor]') ?? [])];
+
+    roots.forEach((root) => {
+        root._codeEditorView?.requestMeasure?.();
+    });
+}
+
+function bindMermaidSourceReveal(scope = document) {
+    scope.querySelectorAll?.('details:has([data-mermaid-source])').forEach((details) => {
+        if (!(details instanceof HTMLDetailsElement) || details.dataset.codeRevealBound === '1') {
+            return;
+        }
+        details.dataset.codeRevealBound = '1';
+        details.addEventListener('toggle', () => {
+            if (details.open) {
+                refreshCodeEditors(details);
+            }
+        });
     });
 }
 
@@ -394,6 +468,7 @@ function initAll(scope = document) {
     initTagsInputs(scope);
     initClipboardButtons(scope);
     initFeatureRawDialogs(scope);
+    bindMermaidSourceReveal(scope);
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -404,3 +479,9 @@ document.addEventListener('bassist:modal-loaded', (event) => {
     const container = event?.detail?.container;
     initAll(container instanceof HTMLElement ? container : document);
 });
+
+window.bassistCodeEditor = {
+    init: initAll,
+    setText: setCodeEditorText,
+    refresh: refreshCodeEditors,
+};

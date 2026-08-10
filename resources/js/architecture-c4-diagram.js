@@ -417,6 +417,26 @@ function isEmptyC4Diagram(text) {
     return !trimmed || /^C4(Context|Container|Component)\s*$/i.test(trimmed);
 }
 
+function writeMermaidSource(source, mermaidText) {
+    if (!source) {
+        return;
+    }
+
+    if (window.bassistCodeEditor?.setText) {
+        window.bassistCodeEditor.setText(source, mermaidText);
+        window.bassistCodeEditor.refresh?.(source);
+        return;
+    }
+
+    const input = source.querySelector?.('[data-code-input]');
+    if (input instanceof HTMLTextAreaElement) {
+        input.value = mermaidText;
+        return;
+    }
+
+    source.textContent = mermaidText;
+}
+
 function showPreviewMessage(preview, message) {
     if (!preview) return;
     preview.innerHTML = '';
@@ -424,9 +444,7 @@ function showPreviewMessage(preview, message) {
 }
 
 async function renderMermaid(preview, source, mermaidText, emptyMessage, renderErrorMessage) {
-    if (source) {
-        source.textContent = mermaidText;
-    }
+    writeMermaidSource(source, mermaidText);
     if (!preview) {
         return;
     }
@@ -917,7 +935,7 @@ function bindEditor(root) {
         const emptyMessage = previewEmptyMessage(root, level, elements, focus);
 
         if (!levelHasRenderableContent(level, elements, focus)) {
-            if (source) source.textContent = '';
+            writeMermaidSource(source, '');
             showPreviewMessage(preview, emptyMessage);
             if (preview) preview.setAttribute('data-level', level);
             return;
@@ -934,6 +952,21 @@ function bindEditor(root) {
                 i18n(root, 'preview-render-error', 'Unable to render this diagram. Check element names and relationships, then try again.'),
             );
         }
+    };
+
+    const syncMermaidSource = () => {
+        const elements = readElements(root);
+        const relationships = readRelationships(root);
+        const layout = readLayout(root);
+        const focus = currentFocus();
+        const source = root.querySelector('[data-mermaid-source]');
+
+        if (!levelHasRenderableContent(level, elements, focus)) {
+            writeMermaidSource(source, '');
+            return;
+        }
+
+        writeMermaidSource(source, generateC4Mermaid(level, elements, relationships, focus, layout));
     };
 
     root.querySelectorAll('[data-add-kind]').forEach((btn) => {
@@ -1037,6 +1070,9 @@ function bindEditor(root) {
             toggleSource.textContent = showing
                 ? (root.getAttribute('data-i18n-show-source') || 'Show Mermaid source')
                 : (root.getAttribute('data-i18n-hide-source') || 'Hide Mermaid source');
+            if (!showing) {
+                syncMermaidSource();
+            }
             return;
         }
 

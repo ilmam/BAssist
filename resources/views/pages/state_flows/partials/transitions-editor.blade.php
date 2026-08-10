@@ -235,10 +235,9 @@
             <div class="border border-border rounded-lg p-4 bg-white overflow-x-auto min-h-24">
                 <pre class="mermaid bassist-mermaid" data-mermaid-preview>@if ($editable){{ __('ui.preview_diagram_hint') }}@endif</pre>
             </div>
-            <details class="mt-3">
-                <summary class="text-xs text-muted-foreground cursor-pointer">Mermaid source</summary>
-                <pre class="mt-2 text-xs p-3 border border-border rounded-lg overflow-x-auto whitespace-pre-wrap" data-mermaid-source></pre>
-            </details>
+            @include('pages.partials.mermaid-source', [
+                'editorId' => 'state_mermaid_source_'.uniqid(),
+            ])
         </div>
     @endif
 </div>

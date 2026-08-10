@@ -402,6 +402,11 @@
         </div>
 
         <div class="mermaid bassist-mermaid border border-border rounded-lg p-4 overflow-auto" data-mermaid-preview data-level="context"></div>
-        <pre class="hidden text-xs text-muted-foreground whitespace-pre-wrap mt-3 border border-border rounded-lg p-3 overflow-auto max-h-64" data-mermaid-source>{{ $mermaidContext ?? "C4Context\n" }}</pre>
+        @include('pages.partials.mermaid-source', [
+            'source' => $mermaidContext ?? "C4Context\n",
+            'wrapInDetails' => false,
+            'hidden' => true,
+            'editorId' => 'architecture_mermaid_source_'.uniqid(),
+        ])
     </x-card>
 </div>
