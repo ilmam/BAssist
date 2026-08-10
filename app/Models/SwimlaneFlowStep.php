@@ -26,6 +26,8 @@ class SwimlaneFlowStep extends BaseModel
         'project_id',
         'position',
         'lane',
+        'lane_color',
+        'element_color',
         'from_label',
         'type',
         'label',
@@ -86,13 +88,19 @@ class SwimlaneFlowStep extends BaseModel
     /**
      * Editor / Mermaid array shape (keeps `from` key for compatibility).
      *
-     * @return array{id: int, lane: string, from: string|null, type: string, label: string, line_title: string|null, code: string|null, stakeholder_need_id: int|null, number: int|null}
+     * @return array{id: int, lane: string, lane_color: string|null, element_color: string|null, from: string|null, type: string, label: string, line_title: string|null, code: string|null, stakeholder_need_id: int|null, number: int|null}
      */
     public function toElementArray(): array
     {
         return [
             'id' => (int) $this->id,
             'lane' => (string) $this->lane,
+            'lane_color' => $this->lane_color !== null && $this->lane_color !== ''
+                ? (string) $this->lane_color
+                : null,
+            'element_color' => $this->element_color !== null && $this->element_color !== ''
+                ? (string) $this->element_color
+                : null,
             'from' => $this->from_label,
             'type' => (string) $this->type,
             'label' => (string) $this->label,

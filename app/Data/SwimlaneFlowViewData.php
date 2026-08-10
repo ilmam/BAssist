@@ -23,6 +23,8 @@ class SwimlaneFlowViewData extends BaseData
         #[Hide]
         public string $direction = 'TB',
         #[Hide]
+        public string $color_mode = 'both',
+        #[Hide]
         public ?array $elements = null,
         public ?int $status_id = null,
         #[InList]

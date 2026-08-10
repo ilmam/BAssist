@@ -13,6 +13,8 @@ Swimlane flows sit under **Diagrams**. Pair them with state flows (lifecycle) an
 ## Guidance
 
 - One lane per actor or responsible party.
+- Optionally assign a **Lane color** (pastel palette) and an **Element color** (richer mid-tone palette) so actors and steps are easier to distinguish in the diagram.
+- Use **Color mode** to apply both, lanes alone, or elements alone in the rendered diagram (saved color choices are kept either way).
 - Focus on the happy path first, then exceptions.
 - Use workshops to validate handoffs between lanes.
 - Each process and decision step gets a stable project-scoped **Identifier** (`PS-n`) on save.

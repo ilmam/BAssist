@@ -23,7 +23,9 @@ class SwimlaneFlowData extends BaseData
 
         public string $direction = 'TB',
 
-        /** @var list<array{id?: int|null, lane?: string, from?: string|null, type?: string, label?: string, line_title?: string|null, code?: string|null, stakeholder_need_id?: int|null}> */
+        public string $color_mode = 'both',
+
+        /** @var list<array{id?: int|null, lane?: string, lane_color?: string|null, element_color?: string|null, from?: string|null, type?: string, label?: string, line_title?: string|null, code?: string|null, stakeholder_need_id?: int|null}> */
         public array $elements = [],
 
         #[ListForm('select', 'Status', hideQuick: true)]
@@ -38,10 +40,13 @@ class SwimlaneFlowData extends BaseData
             'project_id' => ['required', 'integer', 'exists:projects,id'],
             'description' => ['nullable', 'string'],
             'direction' => ['nullable', 'string', Rule::in(['TB', 'LR', 'tb', 'lr'])],
+            'color_mode' => ['nullable', 'string', Rule::in(SwimlaneMermaidGenerator::colorModes())],
             'status_id' => ['nullable', 'integer', 'exists:statuses,id'],
             'elements' => ['nullable', 'array'],
             'elements.*.id' => ['nullable', 'integer', 'min:1'],
             'elements.*.lane' => ['nullable', 'string', 'max:255'],
+            'elements.*.lane_color' => ['nullable', 'string', Rule::in(['', ...SwimlaneMermaidGenerator::laneColorKeys()])],
+            'elements.*.element_color' => ['nullable', 'string', Rule::in(['', ...SwimlaneMermaidGenerator::elementColorKeys()])],
             'elements.*.from' => ['nullable', 'string', 'max:255'],
             'elements.*.type' => ['nullable', 'string', Rule::in([...SwimlaneMermaidGenerator::TYPES, ''])],
             'elements.*.label' => ['nullable', 'string', 'max:255'],
@@ -55,6 +60,8 @@ class SwimlaneFlowData extends BaseData
                     }
 
                     $lane = trim((string) ($value['lane'] ?? ''));
+                    $laneColor = trim((string) ($value['lane_color'] ?? ''));
+                    $elementColor = trim((string) ($value['element_color'] ?? ''));
                     $from = trim((string) ($value['from'] ?? ''));
                     $type = trim((string) ($value['type'] ?? ''));
                     $label = trim((string) ($value['label'] ?? ''));
@@ -63,7 +70,10 @@ class SwimlaneFlowData extends BaseData
                     $needId = trim((string) ($value['stakeholder_need_id'] ?? ''));
 
                     // Blank editor rows default type to "process"; ignore those until Lane/Label are filled.
-                    if ($lane === '' && $from === '' && $label === '' && $lineTitle === '' && $code === '' && $needId === '') {
+                    if (
+                        $lane === '' && $from === '' && $label === '' && $lineTitle === ''
+                        && $code === '' && $needId === '' && $laneColor === '' && $elementColor === ''
+                    ) {
                         return;
                     }
 

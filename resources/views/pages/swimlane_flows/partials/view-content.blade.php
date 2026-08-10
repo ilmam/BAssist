@@ -16,6 +16,7 @@
     @include('pages.swimlane_flows.partials.elements-editor', [
         'elements' => $elements,
         'direction' => $dto->direction ?? 'TB',
+        'colorMode' => $dto->color_mode ?? 'both',
         'editable' => false,
         'autoRender' => true,
         'flowTitle' => $dto->title,

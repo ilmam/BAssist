@@ -121,6 +121,10 @@ class SwimlaneFlowRepository extends BaseRepository
             $data['direction'] = $direction === 'LR' ? 'LR' : 'TB';
         }
 
+        if (array_key_exists('color_mode', $data)) {
+            $data['color_mode'] = SwimlaneMermaidGenerator::normalizeColorMode($data['color_mode'] ?? null);
+        }
+
         return $data;
     }
 
@@ -151,6 +155,8 @@ class SwimlaneFlowRepository extends BaseRepository
                 'project_id' => $projectId,
                 'position' => $index,
                 'lane' => $row['lane'],
+                'lane_color' => $row['lane_color'] ?? null,
+                'element_color' => $row['element_color'] ?? null,
                 'from_label' => $row['from'],
                 'type' => $row['type'],
                 'label' => $row['label'],

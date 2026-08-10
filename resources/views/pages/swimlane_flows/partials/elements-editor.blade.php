@@ -1,7 +1,9 @@
 @php
+    use App\Services\SwimlaneMermaidGenerator;
+
     $elementRows = is_array($elements ?? null) ? $elements : [];
     if ($elementRows === []) {
-        $elementRows = [['id' => null, 'lane' => '', 'from' => '', 'type' => 'process', 'label' => '', 'line_title' => '', 'code' => '', 'stakeholder_need_id' => null]];
+        $elementRows = [['id' => null, 'lane' => '', 'lane_color' => null, 'element_color' => null, 'from' => '', 'type' => 'process', 'label' => '', 'line_title' => '', 'code' => '', 'stakeholder_need_id' => null]];
     }
 
     $editable = $editable ?? true;
@@ -10,6 +12,7 @@
     $flowTitle = $flowTitle ?? '';
     $showDiagram = $showDiagram ?? true;
     $direction = strtoupper((string) ($direction ?? 'TB')) === 'LR' ? 'LR' : 'TB';
+    $colorMode = \App\Services\SwimlaneMermaidGenerator::normalizeColorMode($colorMode ?? null);
     $stakeholderNeedOptions = is_array($stakeholderNeedOptions ?? null) ? $stakeholderNeedOptions : [];
     $stakeholderNeedOptionsUrl = $stakeholderNeedOptionsUrl ?? route('swimlane_flows.stakeholder-need-options');
     $needLabels = collect($stakeholderNeedOptions)->mapWithKeys(
@@ -22,12 +25,46 @@
         'decision' => __('ui.element_type_decision'),
         'end' => __('ui.element_type_end'),
     ];
+
+    $laneColorPalette = SwimlaneMermaidGenerator::LANE_COLORS;
+    $elementColorPalette = SwimlaneMermaidGenerator::ELEMENT_COLORS;
+    $laneColorOptions = ['' => __('ui.element_lane_color_none')];
+    $elementColorOptions = ['' => __('ui.element_color_none')];
+    foreach (array_keys($laneColorPalette) as $key) {
+        $laneColorOptions[$key] = __('ui.element_lane_color_'.$key);
+    }
+    foreach (array_keys($elementColorPalette) as $key) {
+        $elementColorOptions[$key] = __('ui.element_color_'.$key);
+    }
 @endphp
 
 @once
     <style>
         .bassist-mermaid {
             background: #ffffff;
+        }
+
+        .bassist-lane-color-swatch {
+            display: inline-block;
+            width: 0.75rem;
+            height: 0.75rem;
+            border-radius: 9999px;
+            border: 1px solid rgba(15, 23, 42, 0.25);
+            vertical-align: -0.05rem;
+            margin-inline-end: 0.35rem;
+        }
+
+        tr[data-element-row][data-lane-fill] {
+            background-color: color-mix(in srgb, var(--bassist-lane-fill) 32%, transparent);
+        }
+
+        tr[data-element-row][data-lane-fill] > td {
+            background-color: transparent;
+        }
+
+        select[data-field="lane_color"][data-swatch-fill],
+        select[data-field="element_color"][data-swatch-fill] {
+            background-color: color-mix(in srgb, var(--bassist-swatch-fill) 55%, transparent);
         }
     </style>
 @endonce
@@ -37,6 +74,7 @@
     @if ($autoRender) data-auto-render="1" @endif
     @if ($flowTitle !== '') data-flow-title-value="{{ $flowTitle }}" @endif
     data-direction="{{ $direction }}"
+    data-color-mode="{{ $colorMode }}"
     data-stakeholder-need-options-url="{{ $stakeholderNeedOptionsUrl }}"
     class="space-y-5"
 >
@@ -44,16 +82,39 @@
         <input type="hidden" data-flow-title value="{{ $flowTitle }}">
     @endif
 
-    <div class="max-w-xs">
-        <label class="kt-form-label mb-1.5" for="direction">{{ __('ui.direction') }}</label>
-        @if ($editable)
-            <select id="direction" name="direction" class="kt-select">
-                <option value="TB" @selected($direction === 'TB')>{{ __('ui.direction_tb') }}</option>
-                <option value="LR" @selected($direction === 'LR')>{{ __('ui.direction_lr') }}</option>
-            </select>
-        @else
-            <div class="text-sm" data-direction-display>{{ $direction === 'LR' ? __('ui.direction_lr') : __('ui.direction_tb') }}</div>
-        @endif
+    <div class="flex flex-wrap gap-4">
+        <div class="max-w-xs">
+            <label class="kt-form-label mb-1.5" for="direction">{{ __('ui.direction') }}</label>
+            @if ($editable)
+                <select id="direction" name="direction" class="kt-select">
+                    <option value="TB" @selected($direction === 'TB')>{{ __('ui.direction_tb') }}</option>
+                    <option value="LR" @selected($direction === 'LR')>{{ __('ui.direction_lr') }}</option>
+                </select>
+            @else
+                <div class="text-sm" data-direction-display>{{ $direction === 'LR' ? __('ui.direction_lr') : __('ui.direction_tb') }}</div>
+            @endif
+        </div>
+
+        <div class="max-w-xs">
+            <label class="kt-form-label mb-1.5" for="color_mode">{{ __('ui.swimlane_color_mode') }}</label>
+            @if ($editable)
+                <select id="color_mode" name="color_mode" class="kt-select" data-color-mode-input>
+                    <option value="both" @selected($colorMode === 'both')>{{ __('ui.swimlane_color_mode_both') }}</option>
+                    <option value="lanes" @selected($colorMode === 'lanes')>{{ __('ui.swimlane_color_mode_lanes') }}</option>
+                    <option value="elements" @selected($colorMode === 'elements')>{{ __('ui.swimlane_color_mode_elements') }}</option>
+                </select>
+            @else
+                <div class="text-sm" data-color-mode-display>
+                    @if ($colorMode === 'lanes')
+                        {{ __('ui.swimlane_color_mode_lanes') }}
+                    @elseif ($colorMode === 'elements')
+                        {{ __('ui.swimlane_color_mode_elements') }}
+                    @else
+                        {{ __('ui.swimlane_color_mode_both') }}
+                    @endif
+                </div>
+            @endif
+        </div>
     </div>
 
     <div>
@@ -70,6 +131,8 @@
                         <th class="min-w-40">{{ __('ui.element_label') }}</th>
                         <th class="min-w-36">{{ __('ui.element_line_title') }}</th>
                         <th class="min-w-56">{{ __('ui.element_stakeholder_need') }}</th>
+                        <th class="min-w-28">{{ __('ui.element_lane_color') }}</th>
+                        <th class="min-w-28">{{ __('ui.element_color') }}</th>
                         @if ($editable)
                             <th class="w-28">{{ __('ui.actions') }}</th>
                         @endif
@@ -89,8 +152,30 @@
                                 : '';
                             $needLabel = $needLabels[$needId] ?? ($needId !== '' ? $needId : '');
                             $linkable = in_array($type, ['process', 'decision'], true);
+                            $laneColor = strtolower(trim((string) ($row['lane_color'] ?? '')));
+                            if ($laneColor !== '' && ! array_key_exists($laneColor, $laneColorPalette)) {
+                                $laneColor = '';
+                            }
+                            $elementColor = strtolower(trim((string) ($row['element_color'] ?? '')));
+                            if ($elementColor !== '' && ! array_key_exists($elementColor, $elementColorPalette)) {
+                                $elementColor = '';
+                            }
+                            $laneColorLabel = $laneColorOptions[$laneColor] ?? __('ui.element_lane_color_none');
+                            $elementColorLabel = $elementColorOptions[$elementColor] ?? __('ui.element_color_none');
+                            $laneFill = ($laneColor !== '' && isset($laneColorPalette[$laneColor]))
+                                ? $laneColorPalette[$laneColor]['fill']
+                                : '';
+                            $elementFill = ($elementColor !== '' && isset($elementColorPalette[$elementColor]))
+                                ? $elementColorPalette[$elementColor]['fill']
+                                : '';
                         @endphp
-                        <tr data-element-row>
+                        <tr
+                            data-element-row
+                            @if ($laneFill !== '')
+                                data-lane-fill="{{ $laneColor }}"
+                                style="--bassist-lane-fill: {{ $laneFill }};"
+                            @endif
+                        >
                             <td>
                                 @if ($stepId)
                                     <input type="hidden" data-field="id" name="elements[{{ $index }}][id]" value="{{ $stepId }}">
@@ -199,6 +284,84 @@
                                     </span>
                                 @endif
                             </td>
+                            <td>
+                                @if ($editable)
+                                    <select
+                                        class="kt-select"
+                                        data-field="lane_color"
+                                        name="elements[{{ $index }}][lane_color]"
+                                        @if ($laneFill !== '')
+                                            data-swatch-fill="{{ $laneColor }}"
+                                            style="--bassist-swatch-fill: {{ $laneFill }};"
+                                        @endif
+                                    >
+                                        @foreach ($laneColorOptions as $value => $label)
+                                            @php
+                                                $optionFill = ($value !== '' && isset($laneColorPalette[$value]))
+                                                    ? $laneColorPalette[$value]['fill']
+                                                    : '';
+                                            @endphp
+                                            <option
+                                                value="{{ $value }}"
+                                                @selected($laneColor === $value)
+                                                @if ($optionFill !== '')
+                                                    style="background-color: {{ $optionFill }}; color: #0f172a;"
+                                                @endif
+                                            >{{ $label }}</option>
+                                        @endforeach
+                                    </select>
+                                @else
+                                    <span class="text-sm inline-flex items-center" data-field="lane_color" data-value="{{ $laneColor }}">
+                                        @if ($laneColor !== '' && isset($laneColorPalette[$laneColor]))
+                                            <span
+                                                class="bassist-lane-color-swatch"
+                                                style="background: {{ $laneColorPalette[$laneColor]['fill'] }}; border-color: {{ $laneColorPalette[$laneColor]['stroke'] }};"
+                                                aria-hidden="true"
+                                            ></span>
+                                        @endif
+                                        {{ $laneColorLabel }}
+                                    </span>
+                                @endif
+                            </td>
+                            <td>
+                                @if ($editable)
+                                    <select
+                                        class="kt-select"
+                                        data-field="element_color"
+                                        name="elements[{{ $index }}][element_color]"
+                                        @if ($elementFill !== '')
+                                            data-swatch-fill="{{ $elementColor }}"
+                                            style="--bassist-swatch-fill: {{ $elementFill }};"
+                                        @endif
+                                    >
+                                        @foreach ($elementColorOptions as $value => $label)
+                                            @php
+                                                $optionFill = ($value !== '' && isset($elementColorPalette[$value]))
+                                                    ? $elementColorPalette[$value]['fill']
+                                                    : '';
+                                            @endphp
+                                            <option
+                                                value="{{ $value }}"
+                                                @selected($elementColor === $value)
+                                                @if ($optionFill !== '')
+                                                    style="background-color: {{ $optionFill }}; color: #0f172a;"
+                                                @endif
+                                            >{{ $label }}</option>
+                                        @endforeach
+                                    </select>
+                                @else
+                                    <span class="text-sm inline-flex items-center" data-field="element_color" data-value="{{ $elementColor }}">
+                                        @if ($elementColor !== '' && isset($elementColorPalette[$elementColor]))
+                                            <span
+                                                class="bassist-lane-color-swatch"
+                                                style="background: {{ $elementColorPalette[$elementColor]['fill'] }}; border-color: {{ $elementColorPalette[$elementColor]['stroke'] }};"
+                                                aria-hidden="true"
+                                            ></span>
+                                        @endif
+                                        {{ $elementColorLabel }}
+                                    </span>
+                                @endif
+                            </td>
                             @if ($editable)
                                 <td>
                                     <div class="flex items-center justify-end gap-1">
@@ -264,6 +427,40 @@
                     </select>
                 </td>
                 <td>
+                    <select class="kt-select" data-field="lane_color" name="elements[__INDEX__][lane_color]">
+                        @foreach ($laneColorOptions as $value => $label)
+                            @php
+                                $optionFill = ($value !== '' && isset($laneColorPalette[$value]))
+                                    ? $laneColorPalette[$value]['fill']
+                                    : '';
+                            @endphp
+                            <option
+                                value="{{ $value }}"
+                                @if ($optionFill !== '')
+                                    style="background-color: {{ $optionFill }}; color: #0f172a;"
+                                @endif
+                            >{{ $label }}</option>
+                        @endforeach
+                    </select>
+                </td>
+                <td>
+                    <select class="kt-select" data-field="element_color" name="elements[__INDEX__][element_color]">
+                        @foreach ($elementColorOptions as $value => $label)
+                            @php
+                                $optionFill = ($value !== '' && isset($elementColorPalette[$value]))
+                                    ? $elementColorPalette[$value]['fill']
+                                    : '';
+                            @endphp
+                            <option
+                                value="{{ $value }}"
+                                @if ($optionFill !== '')
+                                    style="background-color: {{ $optionFill }}; color: #0f172a;"
+                                @endif
+                            >{{ $label }}</option>
+                        @endforeach
+                    </select>
+                </td>
+                <td>
                     <div class="flex items-center justify-end gap-1">
                         <button type="button" class="kt-btn kt-btn-sm kt-btn-secondary" data-add-element title="{{ __('ui.add_element_row') }}" aria-label="{{ __('ui.add_element_row') }}">
                             {{ __('ui.add_element_row') }}
@@ -290,10 +487,9 @@
             <div class="border border-border rounded-lg p-4 bg-white overflow-x-auto min-h-24">
                 <pre class="mermaid bassist-mermaid" data-mermaid-preview>@if ($editable){{ __('ui.preview_swimlane_hint') }}@endif</pre>
             </div>
-            <details class="mt-3">
-                <summary class="text-xs text-muted-foreground cursor-pointer">Mermaid source</summary>
-                <pre class="mt-2 text-xs p-3 border border-border rounded-lg overflow-x-auto whitespace-pre-wrap" data-mermaid-source></pre>
-            </details>
+            @include('pages.partials.mermaid-source', [
+                'editorId' => 'swimlane_mermaid_source_'.uniqid(),
+            ])
         </div>
     @endif
 </div>
