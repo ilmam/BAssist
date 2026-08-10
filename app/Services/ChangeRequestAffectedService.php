@@ -59,7 +59,7 @@ class ChangeRequestAffectedService
     protected function cascadeFromStakeholderNeed(StakeholderNeed $need): array
     {
         $rows = [];
-        $need->loadMissing('features.scenarios', 'functionalRequirements');
+        $need->loadMissing('features.scenarios', 'functionalRequirements', 'nonFunctionalRequirements');
 
         foreach ($need->features as $feature) {
             $rows[] = $this->row(ChangeRequestAffectedType::FEATURE, $feature);
@@ -73,6 +73,9 @@ class ChangeRequestAffectedService
         }
         foreach ($need->functionalRequirements as $fr) {
             $rows[] = $this->row(ChangeRequestAffectedType::FUNCTIONAL_REQUIREMENT, $fr);
+        }
+        foreach ($need->nonFunctionalRequirements as $nfr) {
+            $rows[] = $this->row(ChangeRequestAffectedType::NON_FUNCTIONAL_REQUIREMENT, $nfr);
         }
 
         return $this->uniqueRows($rows);

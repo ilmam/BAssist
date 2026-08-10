@@ -11,6 +11,7 @@ use App\Models\ChangeRequest;
 use App\Models\Constraint;
 use App\Models\Feature;
 use App\Models\FunctionalRequirement;
+use App\Models\NonFunctionalRequirement;
 use App\Models\Project;
 use App\Models\Risk;
 use App\Models\ScopeItem;
@@ -173,14 +174,16 @@ class NavFolderProgress
         $agreedId = $this->agreedStatusId();
 
         $fr = FunctionalRequirement::query()->where('project_id', $project->id);
+        $nfr = NonFunctionalRequirement::query()->where('project_id', $project->id);
         $features = Feature::query()->where('project_id', $project->id);
 
         if ($agreedId !== null) {
             return (clone $fr)->where('status_id', $agreedId)->exists()
+                || (clone $nfr)->where('status_id', $agreedId)->exists()
                 || (clone $features)->where('status_id', $agreedId)->exists();
         }
 
-        return $fr->exists() || $features->exists();
+        return $fr->exists() || $nfr->exists() || $features->exists();
     }
 
     protected function diagramsHubReady(Project $project): bool
@@ -215,6 +218,11 @@ class NavFolderProgress
             ->whereHas('scenarios')
             ->exists()
             || FunctionalRequirement::query()
+                ->where('project_id', $project->id)
+                ->whereNotNull('acceptance_criteria')
+                ->where('acceptance_criteria', '!=', '')
+                ->exists()
+            || NonFunctionalRequirement::query()
                 ->where('project_id', $project->id)
                 ->whereNotNull('acceptance_criteria')
                 ->where('acceptance_criteria', '!=', '')

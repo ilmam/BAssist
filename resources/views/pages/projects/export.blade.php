@@ -32,6 +32,8 @@
         $hasStrategicBaseline = $strategic_baseline !== null;
         $hasScopeItems = $scope_items->isNotEmpty();
         $hasFunctionalRequirements = $functional_requirements->isNotEmpty();
+        $non_functional_requirements = $non_functional_requirements ?? collect();
+        $hasNonFunctionalRequirements = $non_functional_requirements->isNotEmpty();
         $hasFeatures = $features !== [];
         $matrixRows = $matrix['rows'] ?? [];
         $hasMatrix = $matrixRows !== [];
@@ -51,6 +53,7 @@
             || $hasStrategicBaseline
             || $hasScopeItems
             || $hasFunctionalRequirements
+            || $hasNonFunctionalRequirements
             || $hasFeatures
             || $hasMatrix
             || $readinessItems !== [];
@@ -58,8 +61,8 @@
         $tocSections = array_values(array_filter([
             $hasStrategicBaseline ? ['id' => 'section-strategic-baseline', 'label' => __('ui.strategic_baseline')] : null,
             $hasScopeItems ? ['id' => 'section-scope-items', 'label' => __('ui.scope_items')] : null,
-            $hasObjectives ? ['id' => 'section-business-objectives', 'label' => __('ui.business_objectives')] : null,
             $hasNeeds ? ['id' => 'section-business-needs', 'label' => __('ui.business_needs')] : null,
+            $hasObjectives ? ['id' => 'section-business-objectives', 'label' => __('ui.business_objectives')] : null,
             $hasStakeholders ? ['id' => 'section-stakeholders', 'label' => __('ui.stakeholders')] : null,
             $hasStakeholderNeeds ? ['id' => 'section-stakeholder-needs', 'label' => __('ui.stakeholder_needs')] : null,
             $hasArchitecture ? ['id' => 'section-architecture', 'label' => __('ui.architecture_c4')] : null,
@@ -70,6 +73,7 @@
             $hasConstraints ? ['id' => 'section-constraints', 'label' => __('ui.constraints')] : null,
             $hasBusinessRules ? ['id' => 'section-business-rules', 'label' => __('ui.business_rules')] : null,
             $hasFunctionalRequirements ? ['id' => 'section-functional-requirements', 'label' => __('ui.functional_requirements')] : null,
+            $hasNonFunctionalRequirements ? ['id' => 'section-non-functional-requirements', 'label' => __('ui.non_functional_requirements')] : null,
             $hasFeatures ? ['id' => 'section-features', 'label' => __('ui.features')] : null,
             $hasMatrix ? ['id' => 'section-traceability-matrix', 'label' => __('ui.traceability_matrix')] : null,
         ]));
@@ -219,37 +223,6 @@
         </table>
     @endif
 
-    @if ($hasObjectives)
-        <h2 id="section-business-objectives" class="section-title">{{ __('ui.business_objectives') }}</h2>
-        @foreach ($objectives as $objective)
-            <article class="artifact">
-                <h3 class="item-title">
-                    @if ($objective->code)
-                        <span class="artifact__code">{{ $objective->code }}</span>
-                    @endif
-                    {{ $objective->title }}
-                </h3>
-                @if ($objective->success_measure || $objective->potential_value)
-                    <div class="artifact__panel">
-                        <dl class="kv">
-                            @if ($objective->success_measure)
-                                <dt>{{ __('ui.success_measure') }}</dt>
-                                <dd>{{ $objective->success_measure }}</dd>
-                            @endif
-                            @if ($objective->potential_value)
-                                <dt>{{ __('ui.potential_value') }}</dt>
-                                <dd>{{ $objective->potential_value }}</dd>
-                            @endif
-                        </dl>
-                    </div>
-                @endif
-                @if ($objective->description)
-                    <p class="prose">{{ $objective->description }}</p>
-                @endif
-            </article>
-        @endforeach
-    @endif
-
     @if ($hasNeeds)
         <h2 id="section-business-needs" class="section-title">{{ __('ui.business_needs') }}</h2>
         @foreach ($needs as $need)
@@ -295,6 +268,42 @@
                         <dt>{{ __('ui.do_nothing_consequence') }}</dt>
                         <dd>{{ $need->do_nothing_consequence }}</dd>
                     </dl>
+                @endif
+            </article>
+        @endforeach
+    @endif
+
+    @if ($hasObjectives)
+        <h2 id="section-business-objectives" class="section-title">{{ __('ui.business_objectives') }}</h2>
+        @foreach ($objectives as $objective)
+            <article class="artifact">
+                <h3 class="item-title">
+                    @if ($objective->code)
+                        <span class="artifact__code">{{ $objective->code }}</span>
+                    @endif
+                    {{ $objective->title }}
+                </h3>
+                <div class="artifact__panel">
+                    <dl class="kv">
+                        <dt>{{ __('ui.business_needs') }}</dt>
+                        <dd>
+                            @php
+                                $linkedNeeds = $objective->businessNeeds->pluck('title')->filter()->values();
+                            @endphp
+                            {{ $linkedNeeds->isNotEmpty() ? $linkedNeeds->implode('; ') : '—' }}
+                        </dd>
+                        @if ($objective->success_measure)
+                            <dt>{{ __('ui.success_measure') }}</dt>
+                            <dd>{{ $objective->success_measure }}</dd>
+                        @endif
+                        @if ($objective->potential_value)
+                            <dt>{{ __('ui.potential_value') }}</dt>
+                            <dd>{{ $objective->potential_value }}</dd>
+                        @endif
+                    </dl>
+                </div>
+                @if ($objective->description)
+                    <p class="prose">{{ $objective->description }}</p>
                 @endif
             </article>
         @endforeach
@@ -349,12 +358,12 @@
                             @endphp
                             {{ $linkedStakeholders->isNotEmpty() ? $linkedStakeholders->implode('; ') : '—' }}
                         </dd>
-                        <dt>{{ __('ui.business_needs') }}</dt>
+                        <dt>{{ __('ui.business_objectives') }}</dt>
                         <dd>
                             @php
-                                $linkedNeeds = $sn->businessNeeds->pluck('title')->filter()->values();
+                                $linkedObjectives = $sn->businessObjectives->pluck('title')->filter()->values();
                             @endphp
-                            {{ $linkedNeeds->isNotEmpty() ? $linkedNeeds->implode('; ') : '—' }}
+                            {{ $linkedObjectives->isNotEmpty() ? $linkedObjectives->implode('; ') : '—' }}
                         </dd>
                     </dl>
                 </div>
@@ -546,6 +555,46 @@
         @endforeach
     @endif
 
+    @if ($hasNonFunctionalRequirements)
+        <h2 id="section-non-functional-requirements" class="section-title section-title--break">{{ __('ui.non_functional_requirements') }}</h2>
+        @foreach ($non_functional_requirements as $requirement)
+            <article class="artifact">
+                <h3 class="item-title">
+                    @if ($requirement->code)
+                        <span class="artifact__code">{{ $requirement->code }}</span>
+                    @endif
+                    {{ $requirement->title }}
+                </h3>
+                <div class="artifact__panel">
+                    <div class="artifact__meta">
+                        <span><strong>{{ __('ui.status') }}</strong>{{ $requirement->status?->name ?: '—' }}</span>
+                        <span><strong>{{ __('ui.priority') }}</strong>{{ $requirement->priority?->name ?: '—' }}</span>
+                        <span><strong>{{ __('ui.nfr_category') }}</strong>{{ $requirement->categoryLabel() }}</span>
+                    </div>
+                    <dl class="kv">
+                        <dt>{{ __('ui.stakeholder_need') }}</dt>
+                        <dd>
+                            @if ($requirement->stakeholderNeed)
+                                @if ($requirement->stakeholderNeed->code)
+                                    <span class="artifact__code">{{ $requirement->stakeholderNeed->code }}</span>
+                                @endif
+                                {{ $requirement->stakeholderNeed->title }}
+                            @else
+                                —
+                            @endif
+                        </dd>
+                        <dt>{{ __('ui.description') }}</dt>
+                        <dd>{{ $requirement->description ?: '—' }}</dd>
+                        @if (filled($requirement->acceptance_criteria))
+                            <dt>{{ __('ui.acceptance_criteria') }}</dt>
+                            <dd>{{ $requirement->acceptance_criteria }}</dd>
+                        @endif
+                    </dl>
+                </div>
+            </article>
+        @endforeach
+    @endif
+
     @if ($hasFeatures)
         <h2 id="section-features" class="section-title section-title--break">{{ __('ui.features') }}</h2>
         @foreach ($features as $item)
@@ -595,8 +644,8 @@
         <table class="matrix">
             <thead>
                 <tr>
-                    <th>{{ __('ui.business_objective') }}</th>
                     <th>{{ __('ui.business_need') }}</th>
+                    <th>{{ __('ui.business_objective') }}</th>
                     <th>{{ __('ui.stakeholder_need') }}</th>
                     <th>{{ __('ui.solution_requirement') }}</th>
                     <th>{{ __('ui.process_step') }}</th>
@@ -608,21 +657,21 @@
                 @foreach ($matrixRows as $row)
                     <tr @class(['has-gap' => ! empty($row['has_gap'])])>
                         <td>
-                            @if (! empty($row['objective_code']) || ! empty($row['objective_title']))
-                                @if (! empty($row['objective_code']))
-                                    <span class="artifact__code">{{ $row['objective_code'] }}</span>
-                                @endif
-                                {{ $row['objective_title'] ?? '' }}
-                            @else
-                                —
-                            @endif
-                        </td>
-                        <td>
                             @if (! empty($row['need_code']) || ! empty($row['need_title']))
                                 @if (! empty($row['need_code']))
                                     <span class="artifact__code">{{ $row['need_code'] }}</span>
                                 @endif
                                 {{ $row['need_title'] ?? '' }}
+                            @else
+                                —
+                            @endif
+                        </td>
+                        <td>
+                            @if (! empty($row['objective_code']) || ! empty($row['objective_title']))
+                                @if (! empty($row['objective_code']))
+                                    <span class="artifact__code">{{ $row['objective_code'] }}</span>
+                                @endif
+                                {{ $row['objective_title'] ?? '' }}
                             @else
                                 —
                             @endif
@@ -648,6 +697,11 @@
                                     <span class="artifact__code">{{ $row['functional_requirement_code'] }}</span>
                                 @endif
                                 {{ $row['functional_requirement_title'] ?? '' }}
+                            @elseif (! empty($row['non_functional_requirement_code']) || ! empty($row['non_functional_requirement_title']))
+                                @if (! empty($row['non_functional_requirement_code']))
+                                    <span class="artifact__code">{{ $row['non_functional_requirement_code'] }}</span>
+                                @endif
+                                {{ $row['non_functional_requirement_title'] ?? '' }}
                             @else
                                 —
                             @endif
@@ -682,6 +736,7 @@
                                         'orphan_stakeholder_need' => __('ui.gap_orphan_stakeholder_need'),
                                         'orphan_feature' => __('ui.gap_orphan_feature'),
                                         'orphan_functional_requirement' => __('ui.gap_orphan_functional_requirement'),
+                                        'orphan_non_functional_requirement' => __('ui.gap_orphan_non_functional_requirement'),
                                         default => $gap,
                                     };
                                 })->all();

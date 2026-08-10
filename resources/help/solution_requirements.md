@@ -11,7 +11,7 @@ In BABOK, Solution Requirements are always divided into two critical categories:
 - **Functional Requirements (FRs):** The specific behaviors, responses, and information the system will manage (e.g., "The system shall automatically timestamp the 'Open' and 'Close' events to calculate ticket duration").
 - **Non-Functional Requirements (NFRs) / Quality of Service:** The environmental conditions under which the solution must remain effective, such as performance, security, compliance, and usability (e.g., "The dashboard must render search results within 2 seconds for a database of 100,000 records").
 
-This hub currently hosts two dialects: **Functional Requirements** (classic “system shall” statements) and **BDD Features** (executable behaviour examples). Both link upstream to a Stakeholder Need. Non-functional / quality-of-service capture may be expanded later as an additional dialect.
+This hub hosts three dialects: **Functional Requirements** (classic “system shall” statements), **Non-Functional Requirements** (quality of service), and **BDD Features** (executable behaviour examples). All three link upstream to a Stakeholder Need.
 
 ## Why It Matters
 

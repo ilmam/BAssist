@@ -4,13 +4,16 @@ namespace App\Http\Controllers;
 
 use App\Models\Feature;
 use App\Models\FunctionalRequirement;
-use App\Models\Project;
+use App\Models\NonFunctionalRequirement;
+use App\Support\DtoMetadata;
 use App\Support\EntityAccess;
 use App\Support\ProjectContext;
+use App\Support\RepositoryResolver;
 use App\Support\WorkspaceContext;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class SolutionRequirementsController extends Controller
@@ -23,30 +26,7 @@ class SolutionRequirementsController extends Controller
         $projectId = $this->resolveProjectId($request);
         $workspaceId = $this->resolveWorkspaceId($request);
 
-        $projects = Project::query()
-            ->with('workspace')
-            ->when($tenantId !== null, fn ($q) => $q->whereHas(
-                'workspace',
-                fn ($w) => $w->where('tenant_id', $tenantId)
-            ))
-            ->when($workspaceId !== null, fn ($q) => $q->where('workspace_id', $workspaceId))
-            ->orderBy('name')
-            ->get(['id', 'name', 'code', 'workspace_id']);
-
         $sections = [];
-
-        if (entity_can('FunctionalRequirement', EntityAccess::VIEW)) {
-            $sections[] = $this->section(
-                model: 'FunctionalRequirement',
-                label: __('ui.functional_requirements'),
-                description: __('ui.solution_requirements_functional_requirements_help'),
-                icon: entity_icon('FunctionalRequirement'),
-                projectId: $projectId,
-                workspaceId: $workspaceId,
-                tenantId: $tenantId,
-                query: $this->baseQuery(FunctionalRequirement::query(), $projectId, $workspaceId, $tenantId),
-            );
-        }
 
         if (entity_can('Feature', EntityAccess::VIEW)) {
             $sections[] = $this->section(
@@ -61,13 +41,51 @@ class SolutionRequirementsController extends Controller
             );
         }
 
+        if (entity_can('FunctionalRequirement', EntityAccess::VIEW)) {
+            $sections[] = $this->section(
+                model: 'FunctionalRequirement',
+                label: __('ui.functional_requirements'),
+                description: __('ui.solution_requirements_functional_requirements_help'),
+                icon: entity_icon('FunctionalRequirement'),
+                projectId: $projectId,
+                workspaceId: $workspaceId,
+                tenantId: $tenantId,
+                query: $this->baseQuery(FunctionalRequirement::query(), $projectId, $workspaceId, $tenantId),
+            );
+        }
+
+        if (entity_can('NonFunctionalRequirement', EntityAccess::VIEW)) {
+            $sections[] = $this->section(
+                model: 'NonFunctionalRequirement',
+                label: __('ui.non_functional_requirements'),
+                description: __('ui.solution_requirements_non_functional_requirements_help'),
+                icon: entity_icon('NonFunctionalRequirement'),
+                projectId: $projectId,
+                workspaceId: $workspaceId,
+                tenantId: $tenantId,
+                query: $this->baseQuery(NonFunctionalRequirement::query(), $projectId, $workspaceId, $tenantId),
+            );
+        }
+
+        $filters = array_filter([
+            'project_id' => $projectId,
+            'workspace_id' => $workspaceId,
+        ], fn ($v) => $v !== null && $v !== '');
+
+        $indexUrl = route('solution_requirements.index');
+        $clearUrl = ! empty($filters['project_id'])
+            ? route('solution_requirements.index', array_filter([
+                'workspace_id' => $filters['workspace_id'] ?? null,
+                'clear_project' => 1,
+            ]))
+            : null;
+
         return view('pages.solution_requirements.index', [
             'sections' => $sections,
-            'projects' => $projects,
-            'filters' => [
-                'project_id' => $projectId,
-                'workspace_id' => $workspaceId,
-            ],
+            'filters' => $filters,
+            'filterAction' => $indexUrl,
+            'filterClearUrl' => $clearUrl,
+            'allowedListFilters' => ['project_id'],
         ]);
     }
 
@@ -86,17 +104,6 @@ class SolutionRequirementsController extends Controller
         Builder $query,
     ): array {
         $count = (clone $query)->count();
-        $items = (clone $query)
-            ->with(['project', 'status'])
-            ->orderByDesc('updated_at')
-            ->orderBy('title')
-            ->limit(50)
-            ->get()
-            ->map(function (Model $item) {
-                $item->status_label = $item->status?->name ?? '—';
-
-                return $item;
-            });
 
         $scopeQuery = array_filter([
             'workspace_id' => $workspaceId,
@@ -108,18 +115,34 @@ class SolutionRequirementsController extends Controller
             $indexUrl .= '?'.http_build_query($scopeQuery);
         }
 
+        $ajaxUrl = route('api.'.Str::snake($model).'.index', ['modelName' => $model]);
+        if ($scopeQuery !== []) {
+            $ajaxUrl .= (str_contains($ajaxUrl, '?') ? '&' : '?').http_build_query($scopeQuery);
+        }
+
+        $createModalUrl = entity_can($model, EntityAccess::CREATE)
+            ? model_modal_path($model, 'create')
+            : null;
+        if ($createModalUrl && $scopeQuery !== []) {
+            $createModalUrl .= (str_contains($createModalUrl, '?') ? '&' : '?').http_build_query($scopeQuery);
+        }
+
+        $repository = RepositoryResolver::make($model);
+        $columns = DtoMetadata::for($repository->viewDto)->listColumns(withPrefix: true);
+
         return [
             'model' => $model,
             'label' => $label,
             'description' => $description,
             'icon' => $icon,
             'count' => $count,
-            'items' => $items,
+            'columns' => $columns,
+            'ajax_url' => $ajaxUrl,
             'index_url' => $indexUrl,
-            'create_modal_url' => entity_can($model, EntityAccess::CREATE)
-                ? model_modal_path($model, 'create')
-                : null,
+            'create_modal_url' => $createModalUrl,
             'can_create' => entity_can($model, EntityAccess::CREATE),
+            'table_id' => 'hub-'.Str::snake($model),
+            'page_length' => 10,
             'placeholder' => false,
             'help_topic' => null,
         ];
@@ -170,7 +193,8 @@ class SolutionRequirementsController extends Controller
         $user = auth()->user();
 
         $canView = EntityAccess::can($user, 'Feature', EntityAccess::VIEW)
-            || EntityAccess::can($user, 'FunctionalRequirement', EntityAccess::VIEW);
+            || EntityAccess::can($user, 'FunctionalRequirement', EntityAccess::VIEW)
+            || EntityAccess::can($user, 'NonFunctionalRequirement', EntityAccess::VIEW);
 
         if (! $canView) {
             EntityAccess::authorize($user, 'Feature', EntityAccess::VIEW);

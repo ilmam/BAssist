@@ -10,6 +10,7 @@ use App\Models\ChangeRequest;
 use App\Models\Constraint;
 use App\Models\Feature;
 use App\Models\FunctionalRequirement;
+use App\Models\NonFunctionalRequirement;
 use App\Models\Project;
 use App\Models\Risk;
 use App\Models\ScopeItem;
@@ -50,20 +51,6 @@ class ProjectReadinessService
 
         $items = [];
 
-        if (entity_can('BusinessObjective', EntityAccess::VIEW)) {
-            $count = BusinessObjective::query()
-                ->where('project_id', $project->id)
-                ->whereDoesntHave('businessNeeds')
-                ->count();
-            $items[] = $this->item(
-                key: 'orphan_objectives',
-                label: __('ui.readiness_orphan_objectives'),
-                count: $count,
-                severity: 'warn',
-                url: route('traceability.index', $scopeQuery + ['orphans_only' => 1]),
-            );
-        }
-
         if (entity_can('BusinessNeed', EntityAccess::VIEW)) {
             $count = BusinessNeed::query()
                 ->where('project_id', $project->id)
@@ -77,23 +64,38 @@ class ProjectReadinessService
                 url: route('traceability.index', $scopeQuery + ['orphans_only' => 1]),
             );
 
-            $count = BusinessNeed::query()
+        }
+
+        if (entity_can('BusinessObjective', EntityAccess::VIEW)) {
+            $count = BusinessObjective::query()
+                ->where('project_id', $project->id)
+                ->whereDoesntHave('businessNeeds')
+                ->count();
+            $items[] = $this->item(
+                key: 'orphan_objectives',
+                label: __('ui.readiness_orphan_objectives'),
+                count: $count,
+                severity: 'warn',
+                url: route('traceability.index', $scopeQuery + ['orphans_only' => 1]),
+            );
+
+            $count = BusinessObjective::query()
                 ->where('project_id', $project->id)
                 ->whereDoesntHave('stakeholderNeeds')
                 ->count();
             $items[] = $this->item(
-                key: 'needs_without_stories',
-                label: __('ui.readiness_needs_without_stories'),
+                key: 'objectives_without_stories',
+                label: __('ui.readiness_objectives_without_stories'),
                 count: $count,
                 severity: 'warn',
-                url: model_route('BusinessNeed', 'index').'?'.http_build_query($scopeQuery),
+                url: model_route('BusinessObjective', 'index').'?'.http_build_query($scopeQuery),
             );
         }
 
         if (entity_can('StakeholderNeed', EntityAccess::VIEW)) {
             $count = StakeholderNeed::query()
                 ->where('project_id', $project->id)
-                ->whereDoesntHave('businessNeeds')
+                ->whereDoesntHave('businessObjectives')
                 ->count();
             $items[] = $this->item(
                 key: 'orphan_stories',
@@ -107,6 +109,7 @@ class ProjectReadinessService
                 ->where('project_id', $project->id)
                 ->whereDoesntHave('features')
                 ->whereDoesntHave('functionalRequirements')
+                ->whereDoesntHave('nonFunctionalRequirements')
                 ->count();
             $items[] = $this->item(
                 key: 'stories_without_features',
@@ -174,12 +177,50 @@ class ProjectReadinessService
             );
         }
 
+        if (entity_can('NonFunctionalRequirement', EntityAccess::VIEW)) {
+            $count = NonFunctionalRequirement::query()
+                ->where('project_id', $project->id)
+                ->whereNull('stakeholder_need_id')
+                ->whereNull('change_request_id')
+                ->count();
+            $items[] = $this->item(
+                key: 'orphan_non_functional_requirements',
+                label: __('ui.readiness_orphan_non_functional_requirements'),
+                count: $count,
+                severity: 'warn',
+                url: route('traceability.index', $scopeQuery + ['orphans_only' => 1]),
+            );
+
+            $count = NonFunctionalRequirement::query()
+                ->where('project_id', $project->id)
+                ->where(function ($query) {
+                    $query->whereNull('acceptance_criteria')
+                        ->orWhere('acceptance_criteria', '');
+                })
+                ->count();
+            $items[] = $this->item(
+                key: 'nfrs_without_acceptance',
+                label: __('ui.readiness_nfrs_without_acceptance'),
+                count: $count,
+                severity: 'info',
+                url: route('solution_requirements.index', $scopeQuery),
+            );
+        }
+
         $needRevisionId = EntityStatus::id(EntityStatus::NEED_REVISION);
         if ($needRevisionId !== null && (
-            entity_can('FunctionalRequirement', EntityAccess::VIEW) || entity_can('Feature', EntityAccess::VIEW)
+            entity_can('FunctionalRequirement', EntityAccess::VIEW)
+            || entity_can('NonFunctionalRequirement', EntityAccess::VIEW)
+            || entity_can('Feature', EntityAccess::VIEW)
         )) {
             $frCount = entity_can('FunctionalRequirement', EntityAccess::VIEW)
                 ? FunctionalRequirement::query()
+                    ->where('project_id', $project->id)
+                    ->where('status_id', $needRevisionId)
+                    ->count()
+                : 0;
+            $nfrCount = entity_can('NonFunctionalRequirement', EntityAccess::VIEW)
+                ? NonFunctionalRequirement::query()
                     ->where('project_id', $project->id)
                     ->where('status_id', $needRevisionId)
                     ->count()
@@ -193,7 +234,7 @@ class ProjectReadinessService
             $items[] = $this->item(
                 key: 'need_revision_packaging',
                 label: __('ui.readiness_need_revision_packaging'),
-                count: $frCount + $feCount,
+                count: $frCount + $nfrCount + $feCount,
                 severity: 'critical',
                 url: route('solution_requirements.index', $scopeQuery),
             );

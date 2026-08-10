@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace Database\Seeders;
 
@@ -11,6 +11,7 @@ use App\Models\ChangeRequest;
 use App\Models\Constraint;
 use App\Models\Feature;
 use App\Models\FunctionalRequirement;
+use App\Models\NonFunctionalRequirement;
 use App\Models\Project;
 use App\Models\Risk;
 use App\Models\Scenario;
@@ -32,6 +33,7 @@ use App\Support\ChangeRequestStatus;
 use App\Support\ConstraintStatus;
 use App\Support\EntityPriority;
 use App\Support\EntityStatus;
+use App\Support\NfrCategory;
 use App\Support\RiskCategory;
 use App\Support\RiskImpact;
 use App\Support\RiskLikelihood;
@@ -42,7 +44,7 @@ use App\Support\StrategicBaselineStatus;
 use Illuminate\Database\Seeder;
 
 /**
- * Full demo pack: strategy → need spine → packaging → diagrams → governance.
+ * Full demo pack: strategy ΓåÆ need spine ΓåÆ packaging ΓåÆ diagrams ΓåÆ governance.
  *
  * Project code: DEMO-PACK (idempotent via updateOrCreate on stable titles).
  */
@@ -263,7 +265,7 @@ TXT,
         }
         $snQueue->stakeholders()->sync($stakeholderIds);
 
-        // Teaching orphan (draft, unlinked) — mirrors NeedSpineSeeder patterns.
+        // Teaching orphan (draft, unlinked) ΓÇö mirrors NeedSpineSeeder patterns.
         $orphan = StakeholderNeed::query()->updateOrCreate(
             [
                 'project_id' => $project->id,
@@ -341,7 +343,7 @@ TXT,
             [
                 'description' => 'Field agents have a smartphone or tablet with network access during dealer visits.',
                 'status' => AssumptionStatus::VALIDATED,
-                'source' => 'Pilot interviews — Q2',
+                'source' => 'Pilot interviews ΓÇö Q2',
             ],
         );
 
@@ -550,7 +552,7 @@ TXT,
         Architecture::query()->updateOrCreate(
             ['project_id' => $project->id],
             [
-                'title' => 'Parts inquiry intake — C4 context & containers',
+                'title' => 'Parts inquiry intake ΓÇö C4 context & containers',
                 'description' => 'Context and container view for the digital intake initiative. ERP remains external system of record.',
                 'status_id' => $draftId,
                 'layout' => [
@@ -682,6 +684,25 @@ GHERKIN,
 - Edge: Inquiry stays Draft when quantity is not a positive integer
 TXT,
                 'priority_id' => $mustId,
+                'status_id' => $agreedId,
+            ],
+        );
+
+        NonFunctionalRequirement::query()->updateOrCreate(
+            [
+                'project_id' => $project->id,
+                'title' => 'Inquiry submit response time',
+            ],
+            [
+                'stakeholder_need_id' => $snSubmit->id,
+                'change_request_id' => null,
+                'category' => NfrCategory::PERFORMANCE,
+                'description' => 'The system shall complete parts-inquiry submit validation and return a success or field-error response within 2 seconds under normal dealer catalogue load (up to 100,000 parts).',
+                'acceptance_criteria' => <<<'TXT'
+- p95 submit response time ≤ 2 seconds in the reference environment
+- Timeouts and errors are reported to the agent without leaving the inquiry in an unknown state
+TXT,
+                'priority_id' => $shouldId,
                 'status_id' => $agreedId,
             ],
         );

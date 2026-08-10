@@ -66,11 +66,11 @@ return [
                 'badge_tone' => 'strategy',
                 'children' => [
                     [
-                        'entity' => 'BusinessObjective',
+                        'entity' => 'BusinessNeed',
                         'progress' => 'entity_agreed',
                     ],
                     [
-                        'entity' => 'BusinessNeed',
+                        'entity' => 'BusinessObjective',
                         'progress' => 'entity_agreed',
                     ],
                     [
@@ -115,7 +115,7 @@ return [
                         'route' => 'solution_requirements.index',
                         'icon' => 'subtitle',
                         'icon_v8' => 'subtitle',
-                        'entities' => ['Feature', 'FunctionalRequirement'],
+                        'entities' => ['Feature', 'FunctionalRequirement', 'NonFunctionalRequirement'],
                         'progress' => 'solution_hub',
                     ],
                     [
@@ -184,7 +184,7 @@ return [
                         'route' => 'acceptance-plan.index',
                         'icon' => 'check-squared',
                         'icon_v8' => 'check-squared',
-                        'entities' => ['Feature', 'Scenario', 'FunctionalRequirement'],
+                        'entities' => ['Feature', 'Scenario', 'FunctionalRequirement', 'NonFunctionalRequirement'],
                         'progress' => 'acceptance_hub',
                     ],
                 ],

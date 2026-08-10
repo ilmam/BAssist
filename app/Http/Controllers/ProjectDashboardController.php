@@ -14,14 +14,14 @@ class ProjectDashboardController extends Controller
      */
     protected const ARTIFACTS = [
         [
-            'model' => 'BusinessObjective',
-            'count' => 'business_objectives_count',
-            'label' => 'business_objectives',
-        ],
-        [
             'model' => 'BusinessNeed',
             'count' => 'business_needs_count',
             'label' => 'business_needs',
+        ],
+        [
+            'model' => 'BusinessObjective',
+            'count' => 'business_objectives_count',
+            'label' => 'business_objectives',
         ],
         [
             'model' => 'Stakeholder',
@@ -42,6 +42,11 @@ class ProjectDashboardController extends Controller
             'model' => 'FunctionalRequirement',
             'count' => 'functional_requirements_count',
             'label' => 'functional_requirements',
+        ],
+        [
+            'model' => 'NonFunctionalRequirement',
+            'count' => 'non_functional_requirements_count',
+            'label' => 'non_functional_requirements',
         ],
         [
             'model' => 'ChangeRequest',
@@ -117,6 +122,7 @@ class ProjectDashboardController extends Controller
             'stakeholderNeeds',
             'features',
             'functionalRequirements',
+            'nonFunctionalRequirements',
             'changeRequests',
             'risks',
             'stateFlows',
@@ -149,7 +155,7 @@ class ProjectDashboardController extends Controller
                 'StrategicBaseline' => route('strategic_baselines.for-project', $project->id),
                 'Assumption', 'Constraint', 'BusinessRule' => route('guardrails.index', $scopeQuery),
                 'ScopeItem' => route('strategy.index', $scopeQuery),
-                'Feature', 'FunctionalRequirement' => route('solution_requirements.index', $scopeQuery),
+                'Feature', 'FunctionalRequirement', 'NonFunctionalRequirement' => route('solution_requirements.index', $scopeQuery),
                 'ChangeRequest' => model_route('ChangeRequest', 'index').'?'.http_build_query($scopeQuery),
                 default => model_route($artifact['model'], 'index').'?'.http_build_query($scopeQuery),
             };

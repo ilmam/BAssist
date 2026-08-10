@@ -85,6 +85,12 @@ class Project extends BaseModel
     }
 
     #[Relation('HasMany')]
+    public function nonFunctionalRequirements(): HasMany
+    {
+        return $this->hasMany(NonFunctionalRequirement::class);
+    }
+
+    #[Relation('HasMany')]
     public function changeRequests(): HasMany
     {
         return $this->hasMany(ChangeRequest::class);

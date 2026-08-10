@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Feature;
 use App\Models\FunctionalRequirement;
+use App\Models\NonFunctionalRequirement;
 use App\Models\Project;
 use App\Models\Scenario;
 use App\Models\Workspace;
@@ -27,6 +28,8 @@ class AcceptancePlanBuilder
 
     public const SOURCE_FR = 'fr';
 
+    public const SOURCE_NFR = 'nfr';
+
     public function __construct(
         protected WorkspaceContext $workspaceContext,
         protected ProjectContext $projectContext,
@@ -43,7 +46,7 @@ class AcceptancePlanBuilder
      * }  $filters
      * @return array{
      *   rows: list<array<string, mixed>>,
-     *   summary: array{total: int, edge_case: int, happy_path: int, bdd: int, fr: int},
+     *   summary: array{total: int, edge_case: int, happy_path: int, bdd: int, fr: int, nfr: int},
      *   projects: Collection<int, Project>,
      *   features: Collection<int, Feature>,
      *   filters: array{
@@ -101,6 +104,18 @@ class AcceptancePlanBuilder
                 ->get();
 
             $rows = $rows->merge($this->rowsForFunctionalRequirements($requirements));
+
+            $nfrs = $this->scopedNonFunctionalRequirementQuery($projectId, $workspaceId)
+                ->with([
+                    'status:id,name,code',
+                    'stakeholderNeed:id,number,title',
+                ])
+                ->when($stakeholderNeedId !== null, fn (Builder $query) => $query->where('stakeholder_need_id', $stakeholderNeedId))
+                ->orderBy('number')
+                ->orderBy('title')
+                ->get();
+
+            $rows = $rows->merge($this->rowsForNonFunctionalRequirements($nfrs));
         }
 
         if ($typeFilter !== null) {
@@ -123,6 +138,7 @@ class AcceptancePlanBuilder
                 'happy_path' => $rows->where('type', self::TYPE_HAPPY_PATH)->count(),
                 'bdd' => $rows->where('source', self::SOURCE_BDD)->count(),
                 'fr' => $rows->where('source', self::SOURCE_FR)->count(),
+                'nfr' => $rows->where('source', self::SOURCE_NFR)->count(),
             ],
             'projects' => $this->projectsForFilter($workspaceId),
             'features' => $this->featuresForFilter($projectId, $workspaceId),
@@ -181,6 +197,32 @@ class AcceptancePlanBuilder
             foreach ($checks as $check) {
                 $sequence++;
                 $rows[] = $this->rowFromFunctionalRequirement($requirement, $check, $prefix, $sequence);
+            }
+        }
+
+        return $rows;
+    }
+
+    /**
+     * @param  iterable<int, NonFunctionalRequirement>  $requirements
+     * @return list<array<string, mixed>>
+     */
+    public function rowsForNonFunctionalRequirements(iterable $requirements): array
+    {
+        $rows = [];
+
+        foreach ($requirements as $requirement) {
+            $checks = $this->acceptanceCriteriaLines($requirement->acceptance_criteria);
+            if ($checks === []) {
+                continue;
+            }
+
+            $prefix = $this->testIdPrefix($requirement->code, (string) ($requirement->title ?? ''));
+            $sequence = 0;
+
+            foreach ($checks as $check) {
+                $sequence++;
+                $rows[] = $this->rowFromNonFunctionalRequirement($requirement, $check, $prefix, $sequence);
             }
         }
 
@@ -390,6 +432,37 @@ class AcceptancePlanBuilder
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
+    protected function rowFromNonFunctionalRequirement(
+        NonFunctionalRequirement $requirement,
+        string $check,
+        string $prefix,
+        int $sequence,
+    ): array {
+        $statusName = is_string($requirement->status?->name)
+            ? trim($requirement->status->name)
+            : '';
+
+        return [
+            'source' => self::SOURCE_NFR,
+            'test_id' => $this->formatTestId($prefix, $sequence),
+            'feature_id' => null,
+            'feature_title' => $requirement->title,
+            'feature_code' => $requirement->code,
+            'functional_requirement_id' => null,
+            'non_functional_requirement_id' => $requirement->id,
+            'scenario_id' => null,
+            'scenario_title' => $check,
+            'rule' => trim((string) $requirement->description),
+            'type' => $this->resolveAcceptanceCheckType($check),
+            'status' => $statusName !== '' ? $statusName : self::STATUS_DEFAULT,
+            'need_id' => $requirement->stakeholder_need_id,
+            'need_code' => $requirement->stakeholderNeed?->code,
+        ];
+    }
+
     protected function initialsFromTitle(string $title): string
     {
         $words = preg_split('/\s+/', trim($title)) ?: [];
@@ -435,6 +508,14 @@ class AcceptancePlanBuilder
     protected function scopedFunctionalRequirementQuery(?int $projectId, ?int $workspaceId): Builder
     {
         return $this->applyProjectScope(FunctionalRequirement::query(), $projectId, $workspaceId);
+    }
+
+    /**
+     * @return Builder<NonFunctionalRequirement>
+     */
+    protected function scopedNonFunctionalRequirementQuery(?int $projectId, ?int $workspaceId): Builder
+    {
+        return $this->applyProjectScope(NonFunctionalRequirement::query(), $projectId, $workspaceId);
     }
 
     /**

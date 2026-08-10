@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace App\Models;
 
@@ -77,6 +77,12 @@ class StakeholderNeed extends BaseModel
     public function functionalRequirements(): HasMany
     {
         return $this->hasMany(FunctionalRequirement::class);
+    }
+
+    #[Relation('HasMany')]
+    public function nonFunctionalRequirements(): HasMany
+    {
+        return $this->hasMany(NonFunctionalRequirement::class);
     }
 
     #[Relation('HasMany')]

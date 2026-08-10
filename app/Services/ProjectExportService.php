@@ -41,6 +41,7 @@ class ProjectExportService
      *   risks: \Illuminate\Database\Eloquent\Collection,
      *   features: list<array{model: \App\Models\Feature, gherkin: string}>,
      *   functional_requirements: \Illuminate\Database\Eloquent\Collection,
+     *   non_functional_requirements: \Illuminate\Database\Eloquent\Collection,
      *   matrix: array{rows: list<array<string, mixed>>, summary: array<string, int>}
      * }
      */
@@ -49,16 +50,17 @@ class ProjectExportService
         $project->loadMissing([
             'workspace',
             'status',
-            'businessObjectives',
+            'businessObjectives.businessNeeds',
             'businessNeeds.businessObjectives',
             // Export stakeholders matrix: only rows linked to ≥1 StakeholderNeed (project "requirements").
             'stakeholders.stakeholderNeeds',
             'stakeholderNeeds.priority',
             'stakeholderNeeds.status',
             'stakeholderNeeds.stakeholders',
-            'stakeholderNeeds.businessNeeds',
+            'stakeholderNeeds.businessObjectives',
             'stateFlows.status',
             'swimlaneFlows.status',
+            'swimlaneFlows.swimlaneFlowSteps',
             'architecture.status',
             'assumptions',
             'constraints',
@@ -69,6 +71,9 @@ class ProjectExportService
             'functionalRequirements.priority',
             'functionalRequirements.status',
             'functionalRequirements.stakeholderNeed',
+            'nonFunctionalRequirements.priority',
+            'nonFunctionalRequirements.status',
+            'nonFunctionalRequirements.stakeholderNeed',
             'features.priority',
             'features.status',
             'features.stakeholderNeed',
@@ -119,7 +124,8 @@ class ProjectExportService
                     'mermaid' => $this->swimlanes->generate(
                         $flow->title,
                         $flow->normalizedElements(),
-                        (string) ($flow->direction ?? 'TB')
+                        (string) ($flow->direction ?? 'TB'),
+                        (string) ($flow->color_mode ?? 'both')
                     ),
                 ])
                 ->all(),
@@ -129,6 +135,7 @@ class ProjectExportService
             'business_rules' => $project->businessRules->sortBy('title')->values(),
             'risks' => $project->risks->sortBy('number')->values(),
             'functional_requirements' => $project->functionalRequirements->sortBy('number')->values(),
+            'non_functional_requirements' => $project->nonFunctionalRequirements->sortBy('number')->values(),
             // Features last among artifacts (before the matrix appendix).
             'features' => $project->features
                 ->sortBy('number')

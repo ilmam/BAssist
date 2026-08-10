@@ -27,11 +27,11 @@ class HelpGuideBookletTest extends TestCase
 
     public function test_step_route_returns_guide_with_prev_next_nav(): void
     {
-        $response = $this->withoutMiddleware()->get(route('help.guide.show', 'business_needs'));
+        $response = $this->withoutMiddleware()->get(route('help.guide.show', 'business_objectives'));
 
         $response->assertOk();
         $response->assertSee('help-guide-nav', false);
-        $response->assertSee('data-help-url="'.route('help.guide.show', 'business_objectives').'"', false);
+        $response->assertSee('data-help-url="'.route('help.guide.show', 'business_needs').'"', false);
         $response->assertSee('data-help-url="'.route('help.guide.show', 'risks').'"', false);
         $response->assertSee('data-help-url="'.route('help.guide').'"', false);
         $response->assertSee('data-help-nav="prev"', false);
@@ -74,6 +74,14 @@ class HelpGuideBookletTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('Functional Requirements', false);
+    }
+
+    public function test_non_functional_requirements_guide_is_in_booklet(): void
+    {
+        $response = $this->withoutMiddleware()->get(route('help.guide.show', 'non_functional_requirements'));
+
+        $response->assertOk();
+        $response->assertSee('Non-Functional Requirements', false);
     }
 
     public function test_topbar_includes_ba_guide_trigger_with_label(): void

@@ -17,6 +17,8 @@ final class ChangeRequestAffectedType
 
     public const FUNCTIONAL_REQUIREMENT = 'functional_requirement';
 
+    public const NON_FUNCTIONAL_REQUIREMENT = 'non_functional_requirement';
+
     /**
      * @return list<string>
      */
@@ -28,6 +30,7 @@ final class ChangeRequestAffectedType
             self::STAKEHOLDER_NEED,
             self::FEATURE,
             self::FUNCTIONAL_REQUIREMENT,
+            self::NON_FUNCTIONAL_REQUIREMENT,
         ];
     }
 
@@ -42,6 +45,7 @@ final class ChangeRequestAffectedType
             self::STAKEHOLDER_NEED => \App\Models\StakeholderNeed::class,
             self::FEATURE => \App\Models\Feature::class,
             self::FUNCTIONAL_REQUIREMENT => \App\Models\FunctionalRequirement::class,
+            self::NON_FUNCTIONAL_REQUIREMENT => \App\Models\NonFunctionalRequirement::class,
         ];
     }
 
@@ -61,6 +65,7 @@ final class ChangeRequestAffectedType
             self::STAKEHOLDER_NEED => __('ui.stakeholder_need'),
             self::FEATURE => __('ui.feature'),
             self::FUNCTIONAL_REQUIREMENT => __('ui.functional_requirement'),
+            self::NON_FUNCTIONAL_REQUIREMENT => __('ui.non_functional_requirement'),
         ];
     }
 

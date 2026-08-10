@@ -261,21 +261,21 @@ Carried forward from [`phase-1.x-todo.md`](phase-1.x-todo.md) §1.3 (not started
 
 ---
 
-## 7. Solution requirements — NFR dialect — **TODO** · **P2**
+## 7. Solution requirements — NFR dialect — **DONE** · **P2**
 
-From [`resources/help/solution_requirements.md`](resources/help/solution_requirements.md): *“Non-functional / quality-of-service capture may be expanded later as an additional dialect.”*
+From [`resources/help/solution_requirements.md`](resources/help/solution_requirements.md): third dialect under Solution Requirements.
 
 ### Scope
 
 - Third dialect under Solution Requirements hub (alongside Functional Requirements and BDD Features)
-- Links upstream to Stakeholder Need; same nav/hub pattern as existing dialects
+- Links upstream to Stakeholder Need (or approved Change Request); same nav/hub pattern as existing dialects
 - Lightweight v1: title, description, category (performance, security, availability, etc.), optional acceptance criteria
 
 ### Acceptance criteria
 
-- [ ] Hub section for NFR / QoS with CRUD parity to FR
-- [ ] Traceability and export include NFR rows
-- [ ] Help booklet updated
+- [x] Hub section for NFR / QoS with CRUD parity to FR
+- [x] Traceability and export include NFR rows
+- [x] Help booklet updated
 
 ---
 

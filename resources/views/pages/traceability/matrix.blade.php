@@ -28,6 +28,7 @@
             'orphan_stakeholder_need' => __('ui.gap_orphan_stakeholder_need'),
             'orphan_feature' => __('ui.gap_orphan_feature'),
             'orphan_functional_requirement' => __('ui.gap_orphan_functional_requirement'),
+            'orphan_non_functional_requirement' => __('ui.gap_orphan_non_functional_requirement'),
         ];
     @endphp
 
@@ -96,8 +97,8 @@
                 <table class="kt-table kt-table-border w-full">
                     <thead>
                         <tr>
-                            <th>{{ __('ui.business_objective') }}</th>
                             <th>{{ __('ui.business_need') }}</th>
+                            <th>{{ __('ui.business_objective') }}</th>
                             <th>{{ __('ui.stakeholder_need') }}</th>
                             <th>{{ __('ui.solution_requirement') }}</th>
                             <th>{{ __('ui.process_step') }}</th>
@@ -109,24 +110,11 @@
                         @forelse ($rows as $row)
                             <tr @class(['is-orphan-row' => $row['has_gap']])>
                                 <td>
-                                    @if ($row['objective_id'])
-                                        <a href="{{ model_modal_path('BusinessObjective', 'view', $row['objective_id']) }}"
-                                           class="text-primary hover:underline js-open-modal"
-                                           data-modal-url="{{ model_modal_path('BusinessObjective', 'view', $row['objective_id']) }}">
-                                            @if (! empty($row['objective_code']))
-                                                <span class="text-muted-foreground text-xs me-1">{{ $row['objective_code'] }}</span>
-                                            @endif
-                                            {{ $row['objective_title'] }}
-                                        </a>
-                                    @else
-                                        <span class="text-muted-foreground">—</span>
-                                    @endif
-                                </td>
-                                <td>
                                     @if ($row['need_id'])
                                         <a href="{{ model_modal_path('BusinessNeed', 'view', $row['need_id']) }}"
                                            class="text-primary hover:underline js-open-modal"
-                                           data-modal-url="{{ model_modal_path('BusinessNeed', 'view', $row['need_id']) }}">
+                                           data-modal-url="{{ model_modal_path('BusinessNeed', 'view', $row['need_id']) }}"
+                                           data-modal-nav="off">
                                             @if (! empty($row['need_code']))
                                                 <span class="text-muted-foreground text-xs me-1">{{ $row['need_code'] }}</span>
                                             @endif
@@ -137,10 +125,26 @@
                                     @endif
                                 </td>
                                 <td>
+                                    @if ($row['objective_id'])
+                                        <a href="{{ model_modal_path('BusinessObjective', 'view', $row['objective_id']) }}"
+                                           class="text-primary hover:underline js-open-modal"
+                                           data-modal-url="{{ model_modal_path('BusinessObjective', 'view', $row['objective_id']) }}"
+                                           data-modal-nav="off">
+                                            @if (! empty($row['objective_code']))
+                                                <span class="text-muted-foreground text-xs me-1">{{ $row['objective_code'] }}</span>
+                                            @endif
+                                            {{ $row['objective_title'] }}
+                                        </a>
+                                    @else
+                                        <span class="text-muted-foreground">—</span>
+                                    @endif
+                                </td>
+                                <td>
                                     @if ($row['stakeholder_need_id'])
                                         <a href="{{ model_modal_path('StakeholderNeed', 'view', $row['stakeholder_need_id']) }}"
                                            class="text-primary hover:underline js-open-modal"
-                                           data-modal-url="{{ model_modal_path('StakeholderNeed', 'view', $row['stakeholder_need_id']) }}">
+                                           data-modal-url="{{ model_modal_path('StakeholderNeed', 'view', $row['stakeholder_need_id']) }}"
+                                           data-modal-nav="off">
                                             @if (! empty($row['stakeholder_need_code']))
                                                 <span class="text-muted-foreground text-xs me-1">{{ $row['stakeholder_need_code'] }}</span>
                                             @endif
@@ -154,7 +158,8 @@
                                     @if (! empty($row['feature_id']))
                                         <a href="{{ model_modal_path('Feature', 'view', $row['feature_id']) }}"
                                            class="text-primary hover:underline js-open-modal"
-                                           data-modal-url="{{ model_modal_path('Feature', 'view', $row['feature_id']) }}">
+                                           data-modal-url="{{ model_modal_path('Feature', 'view', $row['feature_id']) }}"
+                                           data-modal-nav="off">
                                             @if (! empty($row['feature_code']))
                                                 <span class="text-muted-foreground text-xs me-1">{{ $row['feature_code'] }}</span>
                                             @endif
@@ -166,13 +171,25 @@
                                     @elseif (! empty($row['functional_requirement_id']))
                                         <a href="{{ model_modal_path('FunctionalRequirement', 'view', $row['functional_requirement_id']) }}"
                                            class="text-primary hover:underline js-open-modal"
-                                           data-modal-url="{{ model_modal_path('FunctionalRequirement', 'view', $row['functional_requirement_id']) }}">
+                                           data-modal-url="{{ model_modal_path('FunctionalRequirement', 'view', $row['functional_requirement_id']) }}"
+                                           data-modal-nav="off">
                                             @if (! empty($row['functional_requirement_code']))
                                                 <span class="text-muted-foreground text-xs me-1">{{ $row['functional_requirement_code'] }}</span>
                                             @endif
                                             {{ $row['functional_requirement_title'] }}
                                         </a>
                                         <span class="text-muted-foreground text-xs ms-1">({{ __('ui.functional_requirement_short') }})</span>
+                                    @elseif (! empty($row['non_functional_requirement_id']))
+                                        <a href="{{ model_modal_path('NonFunctionalRequirement', 'view', $row['non_functional_requirement_id']) }}"
+                                           class="text-primary hover:underline js-open-modal"
+                                           data-modal-url="{{ model_modal_path('NonFunctionalRequirement', 'view', $row['non_functional_requirement_id']) }}"
+                                           data-modal-nav="off">
+                                            @if (! empty($row['non_functional_requirement_code']))
+                                                <span class="text-muted-foreground text-xs me-1">{{ $row['non_functional_requirement_code'] }}</span>
+                                            @endif
+                                            {{ $row['non_functional_requirement_title'] }}
+                                        </a>
+                                        <span class="text-muted-foreground text-xs ms-1">({{ __('ui.non_functional_requirement_short') }})</span>
                                     @else
                                         <span class="text-muted-foreground">—</span>
                                     @endif
@@ -188,7 +205,8 @@
                                         @if (! empty($stepFlowId))
                                             <a href="{{ model_modal_path('SwimlaneFlow', 'view', $stepFlowId) }}"
                                                class="text-primary hover:underline js-open-modal"
-                                               data-modal-url="{{ model_modal_path('SwimlaneFlow', 'view', $stepFlowId) }}">
+                                               data-modal-url="{{ model_modal_path('SwimlaneFlow', 'view', $stepFlowId) }}"
+                                               data-modal-nav="off">
                                                 @if (! empty($stepCode))
                                                     <span class="text-muted-foreground text-xs me-1">{{ $stepCode }}</span>
                                                 @endif

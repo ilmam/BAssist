@@ -37,6 +37,7 @@ return [
         'Feature' => 'category',
         'Scenario' => 'category',
         'FunctionalRequirement' => 'subtitle',   // technical / system document
+        'NonFunctionalRequirement' => 'chart-line', // QoS / measurable attributes
         'Assumption' => 'question-2',
         'Constraint' => 'lock-2',
         'BusinessRule' => 'scroll',              // rules / governance (book reserved for BABOK)

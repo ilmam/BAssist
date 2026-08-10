@@ -70,20 +70,20 @@ return [
         ],
 
         // Icons: config/entity_icons.php (overlaid onto nav_icon by CrudEntityRegistry).
-        'BusinessObjective' => [
-            'home' => true,
-            'nav' => false,
-            'nav_label' => 'Business Objectives',
-            'nav_icon' => 'focus',
-            'nav_icon_v8' => 'focus',
-        ],
-
         'BusinessNeed' => [
             'home' => true,
             'nav' => false,
             'nav_label' => 'Business Needs',
             'nav_icon' => 'electricity',
             'nav_icon_v8' => 'electricity',
+        ],
+
+        'BusinessObjective' => [
+            'home' => true,
+            'nav' => false,
+            'nav_label' => 'Business Objectives',
+            'nav_icon' => 'focus',
+            'nav_icon_v8' => 'focus',
         ],
 
         'Stakeholder' => [
@@ -117,6 +117,14 @@ return [
             'nav_label' => 'Functional Requirements',
             'nav_icon' => 'subtitle',
             'nav_icon_v8' => 'subtitle',
+        ],
+
+        'NonFunctionalRequirement' => [
+            'home' => true,
+            'nav' => false,
+            'nav_label' => 'Non-Functional Requirements',
+            'nav_icon' => 'chart-line',
+            'nav_icon_v8' => 'chart-line',
         ],
 
         'ChangeRequest' => [

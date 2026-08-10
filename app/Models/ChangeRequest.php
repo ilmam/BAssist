@@ -83,6 +83,12 @@ class ChangeRequest extends BaseModel
         return $this->hasMany(FunctionalRequirement::class);
     }
 
+    #[Relation('HasMany')]
+    public function nonFunctionalRequirements(): HasMany
+    {
+        return $this->hasMany(NonFunctionalRequirement::class);
+    }
+
     public function statusLabel(): string
     {
         return ChangeRequestStatus::label((string) $this->status);

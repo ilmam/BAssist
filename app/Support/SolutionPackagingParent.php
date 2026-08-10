@@ -6,7 +6,7 @@ use App\Models\ChangeRequest;
 use Illuminate\Validation\ValidationException;
 
 /**
- * FR / Feature lineage: exclusive parent — Stakeholder Need XOR Change Request.
+ * FR / Feature / NFR lineage: exclusive parent — Stakeholder Need XOR Change Request.
  * At least one is required. Approved/implemented CRs only when CR is chosen.
  */
 final class SolutionPackagingParent

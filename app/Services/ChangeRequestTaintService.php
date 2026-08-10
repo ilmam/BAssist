@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\ChangeRequest;
 use App\Models\Feature;
 use App\Models\FunctionalRequirement;
+use App\Models\NonFunctionalRequirement;
 use App\Support\ChangeRequestStatus;
 use App\Support\EntityStatus;
 use Illuminate\Support\Facades\DB;
@@ -13,7 +14,7 @@ use Illuminate\Validation\ValidationException;
 class ChangeRequestTaintService
 {
     /**
-     * Agreed FR + BDD Feature candidates under the CR's Stakeholder Need.
+     * Agreed FR + NFR + BDD Feature candidates under the CR's Stakeholder Need.
      *
      * @return list<array{type: string, id: int, code: string|null, title: string, selected: bool}>
      */
@@ -48,6 +49,22 @@ class ChangeRequestTaintService
         }
 
         foreach (
+            NonFunctionalRequirement::query()
+                ->where('stakeholder_need_id', $snId)
+                ->where('status_id', $agreedId)
+                ->orderBy('number')
+                ->get() as $nfr
+        ) {
+            $rows[] = [
+                'type' => 'non_functional_requirement',
+                'id' => (int) $nfr->id,
+                'code' => $nfr->code,
+                'title' => (string) $nfr->title,
+                'selected' => true,
+            ];
+        }
+
+        foreach (
             Feature::query()
                 ->where('stakeholder_need_id', $snId)
                 ->where('status_id', $agreedId)
@@ -68,7 +85,7 @@ class ChangeRequestTaintService
 
     /**
      * @param  list<array{type?: string, id?: int|string}|string>  $selected
-     *         Accepts "functional_requirement:12" / "feature:3" tokens or ['type'=>,'id'=>] arrays.
+     *         Accepts "functional_requirement:12" / "non_functional_requirement:4" / "feature:3" tokens or ['type'=>,'id'=>] arrays.
      */
     public function approveAndTaint(ChangeRequest $changeRequest, array $selected): ChangeRequest
     {
@@ -111,6 +128,10 @@ class ChangeRequestTaintService
 
                 if ($type === 'functional_requirement') {
                     FunctionalRequirement::query()
+                        ->whereKey($id)
+                        ->update(['status_id' => $needRevisionId]);
+                } elseif ($type === 'non_functional_requirement') {
+                    NonFunctionalRequirement::query()
                         ->whereKey($id)
                         ->update(['status_id' => $needRevisionId]);
                 } elseif ($type === 'feature') {

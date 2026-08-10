@@ -15,6 +15,7 @@ class BabokDocumentService
 {
     public function __construct(
         protected ProjectExportService $export,
+        protected AcceptancePlanBuilder $acceptancePlan,
     ) {
     }
 
@@ -190,12 +191,13 @@ class BabokDocumentService
             'stakeholder-engagement' => $pack['stakeholders']->count(),
             'stakeholder-requirements' => $pack['stakeholder_needs']->count(),
             'solution-requirements' => $pack['functional_requirements']->count()
+                + ($pack['non_functional_requirements']?->count() ?? 0)
                 + $pack['constraints']->count()
                 + $pack['business_rules']->count(),
             'process-state-models' => count($pack['state_flows'])
                 + count($pack['swimlane_flows'])
                 + count($pack['architecture']['views'] ?? []),
-            'acceptance-criteria' => count($pack['features']),
+            'acceptance-criteria' => count($pack['acceptance_rows'] ?? []),
             'traceability-matrix' => count($pack['matrix']['rows'] ?? []),
             'governance' => count($pack['readiness']['items'] ?? [])
                 + $project->changeRequests->count(),
@@ -224,7 +226,7 @@ class BabokDocumentService
         if ($sectionKey === 'stakeholder-requirements') {
             $before = $pack['stakeholder_needs']->count();
             $filtered['stakeholder_needs'] = $pack['stakeholder_needs']
-                ->filter(fn ($sn) => $sn->businessNeeds->isNotEmpty())
+                ->filter(fn ($sn) => $sn->businessObjectives->isNotEmpty())
                 ->values();
             $omitted += $before - $filtered['stakeholder_needs']->count();
         }
@@ -235,11 +237,18 @@ class BabokDocumentService
                 ->filter(fn ($fr) => $fr->stakeholderNeed !== null)
                 ->values();
             $omitted += $before - $filtered['functional_requirements']->count();
+
+            $nfrs = $pack['non_functional_requirements'] ?? collect();
+            $nfrBefore = $nfrs->count();
+            $filtered['non_functional_requirements'] = $nfrs
+                ->filter(fn ($nfr) => $nfr->stakeholderNeed !== null)
+                ->values();
+            $omitted += $nfrBefore - $filtered['non_functional_requirements']->count();
         }
 
         if ($sectionKey === 'acceptance-criteria') {
-            $before = count($pack['features']);
-            $filtered['features'] = collect($pack['features'])
+            $featuresBefore = count($pack['features']);
+            $features = collect($pack['features'])
                 ->filter(function (array $item): bool {
                     $feature = $item['model'];
                     $hasParent = $feature->stakeholderNeed !== null;
@@ -248,9 +257,49 @@ class BabokDocumentService
 
                     return $hasParent && ($hasScenarios || $hasGherkin);
                 })
+                ->values();
+            $filtered['features'] = $features->all();
+            $omitted += $featuresBefore - $features->count();
+
+            $requirements = $pack['functional_requirements']
+                ->filter(function ($fr): bool {
+                    if ($fr->stakeholderNeed === null) {
+                        return false;
+                    }
+
+                    return $this->acceptancePlan->acceptanceCriteriaLines($fr->acceptance_criteria) !== [];
+                })
+                ->values();
+
+            $frBefore = $pack['functional_requirements']->count();
+            $omitted += $frBefore - $requirements->count();
+
+            $nfrs = collect($pack['non_functional_requirements'] ?? [])
+                ->filter(function ($nfr): bool {
+                    if ($nfr->stakeholderNeed === null) {
+                        return false;
+                    }
+
+                    return $this->acceptancePlan->acceptanceCriteriaLines($nfr->acceptance_criteria) !== [];
+                })
+                ->values();
+
+            $nfrBefore = collect($pack['non_functional_requirements'] ?? [])->count();
+            $omitted += $nfrBefore - $nfrs->count();
+
+            $featureModels = $features->map(fn (array $item) => $item['model'])->all();
+            $rows = collect($this->acceptancePlan->rowsForFeatures($featureModels))
+                ->merge($this->acceptancePlan->rowsForFunctionalRequirements($requirements))
+                ->merge($this->acceptancePlan->rowsForNonFunctionalRequirements($nfrs))
+                ->sortBy([
+                    ['source', 'asc'],
+                    ['feature_code', 'asc'],
+                    ['test_id', 'asc'],
+                ])
                 ->values()
                 ->all();
-            $omitted += $before - count($filtered['features']);
+
+            $filtered['acceptance_rows'] = $rows;
         }
 
         return [$filtered, $omitted];

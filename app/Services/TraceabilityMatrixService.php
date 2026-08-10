@@ -6,6 +6,7 @@ use App\Models\BusinessNeed;
 use App\Models\BusinessObjective;
 use App\Models\Feature;
 use App\Models\FunctionalRequirement;
+use App\Models\NonFunctionalRequirement;
 use App\Models\SwimlaneFlowStep;
 use App\Models\Project;
 use App\Models\StakeholderNeed;
@@ -17,7 +18,7 @@ use Illuminate\Support\Collection;
 
 /**
  * Builds a derived traceability matrix from FK / pivot links.
- * Chain: Objective ↔ Need ↔ Stakeholder Need → (Feature → Scenarios | Functional Requirement)
+ * Chain: Need (why) ↔ Objective (what) ↔ Stakeholder Need → (Feature → Scenarios | Functional Requirement | Non-Functional Requirement)
  * BPD coverage: FR|Feature.swimlane_flow_step_id ← SwimlaneFlowStep; steps optionally link upstream to SN.
  */
 class TraceabilityMatrixService
@@ -32,7 +33,7 @@ class TraceabilityMatrixService
      * @param  array{project_id?: int|string|null, orphans_only?: bool|string|null}  $filters
      * @return array{
      *   rows: list<array<string, mixed>>,
-     *   summary: array{total: int, gaps: int, orphan_objectives: int, orphan_needs: int, orphan_stakeholder_needs: int, orphan_features: int, orphan_functional_requirements: int, features_without_scenarios: int, process_steps_without_need: int, uncovered_process_steps: int},
+     *   summary: array{total: int, gaps: int, orphan_objectives: int, orphan_needs: int, orphan_stakeholder_needs: int, orphan_features: int, orphan_functional_requirements: int, orphan_non_functional_requirements: int, features_without_scenarios: int, process_steps_without_need: int, uncovered_process_steps: int},
      *   projects: Collection<int, Project>,
      *   filters: array{project_id: int|null, workspace_id: int|null, workspace_name: string|null, orphans_only: bool}
      * }
@@ -56,6 +57,7 @@ class TraceabilityMatrixService
             ->merge($this->orphanStakeholderNeedRows($projectId, $workspaceId))
             ->merge($this->orphanFeatureRows($projectId, $workspaceId))
             ->merge($this->orphanFunctionalRequirementRows($projectId, $workspaceId))
+            ->merge($this->orphanNonFunctionalRequirementRows($projectId, $workspaceId))
             ->merge($this->processStepGapRows($coverage))
             ->values();
 
@@ -66,11 +68,12 @@ class TraceabilityMatrixService
         $rows = $rows
             ->sortBy([
                 ['project_name', 'asc'],
-                ['objective_number', 'asc'],
                 ['need_number', 'asc'],
+                ['objective_number', 'asc'],
                 ['stakeholder_need_number', 'asc'],
                 ['feature_code', 'asc'],
                 ['functional_requirement_code', 'asc'],
+                ['non_functional_requirement_code', 'asc'],
                 ['process_step_code', 'asc'],
             ])
             ->values();
@@ -85,6 +88,7 @@ class TraceabilityMatrixService
                 'orphan_stakeholder_needs' => $rows->where('gap_type', 'orphan_stakeholder_need')->count(),
                 'orphan_features' => $rows->where('gap_type', 'orphan_feature')->count(),
                 'orphan_functional_requirements' => $rows->where('gap_type', 'orphan_functional_requirement')->count(),
+                'orphan_non_functional_requirements' => $rows->where('gap_type', 'orphan_non_functional_requirement')->count(),
                 'features_without_scenarios' => $rows->filter(
                     fn (array $r) => in_array('missing_scenarios', $r['gaps'], true)
                 )->count(),
@@ -114,26 +118,33 @@ class TraceabilityMatrixService
             ->with([
                 'project:id,name,code',
                 'businessObjectives:id,number,title',
-                'stakeholderNeeds:id,number,title,project_id',
-                'stakeholderNeeds.stakeholders:id,name',
-                'stakeholderNeeds.features' => fn ($query) => $query
+                'businessObjectives.stakeholderNeeds:id,number,title,project_id',
+                'businessObjectives.stakeholderNeeds.stakeholders:id,name',
+                'businessObjectives.stakeholderNeeds.features' => fn ($query) => $query
                     ->withCount('scenarios')
                     ->with(['swimlaneFlowStep.swimlaneFlow:id,title', 'swimlaneFlowStep.project:id,name,code'])
                     ->orderBy('number')
                     ->orderBy('title'),
-                'stakeholderNeeds.functionalRequirements' => fn ($query) => $query
+                'businessObjectives.stakeholderNeeds.functionalRequirements' => fn ($query) => $query
                     ->with(['swimlaneFlowStep.swimlaneFlow:id,title', 'swimlaneFlowStep.project:id,name,code'])
                     ->orderBy('number')
                     ->orderBy('title'),
-                'stakeholderNeeds.changeRequests.features' => fn ($query) => $query
+                'businessObjectives.stakeholderNeeds.nonFunctionalRequirements' => fn ($query) => $query
+                    ->orderBy('number')
+                    ->orderBy('title'),
+                'businessObjectives.stakeholderNeeds.changeRequests.features' => fn ($query) => $query
                     ->whereNull('stakeholder_need_id')
                     ->withCount('scenarios')
                     ->with(['swimlaneFlowStep.swimlaneFlow:id,title', 'swimlaneFlowStep.project:id,name,code'])
                     ->orderBy('number')
                     ->orderBy('title'),
-                'stakeholderNeeds.changeRequests.functionalRequirements' => fn ($query) => $query
+                'businessObjectives.stakeholderNeeds.changeRequests.functionalRequirements' => fn ($query) => $query
                     ->whereNull('stakeholder_need_id')
                     ->with(['swimlaneFlowStep.swimlaneFlow:id,title', 'swimlaneFlowStep.project:id,name,code'])
+                    ->orderBy('number')
+                    ->orderBy('title'),
+                'businessObjectives.stakeholderNeeds.changeRequests.nonFunctionalRequirements' => fn ($query) => $query
+                    ->whereNull('stakeholder_need_id')
                     ->orderBy('number')
                     ->orderBy('title'),
             ])
@@ -147,15 +158,16 @@ class TraceabilityMatrixService
             $objectives = $need->businessObjectives->isEmpty()
                 ? [null]
                 : $need->businessObjectives->all();
-            $stakeholderNeeds = $need->stakeholderNeeds->isEmpty()
-                ? [null]
-                : $need->stakeholderNeeds->all();
 
             foreach ($objectives as $objective) {
-                foreach ($stakeholderNeeds as $stakeholderNeed) {
-                    [$features, $functionalRequirements] = $this->packagingForStakeholderNeed($stakeholderNeed);
+                $stakeholderNeeds = ($objective === null || $objective->stakeholderNeeds->isEmpty())
+                    ? [null]
+                    : $objective->stakeholderNeeds->all();
 
-                    if ($features->isEmpty() && $functionalRequirements->isEmpty()) {
+                foreach ($stakeholderNeeds as $stakeholderNeed) {
+                    [$features, $functionalRequirements, $nonFunctionalRequirements] = $this->packagingForStakeholderNeed($stakeholderNeed);
+
+                    if ($features->isEmpty() && $functionalRequirements->isEmpty() && $nonFunctionalRequirements->isEmpty()) {
                         $rows[] = $this->makeRow(
                             project: $need->project,
                             objective: $objective,
@@ -163,6 +175,7 @@ class TraceabilityMatrixService
                             stakeholderNeed: $stakeholderNeed,
                             feature: null,
                             functionalRequirement: null,
+                            nonFunctionalRequirement: null,
                             processStep: null,
                             gapType: $objective === null || $stakeholderNeed === null
                                 ? 'incomplete_chain'
@@ -179,6 +192,7 @@ class TraceabilityMatrixService
                             stakeholderNeed: $stakeholderNeed,
                             feature: $feature,
                             functionalRequirement: null,
+                            nonFunctionalRequirement: null,
                             processStep: $feature->swimlaneFlowStep,
                             gapType: $this->featureRowGapType($objective, $feature),
                         );
@@ -192,7 +206,22 @@ class TraceabilityMatrixService
                             stakeholderNeed: $stakeholderNeed,
                             feature: null,
                             functionalRequirement: $functionalRequirement,
+                            nonFunctionalRequirement: null,
                             processStep: $functionalRequirement->swimlaneFlowStep,
+                            gapType: $objective === null ? 'incomplete_chain' : null,
+                        );
+                    }
+
+                    foreach ($nonFunctionalRequirements as $nonFunctionalRequirement) {
+                        $rows[] = $this->makeRow(
+                            project: $need->project,
+                            objective: $objective,
+                            need: $need,
+                            stakeholderNeed: $stakeholderNeed,
+                            feature: null,
+                            functionalRequirement: null,
+                            nonFunctionalRequirement: $nonFunctionalRequirement,
+                            processStep: null,
                             gapType: $objective === null ? 'incomplete_chain' : null,
                         );
                     }
@@ -210,21 +239,112 @@ class TraceabilityMatrixService
     {
         $objectives = $this->scopedQuery(BusinessObjective::query(), $projectId, $workspaceId)
             ->whereDoesntHave('businessNeeds')
-            ->with('project:id,name,code')
+            ->with([
+                'project:id,name,code',
+                'stakeholderNeeds:id,number,title,project_id',
+                'stakeholderNeeds.stakeholders:id,name',
+                'stakeholderNeeds.features' => fn ($query) => $query
+                    ->withCount('scenarios')
+                    ->with(['swimlaneFlowStep.swimlaneFlow:id,title', 'swimlaneFlowStep.project:id,name,code'])
+                    ->orderBy('number')
+                    ->orderBy('title'),
+                'stakeholderNeeds.functionalRequirements' => fn ($query) => $query
+                    ->with(['swimlaneFlowStep.swimlaneFlow:id,title', 'swimlaneFlowStep.project:id,name,code'])
+                    ->orderBy('number')
+                    ->orderBy('title'),
+                'stakeholderNeeds.nonFunctionalRequirements' => fn ($query) => $query
+                    ->orderBy('number')
+                    ->orderBy('title'),
+                'stakeholderNeeds.changeRequests.features' => fn ($query) => $query
+                    ->whereNull('stakeholder_need_id')
+                    ->withCount('scenarios')
+                    ->with(['swimlaneFlowStep.swimlaneFlow:id,title', 'swimlaneFlowStep.project:id,name,code'])
+                    ->orderBy('number')
+                    ->orderBy('title'),
+                'stakeholderNeeds.changeRequests.functionalRequirements' => fn ($query) => $query
+                    ->whereNull('stakeholder_need_id')
+                    ->with(['swimlaneFlowStep.swimlaneFlow:id,title', 'swimlaneFlowStep.project:id,name,code'])
+                    ->orderBy('number')
+                    ->orderBy('title'),
+                'stakeholderNeeds.changeRequests.nonFunctionalRequirements' => fn ($query) => $query
+                    ->whereNull('stakeholder_need_id')
+                    ->orderBy('number')
+                    ->orderBy('title'),
+            ])
             ->orderBy('number')
             ->orderBy('title')
             ->get();
 
-        return $objectives->map(fn (BusinessObjective $objective) => $this->makeRow(
-            project: $objective->project,
-            objective: $objective,
-            need: null,
-            stakeholderNeed: null,
-            feature: null,
-            functionalRequirement: null,
-            processStep: null,
-            gapType: 'orphan_objective',
-        ))->all();
+        $rows = [];
+
+        foreach ($objectives as $objective) {
+            $stakeholderNeeds = $objective->stakeholderNeeds->isEmpty()
+                ? [null]
+                : $objective->stakeholderNeeds->all();
+
+            foreach ($stakeholderNeeds as $stakeholderNeed) {
+                [$features, $functionalRequirements, $nonFunctionalRequirements] = $this->packagingForStakeholderNeed($stakeholderNeed);
+
+                if ($features->isEmpty() && $functionalRequirements->isEmpty() && $nonFunctionalRequirements->isEmpty()) {
+                    $rows[] = $this->makeRow(
+                        project: $objective->project,
+                        objective: $objective,
+                        need: null,
+                        stakeholderNeed: $stakeholderNeed,
+                        feature: null,
+                        functionalRequirement: null,
+                        nonFunctionalRequirement: null,
+                        processStep: null,
+                        gapType: 'orphan_objective',
+                    );
+                    continue;
+                }
+
+                foreach ($features as $feature) {
+                    $rows[] = $this->makeRow(
+                        project: $objective->project,
+                        objective: $objective,
+                        need: null,
+                        stakeholderNeed: $stakeholderNeed,
+                        feature: $feature,
+                        functionalRequirement: null,
+                        nonFunctionalRequirement: null,
+                        processStep: $feature->swimlaneFlowStep,
+                        gapType: 'orphan_objective',
+                    );
+                }
+
+                foreach ($functionalRequirements as $functionalRequirement) {
+                    $rows[] = $this->makeRow(
+                        project: $objective->project,
+                        objective: $objective,
+                        need: null,
+                        stakeholderNeed: $stakeholderNeed,
+                        feature: null,
+                        functionalRequirement: $functionalRequirement,
+                        nonFunctionalRequirement: null,
+                        processStep: $functionalRequirement->swimlaneFlowStep,
+                        gapType: 'orphan_objective',
+                    );
+                }
+
+                foreach ($nonFunctionalRequirements as $nonFunctionalRequirement) {
+                    $rows[] = $this->makeRow(
+                        project: $objective->project,
+                        objective: $objective,
+                        need: null,
+                        stakeholderNeed: $stakeholderNeed,
+                        feature: null,
+                        functionalRequirement: null,
+                        nonFunctionalRequirement: $nonFunctionalRequirement,
+                        processStep: null,
+                        gapType: 'orphan_objective',
+                    );
+                }
+            }
+        }
+
+        return $rows;
     }
 
     /**
@@ -233,7 +353,7 @@ class TraceabilityMatrixService
     protected function orphanStakeholderNeedRows(?int $projectId, ?int $workspaceId): array
     {
         $stakeholderNeeds = $this->scopedQuery(StakeholderNeed::query(), $projectId, $workspaceId)
-            ->whereDoesntHave('businessNeeds')
+            ->whereDoesntHave('businessObjectives')
             ->with([
                 'project:id,name,code',
                 'stakeholders:id,name',
@@ -244,6 +364,9 @@ class TraceabilityMatrixService
                     ->orderBy('title'),
                 'functionalRequirements' => fn ($query) => $query
                     ->with(['swimlaneFlowStep.swimlaneFlow:id,title', 'swimlaneFlowStep.project:id,name,code'])
+                    ->orderBy('number')
+                    ->orderBy('title'),
+                'nonFunctionalRequirements' => fn ($query) => $query
                     ->orderBy('number')
                     ->orderBy('title'),
                 'changeRequests.features' => fn ($query) => $query
@@ -257,6 +380,10 @@ class TraceabilityMatrixService
                     ->with(['swimlaneFlowStep.swimlaneFlow:id,title', 'swimlaneFlowStep.project:id,name,code'])
                     ->orderBy('number')
                     ->orderBy('title'),
+                'changeRequests.nonFunctionalRequirements' => fn ($query) => $query
+                    ->whereNull('stakeholder_need_id')
+                    ->orderBy('number')
+                    ->orderBy('title'),
             ])
             ->orderBy('number')
             ->orderBy('title')
@@ -265,9 +392,9 @@ class TraceabilityMatrixService
         $rows = [];
 
         foreach ($stakeholderNeeds as $stakeholderNeed) {
-            [$features, $functionalRequirements] = $this->packagingForStakeholderNeed($stakeholderNeed);
+            [$features, $functionalRequirements, $nonFunctionalRequirements] = $this->packagingForStakeholderNeed($stakeholderNeed);
 
-            if ($features->isEmpty() && $functionalRequirements->isEmpty()) {
+            if ($features->isEmpty() && $functionalRequirements->isEmpty() && $nonFunctionalRequirements->isEmpty()) {
                 $rows[] = $this->makeRow(
                     project: $stakeholderNeed->project,
                     objective: null,
@@ -275,6 +402,7 @@ class TraceabilityMatrixService
                     stakeholderNeed: $stakeholderNeed,
                     feature: null,
                     functionalRequirement: null,
+                    nonFunctionalRequirement: null,
                     processStep: null,
                     gapType: 'orphan_stakeholder_need',
                 );
@@ -289,6 +417,7 @@ class TraceabilityMatrixService
                     stakeholderNeed: $stakeholderNeed,
                     feature: $feature,
                     functionalRequirement: null,
+                    nonFunctionalRequirement: null,
                     processStep: $feature->swimlaneFlowStep,
                     gapType: 'orphan_stakeholder_need',
                 );
@@ -302,7 +431,22 @@ class TraceabilityMatrixService
                     stakeholderNeed: $stakeholderNeed,
                     feature: null,
                     functionalRequirement: $functionalRequirement,
+                    nonFunctionalRequirement: null,
                     processStep: $functionalRequirement->swimlaneFlowStep,
+                    gapType: 'orphan_stakeholder_need',
+                );
+            }
+
+            foreach ($nonFunctionalRequirements as $nonFunctionalRequirement) {
+                $rows[] = $this->makeRow(
+                    project: $stakeholderNeed->project,
+                    objective: null,
+                    need: null,
+                    stakeholderNeed: $stakeholderNeed,
+                    feature: null,
+                    functionalRequirement: null,
+                    nonFunctionalRequirement: $nonFunctionalRequirement,
+                    processStep: null,
                     gapType: 'orphan_stakeholder_need',
                 );
             }
@@ -332,6 +476,7 @@ class TraceabilityMatrixService
             stakeholderNeed: null,
             feature: $feature,
             functionalRequirement: null,
+            nonFunctionalRequirement: null,
             processStep: $feature->swimlaneFlowStep,
             gapType: 'orphan_feature',
         ))->all();
@@ -357,8 +502,35 @@ class TraceabilityMatrixService
             stakeholderNeed: null,
             feature: null,
             functionalRequirement: $requirement,
+            nonFunctionalRequirement: null,
             processStep: $requirement->swimlaneFlowStep,
             gapType: 'orphan_functional_requirement',
+        ))->all();
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    protected function orphanNonFunctionalRequirementRows(?int $projectId, ?int $workspaceId): array
+    {
+        $requirements = $this->scopedQuery(NonFunctionalRequirement::query(), $projectId, $workspaceId)
+            ->whereNull('stakeholder_need_id')
+            ->whereNull('change_request_id')
+            ->with(['project:id,name,code'])
+            ->orderBy('number')
+            ->orderBy('title')
+            ->get();
+
+        return $requirements->map(fn (NonFunctionalRequirement $requirement) => $this->makeRow(
+            project: $requirement->project,
+            objective: null,
+            need: null,
+            stakeholderNeed: null,
+            feature: null,
+            functionalRequirement: null,
+            nonFunctionalRequirement: $requirement,
+            processStep: null,
+            gapType: 'orphan_non_functional_requirement',
         ))->all();
     }
 
@@ -408,6 +580,7 @@ class TraceabilityMatrixService
                 stakeholderNeed: $step->stakeholderNeed,
                 feature: null,
                 functionalRequirement: null,
+                nonFunctionalRequirement: null,
                 processStep: $step,
                 gapType: $gapType,
                 forceGaps: array_values(array_filter([
@@ -505,6 +678,7 @@ class TraceabilityMatrixService
         ?StakeholderNeed $stakeholderNeed,
         ?Feature $feature,
         ?FunctionalRequirement $functionalRequirement,
+        ?NonFunctionalRequirement $nonFunctionalRequirement,
         ?SwimlaneFlowStep $processStep,
         ?string $gapType,
         ?array $forceGaps = null,
@@ -521,13 +695,16 @@ class TraceabilityMatrixService
             if ($need === null && $objective !== null && $gapType === 'orphan_objective') {
                 $gaps[] = 'missing_need';
             }
-            if ($need === null && $stakeholderNeed !== null && $gapType === 'orphan_stakeholder_need') {
-                $gaps[] = 'missing_need';
+            if ($objective === null && $stakeholderNeed !== null && $gapType === 'orphan_stakeholder_need') {
+                $gaps[] = 'missing_objective';
             }
-            if ($stakeholderNeed === null && $need !== null) {
+            if ($stakeholderNeed === null && $objective !== null) {
                 $gaps[] = 'missing_stakeholder_need';
             }
-            if ($feature === null && $functionalRequirement === null && $stakeholderNeed !== null) {
+            if ($stakeholderNeed === null && $objective === null && $need !== null) {
+                $gaps[] = 'missing_stakeholder_need';
+            }
+            if ($feature === null && $functionalRequirement === null && $nonFunctionalRequirement === null && $stakeholderNeed !== null) {
                 $gaps[] = 'missing_feature';
             }
             if ($feature !== null && $scenarioCount === 0) {
@@ -545,6 +722,10 @@ class TraceabilityMatrixService
             }
             if ($gapType === 'orphan_functional_requirement') {
                 $gaps[] = 'orphan_functional_requirement';
+                $gaps[] = 'missing_stakeholder_need';
+            }
+            if ($gapType === 'orphan_non_functional_requirement') {
+                $gaps[] = 'orphan_non_functional_requirement';
                 $gaps[] = 'missing_stakeholder_need';
             }
         }
@@ -579,6 +760,9 @@ class TraceabilityMatrixService
             'functional_requirement_id' => $functionalRequirement?->id,
             'functional_requirement_code' => $functionalRequirement?->code,
             'functional_requirement_title' => $functionalRequirement?->title,
+            'non_functional_requirement_id' => $nonFunctionalRequirement?->id,
+            'non_functional_requirement_code' => $nonFunctionalRequirement?->code,
+            'non_functional_requirement_title' => $nonFunctionalRequirement?->title,
             'process_step_id' => $processStep?->id,
             'process_step_flow_id' => $processStep?->swimlane_flow_id,
             'process_step_flow_title' => $processStep?->relationLoaded('swimlaneFlow')
@@ -615,12 +799,12 @@ class TraceabilityMatrixService
     /**
      * SN-direct packaging plus CR-only packaging under this Stakeholder Need.
      *
-     * @return array{0: Collection<int, Feature>, 1: Collection<int, FunctionalRequirement>}
+     * @return array{0: Collection<int, Feature>, 1: Collection<int, FunctionalRequirement>, 2: Collection<int, NonFunctionalRequirement>}
      */
     protected function packagingForStakeholderNeed(?StakeholderNeed $stakeholderNeed): array
     {
         if ($stakeholderNeed === null) {
-            return [collect(), collect()];
+            return [collect(), collect(), collect()];
         }
 
         $features = $stakeholderNeed->relationLoaded('features')
@@ -628,6 +812,9 @@ class TraceabilityMatrixService
             : collect();
         $functionalRequirements = $stakeholderNeed->relationLoaded('functionalRequirements')
             ? $stakeholderNeed->functionalRequirements
+            : collect();
+        $nonFunctionalRequirements = $stakeholderNeed->relationLoaded('nonFunctionalRequirements')
+            ? $stakeholderNeed->nonFunctionalRequirements
             : collect();
 
         if ($stakeholderNeed->relationLoaded('changeRequests')) {
@@ -638,12 +825,16 @@ class TraceabilityMatrixService
                 if ($changeRequest->relationLoaded('functionalRequirements')) {
                     $functionalRequirements = $functionalRequirements->concat($changeRequest->functionalRequirements);
                 }
+                if ($changeRequest->relationLoaded('nonFunctionalRequirements')) {
+                    $nonFunctionalRequirements = $nonFunctionalRequirements->concat($changeRequest->nonFunctionalRequirements);
+                }
             }
         }
 
         return [
             $features->unique('id')->values(),
             $functionalRequirements->unique('id')->values(),
+            $nonFunctionalRequirements->unique('id')->values(),
         ];
     }
 
