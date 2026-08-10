@@ -36,7 +36,7 @@ class HelpEndpointTest extends TestCase
 
     public function test_help_route_without_markdown_file_returns_not_found(): void
     {
-        $response = $this->withoutMiddleware()->get(route('stakeholders.help'));
+        $response = $this->withoutMiddleware()->get(route('help.guide.show', 'definitely_missing_guide_topic'));
 
         $response->assertNotFound();
     }
