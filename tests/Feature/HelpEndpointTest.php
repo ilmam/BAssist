@@ -6,9 +6,19 @@ use Tests\TestCase;
 
 class HelpEndpointTest extends TestCase
 {
+    /**
+     * @return array<string, string>
+     */
+    protected function overlayHeaders(): array
+    {
+        return ['X-Requested-With' => 'XMLHttpRequest'];
+    }
+
     public function test_entity_help_route_returns_rendered_guide(): void
     {
-        $response = $this->withoutMiddleware()->get(route('business_needs.help'));
+        $response = $this->withoutMiddleware()
+            ->withHeaders($this->overlayHeaders())
+            ->get(route('business_needs.help'));
 
         $response->assertOk();
         $response->assertSee('data-help-title', false);
@@ -18,7 +28,9 @@ class HelpEndpointTest extends TestCase
 
     public function test_hub_help_route_returns_rendered_guide(): void
     {
-        $response = $this->withoutMiddleware()->get(route('strategy.help'));
+        $response = $this->withoutMiddleware()
+            ->withHeaders($this->overlayHeaders())
+            ->get(route('strategy.help'));
 
         $response->assertOk();
         $response->assertSee('Strategy', false);
@@ -26,7 +38,9 @@ class HelpEndpointTest extends TestCase
 
     public function test_readiness_help_route_returns_rendered_guide(): void
     {
-        $response = $this->withoutMiddleware()->get(route('readiness.help'));
+        $response = $this->withoutMiddleware()
+            ->withHeaders($this->overlayHeaders())
+            ->get(route('readiness.help'));
 
         $response->assertOk();
         $response->assertSee('data-help-title', false);
@@ -36,9 +50,22 @@ class HelpEndpointTest extends TestCase
 
     public function test_help_route_without_markdown_file_returns_not_found(): void
     {
-        $response = $this->withoutMiddleware()->get(route('help.guide.show', 'definitely_missing_guide_topic'));
+        $response = $this->withoutMiddleware()
+            ->withHeaders($this->overlayHeaders())
+            ->get(route('help.guide.show', 'definitely_missing_guide_topic'));
 
         $response->assertNotFound();
+    }
+
+    public function test_full_page_help_routes_redirect_home(): void
+    {
+        $this->withoutMiddleware()
+            ->get(route('business_needs.help'))
+            ->assertRedirect('/');
+
+        $this->withoutMiddleware()
+            ->get(route('strategy.help'))
+            ->assertRedirect('/');
     }
 
     public function test_entity_list_partial_includes_help_trigger(): void
@@ -61,7 +88,9 @@ class HelpEndpointTest extends TestCase
 
     public function test_strategic_baseline_help_route_returns_rendered_guide(): void
     {
-        $response = $this->withoutMiddleware()->get(route('strategic_baselines.help'));
+        $response = $this->withoutMiddleware()
+            ->withHeaders($this->overlayHeaders())
+            ->get(route('strategic_baselines.help'));
 
         $response->assertOk();
         $response->assertSee('data-help-title', false);

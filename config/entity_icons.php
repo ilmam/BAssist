@@ -31,7 +31,7 @@ return [
         'StrategicBaseline' => 'flag',
         'ScopeItem' => 'abstract-14',            // stacked layers
 
-        // Requirements & Design
+        // Requirements Modeling
         'Stakeholder' => 'people',
         'StakeholderNeed' => 'message-text',     // speech bubble
         'Feature' => 'category',

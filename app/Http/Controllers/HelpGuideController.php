@@ -2,22 +2,34 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\RespondsWithModal;
 use App\Support\HelpRegistry;
 use Illuminate\Contracts\View\View;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Response;
 
 class HelpGuideController extends Controller
 {
-    public function index(): View
+    use RespondsWithModal;
+
+    public function index(): View|RedirectResponse
     {
+        if (! $this->wantsModalFragment()) {
+            return redirect('/');
+        }
+
         return view('pages.help.guide-toc', [
             'title' => __(config('help_booklet.title_key', 'ui.ba_guide')),
             'steps' => $this->availableSteps(),
         ]);
     }
 
-    public function show(string $key): View|Response
+    public function show(string $key): View|Response|RedirectResponse
     {
+        if (! $this->wantsModalFragment()) {
+            return redirect('/');
+        }
+
         $key = HelpRegistry::normalizeKey($key);
         $steps = $this->availableSteps();
         $index = collect($steps)->search(fn (array $step): bool => $step['key'] === $key);

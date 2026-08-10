@@ -11,6 +11,7 @@ use App\Http\Controllers\FeatureController;
 use App\Http\Controllers\GuardrailsController;
 use App\Http\Controllers\HelpController;
 use App\Http\Controllers\HelpGuideController;
+use App\Http\Controllers\QuickGuideController;
 use App\Http\Controllers\ProjectDashboardController;
 use App\Http\Controllers\ProjectExportController;
 use App\Http\Controllers\SolutionRequirementsController;
@@ -30,6 +31,7 @@ Route::middleware('auth')->group(function (): void {
 
     Route::get('help/guide', [HelpGuideController::class, 'index'])->name('help.guide');
     Route::get('help/guide/{key}', [HelpGuideController::class, 'show'])->name('help.guide.show');
+    Route::get('help/quick-guide', [QuickGuideController::class, 'show'])->name('help.quick-guide');
 
     Route::get('traceability', [TraceabilityController::class, 'index'])->name('traceability.index');
     Route::get('traceability/help', [HelpController::class, 'show'])->defaults('helpKey', 'traceability')->name('traceability.help');

@@ -482,7 +482,7 @@ return [
     'open_document' => 'Open',
     'nav_folder_badge_title' => ':folder: :ready of :total areas have agreed / sufficient content (guide only — nothing is locked).',
     'nav_folder_strategy' => 'Strategy & Alignment',
-    'nav_folder_radd' => 'Requirements & Design',
+    'nav_folder_radd' => 'Requirements Modeling',
     'nav_folder_governance' => 'Governance & Lifecycle',
     'nav_folder_evaluation' => 'Evaluation & Acceptance',
     'project_dashboard' => 'Project dashboard',
@@ -555,6 +555,97 @@ return [
     'ba_guide_contents' => 'Contents',
     'ba_guide_previous' => 'Previous',
     'ba_guide_next' => 'Next',
+    'quick_guide' => 'Quick Guide',
+    'quick_guide_previous' => 'Previous',
+    'quick_guide_next' => 'Next',
+    'quick_guide_done' => 'Got it',
+
+    // Trail labels (full names, grow as the wizard advances)
+    'quick_guide_trail_project' => 'Create Project',
+    'quick_guide_trail_bn' => 'Business Need',
+    'quick_guide_trail_bo' => 'Business Objective',
+    'quick_guide_trail_stakeholder' => 'Stakeholders',
+    'quick_guide_trail_sn' => 'Stakeholder Need',
+    'quick_guide_trail_solution' => 'Solution Requirements',
+    'quick_guide_trail_trace' => 'Traceability Matrix',
+
+    // BA artifact names (accent label beside the question)
+    'quick_guide_ba_project' => 'Project',
+    'quick_guide_ba_bn' => 'Business Need',
+    'quick_guide_ba_bo' => 'Business Objective',
+    'quick_guide_ba_stakeholder' => 'Stakeholders',
+    'quick_guide_ba_sn' => 'Stakeholder Need',
+    'quick_guide_ba_solution' => 'Solution Requirements',
+    'quick_guide_ba_trace' => 'Traceability Matrix',
+
+    // Human screen questions
+    'quick_guide_q_project' => 'Where does this work live?',
+    'quick_guide_q_bn' => 'What’s breaking down today?',
+    'quick_guide_q_bo' => 'What does success look like?',
+    'quick_guide_q_stakeholder' => 'Who is involved or impacted?',
+    'quick_guide_q_sn' => 'What do they require?',
+    'quick_guide_q_solution' => 'How must the solution behave?',
+    'quick_guide_q_trace' => 'Can you see the whole chain?',
+
+    // Short teaching hints (same leave-portal story — no cute everyday analogies)
+    'quick_guide_hint_project' => 'Before you write needs, lock in the Strategic Baseline: what’s messy today (leave stuck in email), what “done” looks like (one portal), and how you’ll get from here to there.',
+    'quick_guide_hint_bn' => 'Name the current-state pain before you design a fix — what is failing for people today?',
+    'quick_guide_hint_bo' => 'Turn the pain into a measurable target the business can check after go-live.',
+    'quick_guide_hint_stakeholder' => 'List the roles that care about the outcome — requesters, approvers, and anyone who keeps the process honest.',
+    'quick_guide_hint_sn' => 'For each role, capture what they must be able to do or know — not the screen design yet.',
+    'quick_guide_hint_solution' => 'Capture Solution Requirements as FR, NFR, and Scenarios — what the solution must do, how well it must perform, and Given / When / Then proofs.',
+    'quick_guide_hint_trace' => 'Walk the chain end to end — every requirement should hang under a need and a why.',
+
+    // Focused sample cards — Employee Leave Request Portal (one story for the whole wizard)
+    'quick_guide_sample_project_kicker' => 'Project · LR-PORTAL',
+    'quick_guide_sample_project_title' => 'Employee Leave Request Portal',
+    'quick_guide_sample_project_body' => 'One workspace to replace email and spreadsheet leave requests with a single tracked approval flow.',
+
+    // Surrounding project artifacts (shown on Create Project — not trail steps)
+    'quick_guide_surround_title' => 'Also in this project',
+    'quick_guide_surround_risks_label' => 'Risks',
+    'quick_guide_surround_risks_example' => 'Managers ignore portal notices and keep approving by email.',
+    'quick_guide_surround_scope_label' => 'Scope',
+    'quick_guide_surround_scope_example' => 'In: request, approve, and track leave. Out: payroll and timesheet changes.',
+    'quick_guide_surround_constraints_label' => 'Constraints',
+    'quick_guide_surround_constraints_example' => 'Must use the existing HRIS leave balances — no parallel ledger.',
+    'quick_guide_surround_rules_label' => 'Business Rules',
+    'quick_guide_surround_rules_example' => 'Annual leave needs manager approval before HR confirms the booking.',
+
+    'quick_guide_sample_bn_kicker' => 'Business Need · BN-01',
+    'quick_guide_sample_bn_title' => 'Leave requests scatter across email with no status',
+    'quick_guide_sample_bn_body' => 'Employees email managers; HR rebuilds a spreadsheet; nobody can see balance, pending approvals, or who is out next week.',
+
+    'quick_guide_sample_bo_kicker' => 'Business Objective · BO-01',
+    'quick_guide_sample_bo_title' => 'Approve leave in under 1 business day',
+    'quick_guide_sample_bo_body' => 'Move 95% of leave requests into the portal; median approval time under 1 business day within the first quarter.',
+
+    'quick_guide_sample_stakeholder_kicker' => 'Stakeholder · SH-01',
+    'quick_guide_sample_stakeholder_title' => 'Employee (Requester)',
+    'quick_guide_sample_stakeholder_body' => 'Any staff member who books annual or sick leave and needs a clear status without chasing their manager.',
+
+    'quick_guide_sample_sn_kicker' => 'Stakeholder Need · SN-01',
+    'quick_guide_sample_sn_title' => 'Submit once and see live status',
+    'quick_guide_sample_sn_body' => 'Requester must submit a complete leave request once and see balance remaining, pending, approved, or rejected without follow-up emails.',
+
+    'quick_guide_sample_solution_kicker' => 'Solution Requirements · SR-01',
+    'quick_guide_sample_solution_title' => 'Confirm request and notify manager on submit',
+    'quick_guide_sample_solution_body' => 'FR: On submit, create a pending request, freeze the balance, and notify the manager. NFR: Approval notice reaches the manager within 1 minute. Scenario: Given an employee with 5 days remaining enters 2 days of annual leave, When they submit, Then the request shows Pending and the manager receives an approval notice.',
+
+    // Traceability chain mini-examples (leave-portal spine)
+    'quick_guide_chain_project_code' => 'LR-PORTAL',
+    'quick_guide_chain_project' => 'Employee Leave Request Portal',
+    'quick_guide_chain_bn_code' => 'BN-01',
+    'quick_guide_chain_bn' => 'Leave requests buried in email — no audit trail',
+    'quick_guide_chain_bo_code' => 'BO-01',
+    'quick_guide_chain_bo' => '100% leave via portal; approve under 24h',
+    'quick_guide_chain_sn_code' => 'SN-01',
+    'quick_guide_chain_sn' => 'Submit leave once and track status',
+    'quick_guide_chain_solution_code' => 'SR-01',
+    'quick_guide_chain_solution' => 'create leave ticket on submit',
+
+    'quick_guide_matrix_takeaway_coverage' => '<strong>Forward Traceability (Completeness):</strong> Every business/stakeholder need maps forward to a solution requirement to guarantee 100% functional coverage.',
+    'quick_guide_matrix_takeaway_lineage' => '<strong>Backward Traceability (Justification):</strong> Every solution requirement maps backward to a validated business need to eliminate scope creep and gold-plating.',
     'modal_record_nav' => 'Record navigation',
     'previous_record' => 'Previous',
     'next_record' => 'Next',

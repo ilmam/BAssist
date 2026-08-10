@@ -29,10 +29,10 @@ class NavProjectFoldersTest extends TestCase
             [
                 'Stakeholder',
                 'StakeholderNeed',
-                'solution_requirements.index',
-                'Assumption',
                 'Constraint',
+                'Assumption',
                 'BusinessRule',
+                'solution_requirements.index',
                 'diagrams.index',
             ],
             $this->childKeys($folders['radd']['children'])

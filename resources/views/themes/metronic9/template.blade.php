@@ -362,9 +362,10 @@
 
             const url = trigger.getAttribute('data-modal-url');
             const size = trigger.getAttribute('data-modal-size');
+            const noHistory = trigger.getAttribute('data-modal-no-history') === '1';
 
             captureModalRecordNavForOpen(trigger, url).then(function (preserve) {
-                openModal(url, size, { preserveRecordNav: !!preserve });
+                openModal(url, size, { preserveRecordNav: !!preserve, noHistory });
             });
         });
 
@@ -453,7 +454,8 @@
             }
 
             clearModalFormBaseline();
-            modalReturnUrl = modalRecordNavHistoryReturnUrl(opts);
+            const skipHistory = !!opts.noHistory;
+            modalReturnUrl = skipHistory ? null : modalRecordNavHistoryReturnUrl(opts);
 
             fetch(url, {
                 headers: {
@@ -488,7 +490,9 @@
                         document.body.classList.remove('overflow-hidden');
                     }
                     syncPageSheetPush(modal, container);
-                    history.pushState({ modal: true, returnUrl: modalReturnUrl }, '', url);
+                    if (!skipHistory) {
+                        history.pushState({ modal: true, returnUrl: modalReturnUrl }, '', url);
+                    }
 
                     if (typeof KTSelect !== 'undefined' && typeof KTSelect.createInstances === 'function') {
                         KTSelect.createInstances();

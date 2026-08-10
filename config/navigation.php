@@ -94,10 +94,10 @@ return [
             ],
             [
                 'key' => 'radd',
-                'label' => 'Requirements & Design',
-                'short' => 'RADD',
+                'label' => 'Requirements Modeling',
+                'short' => 'Modeling',
                 'babok' => 'KA 7 — Requirements Analysis & Design Definition',
-                'purpose' => 'Specifies what the solution looks like, who needs it, and the rules governing it.',
+                'purpose' => 'Actors → elicitation → constraints → assumptions → business rules → solution requirements → diagrams.',
                 'icon' => 'abstract-26',
                 'icon_v8' => 'abstract-26',
                 'badge_tone' => 'radd',
@@ -110,6 +110,19 @@ return [
                         'entity' => 'StakeholderNeed',
                         'progress' => 'entity_agreed',
                     ],
+                    // Constraints and Assumptions stay separate entity leaves (never merge; guardrails hub stays out of nav).
+                    [
+                        'entity' => 'Constraint',
+                        'progress' => 'entity_present',
+                    ],
+                    [
+                        'entity' => 'Assumption',
+                        'progress' => 'entity_present',
+                    ],
+                    [
+                        'entity' => 'BusinessRule',
+                        'progress' => 'entity_present',
+                    ],
                     [
                         'label' => 'Solution Requirements',
                         'route' => 'solution_requirements.index',
@@ -117,18 +130,6 @@ return [
                         'icon_v8' => 'subtitle',
                         'entities' => ['Feature', 'FunctionalRequirement', 'NonFunctionalRequirement'],
                         'progress' => 'solution_hub',
-                    ],
-                    [
-                        'entity' => 'Assumption',
-                        'progress' => 'entity_present',
-                    ],
-                    [
-                        'entity' => 'Constraint',
-                        'progress' => 'entity_present',
-                    ],
-                    [
-                        'entity' => 'BusinessRule',
-                        'progress' => 'entity_present',
                     ],
                     [
                         // Keep as one hub until diagrams get a better home.

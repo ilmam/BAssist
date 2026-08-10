@@ -7,6 +7,18 @@
         <button
             type="button"
             class="kt-btn kt-btn-ghost kt-btn-sm gap-1.5"
+            title="{{ __('ui.quick_guide') }}"
+            aria-label="{{ __('ui.quick_guide') }}"
+            data-modal-url="{{ route('help.quick-guide') }}"
+            data-modal-size="full"
+            data-modal-no-history="1"
+        >
+            <i class="ki-filled ki-route text-base"></i>
+            <span>{{ __('ui.quick_guide') }}</span>
+        </button>
+        <button
+            type="button"
+            class="kt-btn kt-btn-ghost kt-btn-sm gap-1.5"
             title="{{ __('ui.ba_guide') }}"
             aria-label="{{ __('ui.ba_guide') }}"
             data-help-url="{{ route('help.guide') }}"
