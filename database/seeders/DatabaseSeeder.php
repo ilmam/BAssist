@@ -2,8 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -17,8 +15,7 @@ class DatabaseSeeder extends Seeder
             SuperAdminSeeder::class,
             RoleSeeder::class,
             StatusPrioritySeeder::class,
-            NeedSpineSeeder::class,
-            DemoProjectSeeder::class,
+            DealerPartsInquirySeeder::class,
         ]);
     }
 }
