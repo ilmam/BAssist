@@ -4,7 +4,7 @@ title: Business Needs
 
 ## Context & Definition
 
-A Business Need is the enterprise-level **why** for change: a problem, gap, or opportunity that drives the initiative. In BABOK®, business needs sit at the top of the requirements hierarchy. They answer: *Why must the enterprise change at all?*
+A Business Need is the enterprise-level **why** for change: a problem, gap, or opportunity that drives the initiative. Business needs sit at the top of the requirements hierarchy. They answer: *Why must the enterprise change at all?*
 
 In practice: “Manual phone and email spare-parts inquiries cause high error rates and delayed procurement.”
 

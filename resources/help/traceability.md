@@ -4,7 +4,7 @@ title: Traceability Matrix
 
 ## Context & Definition
 
-The Traceability Matrix is an automated, relational view that maps dependencies across your entire project hierarchy. In BABOK® terms, traceability identifies and documents the lineage of every requirement. It provides *backward* traceability (tracing a feature up to the strategic goal it supports) and *forward* traceability (tracing a requirement down to the specific test cases and code scenarios that fulfill it).
+The Traceability Matrix is an automated, relational view that maps dependencies across your entire project hierarchy. Traceability identifies and documents the lineage of every requirement. It provides *backward* traceability (tracing a feature up to the strategic goal it supports) and *forward* traceability (tracing a requirement down to the specific test cases and code scenarios that fulfill it).
 
 ## Why It Matters
 
@@ -14,7 +14,7 @@ As projects evolve, scope creep and "gold-plating" (adding unapproved, unnecessa
 
 1. **Monitor Link Integrity:** Regularly scan the matrix for *orphan* entities (e.g., software features that lack a parent Business Need) or *barren* entities (e.g., high-level Business Needs that have no downstream BDD Scenarios). Gaps may be highlighted in the matrix or in reviews.
 2. **Perform Instant Impact Analysis:** Before modifying, prioritizing, or retiring any requirement, consult the matrix. Trace forward to see which downstream scenarios, test plans, or developer tasks will break. Trace backward to see which parent needs and objectives are impacted and which stakeholders must be consulted about the change.
-3. **Validate Relationships:** Ensure the links make logical sense based on BABOK relationship types. Ask yourself: Does this feature genuinely *derive from* that stakeholder requirement? Does this BDD scenario adequately *validate* the feature?
+3. **Validate Relationships:** Ensure the links make logical sense based on standard relationship types. Ask yourself: Does this feature genuinely *derive from* that stakeholder requirement? Does this BDD scenario adequately *validate* the feature?
 4. **Export for Audits & Sign-Offs:** Use the matrix views during milestone reviews to demonstrate full requirements coverage to sponsors and regulatory compliance officers—proving definitively that what was built matches what was requested.
 
 ## The Bigger Picture & Downstream Links

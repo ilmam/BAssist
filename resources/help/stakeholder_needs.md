@@ -4,7 +4,7 @@ title: Stakeholder Needs
 
 ## Context & Definition
 
-A Stakeholder Need (formally classified in BABOK® as a Stakeholder Requirement) is the behavioral bridge connecting a Business Objective to the specific solution capabilities required to address it. While business needs describe why the enterprise must change, and business objectives define the measurable what, stakeholder needs describe what a specific operational role or user group must be able to do, decide, or experience for that outcome to be achieved.
+A Stakeholder Need (also called a stakeholder requirement) is the behavioral bridge connecting a Business Objective to the specific solution capabilities required to address it. While business needs describe why the enterprise must change, and business objectives define the measurable what, stakeholder needs describe what a specific operational role or user group must be able to do, decide, or experience for that outcome to be achieved.
 
 ## Why It Matters
 

@@ -6,7 +6,7 @@ title: Solution Requirements
 
 While Stakeholder Requirements describe what the users need to achieve, Solution Requirements describe exactly how the system will behave to meet those needs. They are the detailed characteristics and capabilities that a solution must possess.
 
-In BABOK, Solution Requirements are always divided into two critical categories:
+Solution Requirements are always divided into two critical categories:
 
 - **Functional Requirements (FRs):** The specific behaviors, responses, and information the system will manage (e.g., "The system shall automatically timestamp the 'Open' and 'Close' events to calculate ticket duration").
 - **Non-Functional Requirements (NFRs) / Quality of Service:** The environmental conditions under which the solution must remain effective, such as performance, security, compliance, and usability (e.g., "The dashboard must render search results within 2 seconds for a database of 100,000 records").

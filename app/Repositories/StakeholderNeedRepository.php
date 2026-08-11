@@ -6,6 +6,7 @@ use App\Data\StakeholderNeedData;
 use App\Data\StakeholderNeedViewData;
 use App\Helpers\ListUi;
 use App\Models\StakeholderNeed;
+use App\Support\ProjectContext;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
@@ -51,7 +52,14 @@ class StakeholderNeedRepository extends BaseRepository
 
     public function getSelectOptions($fields = null)
     {
-        return $this->model::query()
+        if ($this->selectOptionsRequireStickyProject() && app(ProjectContext::class)->id() === null) {
+            return [];
+        }
+
+        $query = $this->model::query();
+        $this->applyStickyProjectScope($query);
+
+        return $query
             ->orderBy('number')
             ->orderBy('title')
             ->get(['id', 'number', 'title'])

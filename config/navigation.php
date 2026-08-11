@@ -39,8 +39,8 @@ return [
         'workspace_icon_v8' => 'folder',
         'project_icon' => 'abstract-26',
         'project_icon_v8' => 'abstract-26',
-        'all_workspaces_label' => 'All Workspaces',
-        'all_projects_label' => 'All Projects',
+        // Sidebar project mark (BA logo); rendered as <img>, not KeenIcons.
+        'project_icon_img' => 'images/ba-logo.png',
 
         // Temporarily hide BABOK folder progress badges in the sidebar.
         // Set true to re-enable (NavFolderProgress + blade markup remain in place).

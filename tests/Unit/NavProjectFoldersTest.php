@@ -100,12 +100,50 @@ class NavProjectFoldersTest extends TestCase
         $this->assertStringContainsString('projectFolderItems', $builder);
         $this->assertStringContainsString('NavFolderProgress', $builder);
         $this->assertStringContainsString('show_folder_badges', $builder);
+        $this->assertStringNotContainsString('phase_index', $builder);
+        $this->assertStringNotContainsString('nav-phase-folder__index', $menu);
         $this->assertStringContainsString('nav-folder-badge', $menu);
+        $this->assertStringContainsString('nav-phase-folder', $menu);
+        $this->assertStringContainsString('nav-project-icon', $menu);
+        $this->assertStringContainsString("'type' => 'project'", $builder);
+        $this->assertStringContainsString('project_icon_img', $builder);
+        $this->assertSame('images/ba-logo.png', config('navigation.hierarchy.project_icon_img'));
+        $this->assertFileExists(dirname(__DIR__, 2).'/public/images/ba-logo.png');
+        $this->assertStringContainsString('data-folder-key', $menu);
         $this->assertStringContainsString('guide, never lock', $progress);
         $this->assertNotSame('ui.nav_folder_badge_title', __('ui.nav_folder_badge_title'));
 
         // Temporarily disabled — flip config to re-enable badges without code changes.
         $this->assertFalse(config('navigation.hierarchy.show_folder_badges'));
+    }
+
+    public function test_phase_folders_have_distinct_badge_tones(): void
+    {
+        $folders = collect(config('navigation.hierarchy.project_folders'))->keyBy('key');
+
+        $this->assertSame('strategy', $folders['strategy']['badge_tone'] ?? null);
+        $this->assertSame('radd', $folders['radd']['badge_tone'] ?? null);
+        $this->assertSame('governance', $folders['governance']['badge_tone'] ?? null);
+        $this->assertSame('evaluation', $folders['evaluation']['badge_tone'] ?? null);
+    }
+
+    public function test_all_projects_and_all_workspaces_nav_links_are_removed(): void
+    {
+        $builder = file_get_contents(dirname(__DIR__, 2).'/app/Support/NavTreeBuilder.php');
+
+        $this->assertIsString($builder);
+        $this->assertArrayNotHasKey('all_projects_label', config('navigation.hierarchy'));
+        $this->assertArrayNotHasKey('all_workspaces_label', config('navigation.hierarchy'));
+        $this->assertStringNotContainsString('all_projects_label', $builder);
+        $this->assertStringNotContainsString('all_workspaces_label', $builder);
+        $this->assertStringNotContainsString('All Projects', $builder);
+        $this->assertStringNotContainsString('All Workspaces', $builder);
+        // Workspace row remains the entry point to the project list.
+        $this->assertStringContainsString("model_route_name('Project', 'index')", $builder);
+        $this->assertStringContainsString("'workspace_id' => \$workspace->id", $builder);
+        // Root "Workspaces" label opens the workspace list.
+        $this->assertStringContainsString("model_route_name('Workspace', 'index')", $builder);
+        $this->assertStringContainsString("'clear_workspace' => 1", $builder);
     }
 
     /**

@@ -35,6 +35,10 @@
                 </li>
                 <li class="quick-guide__trail-item" data-qg-trail-item="7" hidden>
                     <span class="quick-guide__trail-connector" aria-hidden="true">→</span>
+                    <span class="quick-guide__trail-label">{{ __('ui.quick_guide_trail_test') }}</span>
+                </li>
+                <li class="quick-guide__trail-item" data-qg-trail-item="8" hidden>
+                    <span class="quick-guide__trail-connector" aria-hidden="true">→</span>
                     <span class="quick-guide__trail-label">{{ __('ui.quick_guide_trail_cr') }}</span>
                 </li>
             </ol>
@@ -134,7 +138,7 @@
                     </div>
                 </section>
 
-                {{-- 6. Solution Requirements (FR, NFR, Scenarios) --}}
+                {{-- 6. Solution Requirements (FR, NFR, BDD Features) --}}
                 <section class="quick-guide__panel" data-qg-panel="5" hidden>
                     <header class="quick-guide__panel-head">
                         <span class="quick-guide__ba">{{ __('ui.quick_guide_ba_solution') }}</span>
@@ -145,6 +149,24 @@
                         <div class="quick-guide__card-kicker">{{ __('ui.quick_guide_sample_solution_kicker') }}</div>
                         <div class="quick-guide__card-title">{{ __('ui.quick_guide_sample_solution_title') }}</div>
                         <p class="quick-guide__card-body">{{ __('ui.quick_guide_sample_solution_body') }}</p>
+                    </div>
+
+                    <div class="quick-guide__surround">
+                        <h5 class="quick-guide__surround-title">{{ __('ui.quick_guide_solution_parts_title') }}</h5>
+                        <div class="quick-guide__surround-grid quick-guide__surround-grid--three">
+                            <div class="quick-guide__mini">
+                                <span class="quick-guide__mini-label">{{ __('ui.quick_guide_solution_bdd_label') }}</span>
+                                <p class="quick-guide__mini-body">{{ __('ui.quick_guide_solution_bdd_example') }}</p>
+                            </div>
+                            <div class="quick-guide__mini">
+                                <span class="quick-guide__mini-label">{{ __('ui.quick_guide_solution_fr_label') }}</span>
+                                <p class="quick-guide__mini-body">{{ __('ui.quick_guide_solution_fr_example') }}</p>
+                            </div>
+                            <div class="quick-guide__mini">
+                                <span class="quick-guide__mini-label">{{ __('ui.quick_guide_solution_nfr_label') }}</span>
+                                <p class="quick-guide__mini-body">{{ __('ui.quick_guide_solution_nfr_example') }}</p>
+                            </div>
+                        </div>
                     </div>
                 </section>
 
@@ -193,8 +215,22 @@
                     </div>
                 </section>
 
-                {{-- 8. Change Request (last — sample + matrix copy with red CR between SN and SR) --}}
+                {{-- 8. Acceptance Test --}}
                 <section class="quick-guide__panel" data-qg-panel="7" hidden>
+                    <header class="quick-guide__panel-head">
+                        <span class="quick-guide__ba">{{ __('ui.quick_guide_ba_test') }}</span>
+                        <h4 class="quick-guide__question">{{ __('ui.quick_guide_q_test') }}</h4>
+                    </header>
+                    <p class="quick-guide__hint">{{ __('ui.quick_guide_hint_test') }}</p>
+                    <div class="quick-guide__card">
+                        <div class="quick-guide__card-kicker">{{ __('ui.quick_guide_sample_test_kicker') }}</div>
+                        <div class="quick-guide__card-title">{{ __('ui.quick_guide_sample_test_title') }}</div>
+                        <p class="quick-guide__card-body">{{ __('ui.quick_guide_sample_test_body') }}</p>
+                    </div>
+                </section>
+
+                {{-- 9. Change Request (last — sample + matrix copy with red CR between SN and SR) --}}
+                <section class="quick-guide__panel" data-qg-panel="8" hidden>
                     <header class="quick-guide__panel-head">
                         <span class="quick-guide__ba">{{ __('ui.quick_guide_ba_cr') }}</span>
                         <h4 class="quick-guide__question">{{ __('ui.quick_guide_q_cr') }}</h4>

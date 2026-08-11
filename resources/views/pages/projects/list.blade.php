@@ -40,19 +40,19 @@
         $downloadMenuItems = [];
         foreach (config('babok_documents.documents', []) as $docKey => $docMeta) {
             $downloadMenuItems[] = [
-                'label' => __($docMeta['title']),
+                'label' => __($docMeta['menu_title'] ?? $docMeta['title']),
                 'link' => url('projects/{id}/babok/'.$docKey),
                 'target' => '_blank',
             ];
         }
         $downloadMenuItems[] = [
-            'label' => __('ui.babok_documents'),
-            'link' => url('projects/{id}/babok'),
-        ];
-        $downloadMenuItems[] = [
             'label' => __('ui.export_pack'),
             'link' => url('projects/{id}/export'),
             'target' => '_blank',
+        ];
+        $downloadMenuItems[] = [
+            'label' => __('ui.babok_documents'),
+            'link' => url('projects/{id}/babok'),
         ];
 
         $datatableOptions = [

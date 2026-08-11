@@ -4,7 +4,7 @@ title: Acceptance Testing & Criteria
 
 ## Context & Definition
 
-Acceptance Testing validates whether the built solution successfully meets the original business needs and is acceptable to key stakeholders. In BABOK® terms, Acceptance Criteria define the specific, objective conditions and measures of value that must be met for a requirement to be considered fulfilled. In practice, these criteria form the definitive "Definition of Done."
+Acceptance Testing validates whether the built solution successfully meets the original business needs and is acceptable to key stakeholders. Acceptance Criteria define the specific, objective conditions and measures of value that must be met for a requirement to be considered fulfilled. In practice, these criteria form the definitive "Definition of Done."
 
 ## Why It Matters
 

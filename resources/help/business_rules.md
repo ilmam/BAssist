@@ -6,7 +6,7 @@ title: Business Rules
 
 Business Rules are the specific, testable directives that shape day-to-day business behavior and guide operational decision-making.
 
-In BABOK, rules must be documented independently of the processes or systems that enforce them. They generally fall into two categories:
+Rules must be documented independently of the processes or systems that enforce them. They generally fall into two categories:
 
 - **Behavioral (Operative) Rules:** Rules that govern action. They dictate what must or must not happen (e.g., "A spare parts inquiry cannot be closed until a formal dealer response is logged").
 - **Definitional (Structural) Rules:** Rules that categorize or calculate knowledge (e.g., "A 'VIP Dealer' is defined as a branch with over $50,000 in quarterly parts orders").

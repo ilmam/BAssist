@@ -401,6 +401,196 @@ body.modal-sheet-push .kt-header {
   flex: 0 0 4.5rem;
 }
 
+/* Modest widen so phase labels + children fit without clipping (theme default 280px). */
+.demo1 {
+  --sidebar-width: 300px;
+  --sidebar-default-width: 300px;
+}
+
+@media (max-width: 64rem) {
+  .demo1 {
+    --sidebar-width: 300px;
+  }
+}
+
+.demo1 .kt-sidebar-content,
+.demo1 #sidebar_scrollable,
+.demo1 .kt-sidebar .kt-menu {
+  max-width: 100%;
+  min-width: 0;
+}
+
+.demo1 .kt-sidebar-content {
+  overflow-x: hidden;
+}
+
+/**
+ * Project row BA logo — fixed 24×24 icon column.
+ * Wide white-bg logo is left-cropped so the blue "BA" mark fills the square;
+ * "ssist" stays clipped inside the box. Slight negative start margin pulls the
+ * mark left toward the tree rail without colliding with it.
+ * Icon↔title spacing is authoritative here (Tailwind gap-[6px] is not compiled).
+ */
+.kt-menu-link:has(.nav-project-icon) {
+  gap: 8px;
+}
+
+.nav-project-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: 24px;
+  height: 24px;
+  overflow: hidden;
+  border-radius: 3px;
+  flex: none;
+  line-height: 0;
+  background: #fff;
+}
+
+.nav-project-icon img {
+  display: block;
+  width: 24px;
+  height: 24px;
+  object-fit: cover;
+  object-position: left center;
+}
+
+/**
+ * BABOK project phase folders — soft color accents in the sidebar.
+ *
+ * Palette (barely-there wash + icon tint):
+ *   strategy   — teal
+ *   radd       — amber
+ *   governance — slate-blue
+ *   evaluation — green
+ */
+.nav-phase-folder {
+  --nav-phase-accent: #64748b;
+  --nav-phase-soft: color-mix(in srgb, var(--nav-phase-accent) 4%, transparent);
+  --nav-phase-soft-strong: color-mix(in srgb, var(--nav-phase-accent) 8%, transparent);
+  --nav-phase-border: color-mix(in srgb, var(--nav-phase-accent) 18%, transparent);
+  margin-block: 0.4rem;
+  /* A few px wider than sibling leaves so the bordered pill can keep
+     padding-inline-end for the + without starving the label. Sidebar
+     overflow-x is hidden, so this won't introduce a scrollbar. */
+  width: calc(100% + 8px);
+  max-width: calc(100% + 8px);
+  margin-inline-start: 0;
+  margin-inline-end: -8px;
+  min-width: 0;
+  align-self: stretch;
+  box-sizing: border-box;
+}
+
+.nav-phase-folder[data-folder-key="strategy"] {
+  --nav-phase-accent: #0f766e;
+}
+
+.nav-phase-folder[data-folder-key="radd"] {
+  --nav-phase-accent: #b45309;
+}
+
+.nav-phase-folder[data-folder-key="governance"] {
+  --nav-phase-accent: #4a6fa5;
+}
+
+.nav-phase-folder[data-folder-key="evaluation"] {
+  --nav-phase-accent: #15803d;
+}
+
+.nav-phase-folder__link {
+  /* Authoritative box metrics — compact chrome so long labels
+     (Requirements Modeling, etc.) fit; pe stays ≥8px so + clears
+     the pill border. Do not use me-[-10px] on arrows. */
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  min-height: 0;
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  gap: 0.125rem; /* 2px — tight icon↔title to free title space */
+  padding-block: 6px;
+  padding-inline-start: 4px; /* less space left of folder icon */
+  padding-inline-end: 8px; /* keep + clear of the right border */
+  margin-inline: 0;
+  border: 1px solid var(--nav-phase-border);
+  border-radius: 0.5rem;
+  background: var(--nav-phase-soft);
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.nav-phase-folder__link:hover,
+.nav-phase-folder.show > .nav-phase-folder__link {
+  background: var(--nav-phase-soft-strong);
+  border-color: color-mix(in srgb, var(--nav-phase-accent) 26%, transparent);
+}
+
+.nav-phase-folder.here > .nav-phase-folder__link {
+  background: var(--nav-phase-soft-strong);
+  border-color: color-mix(in srgb, var(--nav-phase-accent) 28%, transparent);
+}
+
+.nav-phase-folder__icon {
+  width: 18px;
+  color: var(--nav-phase-accent) !important;
+}
+
+.nav-phase-folder__icon .ki-filled {
+  font-size: 1rem; /* ~16px — slightly smaller than text-lg */
+}
+
+.nav-phase-folder__title {
+  /* Match nested sibling .kt-menu-title: text-2sm font-normal
+     (--text-2sm: 0.8125rem / 13px), NOT level-0 text-sm font-medium.
+     Prefer full label: no ellipsis; wrap to 2 lines if still tight. */
+  font-size: 0.8125rem;
+  font-weight: 400;
+  line-height: 1.2;
+  letter-spacing: normal;
+  color: var(--foreground, #0f172a);
+  overflow: hidden;
+  text-overflow: clip;
+  white-space: normal;
+  overflow-wrap: break-word;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
+.nav-phase-folder.here > .nav-phase-folder__link .nav-phase-folder__title,
+.nav-phase-folder.show > .nav-phase-folder__link .nav-phase-folder__title {
+  color: var(--nav-phase-accent);
+}
+
+.nav-phase-folder__arrow {
+  width: 16px;
+  color: var(--nav-phase-accent) !important;
+  opacity: 0.65;
+  /* Do not use sibling me-[-10px] — that cancels pe and puts + on the border. */
+  margin-inline-start: 0;
+  margin-inline-end: 0;
+}
+
+/* No left rail on phase-folder leaf children (project tree rail stays elsewhere). */
+.nav-phase-folder__children::before {
+  content: none !important;
+  border: 0 !important;
+  display: none !important;
+}
+
+.nav-phase-folder__children {
+  margin-top: 0.15rem;
+  margin-bottom: 0.15rem;
+  /* Keep leaf width aligned with sibling rows (parent is +8px wider). */
+  width: calc(100% - 8px);
+  max-width: calc(100% - 8px);
+  min-width: 0;
+}
+
 /**
  * BABOK project-folder progress badges in the sidebar.
  */
@@ -419,21 +609,21 @@ body.modal-sheet-push .kt-header {
 }
 
 .nav-folder-badge[data-tone="strategy"] {
-  color: #0f3d2e;
-  background: #d8f3e7;
-  border-color: #a7e0c5;
+  color: #115e59;
+  background: #ccfbf1;
+  border-color: #99f6e4;
 }
 
 .nav-folder-badge[data-tone="radd"] {
-  color: #1e3a5f;
-  background: #dbeafe;
-  border-color: #bfdbfe;
+  color: #92400e;
+  background: #fef3c7;
+  border-color: #fde68a;
 }
 
 .nav-folder-badge[data-tone="governance"] {
-  color: #5b21b6;
-  background: #ede9fe;
-  border-color: #ddd6fe;
+  color: #334e7a;
+  background: #e8eef7;
+  border-color: #c5d4ea;
 }
 
 .nav-folder-badge[data-tone="evaluation"] {
@@ -541,7 +731,7 @@ table.dataTable tbody td.dt-nowrap {
   margin-bottom: calc(var(--spacing) * 5);
   border: 1px solid var(--border);
   border-radius: var(--radius-md, 0.5rem);
-  background: var(--card, transparent);
+  background: #fafafa;
 }
 
 .list-filter-panel__summary {
@@ -873,6 +1063,10 @@ table.dataTable tbody td.dt-nowrap {
   gap: 0.5rem;
 }
 
+.quick-guide__surround-grid--three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
 .quick-guide__mini {
   padding: 0.65rem 0.75rem;
   border-radius: 0.55rem;
@@ -910,6 +1104,12 @@ table.dataTable tbody td.dt-nowrap {
   font-size: 0.75rem;
   line-height: 1.4;
   color: color-mix(in srgb, var(--qg-ink) 78%, transparent);
+}
+
+@media (max-width: 900px) {
+  .quick-guide__surround-grid--three {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 640px) {

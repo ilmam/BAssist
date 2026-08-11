@@ -24,7 +24,7 @@ A solution that implements every functional workflow but fails under load, expos
 
 - **Upstream:** Stakeholder Needs (and optionally approved Change Requests).
 - **Siblings:** Functional Requirements and BDD Features under the Solution Requirements hub.
-- **Downstream:** Design, capacity planning, security reviews, acceptance / non-functional test plans, export and BABOK packs.
+- **Downstream:** Design, capacity planning, security reviews, acceptance / non-functional test plans, export and Project Documents packs.
 
 **Practical tip:** If two reviewers can disagree whether a demo “met” the NFR, rewrite the description (and acceptance criteria) until the pass/fail condition is unambiguous.
 

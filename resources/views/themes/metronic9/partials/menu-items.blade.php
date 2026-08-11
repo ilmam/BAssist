@@ -8,6 +8,9 @@
         $isOpen = nav_item_is_open($item);
         $hasChildren = ! empty($item['children']);
         $isHeading = ($item['type'] ?? null) === 'heading';
+        $isFolder = ($item['type'] ?? null) === 'folder';
+        $isProject = ($item['type'] ?? null) === 'project';
+        $folderKey = $item['folder_key'] ?? null;
         $childGap = $level >= 2 ? 'gap-[5px]' : 'gap-[14px]';
         $bullet = 'kt-menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 kt-menu-item-active:before:bg-primary kt-menu-item-hover:before:bg-primary';
         $leafLinkActive = 'kt-menu-item-active:bg-accent/60 dark:menu-item-active:border-border kt-menu-item-active:rounded-lg hover:bg-accent/60 hover:rounded-lg';
@@ -18,6 +21,52 @@
             <span class="kt-menu-heading uppercase text-xs font-medium text-muted-foreground ps-[10px] pe-[10px]">
                 {{ $item['label'] }}
             </span>
+        </div>
+    @elseif ($isFolder && $hasChildren)
+        <div class="kt-menu-item kt-menu-item-accordion nav-phase-folder {{ $isOpen ? 'show' : '' }} {{ $isActive ? 'here' : '' }}"
+            data-kt-menu-item-toggle="accordion"
+            data-kt-menu-item-trigger="click"
+            @if ($folderKey) data-folder-key="{{ $folderKey }}" @endif>
+            {{-- Font/padding/width for phase folders are authoritative in bassist.css
+                 (.nav-phase-folder / __link / __arrow / __title). Do not add me-[-10px]
+                 on the arrow — that cancels pe and puts + flush on the pill border. --}}
+            <div class="kt-menu-link nav-phase-folder__link flex items-center grow cursor-pointer"
+                tabindex="0">
+                @if (! empty($item['icon']))
+                    <span class="kt-menu-icon nav-phase-folder__icon items-center w-[18px] shrink-0 flex-none">
+                        <i class="ki-filled ki-{{ $item['icon'] }}"></i>
+                    </span>
+                @endif
+                @if (! empty($item['route']))
+                    <a href="{{ nav_url($item) }}"
+                        onclick="event.stopPropagation()"
+                        class="kt-menu-title nav-phase-folder__title grow min-w-0 shrink"
+                        @if (! empty($item['title'])) title="{{ $item['title'] }}" @endif>
+                        {{ $item['label'] }}
+                    </a>
+                @else
+                    <span class="kt-menu-title nav-phase-folder__title grow min-w-0 shrink"
+                        @if (! empty($item['title'])) title="{{ $item['title'] }}" @endif>
+                        {{ $item['label'] }}
+                    </span>
+                @endif
+                @if (! empty($item['badge']))
+                    <span class="nav-folder-badge shrink-0 flex-none"
+                        data-tone="{{ $item['badge_tone'] ?? 'default' }}"
+                        title="{{ $item['badge_title'] ?? $item['badge'] }}">{{ $item['badge'] }}</span>
+                @endif
+                <span class="kt-menu-arrow nav-phase-folder__arrow text-muted-foreground w-[16px] shrink-0 flex-none justify-end">
+                    <span class="inline-flex kt-menu-item-show:hidden">
+                        <i class="ki-filled ki-plus text-[11px]"></i>
+                    </span>
+                    <span class="hidden kt-menu-item-show:inline-flex">
+                        <i class="ki-filled ki-minus text-[11px]"></i>
+                    </span>
+                </span>
+            </div>
+            <div class="kt-menu-accordion nav-phase-folder__children gap-0.5 relative ps-[8px]">
+                @include('themes.metronic9.partials.menu-items', ['items' => $item['children'], 'level' => $level + 1])
+            </div>
         </div>
     @elseif ($hasChildren)
         <div class="kt-menu-item kt-menu-item-accordion {{ $isOpen ? 'show' : '' }} {{ $isActive ? 'here' : '' }}"
@@ -61,17 +110,27 @@
                     @include('themes.metronic9.partials.menu-items', ['items' => $item['children'], 'level' => 1])
                 </div>
             @else
-                <div class="kt-menu-link border border-transparent grow cursor-pointer {{ $childGap }} ps-[10px] pe-[10px] py-[8px]" tabindex="0">
-                    <span class="{{ $bullet }}"></span>
+                {{-- Nested accordion: projects get BA logo; other parents keep the tree bullet. --}}
+                <div class="kt-menu-link flex items-center border border-transparent grow cursor-pointer {{ $isProject ? 'gap-[6px]' : $childGap }} ps-[10px] pe-[10px] py-[8px]" tabindex="0">
+                    @if ($isProject)
+                        <span class="kt-menu-icon nav-project-icon items-center w-[24px] shrink-0 flex-none">
+                            <img src="{{ asset($item['icon_img'] ?? config('navigation.hierarchy.project_icon_img', 'images/ba-logo.png')) }}"
+                                alt=""
+                                width="24"
+                                height="24">
+                        </span>
+                    @else
+                        <span class="{{ $bullet }}"></span>
+                    @endif
                     @if (! empty($item['route']))
                         <a href="{{ nav_url($item) }}"
                             onclick="event.stopPropagation()"
-                            class="kt-menu-title text-2sm font-normal me-1 text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-medium kt-menu-link-hover:!text-primary grow"
+                            class="kt-menu-title text-2sm font-normal me-1 text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-medium kt-menu-link-hover:!text-primary grow min-w-0"
                             @if (! empty($item['title'])) title="{{ $item['title'] }}" @endif>
                             {{ $item['label'] }}
                         </a>
                     @else
-                        <span class="kt-menu-title text-2sm font-normal me-1 text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-medium kt-menu-link-hover:!text-primary grow"
+                        <span class="kt-menu-title text-2sm font-normal me-1 text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-medium kt-menu-link-hover:!text-primary grow min-w-0"
                             @if (! empty($item['title'])) title="{{ $item['title'] }}" @endif>
                             {{ $item['label'] }}
                         </span>

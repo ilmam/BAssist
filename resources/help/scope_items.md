@@ -6,7 +6,7 @@ title: Scope
 
 Scope explicitly defines the hard boundaries of an initiative. It acts as a filter that divides the universe of possible requirements into two distinct categories: In-Scope (the specific business processes, user groups, systems, and capabilities that will be changed or delivered) and Out-of-Scope (the capabilities, regions, or integrations that are explicitly excluded).
 
-In BABOK terms, scope modelling visualizes the boundaries of control, change, need, and the solution itself.
+Scope modelling visualizes the boundaries of control, change, need, and the solution itself.
 
 ## Why It Matters
 

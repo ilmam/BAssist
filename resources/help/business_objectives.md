@@ -4,7 +4,7 @@ title: Business Objectives
 
 ## Context & Definition
 
-A Business Objective is a measurable enterprise outcome — the **what** we must achieve to address a Business Need. In BABOK® terms this aligns with Business Requirements: goals and objectives that define success for the change. Objectives answer: *What measurable result proves we have responded to the need?*
+A Business Objective is a measurable enterprise outcome — the **what** we must achieve to address a Business Need. Objectives define success for the change as goals and measures. They answer: *What measurable result proves we have responded to the need?*
 
 Objectives are SMART markers of success (e.g., “Increase spare parts digital fulfillment speed by 30% over the next fiscal year”). They do not describe software features, UI layouts, or project tasks; they describe the desired future-state business value.
 

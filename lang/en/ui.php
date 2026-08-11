@@ -438,21 +438,24 @@ return [
     'table_of_contents' => 'Contents',
     'export_none' => 'No :items in this project.',
     'export_no_artifacts' => 'No artifacts yet.',
-    'export_pack' => 'Export pack',
+    'export_pack' => 'Full Package',
     'project_downloads' => 'Project downloads',
-    'babok_documents' => 'Document suite',
+    'babok_documents' => 'Project Documents',
     'babok_document' => 'Package',
     'babok_phase_documents' => 'Baseline packages (pre-approval)',
     'babok_sections' => 'Steps / sections',
     'babok_documents_help' => 'Three core baseline packages for the pre-approval sphere: Strategy (Why), Requirements (What), and Traceability & Governance (Proof). Each package is one print-ready document.',
-    'babok_documents_vs_pack' => 'The full Export pack remains available for a complete dump of every artifact (including orphans). These packages omit unlinked placeholders where noted.',
+    'babok_documents_vs_pack' => 'The Full Package remains available for a complete dump of every artifact (including orphans). These packages omit unlinked placeholders where noted.',
     'babok_reference' => 'Guide reference',
-    'babok_omitted_orphans' => ':count unlinked orphan item(s) omitted from this document (still available in the full export pack).',
+    'babok_omitted_orphans' => ':count unlinked orphan item(s) omitted from this document (still available in the Full Package).',
     'babok_package_strategy' => 'Package 1 — Strategy Analysis (The “Why”)',
+    'babok_package_strategy_menu' => 'Package 1 — Strategy Analysis',
     'babok_package_strategy_help' => 'Current state and needs, future state with SMART objectives and potential value, risk assessment, then change strategy and solution scope.',
     'babok_package_requirements' => 'Package 2 — Requirements Analysis & Design Definition (The “What”)',
+    'babok_package_requirements_menu' => 'Package 2 — Requirements Analysis & Design Definition',
     'babok_package_requirements_help' => 'Stakeholder and solution requirements (functional & non-functional), process/state models, and BDD acceptance criteria (Tasks 7.1, 7.2, 7.4).',
     'babok_package_proof' => 'Package 3 — Traceability & Governance (The “Proof”)',
+    'babok_package_proof_menu' => 'Package 3 — Traceability & Governance',
     'babok_package_proof_help' => 'Who is engaged, how change is governed, and the RTM proving end-to-end lineage.',
     'babok_step_current_state_needs' => 'Step A — Current State Description & Business Needs',
     'babok_step_current_state_needs_note' => 'Task 6.1 Analyze Current State — What is broken today? Capture the raw problem / opportunity in the current-state narrative and business needs.',
@@ -573,6 +576,7 @@ return [
     'quick_guide_trail_cr' => 'Change Request',
     'quick_guide_trail_solution' => 'Solution Requirements',
     'quick_guide_trail_trace' => 'Traceability Matrix',
+    'quick_guide_trail_test' => 'Tests',
 
     // BA artifact names (accent label beside the question)
     'quick_guide_ba_project' => 'Project',
@@ -583,6 +587,7 @@ return [
     'quick_guide_ba_cr' => 'Change Request',
     'quick_guide_ba_solution' => 'Solution Requirements',
     'quick_guide_ba_trace' => 'Traceability Matrix',
+    'quick_guide_ba_test' => 'Acceptance Test',
 
     // Human screen questions
     'quick_guide_q_project' => 'Where does this work live?',
@@ -593,6 +598,7 @@ return [
     'quick_guide_q_cr' => 'How do changing needs drive new requirements?',
     'quick_guide_q_solution' => 'How must the solution behave?',
     'quick_guide_q_trace' => 'Can you see the whole chain?',
+    'quick_guide_q_test' => 'How will you prove it works?',
 
     // Short teaching hints (same leave-portal story — no cute everyday analogies)
     'quick_guide_hint_project' => 'Before you write needs, lock in the Strategic Baseline: what’s messy today (leave stuck in email), what “done” looks like (one portal), and how you’ll get from here to there.',
@@ -603,8 +609,9 @@ return [
     'quick_guide_hint_cr' => 'A Change Request becomes the base for the new Solution Requirement.',
     'quick_guide_hint_cr_chain' => 'The red node is the change that must cascade before or along Solution Requirements.',
     'quick_guide_cr_chain_label' => 'Traceability chain with Change Request',
-    'quick_guide_hint_solution' => 'Capture Solution Requirements as FR, NFR, and Scenarios — what the solution must do, how well it must perform, and Given / When / Then proofs.',
+    'quick_guide_hint_solution' => 'Capture Solution Requirements as Functional Requirements (FR), Non-Functional Requirements (NFR), and BDD Features / scenarios — what the solution must do, how well it must perform, and Given / When / Then proofs.',
     'quick_guide_hint_trace' => 'Walk the chain end to end — every requirement should hang under a need and a why.',
+    'quick_guide_hint_test' => 'After the chain is clear, define Acceptance Tests — checks that prove a leave ticket is created correctly and policy rules (like doctor-note upload) actually block bad submits.',
 
     // Focused sample cards — Employee Leave Request Portal (one story for the whole wizard)
     'quick_guide_sample_project_kicker' => 'Project · LR-PORTAL',
@@ -644,7 +651,19 @@ return [
 
     'quick_guide_sample_solution_kicker' => 'Solution Requirements · SR-01',
     'quick_guide_sample_solution_title' => 'Confirm request and notify manager on submit',
-    'quick_guide_sample_solution_body' => 'FR: On submit, create a pending request, freeze the balance, and notify the manager. NFR: Approval notice reaches the manager within 1 minute. Scenario: Given an employee with 5 days remaining enters 2 days of annual leave, When they submit, Then the request shows Pending and the manager receives an approval notice.',
+    'quick_guide_sample_solution_body' => 'One leave-submit capability, broken into what must happen, how fast it must happen, and the scenario that proves it.',
+
+    'quick_guide_solution_parts_title' => 'Captured as',
+    'quick_guide_solution_bdd_label' => 'BDD Features',
+    'quick_guide_solution_bdd_example' => 'Feature: Submit leave — Given 5 days remaining and 2 days requested, When submit, Then status is Pending and the manager is notified.',
+    'quick_guide_solution_fr_label' => 'Functional Requirements (FR)',
+    'quick_guide_solution_fr_example' => 'On submit, create a pending leave ticket, freeze the balance, and notify the manager.',
+    'quick_guide_solution_nfr_label' => 'Non-Functional Requirements (NFR)',
+    'quick_guide_solution_nfr_example' => 'Approval notice reaches the manager within 1 minute of submit.',
+
+    'quick_guide_sample_test_kicker' => 'Acceptance Test · AT-01',
+    'quick_guide_sample_test_title' => 'Leave ticket created; doctor note blocks invalid submit',
+    'quick_guide_sample_test_body' => 'Pass when a valid annual leave submit creates a Pending ticket and notifies the manager. Fail (and block submit) when sick leave over 3 days is sent without a doctor-note upload.',
 
     // Traceability chain mini-examples (leave-portal spine)
     'quick_guide_chain_project_code' => 'LR-PORTAL',
@@ -660,7 +679,7 @@ return [
     'quick_guide_chain_solution_code' => 'SR-01',
     'quick_guide_chain_solution' => 'create leave ticket on submit',
 
-    // Step 8 CR cascade — distinct SN/SR titles (post-change), not step 7 baseline
+    // Step 9 CR cascade — distinct SN/SR titles (post-change), not Traceability baseline
     'quick_guide_chain_cr_sn_code' => 'SN-02',
     'quick_guide_chain_cr_sn' => 'Prove sick leave over 3 days with a doctor note',
     'quick_guide_chain_cr_sn_badge' => 'Updated need',

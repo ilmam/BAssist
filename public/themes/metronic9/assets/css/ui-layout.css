@@ -223,15 +223,26 @@
 [data-ui-size="spread"] .row > [data-ui-span-lg="12"],
 [data-ui-size="spread"] .row > [data-ui-span="12"]:not([data-ui-span-lg]) { flex: 0 0 100% !important; max-width: 100% !important; }
 
-/* Brand logo — Metronic prebuilt CSS ignores arbitrary h-[Npx] utilities */
+/* Brand logo — Metronic prebuilt CSS ignores arbitrary h-[Npx] utilities.
+ * Expanded sidebar/header: full wordmark at ~44px (fits --header-height 70px).
+ * Collapsed .small-logo: BA mark only so it fits --sidebar-width-collapse 80px. */
 .kt-sidebar .default-logo,
-.kt-sidebar .small-logo,
 #header img[src*="logo"],
-.header-logo img {
-  height: 22px !important;
+.header-logo img,
+.auth-brand-logo {
+  height: 44px !important;
   width: auto !important;
-  max-width: 140px;
+  max-width: 220px;
   object-fit: contain;
+  object-position: left center;
+}
+
+.kt-sidebar .small-logo {
+  height: 36px !important;
+  width: 36px !important;
+  max-width: 36px;
+  object-fit: cover;
+  object-position: left center;
 }
 
 /**

@@ -5,6 +5,7 @@ namespace App\Repositories;
 use App\Helpers\ListUi;
 use App\Models\Project;
 use App\Models\Workspace;
+use App\Support\ProjectContext;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
@@ -70,7 +71,45 @@ class BaseRepository
             $fields = $this->model->getListFields();
         }
 
-        return $this->model::pluck(...$fields);
+        if ($this->selectOptionsRequireStickyProject() && app(ProjectContext::class)->id() === null) {
+            return collect();
+        }
+
+        $query = $this->model::query();
+        $this->applyStickyProjectScope($query);
+
+        return $query->pluck(...$fields);
+    }
+
+    /**
+     * Whether form select options for this repository must be confined to the
+     * sticky project (direct project_id ownership).
+     */
+    protected function selectOptionsRequireStickyProject(): bool
+    {
+        return in_array('project_id', $this->listFilters, true);
+    }
+
+    /**
+     * Constrain queries to the sticky project when this repository owns a
+     * project_id column filter. Fail-closed: no sticky project → no rows, so
+     * form parent selects never leak entities from other projects.
+     */
+    protected function applyStickyProjectScope(Builder $query): Builder
+    {
+        if (! $this->selectOptionsRequireStickyProject()) {
+            return $query;
+        }
+
+        $projectId = app(ProjectContext::class)->id();
+        if ($projectId === null) {
+            return $query->whereRaw('0 = 1');
+        }
+
+        return $query->where(
+            $query->getModel()->getTable().'.project_id',
+            $projectId
+        );
     }
 
     /**

@@ -4,7 +4,7 @@ title: Risk Assessment
 
 ## Context & Definition
 
-Risk is the effect of uncertainty on the value of a change, a solution, or the enterprise (BABOK Task 6.3 Assess Risks). A risk register captures what could go wrong, how likely it is, how badly it hurts value, and what you will do about it.
+Risk is the effect of uncertainty on the value of a change, a solution, or the enterprise. A risk register captures what could go wrong, how likely it is, how badly it hurts value, and what you will do about it.
 
 ## Why It Matters
 

@@ -21,19 +21,19 @@
                         $downloadMenuItems = [];
                         foreach (config('babok_documents.documents', []) as $docKey => $docMeta) {
                             $downloadMenuItems[] = [
-                                'label' => __($docMeta['title']),
+                                'label' => __($docMeta['menu_title'] ?? $docMeta['title']),
                                 'url' => route('projects.babok.show', [$project, $docKey]),
                                 'target' => '_blank',
                             ];
                         }
                         $downloadMenuItems[] = [
-                            'label' => __('ui.babok_documents'),
-                            'url' => route('projects.babok.index', $project),
-                        ];
-                        $downloadMenuItems[] = [
                             'label' => __('ui.export_pack'),
                             'url' => route('projects.export', $project),
                             'target' => '_blank',
+                        ];
+                        $downloadMenuItems[] = [
+                            'label' => __('ui.babok_documents'),
+                            'url' => route('projects.babok.index', $project),
                         ];
                     @endphp
                     <div class="create-split-btn inline-flex items-stretch">

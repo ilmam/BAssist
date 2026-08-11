@@ -4,7 +4,7 @@ title: Stakeholders
 
 ## Context & Definition
 
-A Stakeholder is any group, role, or individual who impacts—or is impacted by—a change initiative. The Stakeholder Matrix is the structured map of those stakeholders for a change. In the BABOK® Guide, stakeholders are not an unstructured cast of random names; they fall into recognizable operational archetypes such as Sponsors, Domain Subject Matter Experts (SMEs), End Users, Customers, Regulators, and Operational Support. The core analytical question is: Who has a stake in this change, and what is the exact nature of their relationship to the solution?
+A Stakeholder is any group, role, or individual who impacts—or is impacted by—a change initiative. The Stakeholder Matrix is the structured map of those stakeholders for a change. Stakeholders are not an unstructured cast of random names; they fall into recognizable operational archetypes such as Sponsors, Domain Subject Matter Experts (SMEs), End Users, Customers, Regulators, and Operational Support. The core analytical question is: Who has a stake in this change, and what is the exact nature of their relationship to the solution?
 
 ## Why It Matters
 

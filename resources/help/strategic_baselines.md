@@ -8,7 +8,7 @@ The Strategic Baseline is the project’s approved Strategy Analysis narrative�
 
 In BAssist, each project has **one** Strategic Baseline document with three narrative fields—**Current state**, **Future state**, and **Change strategy**—plus a lifecycle **Status** (`Draft` → `In review` → `Approved`). Related strategy artifacts live beside it on the Strategy hub and Need Spine: Business Needs, Business Objectives, Scope Items (in/out), Assumptions, Constraints, and Risks.
 
-This maps to BABOK Strategy Analysis (Chapter 6): Analyze Current State (6.1), Define Future State (6.2), Assess Risks (6.3), and Define Change Strategy (6.4).
+This maps to Strategy Analysis: Analyze Current State, Define Future State, Assess Risks, and Define Change Strategy.
 
 ## Why It Matters
 

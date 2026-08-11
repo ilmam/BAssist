@@ -7,6 +7,7 @@
         @csrf
 
         <div class="text-center mb-2.5">
+            <img class="auth-brand-logo mx-auto mb-4" src="{{ asset('images/ba-logo.png') }}" alt="{{ config('app.name') }}" />
             <h3 class="text-lg font-medium text-mono leading-none mb-2.5">
                 Sign in
             </h3>

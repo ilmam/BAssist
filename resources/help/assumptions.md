@@ -6,7 +6,7 @@ title: Assumptions
 
 Assumptions are foundational beliefs about the current environment or the future state that are treated as facts for planning purposes, even though they lack 100% empirical proof at the time.
 
-In BABOK, assumptions are a critical input to Strategy Analysis. Because we cannot know everything before a project starts, we must make assumptions to move forward—for example, "It is assumed that the dealer network has a stable, high-speed internet connection to submit digital inquiries."
+Assumptions are a critical input to strategy analysis. Because we cannot know everything before a project starts, we must make assumptions to move forward—for example, "It is assumed that the dealer network has a stable, high-speed internet connection to submit digital inquiries."
 
 ## Why It Matters
 

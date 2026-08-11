@@ -56,19 +56,10 @@ class NavTreeBuilder
 
         $children = [];
 
-        if ($canViewWorkspace) {
-            $children[] = [
-                'label' => $hierarchyConfig['all_workspaces_label'] ?? 'All Workspaces',
-                'route' => model_route_name('Workspace', 'index'),
-                'query' => ['clear_workspace' => 1],
-            ];
-        }
-
         foreach ($workspaces as $workspace) {
             $workspaceChildren = $this->workspaceChildren(
                 $workspace,
                 $folderTemplates,
-                $canViewProject,
                 $activeProjectId,
             );
 
@@ -92,12 +83,20 @@ class NavTreeBuilder
             return $this->managementFallback();
         }
 
-        return [[
+        $root = [
             'label' => $hierarchyConfig['label'] ?? 'Workspaces',
             'icon' => $hierarchyConfig['icon'] ?? 'folder',
             'icon_v8' => $hierarchyConfig['icon_v8'] ?? ($hierarchyConfig['icon'] ?? 'folder'),
             'children' => $children,
-        ]];
+        ];
+
+        // Root label opens the workspace list (same pattern as workspace → projects).
+        if ($canViewWorkspace) {
+            $root['route'] = model_route_name('Workspace', 'index');
+            $root['query'] = ['clear_workspace' => 1];
+        }
+
+        return [$root];
     }
 
     /**
@@ -107,19 +106,9 @@ class NavTreeBuilder
     protected function workspaceChildren(
         Workspace $workspace,
         array $folderTemplates,
-        bool $canViewProject,
         ?int $activeProjectId,
     ): array {
         $children = [];
-
-        if ($canViewProject) {
-            $children[] = [
-                'label' => config('navigation.hierarchy.all_projects_label', 'All Projects'),
-                'route' => model_route_name('Project', 'index'),
-                'query' => ['workspace_id' => $workspace->id],
-                'context' => ['workspace_id' => (int) $workspace->id],
-            ];
-        }
 
         /** @var Collection<int, Project> $projects */
         $projects = $workspace->projects;
@@ -133,12 +122,14 @@ class NavTreeBuilder
             $isActiveProject = $activeProjectId !== null && (int) $activeProjectId === (int) $project->id;
 
             $children[] = [
+                'type' => 'project',
                 'label' => $project->name,
                 'route' => 'projects.dashboard',
                 'route_params' => ['project' => $project->id],
                 'query' => $projectQuery,
                 'icon' => config('navigation.hierarchy.project_icon', 'abstract-26'),
                 'icon_v8' => config('navigation.hierarchy.project_icon_v8', config('navigation.hierarchy.project_icon', 'abstract-26')),
+                'icon_img' => config('navigation.hierarchy.project_icon_img', 'images/ba-logo.png'),
                 'context' => [
                     'workspace_id' => (int) $workspace->id,
                     'project_id' => (int) $project->id,
@@ -195,11 +186,12 @@ class NavTreeBuilder
             $item = [
                 'type' => 'folder',
                 'folder_key' => $folder['key'] ?? null,
+                'short' => $folder['short'] ?? null,
                 'label' => $folder['label'],
                 'icon' => $folder['icon'] ?? 'folder',
                 'icon_v8' => $folder['icon_v8'] ?? ($folder['icon'] ?? 'folder'),
-                'title' => trim(($folder['babok'] ?? '').' — '.($folder['purpose'] ?? ''), ' —'),
-                'badge_tone' => $folder['badge_tone'] ?? null,
+                'title' => trim((string) ($folder['purpose'] ?? '')),
+                'badge_tone' => $folder['badge_tone'] ?? ($folder['key'] ?? null),
                 'children' => $children,
                 // Open when a child is active; do not force all folders open.
                 'force_open' => false,
@@ -328,11 +320,18 @@ class NavTreeBuilder
 
         $hierarchyConfig = config('navigation.hierarchy', []);
 
-        return [[
+        $root = [
             'label' => $hierarchyConfig['label'] ?? 'Workspaces',
             'icon' => $hierarchyConfig['icon'] ?? 'folder',
             'icon_v8' => $hierarchyConfig['icon_v8'] ?? ($hierarchyConfig['icon'] ?? 'folder'),
             'children' => $children,
-        ]];
+        ];
+
+        if (entity_can('Workspace', EntityAccess::VIEW)) {
+            $root['route'] = model_route_name('Workspace', 'index');
+            $root['query'] = ['clear_workspace' => 1];
+        }
+
+        return [$root];
     }
 }

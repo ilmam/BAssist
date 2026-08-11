@@ -5,18 +5,24 @@ namespace Tests\Unit;
 use App\Data\ChangeRequestData;
 use App\Http\Controllers\ChangeRequestController;
 use App\Models\ChangeRequest;
+use App\Models\Project;
+use App\Models\StakeholderNeed;
+use App\Repositories\ChangeRequestRepository;
+use App\Services\TenancyProvisioner;
 use App\Support\ChangeRequestImpact;
 use App\Support\ChangeRequestStatus;
 use App\Support\CrudEntityRegistry;
 use App\Support\EntityFormBuilder;
 use App\Support\EntityStatus;
 use App\Support\ProjectContext;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class ChangeRequestFormTest extends TestCase
 {
+    use RefreshDatabase;
+
     public function test_entity_is_registered_for_crud(): void
     {
         $this->assertContains('ChangeRequest', array_keys(CrudEntityRegistry::all()));
@@ -93,35 +99,70 @@ class ChangeRequestFormTest extends TestCase
      */
     public function test_select_options_are_scoped_to_current_project_and_approved_status(): void
     {
-        $changeRequest = ChangeRequest::query()->orderBy('id')->first();
+        $provisioner = app(TenancyProvisioner::class);
+        $tenant = $provisioner->ensureSharedTenant();
+        $workspace = $provisioner->ensureSharedWorkspace($tenant);
 
-        if ($changeRequest === null) {
-            $this->markTestSkipped('No Change Request fixture available in the database.');
-        }
+        $project = Project::query()->create([
+            'workspace_id' => $workspace->id,
+            'name' => 'CR Select Scope',
+            'code' => 'CRS-'.uniqid(),
+        ]);
+        $otherProject = Project::query()->create([
+            'workspace_id' => $workspace->id,
+            'name' => 'CR Select Other',
+            'code' => 'CRO-'.uniqid(),
+        ]);
 
-        $originalStatus = $changeRequest->status;
-        $ownProjectId = (int) $changeRequest->project_id;
+        $need = StakeholderNeed::query()->create([
+            'project_id' => $project->id,
+            'title' => 'Anchored need',
+        ]);
+
+        $approved = ChangeRequest::query()->create([
+            'project_id' => $project->id,
+            'title' => 'Approved change',
+            'problem' => 'Problem',
+            'proposed_change' => 'Change',
+            'stakeholder_need_id' => $need->id,
+            'status' => ChangeRequestStatus::APPROVED,
+        ]);
+        ChangeRequest::query()->create([
+            'project_id' => $project->id,
+            'title' => 'Draft change',
+            'problem' => 'Problem',
+            'proposed_change' => 'Change',
+            'stakeholder_need_id' => $need->id,
+            'status' => ChangeRequestStatus::DRAFT,
+        ]);
+        ChangeRequest::query()->create([
+            'project_id' => $otherProject->id,
+            'title' => 'Other project approved',
+            'problem' => 'Problem',
+            'proposed_change' => 'Change',
+            'status' => ChangeRequestStatus::APPROVED,
+        ]);
+
+        $repository = new ChangeRequestRepository;
 
         try {
-            $changeRequest->forceFill(['status' => ChangeRequestStatus::APPROVED])->save();
-            $repository = new \App\Repositories\ChangeRequestRepository;
-
             $stub = $this->createStub(ProjectContext::class);
-            $stub->method('id')->willReturn($ownProjectId);
+            $stub->method('id')->willReturn((int) $project->id);
             $this->app->instance(ProjectContext::class, $stub);
-            $this->assertArrayHasKey($changeRequest->id, $repository->getSelectOptions());
+            $options = $repository->getSelectOptions();
+            $this->assertArrayHasKey($approved->id, $options);
+            $this->assertCount(2, $options); // blank + approved
 
             $otherStub = $this->createStub(ProjectContext::class);
-            $otherStub->method('id')->willReturn($ownProjectId + 999999);
+            $otherStub->method('id')->willReturn((int) $otherProject->id);
             $this->app->instance(ProjectContext::class, $otherStub);
-            $this->assertArrayNotHasKey($changeRequest->id, $repository->getSelectOptions());
+            $this->assertArrayNotHasKey($approved->id, $repository->getSelectOptions());
 
             $noProjectStub = $this->createStub(ProjectContext::class);
             $noProjectStub->method('id')->willReturn(null);
             $this->app->instance(ProjectContext::class, $noProjectStub);
-            $this->assertArrayHasKey($changeRequest->id, $repository->getSelectOptions());
+            $this->assertSame(['' => ''], $repository->getSelectOptions());
         } finally {
-            $changeRequest->forceFill(['status' => $originalStatus])->save();
             $this->app->forgetInstance(ProjectContext::class);
         }
     }

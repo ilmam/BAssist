@@ -4,12 +4,12 @@
     id="sidebar">
     <div class="kt-sidebar-header hidden lg:flex items-center relative justify-between px-3 lg:px-6 shrink-0" id="sidebar_header">
         <a class="dark:hidden" href="{{ url('/') }}">
-            <img class="default-logo h-5 w-auto" src="{{ ui_asset('media/app/default-logo.png') }}" alt="{{ config('app.name') }}" />
-            <img class="small-logo h-5 w-auto" src="{{ ui_asset('media/app/mini-logo.png') }}" alt="{{ config('app.name') }}" />
+            <img class="default-logo h-11 w-auto" src="{{ asset('images/ba-logo.png') }}" alt="{{ config('app.name') }}" />
+            <img class="small-logo h-9 w-9" src="{{ asset('images/ba-logo.png') }}" alt="{{ config('app.name') }}" />
         </a>
         <a class="hidden dark:block" href="{{ url('/') }}">
-            <img class="default-logo h-5 w-auto" src="{{ ui_asset('media/app/default-logo-dark.png') }}" alt="{{ config('app.name') }}" />
-            <img class="small-logo h-5 w-auto" src="{{ ui_asset('media/app/mini-logo.png') }}" alt="{{ config('app.name') }}" />
+            <img class="default-logo h-11 w-auto" src="{{ asset('images/ba-logo.png') }}" alt="{{ config('app.name') }}" />
+            <img class="small-logo h-9 w-9" src="{{ asset('images/ba-logo.png') }}" alt="{{ config('app.name') }}" />
         </a>
         <button class="kt-btn kt-btn-outline kt-btn-icon size-[30px] absolute start-full top-2/4 -translate-x-2/4 -translate-y-2/4 rtl:translate-x-2/4"
             data-kt-toggle="body"

@@ -5,6 +5,8 @@ namespace App\Repositories;
 use App\Data\StakeholderData;
 use App\Data\StakeholderViewData;
 use App\Models\Stakeholder;
+use App\Support\ProjectContext;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use RuntimeException;
 
@@ -40,6 +42,37 @@ class StakeholderRepository extends BaseRepository
     public function __construct()
     {
         $this->model = new Stakeholder();
+    }
+
+    /**
+     * Custom stakeholders first, then system defaults; name within each group.
+     */
+    protected function newListQuery(?array $filters = null): Builder
+    {
+        return $this->orderCustomBeforeSystem(parent::newListQuery($filters));
+    }
+
+    public function getSelectOptions($fields = null)
+    {
+        if ($fields == null) {
+            $fields = $this->model->getListFields();
+        }
+
+        if ($this->selectOptionsRequireStickyProject() && app(ProjectContext::class)->id() === null) {
+            return collect();
+        }
+
+        $query = $this->model::query();
+        $this->applyStickyProjectScope($query);
+
+        return $this->orderCustomBeforeSystem($query)->pluck(...$fields);
+    }
+
+    protected function orderCustomBeforeSystem(Builder $query): Builder
+    {
+        return $query
+            ->orderBy('is_system')
+            ->orderBy('name');
     }
 
     public function create(array $data)

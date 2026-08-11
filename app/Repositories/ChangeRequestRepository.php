@@ -46,9 +46,8 @@ class ChangeRequestRepository extends BaseRepository
     /**
      * Options for FR/Feature Change Request select — approved CRs only, scoped to the
      * sticky project context (mirrors BaseController::applyStickyContextDefaults())
-     * so cross-project CRs never leak into another project's dropdown. When no
-     * project is in scope (e.g. no sticky context yet), falls back to unscoped
-     * to avoid hiding valid options.
+     * so cross-project CRs never leak into another project's dropdown. Fail-closed
+     * when no sticky project is set (empty list aside from the clearable blank).
      *
      * Leading blank keeps the CR select clearable on FR/Feature forms
      * (mirrors SwimlaneFlowStepRepository::getSelectOptions()) — without it the
@@ -58,11 +57,15 @@ class ChangeRequestRepository extends BaseRepository
      */
     public function getSelectOptions($fields = null)
     {
-        $projectId = app(ProjectContext::class)->id();
+        if ($this->selectOptionsRequireStickyProject() && app(ProjectContext::class)->id() === null) {
+            return ['' => ''];
+        }
 
-        $options = $this->model::query()
+        $query = $this->model::query();
+        $this->applyStickyProjectScope($query);
+
+        $options = $query
             ->whereIn('status', [ChangeRequestStatus::APPROVED, ChangeRequestStatus::IMPLEMENTED])
-            ->when($projectId !== null, fn ($query) => $query->where('project_id', $projectId))
             ->orderBy('number')
             ->get()
             ->mapWithKeys(function (ChangeRequest $item) {
