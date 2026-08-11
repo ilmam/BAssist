@@ -401,16 +401,16 @@ body.modal-sheet-push .kt-header {
   flex: 0 0 4.5rem;
 }
 
-/* Modest widen so phase labels + children fit without clipping (theme default 280px). */
+/* Modest widen so phase labels + children fit without clipping (theme default 280px).
+ * Unlayered rules beat Metronic's @layer components, so collapse must be restated
+ * here — otherwise --sidebar-width stays locked at 300px and minimize does nothing. */
 .demo1 {
   --sidebar-width: 300px;
   --sidebar-default-width: 300px;
 }
 
-@media (max-width: 64rem) {
-  .demo1 {
-    --sidebar-width: 300px;
-  }
+.demo1.kt-sidebar-collapse {
+  --sidebar-width: var(--sidebar-width-collapse);
 }
 
 .demo1 .kt-sidebar-content,
