@@ -121,6 +121,9 @@
 
     <div>
         <h4 class="text-sm font-semibold text-foreground mb-3">{{ __('ui.elements') }}</h4>
+        @if ($editable)
+            <p class="text-xs text-muted-foreground mb-3">{{ __('ui.swimlane_order_help') }}</p>
+        @endif
 
         <div class="overflow-x-auto border border-border rounded-lg">
             <table class="kt-table table-auto w-full" data-elements-table>
@@ -138,7 +141,7 @@
                         <th class="min-w-28">{{ __('ui.element_lane_color') }}</th>
                         <th class="min-w-28">{{ __('ui.element_color') }}</th>
                         @if ($editable)
-                            <th class="w-20">{{ __('ui.actions') }}</th>
+                            <th class="w-28">{{ __('ui.actions') }}</th>
                         @endif
                     </tr>
                 </thead>
@@ -379,11 +382,29 @@
                                         <button
                                             type="button"
                                             class="kt-btn kt-btn-sm kt-btn-ghost kt-btn-icon"
+                                            data-move-element="up"
+                                            title="{{ __('ui.element_move_up') }}"
+                                            aria-label="{{ __('ui.element_move_up') }}"
+                                        >
+                                            ↑
+                                        </button>
+                                        <button
+                                            type="button"
+                                            class="kt-btn kt-btn-sm kt-btn-ghost kt-btn-icon"
+                                            data-move-element="down"
+                                            title="{{ __('ui.element_move_down') }}"
+                                            aria-label="{{ __('ui.element_move_down') }}"
+                                        >
+                                            ↓
+                                        </button>
+                                        <button
+                                            type="button"
+                                            class="kt-btn kt-btn-sm kt-btn-ghost kt-btn-icon"
                                             data-add-element
                                             title="{{ __('ui.add_element_row') }}"
                                             aria-label="{{ __('ui.add_element_row') }}"
                                         >
-                                            <i class="ki-filled ki-entrance-right"></i>
+                                            <i class="ki-filled ki-plus"></i>
                                         </button>
                                         <button
                                             type="button"
@@ -476,8 +497,10 @@
                 </td>
                 <td>
                     <div class="flex items-center justify-end gap-1">
+                        <button type="button" class="kt-btn kt-btn-sm kt-btn-ghost kt-btn-icon" data-move-element="up" title="{{ __('ui.element_move_up') }}" aria-label="{{ __('ui.element_move_up') }}">↑</button>
+                        <button type="button" class="kt-btn kt-btn-sm kt-btn-ghost kt-btn-icon" data-move-element="down" title="{{ __('ui.element_move_down') }}" aria-label="{{ __('ui.element_move_down') }}">↓</button>
                         <button type="button" class="kt-btn kt-btn-sm kt-btn-ghost kt-btn-icon" data-add-element title="{{ __('ui.add_element_row') }}" aria-label="{{ __('ui.add_element_row') }}">
-                            <i class="ki-filled ki-entrance-right"></i>
+                            <i class="ki-filled ki-plus"></i>
                         </button>
                         <button type="button" class="kt-btn kt-btn-sm kt-btn-ghost kt-btn-icon" data-remove-element title="{{ __('ui.remove_element_row') }}" aria-label="{{ __('ui.remove_element_row') }}">
                             <i class="ki-filled ki-trash"></i>

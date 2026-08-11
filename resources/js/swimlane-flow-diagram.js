@@ -788,6 +788,30 @@ export function bindSwimlaneFlowEditor(root) {
             return;
         }
 
+        const moveBtn = event.target.closest('[data-move-element]');
+        if (moveBtn) {
+            event.preventDefault();
+            const row = moveBtn.closest('tr[data-element-row]');
+            if (!row || !tbody) {
+                return;
+            }
+            const dir = moveBtn.getAttribute('data-move-element');
+            if (dir === 'up' && row.previousElementSibling?.matches?.('tr[data-element-row]')) {
+                tbody.insertBefore(row, row.previousElementSibling);
+            } else if (dir === 'down' && row.nextElementSibling?.matches?.('tr[data-element-row]')) {
+                tbody.insertBefore(row.nextElementSibling, row);
+            } else {
+                return;
+            }
+            reindexRows();
+            refreshLaneNameList(root, table);
+            if (autoRender) {
+                refresh();
+            } else {
+                maybeSyncMermaidSource();
+            }
+            return;
+        }
 
         const removeBtn = event.target.closest('[data-remove-element]');
         if (!removeBtn) {
