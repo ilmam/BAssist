@@ -432,6 +432,47 @@ function syncLaneColorForSameLane(tbody, sourceRow) {
     });
 }
 
+/**
+ * Collect unique lane titles from the elements table (first-seen order).
+ * Same approach as C4 refreshKeyList for relationship from_key/to_key datalist.
+ */
+function collectLaneNames(table) {
+    if (!table) {
+        return [];
+    }
+
+    const names = [];
+    const seen = new Set();
+
+    table.querySelectorAll('tbody tr[data-element-row] [data-field="lane"]').forEach((el) => {
+        const name =
+            el && 'value' in el && el.tagName !== 'SPAN'
+                ? String(el.value ?? '').trim()
+                : String(el?.getAttribute?.('data-value') ?? el?.textContent ?? '').trim();
+        if (name === '' || seen.has(name)) {
+            return;
+        }
+        seen.add(name);
+        names.push(name);
+    });
+
+    return names;
+}
+
+function refreshLaneNameList(root, table) {
+    const list = root?.querySelector?.('[data-lane-names-list]');
+    if (!list) {
+        return;
+    }
+
+    list.innerHTML = '';
+    collectLaneNames(table).forEach((name) => {
+        const option = document.createElement('option');
+        option.value = name;
+        list.appendChild(option);
+    });
+}
+
 export function bindSwimlaneFlowEditor(root) {
     if (!root || root.dataset.bound === '1') {
         return;
@@ -643,6 +684,7 @@ export function bindSwimlaneFlowEditor(root) {
 
         reindexRows();
         applyRowColorUi(row);
+        refreshLaneNameList(root, table);
         row.querySelector('[data-field="label"]')?.focus();
 
         return row;
@@ -691,11 +733,15 @@ export function bindSwimlaneFlowEditor(root) {
             addRow();
         } else {
             reindexRows();
+            refreshLaneNameList(root, table);
         }
         maybeSyncMermaidSource();
     });
 
-    tbody?.addEventListener('input', () => {
+    tbody?.addEventListener('input', (event) => {
+        if (event.target?.getAttribute?.('data-field') === 'lane') {
+            refreshLaneNameList(root, table);
+        }
         maybeSyncMermaidSource();
     });
 
@@ -707,6 +753,9 @@ export function bindSwimlaneFlowEditor(root) {
         const field = event.target?.getAttribute?.('data-field');
         if (field === 'type') {
             syncNeedEnabled(row);
+        }
+        if (field === 'lane') {
+            refreshLaneNameList(root, table);
         }
         if (field === 'lane_color') {
             syncLaneColorForSameLane(tbody, row);
@@ -740,6 +789,7 @@ export function bindSwimlaneFlowEditor(root) {
 
     reindexRows();
     tbody?.querySelectorAll('tr[data-element-row]').forEach((row) => applyRowColorUi(row));
+    refreshLaneNameList(root, table);
 
     if (autoRender) {
         refresh();

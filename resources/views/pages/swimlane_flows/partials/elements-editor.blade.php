@@ -36,6 +36,8 @@
     foreach (array_keys($elementColorPalette) as $key) {
         $elementColorOptions[$key] = __('ui.element_color_'.$key);
     }
+    // Unique per editor instance (full-page + modal) so list= targets stay local.
+    $laneDatalistId = 'swimlane-lane-names-'.uniqid();
 @endphp
 
 @once
@@ -124,7 +126,9 @@
             <table class="kt-table table-auto w-full" data-elements-table>
                 <thead>
                     <tr>
-                        <th class="min-w-24">{{ __('ui.element_code') }}</th>
+                        @unless ($editable)
+                            <th class="min-w-24">{{ __('ui.element_code') }}</th>
+                        @endunless
                         <th class="min-w-36">{{ __('ui.element_lane') }}</th>
                         <th class="min-w-36">{{ __('ui.element_from') }}</th>
                         <th class="min-w-32">{{ __('ui.element_type') }}</th>
@@ -134,7 +138,7 @@
                         <th class="min-w-28">{{ __('ui.element_lane_color') }}</th>
                         <th class="min-w-28">{{ __('ui.element_color') }}</th>
                         @if ($editable)
-                            <th class="w-28">{{ __('ui.actions') }}</th>
+                            <th class="w-20">{{ __('ui.actions') }}</th>
                         @endif
                     </tr>
                 </thead>
@@ -176,30 +180,37 @@
                                 style="--bassist-lane-fill: {{ $laneFill }};"
                             @endif
                         >
-                            <td>
-                                @if ($stepId)
-                                    <input type="hidden" data-field="id" name="elements[{{ $index }}][id]" value="{{ $stepId }}">
-                                @endif
-                                <input
-                                    type="text"
-                                    class="kt-input bg-muted/40"
-                                    data-field="code"
-                                    name="elements[{{ $index }}][code]"
-                                    value="{{ $code }}"
-                                    readonly
-                                    tabindex="-1"
-                                    placeholder="{{ __('ui.element_code_placeholder') }}"
-                                    autocomplete="off"
-                                >
-                            </td>
+                            @unless ($editable)
+                                <td>
+                                    @if ($stepId)
+                                        <input type="hidden" data-field="id" name="elements[{{ $index }}][id]" value="{{ $stepId }}">
+                                    @endif
+                                    <input
+                                        type="text"
+                                        class="kt-input bg-muted/40"
+                                        data-field="code"
+                                        name="elements[{{ $index }}][code]"
+                                        value="{{ $code }}"
+                                        readonly
+                                        tabindex="-1"
+                                        placeholder="{{ __('ui.element_code_placeholder') }}"
+                                        autocomplete="off"
+                                    >
+                                </td>
+                            @endunless
                             <td>
                                 @if ($editable)
+                                    @if ($stepId)
+                                        <input type="hidden" data-field="id" name="elements[{{ $index }}][id]" value="{{ $stepId }}">
+                                    @endif
+                                    <input type="hidden" data-field="code" name="elements[{{ $index }}][code]" value="{{ $code }}">
                                     <input
                                         type="text"
                                         class="kt-input"
                                         data-field="lane"
                                         name="elements[{{ $index }}][lane]"
                                         value="{{ $row['lane'] ?? '' }}"
+                                        list="{{ $laneDatalistId }}"
                                         placeholder="Support"
                                         autocomplete="off"
                                     >
@@ -367,12 +378,12 @@
                                     <div class="flex items-center justify-end gap-1">
                                         <button
                                             type="button"
-                                            class="kt-btn kt-btn-sm kt-btn-secondary"
+                                            class="kt-btn kt-btn-sm kt-btn-ghost kt-btn-icon"
                                             data-add-element
                                             title="{{ __('ui.add_element_row') }}"
                                             aria-label="{{ __('ui.add_element_row') }}"
                                         >
-                                            {{ __('ui.add_element_row') }}
+                                            <i class="ki-filled ki-entrance-right"></i>
                                         </button>
                                         <button
                                             type="button"
@@ -391,16 +402,19 @@
                 </tbody>
             </table>
         </div>
+
+        @if ($editable)
+            {{-- Same pattern as C4 relationship from_key/to_key: native datalist + kt-input free text. --}}
+            <datalist id="{{ $laneDatalistId }}" data-lane-names-list></datalist>
+        @endif
     </div>
 
     @if ($editable)
         <template data-element-row-template>
             <tr data-element-row>
                 <td>
-                    <input type="text" class="kt-input bg-muted/40" data-field="code" name="elements[__INDEX__][code]" value="" readonly tabindex="-1" placeholder="{{ __('ui.element_code_placeholder') }}" autocomplete="off">
-                </td>
-                <td>
-                    <input type="text" class="kt-input" data-field="lane" name="elements[__INDEX__][lane]" value="" placeholder="Support" autocomplete="off">
+                    <input type="hidden" data-field="code" name="elements[__INDEX__][code]" value="">
+                    <input type="text" class="kt-input" data-field="lane" name="elements[__INDEX__][lane]" value="" list="{{ $laneDatalistId }}" placeholder="Support" autocomplete="off">
                 </td>
                 <td>
                     <input type="text" class="kt-input" data-field="from" name="elements[__INDEX__][from]" value="" placeholder="Review" autocomplete="off">
@@ -462,8 +476,8 @@
                 </td>
                 <td>
                     <div class="flex items-center justify-end gap-1">
-                        <button type="button" class="kt-btn kt-btn-sm kt-btn-secondary" data-add-element title="{{ __('ui.add_element_row') }}" aria-label="{{ __('ui.add_element_row') }}">
-                            {{ __('ui.add_element_row') }}
+                        <button type="button" class="kt-btn kt-btn-sm kt-btn-ghost kt-btn-icon" data-add-element title="{{ __('ui.add_element_row') }}" aria-label="{{ __('ui.add_element_row') }}">
+                            <i class="ki-filled ki-entrance-right"></i>
                         </button>
                         <button type="button" class="kt-btn kt-btn-sm kt-btn-ghost kt-btn-icon" data-remove-element title="{{ __('ui.remove_element_row') }}" aria-label="{{ __('ui.remove_element_row') }}">
                             <i class="ki-filled ki-trash"></i>
