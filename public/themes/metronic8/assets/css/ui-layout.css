@@ -53,9 +53,11 @@
  * ---------------------------------------------------------------------------
  * data-modal-size
  * ---------------------------------------------------------------------------
- * Separate concern: modal window chrome (sm / lg / full / end). Does not drive
- * field layout; resizing the modal changes the container width, and container
- * queries do the rest.
+ * Separate concern: modal window chrome (sm / lg / full / fullscreen / end).
+ * Does not drive field layout; resizing the modal changes the container width,
+ * and container queries do the rest.
+ * Opt in to viewport fill with size="fullscreen" on <x-modal-content>, or
+ * data-modal-size="fullscreen" on a trigger (Bootstrap modal-fullscreen).
  */
 
 [data-ui-container],

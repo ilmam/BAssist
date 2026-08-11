@@ -1,13 +1,17 @@
 @php
-    // Legacy aliases: xl → Large (full), md → Medium (lg), sheet → Side (end).
+    // Legacy aliases: xl → Large (full), md → Medium (lg), sheet → Side (end),
+    // fs / modal-fullscreen → Fullscreen.
     $resolvedSize = match ($size !== '' ? $size : 'full') {
         'xl' => 'full',
         'md' => 'lg',
         'sheet' => 'end',
+        'fs', 'modal-fullscreen' => 'fullscreen',
         default => ($size !== '' ? $size : 'full'),
     };
     $isSheet = in_array($resolvedSize, ['end', 'sheet'], true);
-    // Unified size glyphs: same frame icon at S / M / L scale; side stays distinct.
+    $isFullscreen = $resolvedSize === 'fullscreen';
+    $useFlexShell = $isSheet || $isFullscreen;
+    // Unified size glyphs: same frame icon at S / M / L scale; fullscreen + side stay distinct.
     $sizeModes = [
         'sm' => [
             'icon' => 'ki-frame',
@@ -24,6 +28,11 @@
             'icon_class' => 'text-base',
             'label' => __('ui.modal_size_large'),
         ],
+        'fullscreen' => [
+            'icon' => 'ki-arrow-two-diagonals',
+            'icon_class' => '',
+            'label' => __('ui.modal_size_fullscreen'),
+        ],
         'end' => [
             'icon' => 'ki-exit-right',
             'icon_class' => '',
@@ -35,10 +44,10 @@
     data-modal-size="{{ $resolvedSize }}"
     data-ui-container
     @class([
-        'flex flex-col min-h-0 h-full' => $isSheet,
+        'flex flex-col min-h-0 h-full' => $useFlexShell,
     ])
 >
-    <div @class(['kt-modal-header', 'shrink-0' => $isSheet])>
+    <div @class(['kt-modal-header', 'shrink-0' => $useFlexShell])>
         <h3 class="kt-modal-title">{{ $title }}</h3>
         <div class="flex items-center gap-1.5 shrink-0">
             <div
@@ -83,13 +92,13 @@
 
     <div @class([
         'kt-modal-body',
-        'flex-1 min-h-0 overflow-y-auto overscroll-contain' => $isSheet,
+        'flex-1 min-h-0 overflow-y-auto overscroll-contain' => $useFlexShell,
     ])>
         {{ $slot }}
     </div>
 
     @isset($footer)
-        <div @class(['kt-modal-footer justify-end gap-2.5', 'shrink-0' => $isSheet])>
+        <div @class(['kt-modal-footer justify-end gap-2.5', 'shrink-0' => $useFlexShell])>
             {{ $footer }}
         </div>
     @endisset

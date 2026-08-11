@@ -13,7 +13,7 @@
     $elements = is_array($dto->elements ?? null) ? $dto->elements : [];
 @endphp
 
-<x-modal-content :title="$title" size="full">
+<x-modal-content :title="$title" size="fullscreen">
     {{ Form::open(array_merge($formRoute, [
         'id' => 'modalForm',
         'files' => true,

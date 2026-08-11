@@ -11,6 +11,7 @@ class ModalContent extends Component
 
     public function __construct(
         public string $title = '',
+        /** Dialog chrome: sm | lg | full | fullscreen | end (aliases: md, xl, fs, sheet, modal-fullscreen). */
         public string $size = 'full'
     ) {}
 

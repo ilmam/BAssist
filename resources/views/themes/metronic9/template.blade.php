@@ -73,9 +73,11 @@
             // xl is a legacy alias for Large (full); keep entry for safety.
             xl: { maxWidth: 'min(1400px, calc(100vw - 2rem))' },
             full: { maxWidth: 'min(1400px, calc(100vw - 2rem))' },
+            // fullscreen is applied via a dedicated layout branch (viewport fill).
+            fullscreen: { maxWidth: '100vw' },
         };
 
-        // Map legacy tokens onto switcher sizes: Small/Medium/Large/Side.
+        // Map legacy tokens onto switcher sizes: Small/Medium/Large/Fullscreen/Side.
         function normalizeModalSize(size) {
             if (size === 'xl') {
                 return 'full';
@@ -85,6 +87,9 @@
             }
             if (size === 'sheet') {
                 return 'end';
+            }
+            if (size === 'fs' || size === 'modal-fullscreen') {
+                return 'fullscreen';
             }
 
             return size;
@@ -108,6 +113,10 @@
 
         function isEndModalSize(size) {
             return size === 'end' || size === 'sheet';
+        }
+
+        function isFullscreenModalSize(size) {
+            return size === 'fullscreen' || size === 'fs' || size === 'modal-fullscreen';
         }
 
         function syncPageSheetPush(modal, container) {
@@ -148,6 +157,8 @@
 
                 if (mode === 'end') {
                     isActive = isEndModalSize(size);
+                } else if (mode === 'fullscreen') {
+                    isActive = isFullscreenModalSize(size);
                 } else if (mode === 'full') {
                     isActive = isLargeModalSize(size);
                 } else if (mode === 'lg') {
@@ -284,6 +295,33 @@
                 contentSizeEl.setAttribute('data-modal-size', resolved);
             }
 
+            if (isFullscreenModalSize(resolved)) {
+                modal.style.padding = '0';
+                modal.classList.add('overflow-hidden');
+                container.className = 'kt-modal-content flex flex-col overflow-hidden rounded-none';
+                container.style.cssText = [
+                    'position: fixed',
+                    'inset: 0',
+                    'margin: 0',
+                    'width: 100vw',
+                    'max-width: 100vw',
+                    'height: 100dvh',
+                    'max-height: 100dvh',
+                    'border-radius: 0',
+                    'display: flex',
+                    'flex-direction: column',
+                    'overflow: hidden',
+                ].join('; ');
+                applySheetContentLayout(container, true);
+                applyModalBackdrop(modal, container, { clear: false, size: resolved });
+                syncModalSizeSwitcher(container, resolved);
+                syncPageSheetPush(modal, container);
+                document.dispatchEvent(new CustomEvent('bassist:modal-resized', {
+                    detail: { container, size: resolved },
+                }));
+                return;
+            }
+
             if (isEndModalSize(resolved)) {
                 modal.style.padding = '0';
                 modal.classList.add('overflow-hidden');
@@ -308,6 +346,9 @@
                 applyModalBackdrop(modal, container, { clear: true, size: resolved });
                 syncModalSizeSwitcher(container, resolved);
                 syncPageSheetPush(modal, container);
+                document.dispatchEvent(new CustomEvent('bassist:modal-resized', {
+                    detail: { container, size: resolved },
+                }));
                 return;
             }
 
@@ -324,6 +365,9 @@
             applyModalBackdrop(modal, container, { clear: false, size: resolved });
             syncModalSizeSwitcher(container, resolved);
             syncPageSheetPush(modal, container);
+            document.dispatchEvent(new CustomEvent('bassist:modal-resized', {
+                detail: { container, size: resolved },
+            }));
         }
 
         function hideOpenDropdowns(fromEl) {

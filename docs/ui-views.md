@@ -524,7 +524,31 @@ Use when you must force density **regardless of container width**. Never auto-sy
 
 ### Modal window size is separate
 
-`data-modal-size` (`sm` / `lg` / `full` / `end`, …) controls **dialog chrome** only (max-width, side sheet, etc.). It does **not** drive field spans. Resizing the modal changes the container’s width; container queries reflow the fields.
+`data-modal-size` controls **dialog chrome** only (max-width, side sheet, fullscreen, etc.). It does **not** drive field spans. Resizing the modal changes the container’s width; container queries reflow the fields.
+
+| Size | Meaning |
+|------|---------|
+| `sm` | Small centered dialog |
+| `lg` | Medium centered dialog (`md` alias) |
+| `full` | Large centered dialog (~1400px max; `xl` alias) — **default** |
+| `fullscreen` | Viewport-filling dialog (`fs` / `modal-fullscreen` aliases) |
+| `end` | Right-side sheet (`sheet` alias) |
+
+**Opt in to fullscreen** (Metronic 9):
+
+```blade
+{{-- Default open size for this fragment --}}
+<x-modal-content :title="$title" size="fullscreen">
+```
+
+```html
+{{-- Or override on a single open trigger --}}
+<button data-modal-url="..." data-modal-size="fullscreen">…</button>
+```
+
+Any modal can also switch sizes at runtime via the header size switcher (Small / Medium / Large / Fullscreen / Side). Swimlane and state-flow diagram modals open in `fullscreen` by default.
+
+Metronic 8 maps `fullscreen` to Bootstrap’s `modal-fullscreen` class on the dialog.
 
 App-specific modal quirks (e.g. clear-backdrop side sheets) stay in `bassist.css`.
 

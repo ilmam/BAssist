@@ -13,7 +13,7 @@
     $transitions = is_array($dto->transitions ?? null) ? $dto->transitions : [];
 @endphp
 
-<x-modal-content :title="$title" size="full">
+<x-modal-content :title="$title" size="fullscreen">
     {{ Form::open(array_merge($formRoute, [
         'id' => 'modalForm',
         'files' => true,

@@ -78,10 +78,11 @@
             }
 
             const url = trigger.getAttribute('data-modal-url');
+            const size = trigger.getAttribute('data-modal-size');
             const noHistory = trigger.getAttribute('data-modal-no-history') === '1';
 
             captureModalRecordNavForOpen(trigger, url).then(function (preserve) {
-                openModal(url, { preserveRecordNav: !!preserve, noHistory });
+                openModal(url, size, { preserveRecordNav: !!preserve, noHistory });
             });
         });
 
@@ -191,6 +192,23 @@
                         script.textContent = oldScript.textContent;
                         oldScript.replaceWith(script);
                     });
+
+                    const dialog = modalEl.querySelector('[data-modal-dialog], .modal-dialog');
+                    const sizeFromContent = container.querySelector('[data-modal-size]')?.getAttribute('data-modal-size');
+                    const sizeFromTrigger = (typeof sizeOrOptions === 'string') ? sizeOrOptions : null;
+                    const resolvedSize = sizeFromTrigger || sizeFromContent || '';
+                    if (dialog) {
+                        const isFullscreen = resolvedSize === 'fullscreen'
+                            || resolvedSize === 'fs'
+                            || resolvedSize === 'modal-fullscreen';
+                        const sizeClass = isFullscreen
+                            ? 'modal-fullscreen'
+                            : (resolvedSize && !['full', 'end', 'sheet'].includes(resolvedSize)
+                                ? 'modal-' + resolvedSize
+                                : 'modal-lg');
+                        dialog.className = 'modal-dialog ' + sizeClass;
+                    }
+
                     if (typeof bootstrap !== 'undefined') {
                         bootstrap.Modal.getOrCreateInstance(modalEl, { keyboard: false }).show();
                     }

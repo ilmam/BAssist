@@ -2,7 +2,7 @@
     $modelName = class_basename($model);
 @endphp
 
-<x-modal-content :title="$modelName.' Details'" size="full">
+<x-modal-content :title="$modelName.' Details'" size="fullscreen">
     @include('pages.state_flows.partials.view-content', [
         'dto' => $dto,
         'model' => $model,

@@ -4,10 +4,14 @@
 
     Sizes (via $size, data-modal-size on content, or data-modal-size on trigger):
       sm | md | lg | xl | full (default)  — centered dialogs
+      fullscreen | fs | modal-fullscreen   — viewport-filling dialog
       end | sheet                          — right-side sheet
 
-    Header switcher: Small (sm) / Medium (lg) / Large (full) / Side (end).
-    Legacy aliases: xl → full (Large), md → lg (Medium), sheet → end (Side).
+    Header switcher: Small (sm) / Medium (lg) / Large (full) / Fullscreen / Side (end).
+    Legacy aliases: xl → full (Large), md → lg (Medium), sheet → end (Side),
+    fs / modal-fullscreen → fullscreen.
+    Opt in per form: <x-modal-content size="fullscreen"> or data-modal-size="fullscreen"
+    on a trigger. Users can also pick Fullscreen from the header size switcher on any modal.
     Side mode clears the blurry backdrop by default and pushes page content left
     (body.modal-sheet-push) so the list stays fully visible beside the panel;
     the eye toggle can dim/clear the backdrop in any size.
