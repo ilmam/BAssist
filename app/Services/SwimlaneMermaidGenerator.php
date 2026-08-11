@@ -26,6 +26,11 @@ class SwimlaneMermaidGenerator
         self::COLOR_MODE_ELEMENTS,
     ];
 
+    /** Generation-only synthetic start when the elements table has no start row. */
+    public const DEFAULT_START_ID = 'DefaultStart';
+
+    public const DEFAULT_START_LABEL = 'Start';
+
     /**
      * Lane backgrounds — last/bottom row of Mermaid Studio swimlane picker (pastels).
      *
@@ -114,13 +119,31 @@ class SwimlaneMermaidGenerator
 
         $lines = ['swimlane-beta '.$direction];
         $laneColors = [];
+        // Declare each node id at most once; first row wins for lane placement.
+        // Later rows with the same label still emit edges (joins / converging paths).
+        $declaredNodeIds = [];
+        $lanes = $this->lanesInOrder($rows);
+        $injectDefaultStart = $rows !== [] && ! $this->hasStartElement($rows);
+        $defaultStartLane = $injectDefaultStart ? array_key_first($lanes) : null;
+        $defaultStartTarget = $injectDefaultStart
+            ? $this->defaultStartEntry($rows, $defaultStartLane)
+            : null;
 
-        foreach ($this->lanesInOrder($rows) as $lane => $laneRows) {
+        foreach ($lanes as $lane => $laneRows) {
             $laneId = $this->toNodeId($lane);
             // Quoted subgraph titles: unquoted labels with ()/? break Mermaid swimlane-beta.
             $lines[] = '  subgraph '.$laneId.' ['.$this->quotedLabel($lane).']';
 
+            if ($injectDefaultStart && $lane === $defaultStartLane) {
+                $lines[] = '    '.$this->defaultStartDeclaration();
+            }
+
             foreach ($laneRows as $row) {
+                $nodeId = $this->toNodeId($row['label']);
+                if (isset($declaredNodeIds[$nodeId])) {
+                    continue;
+                }
+                $declaredNodeIds[$nodeId] = true;
                 $lines[] = '    '.$this->nodeDeclaration($row);
             }
 
@@ -128,6 +151,13 @@ class SwimlaneMermaidGenerator
 
             if ($styleLanes && ! array_key_exists($lane, $laneColors)) {
                 $laneColors[$lane] = $this->firstLaneColor($laneRows);
+            }
+        }
+
+        if ($injectDefaultStart && $defaultStartTarget !== null) {
+            $toId = $this->toNodeId($defaultStartTarget['label']);
+            if ($toId !== self::DEFAULT_START_ID) {
+                $lines[] = '  '.self::DEFAULT_START_ID.' --> '.$toId;
             }
         }
 
@@ -161,9 +191,15 @@ class SwimlaneMermaidGenerator
         }
 
         if ($styleElements) {
+            $styledNodeIds = [];
             foreach ($rows as $row) {
+                $nodeId = $this->toNodeId($row['label']);
+                if (isset($styledNodeIds[$nodeId])) {
+                    continue;
+                }
+                $styledNodeIds[$nodeId] = true;
                 $style = $this->styleDeclaration(
-                    $this->toNodeId($row['label']),
+                    $nodeId,
                     $row['element_color'] ?? null,
                     self::ELEMENT_COLORS,
                 );
@@ -291,6 +327,56 @@ class SwimlaneMermaidGenerator
         }
 
         return $lanes;
+    }
+
+    /**
+     * @param  list<array{type: string}>  $rows
+     */
+    protected function hasStartElement(array $rows): bool
+    {
+        foreach ($rows as $row) {
+            if (($row['type'] ?? '') === 'start') {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    protected function defaultStartDeclaration(): string
+    {
+        return self::DEFAULT_START_ID.'(['.$this->quotedLabel(self::DEFAULT_START_LABEL).'])';
+    }
+
+    /**
+     * Prefer first process/decision in the first lane with empty from; else first empty-from overall.
+     *
+     * @param  list<array{lane: string, from: string|null, type: string, label: string}>  $rows
+     * @return array{lane: string, from: string|null, type: string, label: string}|null
+     */
+    protected function defaultStartEntry(array $rows, ?string $firstLane): ?array
+    {
+        if ($firstLane !== null) {
+            foreach ($rows as $row) {
+                if ($row['lane'] !== $firstLane) {
+                    continue;
+                }
+                if (($row['from'] ?? null) !== null && $row['from'] !== '') {
+                    continue;
+                }
+                if (in_array($row['type'], self::SATISFIABLE_TYPES, true)) {
+                    return $row;
+                }
+            }
+        }
+
+        foreach ($rows as $row) {
+            if (($row['from'] ?? null) === null || $row['from'] === '') {
+                return $row;
+            }
+        }
+
+        return null;
     }
 
     /**

@@ -6,6 +6,10 @@
 const TYPES = ['start', 'process', 'decision', 'end'];
 const LINKABLE_TYPES = ['process', 'decision'];
 
+/** Generation-only synthetic start when the elements table has no start row. */
+const DEFAULT_START_ID = 'DefaultStart';
+const DEFAULT_START_LABEL = 'Start';
+
 /** Lane backgrounds — last/bottom Mermaid Studio pastel row. */
 const LANE_COLORS = {
     blue: { fill: '#9ACCE6', stroke: '#5A96B8' },
@@ -131,6 +135,41 @@ function normalizeColorMode(mode) {
     return ['both', 'lanes', 'elements'].includes(value) ? value : 'both';
 }
 
+function hasStartElement(rows) {
+    return rows.some((row) => row.type === 'start');
+}
+
+function defaultStartDeclaration() {
+    return `${DEFAULT_START_ID}([${quotedLabel(DEFAULT_START_LABEL)}])`;
+}
+
+/**
+ * Prefer first process/decision in the first lane with empty from; else first empty-from overall.
+ */
+function defaultStartEntry(rows, firstLane) {
+    if (firstLane) {
+        for (const row of rows) {
+            if (row.lane !== firstLane) {
+                continue;
+            }
+            if (row.from) {
+                continue;
+            }
+            if (LINKABLE_TYPES.includes(row.type)) {
+                return row;
+            }
+        }
+    }
+
+    for (const row of rows) {
+        if (!row.from) {
+            return row;
+        }
+    }
+
+    return null;
+}
+
 export function generateSwimlaneMermaid(title, elements, direction = 'TB', colorMode = 'both') {
     void title;
 
@@ -149,15 +188,38 @@ export function generateSwimlaneMermaid(title, elements, direction = 'TB', color
         lanes[row.lane].push(row);
     }
 
+    const laneNames = Object.keys(lanes);
+    const injectDefaultStart = rows.length > 0 && !hasStartElement(rows);
+    const defaultStartLane = injectDefaultStart ? laneNames[0] ?? null : null;
+    const defaultStartTarget = injectDefaultStart ? defaultStartEntry(rows, defaultStartLane) : null;
+
+    // Declare each node id at most once; first row wins for lane placement.
+    // Later rows with the same label still emit edges (joins / converging paths).
+    const declaredNodeIds = new Set();
     const laneColors = {};
     for (const [lane, laneRows] of Object.entries(lanes)) {
         lines.push(`  subgraph ${toNodeId(lane)} [${quotedLabel(lane)}]`);
+        if (injectDefaultStart && lane === defaultStartLane) {
+            lines.push(`    ${defaultStartDeclaration()}`);
+        }
         for (const row of laneRows) {
+            const nodeId = toNodeId(row.label);
+            if (declaredNodeIds.has(nodeId)) {
+                continue;
+            }
+            declaredNodeIds.add(nodeId);
             lines.push(`    ${nodeDeclaration(row)}`);
         }
         lines.push('  end');
         if (styleLanes) {
             laneColors[lane] = firstLaneColor(laneRows);
+        }
+    }
+
+    if (injectDefaultStart && defaultStartTarget) {
+        const toId = toNodeId(defaultStartTarget.label);
+        if (toId !== DEFAULT_START_ID) {
+            lines.push(`  ${DEFAULT_START_ID} --> ${toId}`);
         }
     }
 
@@ -189,8 +251,14 @@ export function generateSwimlaneMermaid(title, elements, direction = 'TB', color
     }
 
     if (styleElements) {
+        const styledNodeIds = new Set();
         for (const row of rows) {
-            const style = styleLine(toNodeId(row.label), row.element_color, ELEMENT_COLORS);
+            const nodeId = toNodeId(row.label);
+            if (styledNodeIds.has(nodeId)) {
+                continue;
+            }
+            styledNodeIds.add(nodeId);
+            const style = styleLine(nodeId, row.element_color, ELEMENT_COLORS);
             if (style) {
                 lines.push(style);
             }
@@ -719,6 +787,7 @@ export function bindSwimlaneFlowEditor(root) {
             maybeSyncMermaidSource();
             return;
         }
+
 
         const removeBtn = event.target.closest('[data-remove-element]');
         if (!removeBtn) {

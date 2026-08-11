@@ -44,11 +44,107 @@ class SwimlaneMermaidGeneratorTest extends TestCase
             ['lane' => 'A', 'type' => 'process', 'label' => 'One'],
         ], 'LR');
         $this->assertStringStartsWith("swimlane-beta LR\n", $lr);
+        $this->assertStringContainsString('DefaultStart(["Start"])', $lr);
+        $this->assertStringContainsString('DefaultStart --> One', $lr);
 
         $tb = $generator->generate(null, [
             ['lane' => 'A', 'type' => 'process', 'label' => 'One'],
         ], 'tb');
         $this->assertStringStartsWith("swimlane-beta TB\n", $tb);
+        $this->assertStringContainsString('DefaultStart(["Start"])', $tb);
+    }
+
+    public function test_injects_default_start_in_first_lane_when_missing(): void
+    {
+        $generator = new SwimlaneMermaidGenerator();
+
+        $mermaid = $generator->generate(null, [
+            ['lane' => 'Support', 'type' => 'process', 'label' => 'Review'],
+            ['lane' => 'Customer', 'type' => 'process', 'label' => 'Ask', 'from' => 'Review'],
+            ['lane' => 'Support', 'type' => 'end', 'label' => 'Done', 'from' => 'Ask'],
+        ]);
+
+        $subgraphPos = strpos($mermaid, 'subgraph Support ["Support"]');
+        $defaultPos = strpos($mermaid, 'DefaultStart(["Start"])');
+        $reviewPos = strpos($mermaid, 'Review["Review"]');
+        $customerPos = strpos($mermaid, 'subgraph Customer');
+
+        $this->assertNotFalse($subgraphPos);
+        $this->assertNotFalse($defaultPos);
+        $this->assertNotFalse($reviewPos);
+        $this->assertLessThan($defaultPos, $subgraphPos);
+        $this->assertLessThan($reviewPos, $defaultPos);
+        $this->assertLessThan($customerPos, $defaultPos);
+        $this->assertStringContainsString('DefaultStart --> Review', $mermaid);
+    }
+
+    public function test_default_start_links_to_first_empty_from_in_first_lane(): void
+    {
+        $generator = new SwimlaneMermaidGenerator();
+
+        $mermaid = $generator->generate(null, [
+            ['lane' => 'Ops', 'from' => 'Prior', 'type' => 'process', 'label' => 'Linked'],
+            ['lane' => 'Ops', 'from' => null, 'type' => 'decision', 'label' => 'Ready?'],
+            ['lane' => 'Ops', 'from' => null, 'type' => 'process', 'label' => 'Later'],
+        ]);
+
+        $this->assertStringContainsString('DefaultStart(["Start"])', $mermaid);
+        $this->assertStringContainsString('DefaultStart --> Ready', $mermaid);
+        $this->assertStringNotContainsString('DefaultStart --> Later', $mermaid);
+        $this->assertStringNotContainsString('DefaultStart --> Linked', $mermaid);
+    }
+
+    public function test_default_start_falls_back_to_first_empty_from_overall(): void
+    {
+        $generator = new SwimlaneMermaidGenerator();
+
+        $mermaid = $generator->generate(null, [
+            ['lane' => 'First', 'from' => 'Elsewhere', 'type' => 'process', 'label' => 'Already linked'],
+            ['lane' => 'Second', 'from' => null, 'type' => 'end', 'label' => 'Done'],
+        ]);
+
+        $this->assertStringContainsString('subgraph First', $mermaid);
+        $this->assertStringContainsString('DefaultStart(["Start"])', $mermaid);
+        $this->assertStringContainsString('DefaultStart --> Done', $mermaid);
+    }
+
+    public function test_default_start_placed_without_edge_when_no_empty_from(): void
+    {
+        $generator = new SwimlaneMermaidGenerator();
+
+        $mermaid = $generator->generate(null, [
+            ['lane' => 'User', 'from' => 'Prior', 'type' => 'process', 'label' => 'Work'],
+            ['lane' => 'User', 'from' => 'Work', 'type' => 'end', 'label' => 'Done'],
+        ]);
+
+        $this->assertStringContainsString('DefaultStart(["Start"])', $mermaid);
+        $this->assertStringNotContainsString('DefaultStart -->', $mermaid);
+    }
+
+    public function test_does_not_inject_default_start_when_real_start_exists(): void
+    {
+        $generator = new SwimlaneMermaidGenerator();
+
+        $mermaid = $generator->generate(null, [
+            ['lane' => 'Customer', 'type' => 'start', 'label' => 'Begin'],
+            ['lane' => 'Customer', 'type' => 'process', 'label' => 'Ask', 'from' => 'Begin'],
+        ]);
+
+        $this->assertStringContainsString('Begin(["Begin"])', $mermaid);
+        $this->assertStringNotContainsString('DefaultStart', $mermaid);
+    }
+
+    public function test_normalize_does_not_persist_default_start(): void
+    {
+        $generator = new SwimlaneMermaidGenerator();
+
+        $rows = $generator->normalizeElements([
+            ['lane' => 'A', 'type' => 'process', 'label' => 'One'],
+        ]);
+
+        $this->assertCount(1, $rows);
+        $this->assertSame('process', $rows[0]['type']);
+        $this->assertSame('One', $rows[0]['label']);
     }
 
     public function test_lanes_follow_first_appearance_order(): void
@@ -140,14 +236,86 @@ class SwimlaneMermaidGeneratorTest extends TestCase
         $generator = new SwimlaneMermaidGenerator();
 
         $mermaid = $generator->generate(null, [
-            ['lane' => 'User', 'from' => 'Start', 'type' => 'process', 'label' => 'Start'],
-            ['lane' => 'User', 'from' => 'End', 'type' => 'end', 'label' => 'End'],
-            ['lane' => 'User', 'from' => 'Start', 'type' => 'process', 'label' => 'Work'],
+            ['lane' => 'User', 'from' => 'Begin', 'type' => 'process', 'label' => 'Begin'],
+            ['lane' => 'User', 'from' => 'Finish', 'type' => 'end', 'label' => 'Finish'],
+            ['lane' => 'User', 'from' => 'Begin', 'type' => 'process', 'label' => 'Work'],
         ]);
 
-        $this->assertStringNotContainsString('Start --> Start', $mermaid);
-        $this->assertStringNotContainsString('End --> End', $mermaid);
-        $this->assertStringContainsString('Start --> Work', $mermaid);
+        $this->assertStringNotContainsString('Begin --> Begin', $mermaid);
+        $this->assertStringNotContainsString('Finish --> Finish', $mermaid);
+        $this->assertStringContainsString('Begin --> Work', $mermaid);
+        // No real start type: synthetic stadium is still injected (no empty-from entry edge).
+        $this->assertStringContainsString('DefaultStart(["Start"])', $mermaid);
+        $this->assertStringNotContainsString('DefaultStart -->', $mermaid);
+    }
+
+    public function test_converging_paths_declare_shared_label_once_with_all_edges(): void
+    {
+        $generator = new SwimlaneMermaidGenerator();
+
+        $mermaid = $generator->generate(null, [
+            ['lane' => 'Sales', 'from' => null, 'type' => 'start', 'label' => 'Begin'],
+            ['lane' => 'Sales', 'from' => 'Begin', 'type' => 'decision', 'label' => 'Approved?'],
+            ['lane' => 'Sales', 'from' => 'Approved?', 'type' => 'process', 'label' => 'Print Booking Sheet', 'line_title' => 'Yes'],
+            ['lane' => 'Sales', 'from' => 'Approved?', 'type' => 'process', 'label' => 'Print Booking Sheet', 'line_title' => 'No'],
+            ['lane' => 'Sales', 'from' => 'Print Booking Sheet', 'type' => 'end', 'label' => 'Done'],
+        ]);
+
+        $this->assertSame(1, substr_count($mermaid, 'PrintBookingSheet["Print Booking Sheet"]'));
+        $this->assertStringContainsString('Approved -->|Yes| PrintBookingSheet', $mermaid);
+        $this->assertStringContainsString('Approved -->|No| PrintBookingSheet', $mermaid);
+        $this->assertStringContainsString('PrintBookingSheet --> Done', $mermaid);
+        $this->assertStringNotContainsString('DefaultStart', $mermaid);
+    }
+
+    public function test_converging_paths_place_node_in_first_appearance_lane(): void
+    {
+        $generator = new SwimlaneMermaidGenerator();
+
+        $mermaid = $generator->generate(null, [
+            ['lane' => 'Sales', 'from' => null, 'type' => 'start', 'label' => 'Begin'],
+            ['lane' => 'Ops', 'from' => 'Begin', 'type' => 'process', 'label' => 'Print Booking Sheet'],
+            ['lane' => 'Finance', 'from' => 'Begin', 'type' => 'process', 'label' => 'Print Booking Sheet'],
+        ]);
+
+        $opsBlock = substr(
+            $mermaid,
+            (int) strpos($mermaid, 'subgraph Ops'),
+            (int) strpos($mermaid, 'subgraph Finance') - (int) strpos($mermaid, 'subgraph Ops'),
+        );
+        $financeBlock = substr($mermaid, (int) strpos($mermaid, 'subgraph Finance'));
+
+        $this->assertSame(1, substr_count($mermaid, 'PrintBookingSheet["Print Booking Sheet"]'));
+        $this->assertStringContainsString('PrintBookingSheet["Print Booking Sheet"]', $opsBlock);
+        $this->assertStringNotContainsString('PrintBookingSheet["Print Booking Sheet"]', $financeBlock);
+        $this->assertStringContainsString('Begin --> PrintBookingSheet', $mermaid);
+        $this->assertSame(2, substr_count($mermaid, 'Begin --> PrintBookingSheet'));
+    }
+
+    public function test_converging_paths_style_shared_node_once(): void
+    {
+        $generator = new SwimlaneMermaidGenerator();
+
+        $mermaid = $generator->generate(null, [
+            [
+                'lane' => 'Sales',
+                'from' => null,
+                'type' => 'process',
+                'label' => 'Print Booking Sheet',
+                'element_color' => 'peach',
+            ],
+            [
+                'lane' => 'Sales',
+                'from' => 'Other',
+                'type' => 'process',
+                'label' => 'Print Booking Sheet',
+                'element_color' => 'mint',
+            ],
+        ], 'TB', SwimlaneMermaidGenerator::COLOR_MODE_ELEMENTS);
+
+        $this->assertSame(1, substr_count($mermaid, 'style PrintBookingSheet'));
+        $this->assertStringContainsString('style PrintBookingSheet fill:#FEBA7E,stroke:#CE8341', $mermaid);
+        $this->assertStringContainsString('Other --> PrintBookingSheet', $mermaid);
     }
 
     public function test_quotes_labels_with_parentheses_for_mermaid_safety(): void
@@ -165,6 +333,8 @@ class SwimlaneMermaidGeneratorTest extends TestCase
             'ProvideFollowUpDealerResponded --> RequestMoreInfoTiqResponded',
             $mermaid,
         );
+        $this->assertStringContainsString('DefaultStart(["Start"])', $mermaid);
+        $this->assertStringContainsString('DefaultStart --> ProvideFollowUpDealerResponded', $mermaid);
     }
 
     public function test_emits_lane_style_from_palette_key(): void
