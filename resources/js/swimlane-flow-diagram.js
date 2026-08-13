@@ -595,6 +595,43 @@ function writeMermaidSource(source, mermaidText) {
     source.textContent = mermaidText;
 }
 
+/**
+ * Make modal Mermaid fill its width-% wrapper (host → pre → svg at 100% width).
+ * Keeps viewBox so height:auto preserves aspect ratio.
+ */
+function prepareModalMermaidFill(host) {
+    const sizeHost = host?.matches?.('[data-mermaid-modal-host]')
+        ? host
+        : host?.closest?.('[data-mermaid-modal-host]') || host;
+    const mermaidEl =
+        sizeHost?.querySelector?.('.bassist-mermaid, .mermaid') ||
+        (host?.matches?.('.bassist-mermaid, .mermaid') ? host : null);
+    const svg = mermaidEl?.querySelector?.('svg');
+
+    if (sizeHost?.matches?.('[data-mermaid-modal-host]')) {
+        sizeHost.style.width = '100%';
+        sizeHost.style.height = 'auto';
+        sizeHost.style.maxWidth = 'none';
+    }
+
+    if (mermaidEl) {
+        mermaidEl.style.width = '100%';
+        mermaidEl.style.height = 'auto';
+        mermaidEl.style.maxWidth = 'none';
+    }
+
+    if (svg) {
+        svg.style.width = '100%';
+        svg.style.height = 'auto';
+        svg.style.maxWidth = 'none';
+        // With viewBox, width 100% + height auto scales cleanly inside the wrapper.
+        if (svg.getAttribute('viewBox')) {
+            svg.setAttribute('width', '100%');
+            svg.removeAttribute('height');
+        }
+    }
+}
+
 async function renderMermaidPreview(preview, mermaidText, dataAttr = 'data-mermaid-preview') {
     if (!preview?.parentElement) {
         return null;
@@ -889,6 +926,11 @@ export function bindSwimlaneFlowEditor(root) {
     const buildDiagramModalHtml = () => {
         const title = t('data-i18n-diagram-modal-title', 'Diagram preview');
         const sizeLabel = t('data-i18n-modal-size', 'Size');
+        const zoomLabel = t('data-i18n-diagram-zoom', 'Diagram zoom');
+        const zoomIn = t('data-i18n-diagram-zoom-in', 'Zoom in');
+        const zoomOut = t('data-i18n-diagram-zoom-out', 'Zoom out');
+        const zoomFit = t('data-i18n-diagram-zoom-fit', 'Fit to view');
+        const zoomReset = t('data-i18n-diagram-zoom-reset', 'Reset to 100%');
         const sizes = [
             ['sm', 'ki-frame', 'text-[10px]', t('data-i18n-modal-size-small', 'Small')],
             ['lg', 'ki-frame', 'text-xs', t('data-i18n-modal-size-medium', 'Medium')],
@@ -908,6 +950,12 @@ export function bindSwimlaneFlowEditor(root) {
   <div class="kt-modal-header shrink-0">
     <h3 class="kt-modal-title">${title}</h3>
     <div class="flex items-center gap-1.5 shrink-0">
+      <div class="flex items-center gap-0.5 rounded-md border border-border p-0.5" role="group" aria-label="${zoomLabel}" data-diagram-zoom-toolbar>
+        <button type="button" class="kt-btn kt-btn-sm kt-btn-icon kt-btn-ghost" data-diagram-zoom-out title="${zoomOut}" aria-label="${zoomOut}"><i class="ki-filled ki-minus"></i></button>
+        <button type="button" class="kt-btn kt-btn-sm kt-btn-ghost min-w-12 px-1 text-xs tabular-nums" data-diagram-zoom-reset title="${zoomReset}" aria-label="${zoomReset}"><span data-diagram-zoom-label>100%</span></button>
+        <button type="button" class="kt-btn kt-btn-sm kt-btn-icon kt-btn-ghost" data-diagram-zoom-in title="${zoomIn}" aria-label="${zoomIn}"><i class="ki-filled ki-plus"></i></button>
+        <button type="button" class="kt-btn kt-btn-sm kt-btn-ghost px-2 text-xs" data-diagram-zoom-fit title="${zoomFit}" aria-label="${zoomFit}">Fit</button>
+      </div>
       <div class="flex items-center gap-0.5 rounded-md border border-border p-0.5" role="group" aria-label="${sizeLabel}" data-modal-size-switcher>
         ${sizeButtons}
       </div>
@@ -923,13 +971,198 @@ export function bindSwimlaneFlowEditor(root) {
     </div>
   </div>
   <div class="kt-modal-body flex-1 min-h-0 overflow-hidden flex flex-col">
-    <div class="min-h-0 flex-1 overflow-auto border border-border rounded-lg bg-white p-4" data-diagram-modal-scroll>
-      <div data-mermaid-modal-host>
-        <pre class="mermaid bassist-mermaid" data-mermaid-modal-preview></pre>
+    <div class="min-h-0 flex-1 overflow-auto border border-border rounded-lg bg-white" data-diagram-modal-scroll data-diagram-zoom-viewport>
+      <div data-diagram-zoom-stage class="p-4">
+        <div data-mermaid-modal-host>
+          <pre class="mermaid bassist-mermaid" data-mermaid-modal-preview></pre>
+        </div>
       </div>
     </div>
   </div>
 </div>`;
+    };
+
+    const MIN_DIAGRAM_ZOOM = 0.25;
+    const MAX_DIAGRAM_ZOOM = 4;
+
+    const clampDiagramZoom = (scale) => Math.min(MAX_DIAGRAM_ZOOM, Math.max(MIN_DIAGRAM_ZOOM, scale));
+
+    /**
+     * Width-% zoom: stage width is 100%/125%/… of the scroll viewport.
+     * Mermaid/SVG fill the stage (width:100%; height:auto). Parent scrolls when
+     * stage exceeds the modal. No transform/CSS zoom.
+     */
+    const bindDiagramModalZoom = (shell) => {
+        const viewport = shell?.querySelector('[data-diagram-zoom-viewport]');
+        const stage = shell?.querySelector('[data-diagram-zoom-stage]');
+        const label = shell?.querySelector('[data-diagram-zoom-label]');
+        if (!viewport || !stage) {
+            return null;
+        }
+
+        if (shell._bassistDiagramZoom?.bound) {
+            return shell._bassistDiagramZoom;
+        }
+
+        const state = {
+            bound: true,
+            /** 1 ⇒ stage width 100% of viewport */
+            scale: 1,
+            fitted: true,
+            dragging: false,
+            lastX: 0,
+            lastY: 0,
+        };
+
+        const prepareFill = () => {
+            prepareModalMermaidFill(stage.querySelector('[data-mermaid-modal-host]'));
+        };
+
+        const apply = () => {
+            stage.style.zoom = '';
+            stage.style.transform = '';
+            // Encapsulating wrapper width as % of the scrollable modal viewport.
+            stage.style.width = `${state.scale * 100}%`;
+            stage.style.maxWidth = 'none';
+            prepareFill();
+            if (label) {
+                label.textContent = `${Math.round(state.scale * 100)}%`;
+            }
+        };
+
+        const zoomBy = (factor, anchorX = null, anchorY = null) => {
+            const prev = state.scale;
+            const next = clampDiagramZoom(prev * factor);
+            if (next === prev) {
+                return;
+            }
+
+            const rect = viewport.getBoundingClientRect();
+            const ax = anchorX == null ? rect.left + rect.width / 2 : anchorX;
+            const ay = anchorY == null ? rect.top + rect.height / 2 : anchorY;
+            const relX = ax - rect.left + viewport.scrollLeft;
+            const relY = ay - rect.top + viewport.scrollTop;
+            const ratio = next / prev;
+
+            state.scale = next;
+            state.fitted = next === 1;
+            apply();
+            viewport.scrollLeft = relX * ratio - (ax - rect.left);
+            viewport.scrollTop = relY * ratio - (ay - rect.top);
+        };
+
+        /** Fit / 100% = wrapper is 100% of modal viewport width. */
+        const fitWidth = () => {
+            state.scale = 1;
+            state.fitted = true;
+            apply();
+            viewport.scrollLeft = 0;
+            viewport.scrollTop = 0;
+        };
+
+        const reset = () => fitWidth();
+        const fit = () => fitWidth();
+
+        viewport.addEventListener(
+            'wheel',
+            (event) => {
+                // Ctrl/Meta+wheel zooms; plain wheel scrolls the diagram naturally.
+                if (!event.ctrlKey && !event.metaKey) {
+                    return;
+                }
+                event.preventDefault();
+                const factor = event.deltaY < 0 ? 1.1 : 1 / 1.1;
+                zoomBy(factor, event.clientX, event.clientY);
+            },
+            { passive: false }
+        );
+
+        viewport.addEventListener('pointerdown', (event) => {
+            if (event.button !== 0) {
+                return;
+            }
+            const target =
+                event.target instanceof Element ? event.target : event.target?.parentElement;
+            if (target?.closest?.('button, a, input, textarea, select, [data-diagram-zoom-toolbar]')) {
+                return;
+            }
+            state.dragging = true;
+            state.lastX = event.clientX;
+            state.lastY = event.clientY;
+            viewport.classList.add('is-panning');
+            try {
+                viewport.setPointerCapture?.(event.pointerId);
+            } catch {
+                // Ignore if capture is unavailable.
+            }
+        });
+
+        viewport.addEventListener('pointermove', (event) => {
+            if (!state.dragging) {
+                return;
+            }
+            viewport.scrollLeft -= event.clientX - state.lastX;
+            viewport.scrollTop -= event.clientY - state.lastY;
+            state.lastX = event.clientX;
+            state.lastY = event.clientY;
+            if (state.scale !== 1) {
+                state.fitted = false;
+            }
+        });
+
+        const endPan = (event) => {
+            if (!state.dragging) {
+                return;
+            }
+            state.dragging = false;
+            viewport.classList.remove('is-panning');
+            if (event?.pointerId != null) {
+                try {
+                    viewport.releasePointerCapture?.(event.pointerId);
+                } catch {
+                    // Ignore if capture was already released.
+                }
+            }
+        };
+
+        viewport.addEventListener('pointerup', endPan);
+        viewport.addEventListener('pointercancel', endPan);
+
+        shell.querySelector('[data-diagram-zoom-in]')?.addEventListener('click', (event) => {
+            event.preventDefault();
+            zoomBy(1.15);
+        });
+        shell.querySelector('[data-diagram-zoom-out]')?.addEventListener('click', (event) => {
+            event.preventDefault();
+            zoomBy(1 / 1.15);
+        });
+        shell.querySelector('[data-diagram-zoom-fit]')?.addEventListener('click', (event) => {
+            event.preventDefault();
+            fit();
+        });
+        shell.querySelector('[data-diagram-zoom-reset]')?.addEventListener('click', (event) => {
+            event.preventDefault();
+            reset();
+        });
+
+        const onModalResized = (event) => {
+            if (!shell.isConnected || !isDiagramPreviewModalOpen()) {
+                return;
+            }
+            if (event?.detail?.container && !event.detail.container.contains(shell)) {
+                return;
+            }
+            apply();
+        };
+        document.addEventListener('bassist:modal-resized', onModalResized);
+
+        state.apply = apply;
+        state.fit = fit;
+        state.reset = reset;
+        state.prepareFill = prepareFill;
+        shell._bassistDiagramZoom = state;
+        apply();
+        return state;
     };
 
     const isDiagramPreviewModalOpen = () => {
@@ -961,7 +1194,7 @@ export function bindSwimlaneFlowEditor(root) {
         return { shell, mount };
     };
 
-    const refreshOpenDiagramModal = async () => {
+    const refreshOpenDiagramModal = async ({ fit = false } = {}) => {
         const open = getOpenDiagramModalHost();
         if (!open) {
             return false;
@@ -974,13 +1207,28 @@ export function bindSwimlaneFlowEditor(root) {
         open.mount.replaceChildren(preview);
 
         await renderMermaidPreview(preview, currentMermaidText(), 'data-mermaid-modal-preview');
+
+        const zoom = bindDiagramModalZoom(open.shell);
+        // One frame after Mermaid paint so viewBox/SVG exist before width-% fill.
+        await new Promise((resolve) => {
+            requestAnimationFrame(() => {
+                zoom?.prepareFill?.();
+                if (fit || zoom?.fitted || zoom?.scale === 1) {
+                    zoom?.fit?.();
+                } else {
+                    zoom?.apply?.();
+                }
+                resolve();
+            });
+        });
+
         return true;
     };
 
     const openDiagramModal = async () => {
-        // Already open (e.g. user switched to Side) — re-render only; keep current size.
+        // Already open (e.g. user switched to Side) — re-render only; keep size + zoom.
         if (isDiagramPreviewModalOpen()) {
-            await refreshOpenDiagramModal();
+            await refreshOpenDiagramModal({ fit: false });
             return;
         }
 
@@ -997,7 +1245,7 @@ export function bindSwimlaneFlowEditor(root) {
             return;
         }
 
-        await refreshOpenDiagramModal();
+        await refreshOpenDiagramModal({ fit: true });
     };
 
     const isTypingTarget = (target) => {

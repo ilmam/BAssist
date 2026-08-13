@@ -47,18 +47,57 @@
             background: #ffffff;
         }
 
-        /* Modal preview: fill usable width like a responsive image (no CSS-transform zoom). */
-        [data-diagram-preview-shell] .bassist-mermaid {
+        /*
+         * Modal diagram zoom model:
+         * - Viewport (parent): overflow auto, definite flex size.
+         * - Stage (wrapper): width 100% / 125% / … of viewport; zoom = that %.
+         * - Host / mermaid / svg: width 100% of stage, height auto (fills wrapper).
+         * Avoid max-content / transform-scale stages that collapse to 0.
+         */
+        [data-diagram-preview-shell] .kt-modal-body {
+            overflow: hidden !important;
+        }
+
+        [data-diagram-zoom-viewport] {
+            overflow: auto;
+            overscroll-behavior: contain;
+            min-height: 12rem;
+            flex: 1 1 auto;
+            min-width: 0;
+            cursor: grab;
+        }
+
+        [data-diagram-zoom-viewport].is-panning {
+            cursor: grabbing;
+            user-select: none;
+        }
+
+        [data-diagram-zoom-stage] {
+            display: block;
+            box-sizing: border-box;
+            width: 100%;
+            max-width: none;
+        }
+
+        [data-diagram-preview-shell] [data-mermaid-modal-host] {
             display: block;
             width: 100%;
-            max-width: 100%;
+            max-width: none;
+        }
+
+        [data-diagram-preview-shell] .bassist-mermaid {
+            display: block;
+            margin: 0;
+            width: 100%;
+            max-width: none;
+            overflow: visible;
         }
 
         [data-diagram-preview-shell] .bassist-mermaid svg {
             display: block;
-            width: 100%;
-            max-width: 100%;
-            height: auto;
+            width: 100% !important;
+            max-width: none !important;
+            height: auto !important;
         }
 
         .bassist-lane-color-swatch {
@@ -105,6 +144,11 @@
     data-i18n-modal-backdrop="{{ __('ui.modal_backdrop_show_page') }}"
     data-i18n-modal-sheet-float="{{ __('ui.modal_sheet_float') }}"
     data-i18n-modal-sheet-push="{{ __('ui.modal_sheet_push') }}"
+    data-i18n-diagram-zoom="{{ __('ui.diagram_zoom') }}"
+    data-i18n-diagram-zoom-in="{{ __('ui.diagram_zoom_in') }}"
+    data-i18n-diagram-zoom-out="{{ __('ui.diagram_zoom_out') }}"
+    data-i18n-diagram-zoom-fit="{{ __('ui.diagram_zoom_fit') }}"
+    data-i18n-diagram-zoom-reset="{{ __('ui.diagram_zoom_reset') }}"
     data-i18n-close="{{ __('ui.close') }}"
     class="space-y-5"
 >
