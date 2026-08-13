@@ -38,12 +38,27 @@
     }
     // Unique per editor instance (full-page + modal) so list= targets stay local.
     $laneDatalistId = 'swimlane-lane-names-'.uniqid();
+    $labelDatalistId = 'swimlane-label-names-'.uniqid();
 @endphp
 
 @once
     <style>
         .bassist-mermaid {
             background: #ffffff;
+        }
+
+        /* Modal preview: fill usable width like a responsive image (no CSS-transform zoom). */
+        [data-diagram-preview-shell] .bassist-mermaid {
+            display: block;
+            width: 100%;
+            max-width: 100%;
+        }
+
+        [data-diagram-preview-shell] .bassist-mermaid svg {
+            display: block;
+            width: 100%;
+            max-width: 100%;
+            height: auto;
         }
 
         .bassist-lane-color-swatch {
@@ -78,6 +93,19 @@
     data-direction="{{ $direction }}"
     data-color-mode="{{ $colorMode }}"
     data-stakeholder-need-options-url="{{ $stakeholderNeedOptionsUrl }}"
+    data-i18n-apply-success="{{ __('ui.apply_mermaid_source_success') }}"
+    data-i18n-apply-error="{{ __('ui.apply_mermaid_source_error') }}"
+    data-i18n-diagram-modal-title="{{ __('ui.diagram_preview_modal_title') }}"
+    data-i18n-modal-size="{{ __('ui.modal_size') }}"
+    data-i18n-modal-size-small="{{ __('ui.modal_size_small') }}"
+    data-i18n-modal-size-medium="{{ __('ui.modal_size_medium') }}"
+    data-i18n-modal-size-large="{{ __('ui.modal_size_large') }}"
+    data-i18n-modal-size-fullscreen="{{ __('ui.modal_size_fullscreen') }}"
+    data-i18n-modal-size-side="{{ __('ui.modal_size_side') }}"
+    data-i18n-modal-backdrop="{{ __('ui.modal_backdrop_show_page') }}"
+    data-i18n-modal-sheet-float="{{ __('ui.modal_sheet_float') }}"
+    data-i18n-modal-sheet-push="{{ __('ui.modal_sheet_push') }}"
+    data-i18n-close="{{ __('ui.close') }}"
     class="space-y-5"
 >
     @if ($showTitleField)
@@ -125,8 +153,8 @@
             <p class="text-xs text-muted-foreground mb-3">{{ __('ui.swimlane_order_help') }}</p>
         @endif
 
-        <div class="overflow-x-auto border border-border rounded-lg">
-            <table class="kt-table table-auto w-full" data-elements-table>
+        <div class="overflow-x-auto border border-border rounded-lg" data-table-density="compact">
+            <table class="kt-table kt-table--compact table-auto w-full" data-elements-table>
                 <thead>
                     <tr>
                         @unless ($editable)
@@ -134,9 +162,9 @@
                         @endunless
                         <th class="min-w-36">{{ __('ui.element_lane') }}</th>
                         <th class="min-w-36">{{ __('ui.element_from') }}</th>
+                        <th class="min-w-36">{{ __('ui.element_line_title') }}</th>
                         <th class="min-w-32">{{ __('ui.element_type') }}</th>
                         <th class="min-w-40">{{ __('ui.element_label') }}</th>
-                        <th class="min-w-36">{{ __('ui.element_line_title') }}</th>
                         <th class="min-w-56">{{ __('ui.element_stakeholder_need') }}</th>
                         <th class="min-w-28">{{ __('ui.element_lane_color') }}</th>
                         <th class="min-w-28">{{ __('ui.element_color') }}</th>
@@ -229,11 +257,27 @@
                                         data-field="from"
                                         name="elements[{{ $index }}][from]"
                                         value="{{ $row['from'] ?? '' }}"
+                                        list="{{ $labelDatalistId }}"
                                         placeholder="Review"
                                         autocomplete="off"
                                     >
                                 @else
                                     <span class="text-sm" data-field="from" data-value="{{ $row['from'] ?? '' }}">{{ $row['from'] ?? '' }}</span>
+                                @endif
+                            </td>
+                            <td>
+                                @if ($editable)
+                                    <input
+                                        type="text"
+                                        class="kt-input"
+                                        data-field="line_title"
+                                        name="elements[{{ $index }}][line_title]"
+                                        value="{{ $row['line_title'] ?? '' }}"
+                                        placeholder="Yes"
+                                        autocomplete="off"
+                                    >
+                                @else
+                                    <span class="text-sm" data-field="line_title" data-value="{{ $row['line_title'] ?? '' }}">{{ $row['line_title'] ?? '' }}</span>
                                 @endif
                             </td>
                             <td>
@@ -255,26 +299,12 @@
                                         data-field="label"
                                         name="elements[{{ $index }}][label]"
                                         value="{{ $row['label'] ?? '' }}"
+                                        list="{{ $labelDatalistId }}"
                                         placeholder="Approved?"
                                         autocomplete="off"
                                     >
                                 @else
                                     <span class="text-sm" data-field="label" data-value="{{ $row['label'] ?? '' }}">{{ $row['label'] ?? '' }}</span>
-                                @endif
-                            </td>
-                            <td>
-                                @if ($editable)
-                                    <input
-                                        type="text"
-                                        class="kt-input"
-                                        data-field="line_title"
-                                        name="elements[{{ $index }}][line_title]"
-                                        value="{{ $row['line_title'] ?? '' }}"
-                                        placeholder="Yes"
-                                        autocomplete="off"
-                                    >
-                                @else
-                                    <span class="text-sm" data-field="line_title" data-value="{{ $row['line_title'] ?? '' }}">{{ $row['line_title'] ?? '' }}</span>
                                 @endif
                             </td>
                             <td>
@@ -427,6 +457,8 @@
         @if ($editable)
             {{-- Same pattern as C4 relationship from_key/to_key: native datalist + kt-input free text. --}}
             <datalist id="{{ $laneDatalistId }}" data-lane-names-list></datalist>
+            {{-- From → Label edges: suggest existing node labels for From and Label (To). --}}
+            <datalist id="{{ $labelDatalistId }}" data-label-names-list></datalist>
         @endif
     </div>
 
@@ -434,11 +466,15 @@
         <template data-element-row-template>
             <tr data-element-row>
                 <td>
+                    <input type="hidden" data-field="id" name="elements[__INDEX__][id]" value="">
                     <input type="hidden" data-field="code" name="elements[__INDEX__][code]" value="">
                     <input type="text" class="kt-input" data-field="lane" name="elements[__INDEX__][lane]" value="" list="{{ $laneDatalistId }}" placeholder="Support" autocomplete="off">
                 </td>
                 <td>
-                    <input type="text" class="kt-input" data-field="from" name="elements[__INDEX__][from]" value="" placeholder="Review" autocomplete="off">
+                    <input type="text" class="kt-input" data-field="from" name="elements[__INDEX__][from]" value="" list="{{ $labelDatalistId }}" placeholder="Review" autocomplete="off">
+                </td>
+                <td>
+                    <input type="text" class="kt-input" data-field="line_title" name="elements[__INDEX__][line_title]" value="" placeholder="Yes" autocomplete="off">
                 </td>
                 <td>
                     <select class="kt-select" data-field="type" name="elements[__INDEX__][type]">
@@ -448,10 +484,7 @@
                     </select>
                 </td>
                 <td>
-                    <input type="text" class="kt-input" data-field="label" name="elements[__INDEX__][label]" value="" placeholder="Approved?" autocomplete="off">
-                </td>
-                <td>
-                    <input type="text" class="kt-input" data-field="line_title" name="elements[__INDEX__][line_title]" value="" placeholder="Yes" autocomplete="off">
+                    <input type="text" class="kt-input" data-field="label" name="elements[__INDEX__][label]" value="" list="{{ $labelDatalistId }}" placeholder="Approved?" autocomplete="off">
                 </td>
                 <td>
                     <select class="kt-select" data-field="stakeholder_need_id" name="elements[__INDEX__][stakeholder_need_id]">
@@ -515,17 +548,30 @@
         <div>
             <div class="flex items-center justify-between gap-2 mb-3">
                 <h4 class="text-sm font-semibold text-foreground">{{ __('ui.diagram_preview') }}</h4>
-                @if ($editable)
-                    <button type="button" class="kt-btn kt-btn-sm kt-btn-primary" data-preview-diagram>
-                        {{ __('ui.preview_diagram') }}
+                <div class="flex flex-wrap items-center gap-2">
+                    @if ($editable)
+                        <button type="button" class="kt-btn kt-btn-sm kt-btn-primary" data-preview-diagram>
+                            {{ __('ui.preview_diagram') }}
+                        </button>
+                    @endif
+                    <button
+                        type="button"
+                        class="kt-btn kt-btn-sm kt-btn-outline"
+                        data-preview-diagram-modal
+                        title="{{ __('ui.preview_diagram_modal_shortcut') }}"
+                        aria-keyshortcuts="Alt+Q"
+                    >
+                        {{ __('ui.preview_diagram_modal') }}
                     </button>
-                @endif
+                </div>
             </div>
             <div class="border border-border rounded-lg p-4 bg-white overflow-x-auto min-h-24">
                 <pre class="mermaid bassist-mermaid" data-mermaid-preview>@if ($editable){{ __('ui.preview_swimlane_hint') }}@endif</pre>
             </div>
             @include('pages.partials.mermaid-source', [
                 'editorId' => 'swimlane_mermaid_source_'.uniqid(),
+                'readonly' => ! $editable,
+                'showApply' => $editable,
             ])
         </div>
     @endif

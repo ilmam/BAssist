@@ -50,6 +50,7 @@
 
 /**
  * Side sheet push: reserve the right edge so page content is not hidden under the panel.
+ * Applied only when data-modal-sheet-mode="push" (default). Overlay mode skips this.
  * --modal-sheet-reserve is set from JS (sheet width + end gutter).
  */
 body.modal-sheet-push {

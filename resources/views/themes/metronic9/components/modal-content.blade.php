@@ -76,6 +76,16 @@
             </div>
             <button
                 type="button"
+                class="kt-btn kt-btn-sm kt-btn-icon kt-btn-ghost shrink-0 {{ $isSheet ? '' : 'hidden' }}"
+                data-modal-sheet-mode-toggle
+                aria-pressed="false"
+                title="{{ __('ui.modal_sheet_float') }}"
+                aria-label="{{ __('ui.modal_sheet_float') }}"
+            >
+                <i class="ki-filled ki-arrow-left" data-modal-sheet-mode-icon></i>
+            </button>
+            <button
+                type="button"
                 class="kt-btn kt-btn-sm kt-btn-icon kt-btn-ghost shrink-0"
                 data-modal-backdrop-toggle
                 aria-pressed="false"

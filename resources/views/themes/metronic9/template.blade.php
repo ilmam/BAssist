@@ -32,6 +32,12 @@
 
             document.documentElement.classList.add(themeMode);
         }
+
+        // Restore desktop sidebar collapse before paint (KTToggle has no built-in sticky).
+        // Mobile drawer uses data-kt-drawer and is unaffected by this body class.
+        if (localStorage.getItem('kt-sidebar-collapse') === 'on') {
+            document.body.classList.add('kt-sidebar-collapse');
+        }
     </script>
 
     <div class="flex grow">
@@ -61,6 +67,32 @@
     <script src="{{ ui_asset('vendors/jquery/jquery.min.js') }}"></script>
     <script src="{{ ui_asset('vendors/datatables-net/dataTables.min.js') }}"></script>
     <script src="{{ ui_asset('js/layouts/demo1.js') }}"></script>
+    <script>
+        (function () {
+            const storageKey = 'kt-sidebar-collapse';
+            const collapseClass = 'kt-sidebar-collapse';
+            const toggle = document.getElementById('sidebar_toggle');
+
+            if (!toggle) {
+                return;
+            }
+
+            // Keep KTToggle button state in sync with the early body-class restore.
+            if (document.body.classList.contains(collapseClass)) {
+                toggle.classList.add('active');
+            }
+
+            toggle.addEventListener('click', function () {
+                // Run after KTToggle updates body class on the same click.
+                setTimeout(function () {
+                    localStorage.setItem(
+                        storageKey,
+                        document.body.classList.contains(collapseClass) ? 'on' : 'off'
+                    );
+                }, 0);
+            });
+        })();
+    </script>
     @vite(['resources/js/state-flow-diagram.js', 'resources/js/swimlane-flow-diagram.js', 'resources/js/architecture-c4-diagram.js', 'resources/js/code-editor.js'])
     @stack('scripts')
     <script>
@@ -119,12 +151,77 @@
             return size === 'fullscreen' || size === 'fs' || size === 'modal-fullscreen';
         }
 
+        const modalSheetModeStorageKey = 'kt-modal-sheet-mode';
+
+        function readStoredModalSheetMode() {
+            try {
+                const saved = localStorage.getItem(modalSheetModeStorageKey);
+                if (saved === 'overlay' || saved === 'push') {
+                    return saved;
+                }
+            } catch (error) {
+                // Ignore quota / private-mode failures.
+            }
+            return 'push';
+        }
+
+        function isModalSheetPush(modal) {
+            return (modal?.getAttribute('data-modal-sheet-mode') || 'push') !== 'overlay';
+        }
+
+        function syncModalSheetModeToggle(container, mode, size) {
+            const toggle = container?.querySelector('[data-modal-sheet-mode-toggle]');
+            if (!toggle) {
+                return;
+            }
+
+            const resolvedSize = size || document.getElementById('mianModal')?.getAttribute('data-modal-size');
+            const show = isEndModalSize(resolvedSize);
+            toggle.classList.toggle('hidden', !show);
+
+            const overlay = mode === 'overlay';
+            const label = overlay
+                ? @json(__('ui.modal_sheet_push'))
+                : @json(__('ui.modal_sheet_float'));
+            const icon = toggle.querySelector('[data-modal-sheet-mode-icon]');
+
+            toggle.setAttribute('aria-pressed', overlay ? 'true' : 'false');
+            toggle.setAttribute('title', label);
+            toggle.setAttribute('aria-label', label);
+            toggle.classList.toggle('kt-btn-secondary', overlay);
+            toggle.classList.toggle('kt-btn-ghost', !overlay);
+
+            if (icon) {
+                // Push = page shifts left; overlay = panel floats on top.
+                icon.classList.toggle('ki-arrow-left', !overlay);
+                icon.classList.toggle('ki-copy', overlay);
+            }
+        }
+
+        function applyModalSheetMode(modal, container, mode) {
+            if (!modal) {
+                return;
+            }
+
+            const resolved = mode === 'overlay' ? 'overlay' : 'push';
+            modal.setAttribute('data-modal-sheet-mode', resolved);
+            try {
+                localStorage.setItem(modalSheetModeStorageKey, resolved);
+            } catch (error) {
+                // Ignore quota / private-mode failures.
+            }
+
+            syncModalSheetModeToggle(container, resolved, modal.getAttribute('data-modal-size'));
+            syncPageSheetPush(modal, container);
+        }
+
         function syncPageSheetPush(modal, container) {
             const body = document.body;
             const open = !!modal?.classList.contains('open');
             const end = isEndModalSize(modal?.getAttribute('data-modal-size'));
+            const push = isModalSheetPush(modal);
 
-            if (!open || !end) {
+            if (!open || !end || !push) {
                 body.classList.remove('modal-sheet-push');
                 body.style.removeProperty('--modal-sheet-reserve');
                 return;
@@ -315,6 +412,7 @@
                 applySheetContentLayout(container, true);
                 applyModalBackdrop(modal, container, { clear: false, size: resolved });
                 syncModalSizeSwitcher(container, resolved);
+                syncModalSheetModeToggle(container, modal.getAttribute('data-modal-sheet-mode') || 'push', resolved);
                 syncPageSheetPush(modal, container);
                 document.dispatchEvent(new CustomEvent('bassist:modal-resized', {
                     detail: { container, size: resolved },
@@ -345,6 +443,7 @@
                 applySheetContentLayout(container, true);
                 applyModalBackdrop(modal, container, { clear: true, size: resolved });
                 syncModalSizeSwitcher(container, resolved);
+                syncModalSheetModeToggle(container, modal.getAttribute('data-modal-sheet-mode') || 'push', resolved);
                 syncPageSheetPush(modal, container);
                 document.dispatchEvent(new CustomEvent('bassist:modal-resized', {
                     detail: { container, size: resolved },
@@ -364,6 +463,7 @@
             container.style.overflowY = 'auto';
             applyModalBackdrop(modal, container, { clear: false, size: resolved });
             syncModalSizeSwitcher(container, resolved);
+            syncModalSheetModeToggle(container, modal.getAttribute('data-modal-sheet-mode') || 'push', resolved);
             syncPageSheetPush(modal, container);
             document.dispatchEvent(new CustomEvent('bassist:modal-resized', {
                 detail: { container, size: resolved },
@@ -472,6 +572,101 @@
             }) !== false;
         }
 
+        /**
+         * Show HTML (string or Element) in #mianModal without fetching a URL.
+         * Reuses size / backdrop / stack behavior from openModal.
+         */
+        function openModalHtml(htmlOrNode, sizeFromTrigger, options) {
+            const modal = document.getElementById('mianModal');
+            const container = modal?.querySelector('[data-modal-container]');
+
+            if (!modal || !container) {
+                return false;
+            }
+
+            if (!modal.hasAttribute('data-modal-default-size')) {
+                modal.setAttribute('data-modal-default-size', modal.getAttribute('data-modal-size') || 'full');
+            }
+
+            const opts = options || {};
+            if (!opts.force && !opts.preserveRecordNav && isModalHostOpen(modal) && isModalEditFormDirty()) {
+                if (!confirmDiscardModalEdits()) {
+                    return false;
+                }
+                clearModalFormBaseline();
+            }
+
+            const stacked = pushModalStackIfNeeded(modal, container, opts);
+
+            if (!opts.preserveRecordNav) {
+                clearModalRecordNav();
+            }
+
+            clearModalFormBaseline();
+            const skipHistory = !!opts.noHistory || !!opts.fromStack;
+            if (!opts.fromStack) {
+                modalReturnUrl = skipHistory ? null : modalRecordNavHistoryReturnUrl(opts);
+            }
+
+            try {
+                if (htmlOrNode instanceof Element) {
+                    container.replaceChildren();
+                    while (htmlOrNode.firstChild) {
+                        container.appendChild(htmlOrNode.firstChild);
+                    }
+                } else {
+                    container.innerHTML = String(htmlOrNode ?? '');
+                }
+
+                // Cloned editors keep data-bound but lose listeners — allow rebind.
+                container.querySelectorAll('[data-swimlane-flow-editor],[data-state-flow-editor],[data-architecture-editor]').forEach((el) => {
+                    delete el.dataset.bound;
+                });
+
+                activateScriptsIn(container);
+
+                const sizeFromContent = container.querySelector('[data-modal-size]')?.getAttribute('data-modal-size');
+                const resolvedSize = normalizeModalSize(
+                    sizeFromTrigger || sizeFromContent || modal.getAttribute('data-modal-default-size') || 'full'
+                );
+                applyModalSize(modal, container, resolvedSize);
+
+                modal.classList.add('open');
+                modal.setAttribute('aria-hidden', 'false');
+                if (!isModalBackdropClear(modal)) {
+                    document.body.classList.add('overflow-hidden');
+                } else {
+                    document.body.classList.remove('overflow-hidden');
+                }
+                syncPageSheetPush(modal, container);
+
+                const historyUrl = opts.historyUrl || null;
+                if (!skipHistory && historyUrl) {
+                    history.pushState({ modal: true, returnUrl: modalReturnUrl }, '', historyUrl);
+                }
+                rememberOpenedModal(historyUrl || currentModalUrl || window.location.href, opts);
+
+                if (typeof KTSelect !== 'undefined' && typeof KTSelect.createInstances === 'function') {
+                    KTSelect.createInstances();
+                }
+
+                document.dispatchEvent(new CustomEvent('bassist:modal-loaded', {
+                    detail: { container },
+                }));
+
+                return true;
+            } catch (error) {
+                if (stacked) {
+                    modalStack.pop();
+                }
+                console.error(error);
+                window.alert('Could not open the dialog. Please try again.');
+                return false;
+            }
+        }
+
+        window.bassistOpenModalHtml = openModalHtml;
+
         function openModal(url, sizeFromTrigger, options) {
             const modal = document.getElementById('mianModal');
             const container = modal?.querySelector('[data-modal-container]');
@@ -520,6 +715,7 @@
                     return html;
                 })
                 .then(html => {
+                    // Content already stacked above; inject without stacking again.
                     container.innerHTML = html;
                     activateScriptsIn(container);
 
@@ -594,6 +790,25 @@
                 return;
             }
 
+            const sheetModeToggle = event.target.closest('[data-modal-sheet-mode-toggle]');
+            if (sheetModeToggle) {
+                event.preventDefault();
+                event.stopPropagation();
+
+                const modal = document.getElementById('mianModal');
+                const container = modal?.querySelector('[data-modal-container]');
+                if (!modal || !container || !isEndModalSize(modal.getAttribute('data-modal-size'))) {
+                    return;
+                }
+
+                applyModalSheetMode(
+                    modal,
+                    container,
+                    isModalSheetPush(modal) ? 'overlay' : 'push'
+                );
+                return;
+            }
+
             if (event.target.closest('[data-kt-modal-dismiss]')) {
                 requestCloseModal();
             }
@@ -602,6 +817,9 @@
         (function initModalHost() {
             const modal = document.getElementById('mianModal');
             const container = modal?.querySelector('[data-modal-container]');
+            if (modal) {
+                modal.setAttribute('data-modal-sheet-mode', readStoredModalSheetMode());
+            }
             if (modal && container) {
                 applyModalSize(modal, container, modal.getAttribute('data-modal-size') || 'full');
             }

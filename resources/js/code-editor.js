@@ -309,6 +309,34 @@ function bindCodeEditor(root) {
 }
 
 /**
+ * Read text from a CodeMirror-backed code document (or nested host).
+ */
+export function getCodeEditorText(host) {
+    if (!host) {
+        return '';
+    }
+
+    const editorRoot = host.matches?.('[data-code-editor]')
+        ? host
+        : host.querySelector?.('[data-code-editor]');
+    const view = editorRoot?._codeEditorView;
+    if (view) {
+        return view.state.doc.toString();
+    }
+
+    const textarea = editorRoot?.querySelector?.('[data-code-input]')
+        ?? (host instanceof HTMLTextAreaElement && host.hasAttribute('data-code-input')
+            ? host
+            : host.querySelector?.('[data-code-input]'));
+
+    if (textarea instanceof HTMLTextAreaElement) {
+        return textarea.value ?? '';
+    }
+
+    return host.textContent ?? '';
+}
+
+/**
  * Update a CodeMirror-backed code document (or nested host) with new text.
  * Used by diagram previews that refresh Mermaid source on each render.
  */
@@ -482,6 +510,7 @@ document.addEventListener('bassist:modal-loaded', (event) => {
 
 window.bassistCodeEditor = {
     init: initAll,
+    getText: getCodeEditorText,
     setText: setCodeEditorText,
     refresh: refreshCodeEditors,
 };

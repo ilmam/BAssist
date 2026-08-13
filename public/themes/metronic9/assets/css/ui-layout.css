@@ -413,3 +413,47 @@
   margin-bottom: 0;
 }
 
+/**
+ * Compact table density — opt in on a table wrapper or the table itself:
+ *   data-table-density="compact"  and/or  class "kt-table--compact"
+ * Reduces cell padding so dense editors (e.g. BPD elements) stay readable.
+ */
+[data-table-density="compact"] .kt-table thead th,
+.kt-table.kt-table--compact thead th,
+[data-table-density="compact"].kt-table thead th {
+  height: calc(var(--spacing) * 7);
+  padding-inline: calc(var(--spacing) * 2);
+  padding-block: calc(var(--spacing) * 1.5);
+  font-size: var(--text-xs);
+  line-height: var(--text-xs--line-height);
+}
+
+[data-table-density="compact"] .kt-table tbody td,
+.kt-table.kt-table--compact tbody td,
+[data-table-density="compact"].kt-table tbody td {
+  padding-inline: calc(var(--spacing) * 2);
+  padding-block: calc(var(--spacing) * 1.5);
+}
+
+/* Match kt-input-sm / kt-select-sm without requiring classes on every cell control. */
+[data-table-density="compact"] .kt-table .kt-input,
+.kt-table.kt-table--compact .kt-input,
+[data-table-density="compact"].kt-table .kt-input {
+  height: calc(var(--spacing) * 7);
+  border-radius: calc(var(--radius) - 2px);
+  padding-inline: calc(var(--spacing) * 2.5);
+  font-size: var(--text-xs);
+  line-height: var(--text-xs--line-height);
+}
+
+[data-table-density="compact"] .kt-table .kt-select,
+.kt-table.kt-table--compact .kt-select,
+[data-table-density="compact"].kt-table .kt-select {
+  height: calc(var(--spacing) * 7);
+  min-height: calc(var(--spacing) * 7);
+  border-radius: calc(var(--radius) - 2px);
+  padding-inline: calc(var(--spacing) * 2.5);
+  font-size: var(--text-xs);
+  line-height: var(--text-xs--line-height);
+}
+

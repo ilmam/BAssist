@@ -4,6 +4,8 @@
     $hidden = (bool) ($hidden ?? false);
     $wrapInDetails = (bool) ($wrapInDetails ?? true);
     $summary = $summary ?? __('ui.mermaid_source');
+    $readonly = (bool) ($readonly ?? true);
+    $showApply = (bool) ($showApply ?? false);
 @endphp
 
 @if ($wrapInDetails)
@@ -13,11 +15,22 @@
             @include('pages.partials.code-document', [
                 'source' => $source,
                 'language' => 'mermaid',
-                'readonly' => true,
+                'readonly' => $readonly,
                 'showCopy' => true,
                 'editorId' => $editorId,
                 'compact' => true,
             ])
+            @if ($showApply)
+                <div class="mt-2 flex flex-wrap items-center gap-2">
+                    <button type="button" class="kt-btn kt-btn-sm kt-btn-outline" data-apply-mermaid-source>
+                        {{ __('ui.apply_mermaid_source') }}
+                    </button>
+                    <p class="text-xs text-muted-foreground m-0" data-mermaid-apply-help>
+                        {{ __('ui.apply_mermaid_source_help') }}
+                    </p>
+                    <p class="text-xs m-0 w-full hidden" data-mermaid-apply-status role="status" aria-live="polite"></p>
+                </div>
+            @endif
         </div>
     </details>
 @else
@@ -25,10 +38,21 @@
         @include('pages.partials.code-document', [
             'source' => $source,
             'language' => 'mermaid',
-            'readonly' => true,
+            'readonly' => $readonly,
             'showCopy' => true,
             'editorId' => $editorId,
             'compact' => true,
         ])
+        @if ($showApply)
+            <div class="mt-2 flex flex-wrap items-center gap-2">
+                <button type="button" class="kt-btn kt-btn-sm kt-btn-outline" data-apply-mermaid-source>
+                    {{ __('ui.apply_mermaid_source') }}
+                </button>
+                <p class="text-xs text-muted-foreground m-0" data-mermaid-apply-help>
+                    {{ __('ui.apply_mermaid_source_help') }}
+                </p>
+                <p class="text-xs m-0 w-full hidden" data-mermaid-apply-status role="status" aria-live="polite"></p>
+            </div>
+        @endif
     </div>
 @endif

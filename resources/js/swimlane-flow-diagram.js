@@ -268,6 +268,281 @@ export function generateSwimlaneMermaid(title, elements, direction = 'TB', color
     return `${lines.join('\n')}\n`;
 }
 
+function unquoteMermaidLabel(value) {
+    const trimmed = String(value ?? '').trim();
+    if (trimmed.length >= 2 && trimmed.startsWith('"') && trimmed.endsWith('"')) {
+        return trimmed.slice(1, -1);
+    }
+    return trimmed;
+}
+
+function labelFromAlternation(quoted, plain) {
+    if (quoted !== undefined && quoted !== '') {
+        return unquoteMermaidLabel(quoted);
+    }
+    return unquoteMermaidLabel(plain ?? '');
+}
+
+function parseNodeDeclaration(line) {
+    let match = line.match(/^([A-Za-z][A-Za-z0-9_]*)\(\[\s*(?:"([^"]*)"|([^\]]*?))\s*\]\)\s*$/);
+    if (match) {
+        return {
+            id: match[1],
+            label: labelFromAlternation(match[2], match[3]),
+            shape: 'stadium',
+        };
+    }
+
+    match = line.match(/^([A-Za-z][A-Za-z0-9_]*)\{\s*(?:"([^"]*)"|([^}]*?))\s*\}\s*$/);
+    if (match) {
+        return {
+            id: match[1],
+            label: labelFromAlternation(match[2], match[3]),
+            shape: 'diamond',
+        };
+    }
+
+    match = line.match(/^([A-Za-z][A-Za-z0-9_]*)\[\s*(?:"([^"]*)"|([^\]]*?))\s*\]\s*$/);
+    if (match) {
+        return {
+            id: match[1],
+            label: labelFromAlternation(match[2], match[3]),
+            shape: 'rect',
+        };
+    }
+
+    return null;
+}
+
+function assignStadiumTypes(nodes, edges) {
+    const outgoing = new Set();
+    const incoming = new Set();
+
+    edges.forEach((edge) => {
+        if (edge.fromId === DEFAULT_START_ID) {
+            return;
+        }
+        outgoing.add(edge.fromId);
+        incoming.add(edge.toId);
+    });
+
+    Object.values(nodes).forEach((node) => {
+        if (node.shape === 'diamond') {
+            node.type = 'decision';
+            return;
+        }
+        if (node.shape === 'rect') {
+            node.type = 'process';
+            return;
+        }
+
+        const hasOut = outgoing.has(node.id);
+        const hasIn = incoming.has(node.id);
+        if (hasOut && !hasIn) {
+            node.type = 'start';
+        } else if (hasIn && !hasOut) {
+            node.type = 'end';
+        } else if (!hasIn && !hasOut) {
+            node.type = 'start';
+        } else {
+            node.type = 'end';
+        }
+    });
+}
+
+/**
+ * Parse BAssist swimlane-beta Mermaid (generator subset) back into elements rows.
+ * Mirrors PHP SwimlaneMermaidParser.
+ *
+ * @returns {{ direction: string, elements: Array<{lane: string, from: string|null, type: string, label: string, line_title: string|null}> }}
+ */
+export function parseSwimlaneMermaid(source) {
+    const rawLines = String(source ?? '').split(/\r\n|\n|\r/);
+    let direction = null;
+    const nodes = {};
+    const edges = [];
+    const nodeOrder = [];
+    let currentLaneLabel = null;
+    let inSubgraph = false;
+
+    for (let index = 0; index < rawLines.length; index += 1) {
+        const line = rawLines[index].trim();
+        const lineNo = index + 1;
+
+        if (line === '' || line.startsWith('%%')) {
+            continue;
+        }
+
+        if (direction === null) {
+            const header = line.match(/^swimlane-beta(?:\s+(TB|LR))?$/i);
+            if (header) {
+                direction = String(header[1] ?? 'TB').toUpperCase() === 'LR' ? 'LR' : 'TB';
+                continue;
+            }
+            throw new Error(`Line ${lineNo}: expected swimlane-beta TB|LR header.`);
+        }
+
+        if (/^(style|classDef|class)\b/i.test(line)) {
+            continue;
+        }
+
+        const subgraph = line.match(
+            /^subgraph\s+([A-Za-z][A-Za-z0-9_]*)\s*\[\s*(?:"([^"]*)"|([^\]]+))\s*\]\s*$/i
+        );
+        if (subgraph) {
+            if (inSubgraph) {
+                throw new Error(`Line ${lineNo}: nested subgraph is not supported.`);
+            }
+            inSubgraph = true;
+            currentLaneLabel = labelFromAlternation(subgraph[2], subgraph[3]);
+            continue;
+        }
+
+        if (line.toLowerCase() === 'end') {
+            if (!inSubgraph) {
+                throw new Error(`Line ${lineNo}: unexpected end.`);
+            }
+            inSubgraph = false;
+            currentLaneLabel = null;
+            continue;
+        }
+
+        const edge = line.match(
+            /^([A-Za-z][A-Za-z0-9_]*)\s*-->\s*(?:\|([^|]*)\|\s*)?([A-Za-z][A-Za-z0-9_]*)\s*$/
+        );
+        if (edge) {
+            const lineTitle = String(edge[2] ?? '').trim();
+            edges.push({
+                fromId: edge[1],
+                toId: edge[3],
+                lineTitle: lineTitle === '' ? null : lineTitle,
+            });
+            continue;
+        }
+
+        const node = parseNodeDeclaration(line);
+        if (node) {
+            if (!inSubgraph || currentLaneLabel === null) {
+                throw new Error(`Line ${lineNo}: node declarations must be inside a subgraph lane.`);
+            }
+
+            if (node.id === DEFAULT_START_ID) {
+                continue;
+            }
+
+            if (!Object.prototype.hasOwnProperty.call(nodes, node.id)) {
+                nodes[node.id] = {
+                    id: node.id,
+                    label: node.label,
+                    type: null,
+                    shape: node.shape,
+                    lane: currentLaneLabel,
+                };
+                nodeOrder.push(node.id);
+            }
+            continue;
+        }
+
+        throw new Error(`Line ${lineNo}: unsupported Mermaid syntax for swimlane import.`);
+    }
+
+    if (direction === null) {
+        throw new Error('Missing swimlane-beta TB|LR header.');
+    }
+    if (inSubgraph) {
+        throw new Error('Unclosed subgraph (missing end).');
+    }
+    if (nodeOrder.length === 0) {
+        throw new Error('No lane nodes found to import.');
+    }
+
+    edges.forEach((edge) => {
+        if (edge.toId === DEFAULT_START_ID) {
+            throw new Error('Edges into DefaultStart are not supported.');
+        }
+        if (!Object.prototype.hasOwnProperty.call(nodes, edge.toId)) {
+            throw new Error(`Edge target "${edge.toId}" is not declared in a lane subgraph.`);
+        }
+        if (
+            edge.fromId !== DEFAULT_START_ID
+            && !Object.prototype.hasOwnProperty.call(nodes, edge.fromId)
+        ) {
+            throw new Error(`Edge source "${edge.fromId}" is not declared in a lane subgraph.`);
+        }
+    });
+
+    assignStadiumTypes(nodes, edges);
+
+    const realIncoming = {};
+    const defaultStartTargets = new Set();
+    edges.forEach((edge) => {
+        if (edge.fromId === DEFAULT_START_ID) {
+            defaultStartTargets.add(edge.toId);
+            return;
+        }
+        if (!Object.prototype.hasOwnProperty.call(realIncoming, edge.toId)) {
+            realIncoming[edge.toId] = [];
+        }
+        realIncoming[edge.toId].push(edge);
+    });
+
+    const elements = [];
+
+    nodeOrder.forEach((id) => {
+        const node = nodes[id];
+        const hasReal = (realIncoming[id] || []).length > 0;
+        const needsEmptyFrom = !hasReal || defaultStartTargets.has(id);
+        if (!needsEmptyFrom) {
+            return;
+        }
+        elements.push({
+            lane: node.lane,
+            from: null,
+            type: node.type || 'process',
+            label: node.label,
+            line_title: null,
+        });
+    });
+
+    edges.forEach((edge) => {
+        if (edge.fromId === DEFAULT_START_ID) {
+            return;
+        }
+        const from = nodes[edge.fromId];
+        const to = nodes[edge.toId];
+        elements.push({
+            lane: to.lane,
+            from: from.label,
+            type: to.type || 'process',
+            label: to.label,
+            line_title: edge.lineTitle,
+        });
+    });
+
+    if (elements.length === 0) {
+        throw new Error('No elements could be derived from Mermaid source.');
+    }
+
+    return { direction, elements };
+}
+
+function readMermaidSourceText(source) {
+    if (!source) {
+        return '';
+    }
+
+    if (window.bassistCodeEditor?.getText) {
+        return window.bassistCodeEditor.getText(source);
+    }
+
+    const input = source.querySelector?.('[data-code-input]');
+    if (input instanceof HTMLTextAreaElement) {
+        return input.value ?? '';
+    }
+
+    return source.textContent ?? '';
+}
+
 export function readElementsFromTable(table) {
     if (!table) {
         return [];
@@ -320,17 +595,14 @@ function writeMermaidSource(source, mermaidText) {
     source.textContent = mermaidText;
 }
 
-async function renderMermaid(preview, source, mermaidText) {
-    writeMermaidSource(source, mermaidText);
-
-    const host = preview.parentElement;
-    if (!host) {
-        return;
+async function renderMermaidPreview(preview, mermaidText, dataAttr = 'data-mermaid-preview') {
+    if (!preview?.parentElement) {
+        return null;
     }
 
     const next = document.createElement('pre');
     next.className = 'mermaid bassist-mermaid';
-    next.setAttribute('data-mermaid-preview', '');
+    next.setAttribute(dataAttr, '');
     next.textContent = mermaidText;
     preview.replaceWith(next);
 
@@ -355,6 +627,13 @@ async function renderMermaid(preview, source, mermaidText) {
         const reason = error?.message ? `\n\n(${error.message})` : '';
         next.textContent = `Unable to render diagram.${reason}\n\n${mermaidText}`;
     }
+
+    return next;
+}
+
+async function renderMermaid(preview, source, mermaidText) {
+    writeMermaidSource(source, mermaidText);
+    return renderMermaidPreview(preview, mermaidText, 'data-mermaid-preview');
 }
 
 function setNeedSelectOptions(select, options, selectedValue) {
@@ -501,10 +780,10 @@ function syncLaneColorForSameLane(tbody, sourceRow) {
 }
 
 /**
- * Collect unique lane titles from the elements table (first-seen order).
+ * Collect unique field values from the elements table (first-seen order).
  * Same approach as C4 refreshKeyList for relationship from_key/to_key datalist.
  */
-function collectLaneNames(table) {
+function collectFieldNames(table, field) {
     if (!table) {
         return [];
     }
@@ -512,7 +791,7 @@ function collectLaneNames(table) {
     const names = [];
     const seen = new Set();
 
-    table.querySelectorAll('tbody tr[data-element-row] [data-field="lane"]').forEach((el) => {
+    table.querySelectorAll(`tbody tr[data-element-row] [data-field="${field}"]`).forEach((el) => {
         const name =
             el && 'value' in el && el.tagName !== 'SPAN'
                 ? String(el.value ?? '').trim()
@@ -527,18 +806,40 @@ function collectLaneNames(table) {
     return names;
 }
 
-function refreshLaneNameList(root, table) {
-    const list = root?.querySelector?.('[data-lane-names-list]');
+function collectLaneNames(table) {
+    return collectFieldNames(table, 'lane');
+}
+
+function collectLabelNames(table) {
+    return collectFieldNames(table, 'label');
+}
+
+function refreshDatalist(root, selector, names) {
+    const list = root?.querySelector?.(selector);
     if (!list) {
         return;
     }
 
     list.innerHTML = '';
-    collectLaneNames(table).forEach((name) => {
+    names.forEach((name) => {
         const option = document.createElement('option');
         option.value = name;
         list.appendChild(option);
     });
+}
+
+function refreshLaneNameList(root, table) {
+    refreshDatalist(root, '[data-lane-names-list]', collectLaneNames(table));
+}
+
+function refreshLabelNameList(root, table) {
+    refreshDatalist(root, '[data-label-names-list]', collectLabelNames(table));
+}
+
+/** Refresh lane + node-label suggestion datalists after table edits. */
+function refreshSuggestionLists(root, table) {
+    refreshLaneNameList(root, table);
+    refreshLabelNameList(root, table);
 }
 
 export function bindSwimlaneFlowEditor(root) {
@@ -550,6 +851,7 @@ export function bindSwimlaneFlowEditor(root) {
     const table = root.querySelector('[data-elements-table]');
     const tbody = table?.querySelector('tbody');
     const previewBtn = root.querySelector('[data-preview-diagram]');
+    const modalPreviewBtn = root.querySelector('[data-preview-diagram-modal]');
     const form = root.closest('form');
     const titleInput =
         root.querySelector('[data-flow-title]') ||
@@ -565,9 +867,170 @@ export function bindSwimlaneFlowEditor(root) {
     const autoRender = root.getAttribute('data-auto-render') === '1';
     const needOptionsUrl = root.getAttribute('data-stakeholder-need-options-url') || '';
 
+    const applyBtn = root.querySelector('[data-apply-mermaid-source]');
+    const applyStatus = root.querySelector('[data-mermaid-apply-status]');
+    const sourceEditable = Boolean(applyBtn);
+    let sourceDirty = false;
+
     if (!preview) {
         return;
     }
+
+    const currentMermaidText = () =>
+        generateSwimlaneMermaid(
+            titleInput?.value ?? root.getAttribute('data-flow-title-value') ?? '',
+            readElementsFromTable(table),
+            directionInput?.value ?? root.getAttribute('data-direction') ?? 'TB',
+            colorModeInput?.value ?? root.getAttribute('data-color-mode') ?? 'both'
+        );
+
+    const t = (key, fallback) => root.getAttribute(key) || fallback;
+
+    const buildDiagramModalHtml = () => {
+        const title = t('data-i18n-diagram-modal-title', 'Diagram preview');
+        const sizeLabel = t('data-i18n-modal-size', 'Size');
+        const sizes = [
+            ['sm', 'ki-frame', 'text-[10px]', t('data-i18n-modal-size-small', 'Small')],
+            ['lg', 'ki-frame', 'text-xs', t('data-i18n-modal-size-medium', 'Medium')],
+            ['full', 'ki-frame', 'text-base', t('data-i18n-modal-size-large', 'Large')],
+            ['fullscreen', 'ki-arrow-two-diagonals', '', t('data-i18n-modal-size-fullscreen', 'Fullscreen')],
+            ['end', 'ki-exit-right', '', t('data-i18n-modal-size-side', 'Side')],
+        ];
+        const sizeButtons = sizes
+            .map(([mode, icon, iconClass, label]) => {
+                const active = mode === 'fullscreen';
+                return `<button type="button" class="kt-btn kt-btn-sm kt-btn-icon ${active ? 'kt-btn-secondary' : 'kt-btn-ghost'}" data-modal-size-set="${mode}" aria-pressed="${active ? 'true' : 'false'}" title="${label}" aria-label="${label}"><i class="ki-filled ${icon} ${iconClass}"></i></button>`;
+            })
+            .join('');
+
+        return `
+<div data-modal-size="fullscreen" data-ui-container data-diagram-preview-shell class="flex flex-col min-h-0 h-full">
+  <div class="kt-modal-header shrink-0">
+    <h3 class="kt-modal-title">${title}</h3>
+    <div class="flex items-center gap-1.5 shrink-0">
+      <div class="flex items-center gap-0.5 rounded-md border border-border p-0.5" role="group" aria-label="${sizeLabel}" data-modal-size-switcher>
+        ${sizeButtons}
+      </div>
+      <button type="button" class="kt-btn kt-btn-sm kt-btn-icon kt-btn-ghost shrink-0 hidden" data-modal-sheet-mode-toggle aria-pressed="false" title="${t('data-i18n-modal-sheet-float', 'Float over page')}" aria-label="${t('data-i18n-modal-sheet-float', 'Float over page')}">
+        <i class="ki-filled ki-arrow-left" data-modal-sheet-mode-icon></i>
+      </button>
+      <button type="button" class="kt-btn kt-btn-sm kt-btn-icon kt-btn-ghost shrink-0" data-modal-backdrop-toggle aria-pressed="false" title="${t('data-i18n-modal-backdrop', 'Show page')}" aria-label="${t('data-i18n-modal-backdrop', 'Show page')}">
+        <i class="ki-filled ki-eye" data-modal-backdrop-icon></i>
+      </button>
+      <button class="kt-btn kt-btn-sm kt-btn-icon kt-btn-ghost shrink-0" data-kt-modal-dismiss="true" type="button" aria-label="${t('data-i18n-close', 'Close')}">
+        <i class="ki-filled ki-cross"></i>
+      </button>
+    </div>
+  </div>
+  <div class="kt-modal-body flex-1 min-h-0 overflow-hidden flex flex-col">
+    <div class="min-h-0 flex-1 overflow-auto border border-border rounded-lg bg-white p-4" data-diagram-modal-scroll>
+      <div data-mermaid-modal-host>
+        <pre class="mermaid bassist-mermaid" data-mermaid-modal-preview></pre>
+      </div>
+    </div>
+  </div>
+</div>`;
+    };
+
+    const isDiagramPreviewModalOpen = () => {
+        const host = document.getElementById('mianModal');
+        if (!host) {
+            return false;
+        }
+        const open =
+            host.classList.contains('open') ||
+            host.classList.contains('show') ||
+            (typeof window.isModalHostOpen === 'function' && window.isModalHostOpen(host));
+        if (!open) {
+            return false;
+        }
+        return Boolean(host.querySelector('[data-diagram-preview-shell]'));
+    };
+
+    const getOpenDiagramModalHost = () => {
+        if (!isDiagramPreviewModalOpen()) {
+            return null;
+        }
+        const shell = document.getElementById('mianModal')?.querySelector('[data-diagram-preview-shell]');
+        const mount =
+            shell?.querySelector('[data-mermaid-modal-host]') ||
+            shell?.querySelector('[data-diagram-modal-scroll]');
+        if (!shell || !mount) {
+            return null;
+        }
+        return { shell, mount };
+    };
+
+    const refreshOpenDiagramModal = async () => {
+        const open = getOpenDiagramModalHost();
+        if (!open) {
+            return false;
+        }
+
+        // Mermaid may replace/mutate the <pre>; remount a fresh node in the stable host.
+        const preview = document.createElement('pre');
+        preview.className = 'mermaid bassist-mermaid';
+        preview.setAttribute('data-mermaid-modal-preview', '');
+        open.mount.replaceChildren(preview);
+
+        await renderMermaidPreview(preview, currentMermaidText(), 'data-mermaid-modal-preview');
+        return true;
+    };
+
+    const openDiagramModal = async () => {
+        // Already open (e.g. user switched to Side) — re-render only; keep current size.
+        if (isDiagramPreviewModalOpen()) {
+            await refreshOpenDiagramModal();
+            return;
+        }
+
+        if (typeof window.bassistOpenModalHtml !== 'function') {
+            console.error('bassistOpenModalHtml is not available');
+            return;
+        }
+
+        const opened = window.bassistOpenModalHtml(buildDiagramModalHtml(), 'fullscreen', {
+            force: true,
+            noHistory: true,
+        });
+        if (!opened) {
+            return;
+        }
+
+        await refreshOpenDiagramModal();
+    };
+
+    const isTypingTarget = (target) => {
+        if (!(target instanceof Element)) {
+            return false;
+        }
+        if (target.closest('.cm-editor, .CodeMirror, [data-code-editor]')) {
+            return true;
+        }
+        if (target.closest('input, textarea, select, [contenteditable=""], [contenteditable="true"]')) {
+            return true;
+        }
+        return Boolean(target.isContentEditable);
+    };
+
+    const setApplyStatus = (message, kind = '') => {
+        if (!applyStatus) {
+            return;
+        }
+        if (!message) {
+            applyStatus.textContent = '';
+            applyStatus.classList.add('hidden');
+            applyStatus.classList.remove('text-destructive', 'text-green-700');
+            return;
+        }
+        applyStatus.textContent = message;
+        applyStatus.classList.remove('hidden', 'text-destructive', 'text-green-700');
+        if (kind === 'error') {
+            applyStatus.classList.add('text-destructive');
+        } else if (kind === 'success') {
+            applyStatus.classList.add('text-green-700');
+        }
+    };
 
     const refresh = async () => {
         preview = root.querySelector('[data-mermaid-preview]');
@@ -575,24 +1038,16 @@ export function bindSwimlaneFlowEditor(root) {
             return;
         }
 
-        const mermaidText = generateSwimlaneMermaid(
-            titleInput?.value ?? root.getAttribute('data-flow-title-value') ?? '',
-            readElementsFromTable(table),
-            directionInput?.value ?? root.getAttribute('data-direction') ?? 'TB',
-            colorModeInput?.value ?? root.getAttribute('data-color-mode') ?? 'both'
-        );
-
-        await renderMermaid(preview, source, mermaidText);
+        await renderMermaid(preview, source, currentMermaidText());
+        // Keep an already-open preview modal in sync without rebuilding (preserves size).
+        await refreshOpenDiagramModal();
+        sourceDirty = false;
+        setApplyStatus('');
     };
 
     const syncMermaidSource = () => {
-        const mermaidText = generateSwimlaneMermaid(
-            titleInput?.value ?? root.getAttribute('data-flow-title-value') ?? '',
-            readElementsFromTable(table),
-            directionInput?.value ?? root.getAttribute('data-direction') ?? 'TB',
-            colorModeInput?.value ?? root.getAttribute('data-color-mode') ?? 'both'
-        );
-        writeMermaidSource(source, mermaidText);
+        writeMermaidSource(source, currentMermaidText());
+        sourceDirty = false;
     };
 
     const sourceDetails = source?.closest('details');
@@ -603,6 +1058,10 @@ export function bindSwimlaneFlowEditor(root) {
         return Boolean(source) && !source.classList.contains('hidden');
     };
     const maybeSyncMermaidSource = () => {
+        // While the user is editing Mermaid, do not overwrite their draft from the table.
+        if (sourceEditable && sourceDirty) {
+            return;
+        }
         if (isSourcePanelOpen()) {
             syncMermaidSource();
         }
@@ -610,8 +1069,18 @@ export function bindSwimlaneFlowEditor(root) {
 
     sourceDetails?.addEventListener('toggle', () => {
         if (sourceDetails.open) {
-            syncMermaidSource();
+            if (!(sourceEditable && sourceDirty)) {
+                syncMermaidSource();
+            }
         }
+    });
+
+    source?.addEventListener('input', () => {
+        if (!sourceEditable) {
+            return;
+        }
+        sourceDirty = true;
+        setApplyStatus('');
     });
 
     titleInput?.addEventListener('input', maybeSyncMermaidSource);
@@ -752,15 +1221,164 @@ export function bindSwimlaneFlowEditor(root) {
 
         reindexRows();
         applyRowColorUi(row);
-        refreshLaneNameList(root, table);
+        refreshSuggestionLists(root, table);
         row.querySelector('[data-field="label"]')?.focus();
 
         return row;
     };
 
+    const setRowField = (row, field, value) => {
+        const el = row.querySelector(`[data-field="${field}"]`);
+        if (!el) {
+            return;
+        }
+        if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT') {
+            el.value = value == null ? '' : String(value);
+        }
+    };
+
+    const elementMatchKey = (row) => {
+        const from = String(row?.from ?? '').trim();
+        const label = String(row?.label ?? '').trim();
+        const type = String(row?.type ?? '').trim().toLowerCase();
+        return `${label}\0${from}\0${type}`;
+    };
+
+    const fillElementRow = (row, element) => {
+        setRowField(row, 'id', element.id ?? '');
+        setRowField(row, 'code', element.code ?? '');
+        setRowField(row, 'lane', element.lane ?? '');
+        setRowField(row, 'from', element.from ?? '');
+        setRowField(row, 'type', element.type ?? 'process');
+        setRowField(row, 'label', element.label ?? '');
+        setRowField(row, 'line_title', element.line_title ?? '');
+        setRowField(row, 'stakeholder_need_id', element.stakeholder_need_id ?? '');
+        setRowField(row, 'lane_color', element.lane_color ?? '');
+        setRowField(row, 'element_color', element.element_color ?? '');
+        syncNeedEnabled(row);
+        applyRowColorUi(row);
+    };
+
+    const rebuildElementsFromParsed = (parsedElements) => {
+        if (!template || !tbody) {
+            return;
+        }
+
+        const previous = readElementsFromTable(table);
+        const previousByKey = new Map();
+        previous.forEach((row) => {
+            const key = elementMatchKey(row);
+            if (!previousByKey.has(key)) {
+                previousByKey.set(key, []);
+            }
+            previousByKey.get(key).push(row);
+        });
+
+        const merged = parsedElements.map((element) => {
+            const key = elementMatchKey(element);
+            const bucket = previousByKey.get(key);
+            const prior = bucket && bucket.length > 0 ? bucket.shift() : null;
+            return {
+                id: prior?.id ?? '',
+                code: prior?.code ?? '',
+                lane: element.lane ?? '',
+                from: element.from ?? '',
+                type: element.type ?? 'process',
+                label: element.label ?? '',
+                line_title: element.line_title ?? '',
+                stakeholder_need_id: prior?.stakeholder_need_id ?? '',
+                lane_color: prior?.lane_color ?? '',
+                element_color: prior?.element_color ?? '',
+            };
+        });
+
+        tbody.querySelectorAll('tr[data-element-row]').forEach((row) => row.remove());
+
+        merged.forEach((element) => {
+            const fragment = template.content.cloneNode(true);
+            const row = fragment.querySelector('tr');
+            if (!row) {
+                return;
+            }
+            tbody.appendChild(row);
+            fillElementRow(row, element);
+        });
+
+        if (!tbody.querySelector('tr[data-element-row]')) {
+            addRow();
+        }
+
+        reindexRows();
+        refreshSuggestionLists(root, table);
+    };
+
+    const applyMermaidSource = async () => {
+        if (!sourceEditable || !tbody || !template) {
+            return;
+        }
+
+        let parsed;
+        try {
+            parsed = parseSwimlaneMermaid(readMermaidSourceText(source));
+        } catch (error) {
+            const detail = error?.message ? ` ${error.message}` : '';
+            setApplyStatus(
+                `${root.getAttribute('data-i18n-apply-error') || 'Could not parse Mermaid source.'}${detail}`,
+                'error'
+            );
+            return;
+        }
+
+        if (directionInput && (parsed.direction === 'TB' || parsed.direction === 'LR')) {
+            directionInput.value = parsed.direction;
+            root.setAttribute('data-direction', parsed.direction);
+        }
+
+        rebuildElementsFromParsed(parsed.elements);
+        sourceDirty = false;
+        setApplyStatus(
+            root.getAttribute('data-i18n-apply-success') || 'Elements updated from Mermaid.',
+            'success'
+        );
+        await refresh();
+    };
+
+    applyBtn?.addEventListener('click', (event) => {
+        event.preventDefault();
+        applyMermaidSource();
+    });
+
     previewBtn?.addEventListener('click', (event) => {
         event.preventDefault();
         refresh();
+    });
+
+    modalPreviewBtn?.addEventListener('click', (event) => {
+        event.preventDefault();
+        openDiagramModal();
+    });
+
+    document.addEventListener('keydown', (event) => {
+        // Alt+Q — quick diagram preview (avoids Ctrl+D browser bookmark).
+        // Works from selects/inputs; event.code covers non-US layouts where Alt remaps key.
+        const isAltQ =
+            event.altKey &&
+            !event.ctrlKey &&
+            !event.metaKey &&
+            !event.shiftKey &&
+            (String(event.key || '').toLowerCase() === 'q' || event.code === 'KeyQ');
+
+        if (!isAltQ) {
+            return;
+        }
+
+        // Root may be detached while the edit form is stacked under the preview.
+        if (!document.body.contains(root) && !isDiagramPreviewModalOpen()) {
+            return;
+        }
+
+        event.preventDefault();
+        openDiagramModal();
     });
 
     colorModeInput?.addEventListener('change', () => {
@@ -804,7 +1422,7 @@ export function bindSwimlaneFlowEditor(root) {
                 return;
             }
             reindexRows();
-            refreshLaneNameList(root, table);
+            refreshSuggestionLists(root, table);
             if (autoRender) {
                 refresh();
             } else {
@@ -826,14 +1444,15 @@ export function bindSwimlaneFlowEditor(root) {
             addRow();
         } else {
             reindexRows();
-            refreshLaneNameList(root, table);
+            refreshSuggestionLists(root, table);
         }
         maybeSyncMermaidSource();
     });
 
     tbody?.addEventListener('input', (event) => {
-        if (event.target?.getAttribute?.('data-field') === 'lane') {
-            refreshLaneNameList(root, table);
+        const field = event.target?.getAttribute?.('data-field');
+        if (field === 'lane' || field === 'label') {
+            refreshSuggestionLists(root, table);
         }
         maybeSyncMermaidSource();
     });
@@ -847,8 +1466,8 @@ export function bindSwimlaneFlowEditor(root) {
         if (field === 'type') {
             syncNeedEnabled(row);
         }
-        if (field === 'lane') {
-            refreshLaneNameList(root, table);
+        if (field === 'lane' || field === 'label') {
+            refreshSuggestionLists(root, table);
         }
         if (field === 'lane_color') {
             syncLaneColorForSameLane(tbody, row);
@@ -882,17 +1501,19 @@ export function bindSwimlaneFlowEditor(root) {
 
     reindexRows();
     tbody?.querySelectorAll('tr[data-element-row]').forEach((row) => applyRowColorUi(row));
-    refreshLaneNameList(root, table);
+    refreshSuggestionLists(root, table);
 
     if (autoRender) {
         refresh();
     }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    document.querySelectorAll('[data-swimlane-flow-editor]').forEach((root) => bindSwimlaneFlowEditor(root));
-});
+if (typeof document !== 'undefined') {
+    document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('[data-swimlane-flow-editor]').forEach((root) => bindSwimlaneFlowEditor(root));
+    });
 
-document.addEventListener('bassist:modal-loaded', () => {
-    document.querySelectorAll('[data-swimlane-flow-editor]').forEach((root) => bindSwimlaneFlowEditor(root));
-});
+    document.addEventListener('bassist:modal-loaded', () => {
+        document.querySelectorAll('[data-swimlane-flow-editor]').forEach((root) => bindSwimlaneFlowEditor(root));
+    });
+}

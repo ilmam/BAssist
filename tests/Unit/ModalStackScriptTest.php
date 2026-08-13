@@ -19,6 +19,8 @@ class ModalStackScriptTest extends TestCase
         $this->assertStringContainsString('function handleModalStackPopState', $html);
         $this->assertStringContainsString('fromStack', $html);
         $this->assertStringContainsString('preserveRecordNav', $html);
+        $this->assertStringContainsString('contentClone', $html);
+        $this->assertStringContainsString('bassistOpenModalHtml', $html);
     }
 
     #[Test]
@@ -36,6 +38,7 @@ class ModalStackScriptTest extends TestCase
             $this->assertStringContainsString('pushModalStackIfNeeded', $contents);
             $this->assertStringContainsString('closeModalWithStack', $contents);
             $this->assertStringContainsString('handleModalStackPopState', $contents);
+            $this->assertStringContainsString('window.bassistOpenModalHtml', $contents);
         }
     }
 

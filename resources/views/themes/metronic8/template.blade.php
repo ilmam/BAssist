@@ -145,6 +145,113 @@
             }) !== false;
         }
 
+        function applyBootstrapModalSize(modalEl, container, sizeOrOptions, sizeFromTrigger) {
+            const dialog = modalEl.querySelector('[data-modal-dialog], .modal-dialog');
+            const sizeFromContent = container.querySelector('[data-modal-size]')?.getAttribute('data-modal-size');
+            const triggerSize = sizeFromTrigger ?? ((typeof sizeOrOptions === 'string') ? sizeOrOptions : null);
+            const resolvedSize = triggerSize || sizeFromContent || '';
+            if (dialog) {
+                const isFullscreen = resolvedSize === 'fullscreen'
+                    || resolvedSize === 'fs'
+                    || resolvedSize === 'modal-fullscreen';
+                const sizeClass = isFullscreen
+                    ? 'modal-fullscreen'
+                    : (resolvedSize && !['full', 'end', 'sheet'].includes(resolvedSize)
+                        ? 'modal-' + resolvedSize
+                        : 'modal-lg');
+                dialog.className = 'modal-dialog ' + sizeClass;
+            }
+            return resolvedSize;
+        }
+
+        function activateScriptsInContainer(container) {
+            container.querySelectorAll('script').forEach((oldScript) => {
+                const script = document.createElement('script');
+                Array.from(oldScript.attributes).forEach((attr) => {
+                    script.setAttribute(attr.name, attr.value);
+                });
+                script.textContent = oldScript.textContent;
+                oldScript.replaceWith(script);
+            });
+        }
+
+        /**
+         * Show HTML (string or Element) in #mianModal without fetching a URL.
+         */
+        function openModalHtml(htmlOrNode, sizeOrOptions, maybeOptions) {
+            const modalEl = document.getElementById('mianModal');
+            const container = modalEl?.querySelector('[data-modal-container], .modal-content');
+
+            if (!modalEl || !container) {
+                return false;
+            }
+
+            const opts = (sizeOrOptions && typeof sizeOrOptions === 'object' && !Array.isArray(sizeOrOptions))
+                ? sizeOrOptions
+                : (maybeOptions || {});
+            const sizeFromTrigger = (typeof sizeOrOptions === 'string') ? sizeOrOptions : (opts.size || null);
+
+            if (!opts.force && !opts.preserveRecordNav && isModalHostOpen(modalEl) && isModalEditFormDirty()) {
+                if (!confirmDiscardModalEdits()) {
+                    return false;
+                }
+                clearModalFormBaseline();
+            }
+
+            const stacked = pushModalStackIfNeeded(modalEl, container, opts);
+
+            if (!opts.preserveRecordNav) {
+                clearModalRecordNav();
+            }
+
+            clearModalFormBaseline();
+            const skipHistory = !!opts.noHistory || !!opts.fromStack;
+            if (!opts.fromStack) {
+                modalReturnUrl = skipHistory ? null : modalRecordNavHistoryReturnUrl(opts);
+            }
+
+            try {
+                if (htmlOrNode instanceof Element) {
+                    container.replaceChildren();
+                    while (htmlOrNode.firstChild) {
+                        container.appendChild(htmlOrNode.firstChild);
+                    }
+                } else {
+                    container.innerHTML = String(htmlOrNode ?? '');
+                }
+
+                container.querySelectorAll('[data-swimlane-flow-editor],[data-state-flow-editor],[data-architecture-editor]').forEach((el) => {
+                    delete el.dataset.bound;
+                });
+
+                activateScriptsInContainer(container);
+                applyBootstrapModalSize(modalEl, container, sizeOrOptions, sizeFromTrigger);
+
+                if (typeof bootstrap !== 'undefined') {
+                    bootstrap.Modal.getOrCreateInstance(modalEl, { keyboard: false }).show();
+                }
+
+                const historyUrl = opts.historyUrl || null;
+                if (!skipHistory && historyUrl) {
+                    history.pushState({ modal: true, returnUrl: modalReturnUrl }, '', historyUrl);
+                }
+                rememberOpenedModal(historyUrl || currentModalUrl || window.location.href, opts);
+                document.dispatchEvent(new CustomEvent('bassist:modal-loaded', {
+                    detail: { container },
+                }));
+
+                return true;
+            } catch (error) {
+                if (stacked) {
+                    modalStack.pop();
+                }
+                console.error(error);
+                return false;
+            }
+        }
+
+        window.bassistOpenModalHtml = openModalHtml;
+
         function openModal(url, sizeOrOptions, maybeOptions) {
             const modalEl = document.getElementById('mianModal');
             const container = modalEl?.querySelector('[data-modal-container], .modal-content');
@@ -184,30 +291,10 @@
                 .then(response => response.text())
                 .then(html => {
                     container.innerHTML = html;
-                    container.querySelectorAll('script').forEach((oldScript) => {
-                        const script = document.createElement('script');
-                        Array.from(oldScript.attributes).forEach((attr) => {
-                            script.setAttribute(attr.name, attr.value);
-                        });
-                        script.textContent = oldScript.textContent;
-                        oldScript.replaceWith(script);
-                    });
+                    activateScriptsInContainer(container);
 
-                    const dialog = modalEl.querySelector('[data-modal-dialog], .modal-dialog');
-                    const sizeFromContent = container.querySelector('[data-modal-size]')?.getAttribute('data-modal-size');
                     const sizeFromTrigger = (typeof sizeOrOptions === 'string') ? sizeOrOptions : null;
-                    const resolvedSize = sizeFromTrigger || sizeFromContent || '';
-                    if (dialog) {
-                        const isFullscreen = resolvedSize === 'fullscreen'
-                            || resolvedSize === 'fs'
-                            || resolvedSize === 'modal-fullscreen';
-                        const sizeClass = isFullscreen
-                            ? 'modal-fullscreen'
-                            : (resolvedSize && !['full', 'end', 'sheet'].includes(resolvedSize)
-                                ? 'modal-' + resolvedSize
-                                : 'modal-lg');
-                        dialog.className = 'modal-dialog ' + sizeClass;
-                    }
+                    applyBootstrapModalSize(modalEl, container, sizeOrOptions, sizeFromTrigger);
 
                     if (typeof bootstrap !== 'undefined') {
                         bootstrap.Modal.getOrCreateInstance(modalEl, { keyboard: false }).show();

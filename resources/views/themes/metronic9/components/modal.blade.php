@@ -13,13 +13,14 @@
     Opt in per form: <x-modal-content size="fullscreen"> or data-modal-size="fullscreen"
     on a trigger. Users can also pick Fullscreen from the header size switcher on any modal.
     Side mode clears the blurry backdrop by default and pushes page content left
-    (body.modal-sheet-push) so the list stays fully visible beside the panel;
-    the eye toggle can dim/clear the backdrop in any size.
+    (body.modal-sheet-push) so the list stays fully visible beside the panel.
+    Use the sheet-mode toggle to float the panel over the page instead (no push).
+    The eye toggle can dim/clear the backdrop in any size.
 --}}
 @php
     $size = $size !== '' ? $size : 'full';
 @endphp
-<div class="kt-modal z-50" id="{{ $id }}" aria-hidden="true" data-modal-host data-modal-size="{{ $size }}">
+<div class="kt-modal z-50" id="{{ $id }}" aria-hidden="true" data-modal-host data-modal-size="{{ $size }}" data-modal-sheet-mode="push">
     <div class="kt-modal-backdrop" data-kt-modal-dismiss="true"></div>
     <div class="kt-modal-content" data-modal-container></div>
 </div>

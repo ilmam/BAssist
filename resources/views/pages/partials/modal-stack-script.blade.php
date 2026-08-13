@@ -23,7 +23,7 @@ function clearModalStack() {
     currentModalMeta = { historyPushed: false, returnUrl: null };
 }
 
-function snapshotModalStackEntry(modal) {
+function snapshotModalStackEntry(modal, container) {
     return {
         url: currentModalUrl || window.location.href,
         size: modal?.getAttribute?.('data-modal-size') || null,
@@ -31,6 +31,8 @@ function snapshotModalStackEntry(modal) {
         recordNav: typeof modalRecordNav !== 'undefined' ? cloneModalRecordNav(modalRecordNav) : null,
         historyPushed: !!currentModalMeta.historyPushed,
         clearBackdrop: modal?.getAttribute?.('data-modal-clear-backdrop') || '0',
+        // cloneNode keeps live input values; used when nested HTML modals must not lose edits.
+        contentClone: container ? container.cloneNode(true) : null,
     };
 }
 
@@ -48,7 +50,7 @@ function pushModalStackIfNeeded(modal, container, options) {
         return false;
     }
 
-    modalStack.push(snapshotModalStackEntry(modal));
+    modalStack.push(snapshotModalStackEntry(modal, container));
     return true;
 }
 
@@ -66,7 +68,7 @@ function rememberOpenedModal(url, options) {
 
 function restoreParentModalFromStack() {
     const entry = modalStack.pop();
-    if (!entry || !entry.url) {
+    if (!entry || (!entry.url && !entry.contentClone)) {
         return false;
     }
 
@@ -83,13 +85,21 @@ function restoreParentModalFromStack() {
     };
     currentModalUrl = entry.url;
 
-    if (typeof openModal === 'function') {
-        openModal(entry.url, entry.size, {
-            fromStack: true,
-            force: true,
-            noHistory: true,
-            preserveRecordNav: !!entry.recordNav,
-        });
+    const restoreOpts = {
+        fromStack: true,
+        force: true,
+        noHistory: true,
+        preserveRecordNav: !!entry.recordNav,
+    };
+
+    // Prefer DOM clone restore so unsaved form fields survive nested HTML modals.
+    if (entry.contentClone && typeof window.bassistOpenModalHtml === 'function') {
+        window.bassistOpenModalHtml(entry.contentClone, entry.size, restoreOpts);
+        return true;
+    }
+
+    if (typeof openModal === 'function' && entry.url) {
+        openModal(entry.url, entry.size, restoreOpts);
     }
 
     return true;
