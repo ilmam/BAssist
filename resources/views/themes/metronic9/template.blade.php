@@ -12,7 +12,10 @@
     <link href="{{ ui_asset('css/bassist.css') }}?v={{ @filemtime(public_path(config('ui.themes.'.ui_theme().'.asset_prefix').'/css/bassist.css')) ?: time() }}" rel="stylesheet" />
     @stack('styles')
 </head>
-<body class="antialiased flex h-full text-base text-foreground bg-background demo1 kt-sidebar-fixed kt-header-fixed">
+<body class="antialiased flex h-full text-base text-foreground bg-background demo1 kt-sidebar-fixed kt-header-fixed"
+    data-unsaved-changes-leave="{{ __('ui.unsaved_changes_leave') }}"
+    data-save-shortcut="{{ __('ui.save_shortcut') }}"
+    data-record-saved="{{ __('ui.record_saved') }}">
     <script>
         const defaultThemeMode = 'light';
         let themeMode;
@@ -93,7 +96,7 @@
             });
         })();
     </script>
-    @vite(['resources/js/state-flow-diagram.js', 'resources/js/swimlane-flow-diagram.js', 'resources/js/architecture-c4-diagram.js', 'resources/js/code-editor.js'])
+    @vite(['resources/js/form-safety.js', 'resources/js/state-flow-diagram.js', 'resources/js/swimlane-flow-diagram.js', 'resources/js/architecture-c4-diagram.js', 'resources/js/code-editor.js'])
     @stack('scripts')
     <script>
         let modalReturnUrl = null;

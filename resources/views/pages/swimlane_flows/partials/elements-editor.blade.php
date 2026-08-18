@@ -607,6 +607,12 @@
                     >
                         {{ __('ui.preview_diagram_modal') }}
                     </button>
+                    <button type="button" class="kt-btn kt-btn-sm kt-btn-outline" data-print-diagram>
+                        {{ __('ui.print_diagram') }}
+                    </button>
+                    <button type="button" class="kt-btn kt-btn-sm kt-btn-outline" data-export-diagram-image>
+                        {{ __('ui.export_diagram_image') }}
+                    </button>
                 </div>
             </div>
             <div class="border border-border rounded-lg p-4 bg-white overflow-x-auto min-h-24">

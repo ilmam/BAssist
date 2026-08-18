@@ -673,6 +673,254 @@ async function renderMermaid(preview, source, mermaidText) {
     return renderMermaidPreview(preview, mermaidText, 'data-mermaid-preview');
 }
 
+function escapeHtml(value) {
+    return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
+
+function sanitizeDiagramFilename(name) {
+    const base = String(name ?? '').trim() || 'diagram';
+    return base.replace(/[^\w\-]+/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '') || 'diagram';
+}
+
+function triggerBlobDownload(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+/** Clone preview SVG with explicit pixel dimensions for export (no % width clipping). */
+function prepareDiagramSvgClone(svg) {
+    const clone = svg.cloneNode(true);
+    if (!clone.getAttribute('xmlns')) {
+        clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+    }
+    clone.style.maxWidth = 'none';
+    clone.style.height = 'auto';
+    clone.style.display = 'block';
+
+    const viewBox = clone.getAttribute('viewBox');
+    if (viewBox) {
+        const parts = viewBox.split(/\s+/).map(Number);
+        if (parts.length === 4 && parts[2] > 0 && parts[3] > 0) {
+            clone.setAttribute('width', String(parts[2]));
+            clone.setAttribute('height', String(parts[3]));
+            return clone;
+        }
+    }
+
+    const width = parseFloat(clone.getAttribute('width'));
+    const height = parseFloat(clone.getAttribute('height'));
+    if (width > 0 && height > 0) {
+        return clone;
+    }
+
+    try {
+        const box = svg.getBBox?.();
+        if (box && box.width > 0 && box.height > 0) {
+            clone.setAttribute('width', String(box.width));
+            clone.setAttribute('height', String(box.height));
+            if (!viewBox) {
+                clone.setAttribute('viewBox', `${box.x} ${box.y} ${box.width} ${box.height}`);
+            }
+        }
+    } catch {
+        // getBBox can fail on detached SVG; fall back to defaults in callers.
+    }
+
+    return clone;
+}
+
+function diagramSvgDimensions(svg) {
+    const clone = prepareDiagramSvgClone(svg);
+    const viewBox = clone.getAttribute('viewBox');
+    if (viewBox) {
+        const parts = viewBox.split(/\s+/).map(Number);
+        if (parts.length === 4 && parts[2] > 0 && parts[3] > 0) {
+            return { width: parts[2], height: parts[3] };
+        }
+    }
+
+    const width = parseFloat(clone.getAttribute('width'));
+    const height = parseFloat(clone.getAttribute('height'));
+    if (width > 0 && height > 0) {
+        return { width, height };
+    }
+
+    return { width: 800, height: 600 };
+}
+
+const SVG_NS = 'http://www.w3.org/2000/svg';
+
+/** Split a mermaid HTML label into its visual lines (<p> blocks plus <br>). */
+function foreignObjectLabelLines(foreignObject) {
+    const blocks = Array.from(foreignObject.querySelectorAll('p'));
+    const sources = blocks.length > 0 ? blocks : [foreignObject];
+    const lines = [];
+
+    sources.forEach((element) => {
+        element.innerHTML.split(/<br\s*\/?>/i).forEach((part) => {
+            const holder = document.createElement('div');
+            holder.innerHTML = part;
+            const text = holder.textContent.replace(/\s+/g, ' ').trim();
+            if (text) {
+                lines.push(text);
+            }
+        });
+    });
+
+    return lines.length > 0 ? lines : [foreignObject.textContent.trim()];
+}
+
+/**
+ * Rasterising an SVG that contains <foreignObject> taints the canvas in
+ * Chromium, so toBlob/toDataURL throws SecurityError. Mermaid renders every
+ * label as an HTML foreignObject, which made PNG export fail on all diagrams.
+ * Swap them for native <text> before rasterising; geometry comes from the same
+ * layout, so the exported image matches the preview.
+ */
+function inlineForeignObjectLabels(clone, sourceSvg) {
+    const targets = Array.from(clone.querySelectorAll('foreignObject'));
+    const origins = Array.from(sourceSvg.querySelectorAll('foreignObject'));
+
+    targets.forEach((foreignObject, index) => {
+        const origin = origins[index];
+        const styled = origin?.querySelector('span, p, div') || origin;
+        const computed = styled ? window.getComputedStyle(styled) : null;
+        const fontSize = parseFloat(computed?.fontSize) || 16;
+        const width = parseFloat(foreignObject.getAttribute('width')) || 0;
+        const height = parseFloat(foreignObject.getAttribute('height')) || 0;
+        const lines = foreignObjectLabelLines(foreignObject);
+        const lineHeight = fontSize * 1.5;
+
+        const text = document.createElementNS(SVG_NS, 'text');
+        text.setAttribute('text-anchor', 'middle');
+        text.setAttribute('font-family', computed?.fontFamily || 'trebuchet ms, verdana, arial, sans-serif');
+        text.setAttribute('font-size', `${fontSize}px`);
+        text.setAttribute('fill', computed?.color || '#111827');
+
+        // Centre the block vertically inside the label box; 0.35em lifts the
+        // baseline to the optical middle of the cap height.
+        const firstBaseline = height / 2 - ((lines.length - 1) * lineHeight) / 2 + fontSize * 0.35;
+
+        lines.forEach((line, lineIndex) => {
+            const tspan = document.createElementNS(SVG_NS, 'tspan');
+            tspan.setAttribute('x', String(width / 2));
+            tspan.setAttribute('y', String(firstBaseline + lineIndex * lineHeight));
+            tspan.textContent = line;
+            text.appendChild(tspan);
+        });
+
+        foreignObject.replaceWith(text);
+    });
+}
+
+async function downloadDiagramPng(svg, title) {
+    const clone = prepareDiagramSvgClone(svg);
+    const { width, height } = diagramSvgDimensions(clone);
+    inlineForeignObjectLabels(clone, svg);
+    const svgHtml = new XMLSerializer().serializeToString(clone);
+    const svgBlob = new Blob([svgHtml], { type: 'image/svg+xml;charset=utf-8' });
+    const url = URL.createObjectURL(svgBlob);
+
+    try {
+        const image = await new Promise((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => resolve(img);
+            img.onerror = () => reject(new Error('Failed to load SVG for PNG export'));
+            img.src = url;
+        });
+
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.ceil(width);
+        canvas.height = Math.ceil(height);
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+            throw new Error('Canvas not supported');
+        }
+
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+        const blob = await new Promise((resolve, reject) => {
+            canvas.toBlob((result) => {
+                if (result) {
+                    resolve(result);
+                    return;
+                }
+                reject(new Error('PNG export failed'));
+            }, 'image/png');
+        });
+
+        triggerBlobDownload(blob, `${sanitizeDiagramFilename(title)}.png`);
+    } finally {
+        URL.revokeObjectURL(url);
+    }
+}
+
+/** Write the already-rendered SVG into a blank window so the user can print it. */
+function writeDiagramPrintDocument(win, svg, title) {
+    const clone = svg.cloneNode(true);
+    if (!clone.getAttribute('xmlns')) {
+        clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+    }
+    clone.style.maxWidth = '100%';
+    clone.style.height = 'auto';
+    clone.style.display = 'block';
+    if (clone.getAttribute('viewBox')) {
+        clone.setAttribute('width', '100%');
+        clone.removeAttribute('height');
+    }
+
+    const heading = String(title ?? '').trim();
+    const docTitle = heading || 'Diagram';
+    const svgHtml = new XMLSerializer().serializeToString(clone);
+    const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>${escapeHtml(docTitle)}</title>
+<style>
+  html, body { margin: 0; background: #fff; }
+  body { padding: 16px; }
+  svg { max-width: 100%; height: auto; display: block; }
+  @media print {
+    body { padding: 0; }
+  }
+  @page { margin: 10mm; }
+</style>
+</head>
+<body>
+${svgHtml}
+<script>
+window.addEventListener('load', function () {
+  // rAF lets the SVG lay out before the print snapshot is taken.
+  requestAnimationFrame(function () {
+    window.focus();
+    window.print();
+  });
+});
+<\/script>
+</body>
+</html>`;
+
+    // about:blank is already loaded by the time we write; document.write is ignored.
+    // Navigate the gesture-opened tab to a blob instead.
+    const url = URL.createObjectURL(new Blob([html], { type: 'text/html' }));
+    win.location.replace(url);
+    win.addEventListener('load', () => URL.revokeObjectURL(url), { once: true });
+}
+
 function setNeedSelectOptions(select, options, selectedValue) {
     if (!select) {
         return;
@@ -889,6 +1137,8 @@ export function bindSwimlaneFlowEditor(root) {
     const tbody = table?.querySelector('tbody');
     const previewBtn = root.querySelector('[data-preview-diagram]');
     const modalPreviewBtn = root.querySelector('[data-preview-diagram-modal]');
+    const printBtn = root.querySelector('[data-print-diagram]');
+    const exportImageBtn = root.querySelector('[data-export-diagram-image]');
     const form = root.closest('form');
     const titleInput =
         root.querySelector('[data-flow-title]') ||
@@ -908,6 +1158,34 @@ export function bindSwimlaneFlowEditor(root) {
     const applyStatus = root.querySelector('[data-mermaid-apply-status]');
     const sourceEditable = Boolean(applyBtn);
     let sourceDirty = false;
+    let tableDirty = false;
+    const syncEditorDirtyAttr = () => {
+        if (sourceDirty || tableDirty) {
+            root.setAttribute('data-editor-dirty', '1');
+        } else {
+            root.removeAttribute('data-editor-dirty');
+        }
+    };
+    const setSourceDirty = (value) => {
+        sourceDirty = Boolean(value);
+        syncEditorDirtyAttr();
+    };
+    const setTableDirty = (value) => {
+        tableDirty = Boolean(value);
+        syncEditorDirtyAttr();
+    };
+
+    // Alt+S saves in place, so nothing re-renders to clear these flags for us.
+    // Without this the editor stays "dirty" and the leave prompt keeps firing.
+    document.addEventListener('bassist:form-saved', (event) => {
+        const savedForm = event.detail?.form;
+        if (!root.isConnected || (savedForm && !savedForm.contains(root))) {
+            return;
+        }
+
+        setSourceDirty(false);
+        setTableDirty(false);
+    });
 
     if (!preview) {
         return;
@@ -1289,13 +1567,13 @@ export function bindSwimlaneFlowEditor(root) {
         await renderMermaid(preview, source, currentMermaidText());
         // Keep an already-open preview modal in sync without rebuilding (preserves size).
         await refreshOpenDiagramModal();
-        sourceDirty = false;
+        setSourceDirty(false);
         setApplyStatus('');
     };
 
     const syncMermaidSource = () => {
         writeMermaidSource(source, currentMermaidText());
-        sourceDirty = false;
+        setSourceDirty(false);
     };
 
     const sourceDetails = source?.closest('details');
@@ -1327,7 +1605,7 @@ export function bindSwimlaneFlowEditor(root) {
         if (!sourceEditable) {
             return;
         }
-        sourceDirty = true;
+        setSourceDirty(true);
         setApplyStatus('');
     });
 
@@ -1583,7 +1861,7 @@ export function bindSwimlaneFlowEditor(root) {
         }
 
         rebuildElementsFromParsed(parsed.elements);
-        sourceDirty = false;
+        setSourceDirty(false);
         setApplyStatus(
             root.getAttribute('data-i18n-apply-success') || 'Elements updated from Mermaid.',
             'success'
@@ -1604,6 +1882,61 @@ export function bindSwimlaneFlowEditor(root) {
     modalPreviewBtn?.addEventListener('click', (event) => {
         event.preventDefault();
         openDiagramModal();
+    });
+
+    const currentPreviewSvg = () => {
+        const open = getOpenDiagramModalHost();
+        const fromModal = open?.mount?.querySelector?.('svg');
+        if (fromModal) {
+            return fromModal;
+        }
+        preview = root.querySelector('[data-mermaid-preview]');
+        return preview?.querySelector?.('svg') ?? root.querySelector('.bassist-mermaid svg') ?? null;
+    };
+
+    printBtn?.addEventListener('click', async (event) => {
+        event.preventDefault();
+        const win = window.open('about:blank', '_blank');
+        if (!win) {
+            window.alert('Pop-up blocked. Allow pop-ups for this site to print the diagram.');
+            return;
+        }
+
+        let svg = currentPreviewSvg();
+        if (!svg) {
+            await refresh();
+            svg = currentPreviewSvg();
+        }
+        if (!svg) {
+            win.close();
+            window.alert('No diagram to print. Click Preview diagram first.');
+            return;
+        }
+
+        const title = (titleInput?.value ?? root.getAttribute('data-flow-title-value') ?? '').trim();
+        writeDiagramPrintDocument(win, svg, title);
+    });
+
+    exportImageBtn?.addEventListener('click', async (event) => {
+        event.preventDefault();
+
+        let svg = currentPreviewSvg();
+        if (!svg) {
+            await refresh();
+            svg = currentPreviewSvg();
+        }
+        if (!svg) {
+            window.alert('No diagram to export. Click Preview diagram first.');
+            return;
+        }
+
+        const title = (titleInput?.value ?? root.getAttribute('data-flow-title-value') ?? '').trim();
+        try {
+            await downloadDiagramPng(svg, title);
+        } catch (error) {
+            console.error(error);
+            window.alert('Could not export diagram image. Try Preview diagram again.');
+        }
     });
 
     document.addEventListener('keydown', (event) => {
@@ -1650,6 +1983,7 @@ export function bindSwimlaneFlowEditor(root) {
         if (addBtn) {
             event.preventDefault();
             addRow(addBtn.closest('tr[data-element-row]'));
+            setTableDirty(true);
             maybeSyncMermaidSource();
             return;
         }
@@ -1671,6 +2005,7 @@ export function bindSwimlaneFlowEditor(root) {
             }
             reindexRows();
             refreshSuggestionLists(root, table);
+            setTableDirty(true);
             if (autoRender) {
                 refresh();
             } else {
@@ -1694,6 +2029,7 @@ export function bindSwimlaneFlowEditor(root) {
             reindexRows();
             refreshSuggestionLists(root, table);
         }
+        setTableDirty(true);
         maybeSyncMermaidSource();
     });
 
@@ -1702,6 +2038,7 @@ export function bindSwimlaneFlowEditor(root) {
         if (field === 'lane' || field === 'label') {
             refreshSuggestionLists(root, table);
         }
+        setTableDirty(true);
         maybeSyncMermaidSource();
     });
 
@@ -1723,6 +2060,7 @@ export function bindSwimlaneFlowEditor(root) {
         if (field === 'element_color') {
             paintColorSelect(event.target, ELEMENT_COLORS);
         }
+        setTableDirty(true);
         maybeSyncMermaidSource();
     });
 
@@ -1738,6 +2076,7 @@ export function bindSwimlaneFlowEditor(root) {
 
         event.preventDefault();
         addRow(addBtn.closest('tr[data-element-row]'));
+        setTableDirty(true);
         maybeSyncMermaidSource();
     });
 

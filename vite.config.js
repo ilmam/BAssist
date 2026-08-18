@@ -8,6 +8,7 @@ export default defineConfig({
             input: [
                 'resources/css/app.css',
                 'resources/js/app.js',
+                'resources/js/form-safety.js',
                 'resources/js/state-flow-diagram.js',
                 'resources/js/swimlane-flow-diagram.js',
                 'resources/js/architecture-c4-diagram.js',

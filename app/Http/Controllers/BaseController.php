@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Concerns\ResolvesListFilters;
 use App\Http\Controllers\Concerns\RespondsWithModal;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
 use App\Models\Concerns\HasEntityNumber;
 use App\Support\DtoMetadata;
 use App\Support\EntityFormBuilder;
@@ -239,6 +240,8 @@ class BaseController extends Controller
      */
     protected function mutationRecordPayload(mixed $record): array
     {
+        // Save-in-place (Alt+S) needs these so a create form can turn itself
+        // into an edit form instead of inserting again on the next save.
         if (is_object($record) && method_exists($record, 'toArray')) {
             $values = $record->toArray();
         } elseif (is_array($record)) {
@@ -258,11 +261,33 @@ class BaseController extends Controller
             $label = (string) $values['code'];
         }
 
-        return [
+        return array_merge([
             'id' => $values['id'] ?? null,
             'label' => (string) $label,
             'values' => $values,
-        ];
+        ], $this->mutationRecordUrls($values['id'] ?? null));
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    protected function mutationRecordUrls(mixed $id): array
+    {
+        if ($id === null || $id === '' || $this->modelName === '') {
+            return [];
+        }
+
+        $urls = [];
+
+        foreach (['update', 'edit'] as $action) {
+            $name = model_route_name($this->modelName, $action);
+
+            if (Route::has($name)) {
+                $urls[$action.'_url'] = route($name, $id);
+            }
+        }
+
+        return $urls;
     }
 
     /**

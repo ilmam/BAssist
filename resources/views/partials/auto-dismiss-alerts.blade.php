@@ -67,5 +67,8 @@
         }
 
         document.querySelectorAll('[data-bassist-auto-dismiss]').forEach(schedule);
+
+        // Alerts injected after load (e.g. Alt+S save-in-place) reuse this timer.
+        window.bassistScheduleAutoDismiss = schedule;
     })();
 </script>

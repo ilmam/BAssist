@@ -20,12 +20,15 @@ function modalFormContainer() {
 }
 
 function isModalEditForm(form) {
-    if (!form) {
+    if (!form || form.hasAttribute('data-quick-create-form')) {
         return false;
     }
 
     const method = String(form.querySelector('input[name="_method"]')?.value || form.getAttribute('method') || '')
         .toUpperCase();
+    if (method === 'DELETE') {
+        return false;
+    }
     if (method === 'PUT' || method === 'PATCH') {
         return true;
     }
@@ -33,8 +36,13 @@ function isModalEditForm(form) {
     const action = String(form.getAttribute('action') || '');
     const locationPath = String(window.location.pathname || '');
 
-    return /\/modal\/\d+\/edit(?:\/|$|\?)/i.test(action)
-        || /\/modal\/\d+\/edit(?:\/|$|\?)/i.test(locationPath);
+    if (/\/modal\/\d+\/edit(?:\/|$|\?)/i.test(action)
+        || /\/modal\/\d+\/edit(?:\/|$|\?)/i.test(locationPath)) {
+        return true;
+    }
+
+    // Create (POST) entity forms in the shared modal — same unsaved-changes guard as edit.
+    return method === 'POST' && form.hasAttribute('data-modal-form');
 }
 
 function serializeModalForm(form) {
@@ -84,12 +92,16 @@ function clearModalFormBaseline() {
 }
 
 function isModalEditFormDirty() {
-    if (modalFormBaseline === null) {
+    const root = modalFormContainer();
+    if (!root) {
         return false;
     }
 
-    const root = modalFormContainer();
-    if (!root) {
+    if (root.querySelector('[data-editor-dirty]')) {
+        return true;
+    }
+
+    if (modalFormBaseline === null) {
         return false;
     }
 

@@ -16,7 +16,10 @@
 
 <body id="kt_body"
     style="background-image: url('{{ ui_asset('media/misc/page-bg.jpg') }}')"
-    class="page-loading-enabled page-loading page-bg header-fixed header-tablet-and-mobile-fixed aside-enabled">
+    class="page-loading-enabled page-loading page-bg header-fixed header-tablet-and-mobile-fixed aside-enabled"
+    data-unsaved-changes-leave="{{ __('ui.unsaved_changes_leave') }}"
+    data-save-shortcut="{{ __('ui.save_shortcut') }}"
+    data-record-saved="{{ __('ui.record_saved') }}">
     @include('themes.metronic8.partials.theme-mode._init')
     @include('themes.metronic8.partials._loader')
     <div class="d-flex flex-column flex-root">
@@ -51,7 +54,7 @@
     <script src="{{ ui_asset('plugins/global/plugins.bundle.js') }}"></script>
     <script src="{{ ui_asset('js/scripts.bundle.js') }}"></script>
     <script src="{{ ui_asset('plugins/custom/datatables/datatables.bundle.js') }}"></script>
-    @vite(['resources/js/state-flow-diagram.js', 'resources/js/swimlane-flow-diagram.js', 'resources/js/architecture-c4-diagram.js', 'resources/js/code-editor.js'])
+    @vite(['resources/js/form-safety.js', 'resources/js/state-flow-diagram.js', 'resources/js/swimlane-flow-diagram.js', 'resources/js/architecture-c4-diagram.js', 'resources/js/code-editor.js'])
     @stack('scripts')
     <script>
         let modalReturnUrl = null;

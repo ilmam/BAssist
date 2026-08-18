@@ -63,6 +63,24 @@ class RespondAfterMutationTest extends TestCase
         $this->assertSame(7, $payload['record']['id']);
     }
 
+    public function test_ajax_payload_carries_urls_so_alt_s_can_save_in_place(): void
+    {
+        $controller = $this->makeController('SwimlaneFlow');
+        $request = Request::create('/swimlane_flows', 'POST', [], [], [], [
+            'HTTP_X_REQUESTED_WITH' => 'XMLHttpRequest',
+            'HTTP_ACCEPT' => 'application/json',
+        ]);
+
+        $response = $this->invokeRespondAfterMutation($controller, $request, ['id' => 42, 'title' => 'Flow']);
+
+        $payload = $response->getData(true);
+
+        // A create form uses these to become an edit form, so a second Alt+S
+        // updates record 42 instead of inserting a duplicate.
+        $this->assertSame(route('swimlane_flows.update', 42), $payload['record']['update_url']);
+        $this->assertSame(route('swimlane_flows.edit', 42), $payload['record']['edit_url']);
+    }
+
     private function makeController(string $modelName): BaseController
     {
         $controller = new class extends BaseController {};
