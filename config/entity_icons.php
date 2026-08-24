@@ -46,6 +46,7 @@ return [
         'Architecture' => 'abstract-26',
         'StateFlow' => 'abstract-39',
         'SwimlaneFlow' => 'row-horizontal',
+        'DataDictionary' => 'tablet-text-down',
 
         // Governance
         'ChangeRequest' => 'arrow-mix',

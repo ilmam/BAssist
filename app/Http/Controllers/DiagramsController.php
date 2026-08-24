@@ -137,9 +137,10 @@ class DiagramsController extends Controller
         ?int $workspaceId,
         mixed $tenantId,
     ): array {
-        $query = $model === 'StateFlow'
-            ? StateFlow::query()->with(['project', 'status'])
-            : SwimlaneFlow::query()->with(['project', 'status']);
+        $query = match ($model) {
+            'StateFlow' => StateFlow::query()->with(['project', 'status']),
+            default => SwimlaneFlow::query()->with(['project', 'status']),
+        };
 
         $query
             ->when($tenantId !== null, fn ($q) => $q->whereHas(

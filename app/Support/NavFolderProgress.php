@@ -9,6 +9,7 @@ use App\Models\BusinessObjective;
 use App\Models\BusinessRule;
 use App\Models\ChangeRequest;
 use App\Models\Constraint;
+use App\Models\DataDictionary;
 use App\Models\Feature;
 use App\Models\FunctionalRequirement;
 use App\Models\NonFunctionalRequirement;
@@ -21,8 +22,6 @@ use App\Models\StateFlow;
 use App\Models\Status;
 use App\Models\StrategicBaseline;
 use App\Models\SwimlaneFlow;
-use App\Support\ChangeRequestStatus;
-use App\Support\StrategicBaselineStatus;
 
 /**
  * Folder progress badges for project navigation (guide, never lock).
@@ -130,6 +129,7 @@ class NavFolderProgress
             'Assumption' => Assumption::query()->where('project_id', $project->id)->exists(),
             'Constraint' => Constraint::query()->where('project_id', $project->id)->exists(),
             'BusinessRule' => BusinessRule::query()->where('project_id', $project->id)->exists(),
+            'DataDictionary' => DataDictionary::query()->where('project_id', $project->id)->exists(),
             default => false,
         };
     }

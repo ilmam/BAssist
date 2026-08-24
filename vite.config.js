@@ -12,6 +12,7 @@ export default defineConfig({
                 'resources/js/state-flow-diagram.js',
                 'resources/js/swimlane-flow-diagram.js',
                 'resources/js/architecture-c4-diagram.js',
+                'resources/js/data-dictionary-diagram.js',
                 'resources/js/code-editor.js',
                 'resources/js/project-export-print.js',
             ],

@@ -9,6 +9,7 @@ use App\Models\BusinessObjective;
 use App\Models\BusinessRule;
 use App\Models\ChangeRequest;
 use App\Models\Constraint;
+use App\Models\DataDictionary;
 use App\Models\Feature;
 use App\Models\FunctionalRequirement;
 use App\Models\NonFunctionalRequirement;
@@ -87,6 +88,7 @@ class DemoProjectSeeder extends Seeder
         $steps = $this->seedSwimlane($project, $draftId);
         $this->seedStateFlow($project, $draftId);
         $this->seedArchitecture($project, $draftId);
+        $this->seedDataDictionary($project, $draftId);
         $this->seedSolutionPackaging($project, $mustId, $shouldId, $couldId, $agreedId, $draftId, $steps);
     }
 
@@ -576,6 +578,51 @@ TXT,
                     ['from' => 'api', 'to' => 'db', 'label' => 'Reads/writes inquiries'],
                     ['from' => 'api', 'to' => 'idp', 'label' => 'OIDC login'],
                     ['from' => 'api', 'to' => 'erp', 'label' => 'Creates order after review (phase 2)'],
+                ],
+            ],
+        );
+    }
+
+    protected function seedDataDictionary(Project $project, int $draftId): void
+    {
+        DataDictionary::query()->updateOrCreate(
+            [
+                'project_id' => $project->id,
+                'title' => 'Parts inquiry intake dictionary',
+            ],
+            [
+                'description' => 'Data the digital intake form must capture before procurement sees the request. Types on Auto follow the field name.',
+                'status_id' => $draftId,
+                'entities' => [
+                    [
+                        'name' => 'Dealer',
+                        'meaning' => 'Selling partner submitting the inquiry.',
+                        'fields' => [
+                            ['name' => 'dealer_id', 'meaning' => 'Dealer identifier', 'type' => '', 'is_pk' => true, 'references' => ''],
+                            ['name' => 'name', 'meaning' => 'Dealer trading name', 'type' => '', 'is_pk' => false, 'references' => ''],
+                            ['name' => 'region', 'meaning' => 'Operating region', 'type' => 'string', 'is_pk' => false, 'references' => ''],
+                        ],
+                    ],
+                    [
+                        'name' => 'PartInquiry',
+                        'meaning' => 'One dealer request for parts, held in Draft until complete.',
+                        'fields' => [
+                            ['name' => 'inquiry_id', 'meaning' => 'Inquiry identifier', 'type' => '', 'is_pk' => true, 'references' => ''],
+                            ['name' => 'dealer_id', 'meaning' => 'Submitting dealer', 'type' => '', 'is_pk' => false, 'references' => 'Dealer'],
+                            ['name' => 'submitted_at', 'meaning' => 'When the agent submitted a complete request', 'type' => '', 'is_pk' => false, 'references' => ''],
+                            ['name' => 'status', 'meaning' => 'Draft, Submitted, In Review, Returned, Ordered, Cancelled, Closed', 'type' => 'string', 'is_pk' => false, 'references' => ''],
+                        ],
+                    ],
+                    [
+                        'name' => 'InquiryLineItem',
+                        'meaning' => 'A part line on the inquiry.',
+                        'fields' => [
+                            ['name' => 'item_id', 'meaning' => 'Line identifier', 'type' => '', 'is_pk' => true, 'references' => ''],
+                            ['name' => 'inquiry_id', 'meaning' => 'Parent inquiry', 'type' => '', 'is_pk' => false, 'references' => 'PartInquiry'],
+                            ['name' => 'part_number', 'meaning' => 'Part number (mandatory when complete)', 'type' => 'string', 'is_pk' => false, 'references' => ''],
+                            ['name' => 'quantity', 'meaning' => 'Requested quantity', 'type' => '', 'is_pk' => false, 'references' => ''],
+                        ],
+                    ],
                 ],
             ],
         );

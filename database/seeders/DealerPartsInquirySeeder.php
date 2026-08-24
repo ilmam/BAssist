@@ -9,6 +9,7 @@ use App\Models\BusinessObjective;
 use App\Models\BusinessRule;
 use App\Models\ChangeRequest;
 use App\Models\Constraint;
+use App\Models\DataDictionary;
 use App\Models\Feature;
 use App\Models\FunctionalRequirement;
 use App\Models\Project;
@@ -75,6 +76,7 @@ class DealerPartsInquirySeeder extends Seeder
         $sns = $this->seedNeedSpine($project, $agreedId, $mustId, $shouldId, $couldId);
         $this->seedConstraintsAndRules($project);
         $this->seedStateFlow($project, $agreedId);
+        $this->seedDataDictionary($project, $agreedId);
         $steps = $this->seedSwimlane($project, $agreedId, $sns);
         $this->seedFunctionalRequirements($project, $mustId, $shouldId, $couldId, $agreedId, $steps, $sns);
     }
@@ -145,7 +147,7 @@ TXT,
         int $shouldId,
         int $couldId,
     ): array {
-   
+
         // --- Business Needs (why) — problem/opportunity focused titles ---
         $bn01 = $this->upsertBusinessNeed(
             $project,
@@ -557,6 +559,73 @@ TXT,
                 'BR-DPI-Audit-Export: management-only audit export',
             ])
             ->each(fn (BusinessRule $row) => $row->delete());
+    }
+
+    protected function seedDataDictionary(Project $project, int $agreedId): void
+    {
+        DataDictionary::query()->updateOrCreate(
+            [
+                'project_id' => $project->id,
+                'title' => 'DPI inquiry data dictionary',
+            ],
+            [
+                'description' => 'Business data for dealer parts inquiry tickets. Mandatory create fields follow FR-01 / BR-DPI-Mandatory. Types on Auto follow the field name.',
+                'status_id' => $agreedId,
+                'entities' => [
+                    [
+                        'name' => 'Dealer',
+                        'meaning' => 'Selling partner who raises parts inquiries.',
+                        'fields' => [
+                            ['name' => 'dealer_id', 'meaning' => 'Dealer identifier', 'type' => '', 'is_pk' => true, 'references' => ''],
+                            ['name' => 'name', 'meaning' => 'Dealer trading name', 'type' => '', 'is_pk' => false, 'references' => ''],
+                            ['name' => 'region', 'meaning' => 'Operating region', 'type' => 'string', 'is_pk' => false, 'references' => ''],
+                        ],
+                    ],
+                    [
+                        'name' => 'Branch',
+                        'meaning' => 'Dealer location that owns the inquiry.',
+                        'fields' => [
+                            ['name' => 'branch_id', 'meaning' => 'Branch identifier', 'type' => '', 'is_pk' => true, 'references' => ''],
+                            ['name' => 'dealer_id', 'meaning' => 'Owning dealer', 'type' => '', 'is_pk' => false, 'references' => 'Dealer'],
+                            ['name' => 'name', 'meaning' => 'Branch name', 'type' => '', 'is_pk' => false, 'references' => ''],
+                        ],
+                    ],
+                    [
+                        'name' => 'Inquiry',
+                        'meaning' => 'Official ticket for a dealer-to-TIQ parts question.',
+                        'fields' => [
+                            ['name' => 'inquiry_id', 'meaning' => 'Ticket identifier', 'type' => '', 'is_pk' => true, 'references' => ''],
+                            ['name' => 'dealer_id', 'meaning' => 'Submitting dealer (mandatory)', 'type' => '', 'is_pk' => false, 'references' => 'Dealer'],
+                            ['name' => 'branch_id', 'meaning' => 'Submitting branch (mandatory)', 'type' => '', 'is_pk' => false, 'references' => 'Branch'],
+                            ['name' => 'inquiry_type', 'meaning' => 'Kind of inquiry (mandatory)', 'type' => 'string', 'is_pk' => false, 'references' => ''],
+                            ['name' => 'description', 'meaning' => 'Inquiry description (mandatory)', 'type' => '', 'is_pk' => false, 'references' => ''],
+                            ['name' => 'status', 'meaning' => 'Open, TIQ Responded, Dealer Responded, or Closed', 'type' => 'string', 'is_pk' => false, 'references' => ''],
+                            ['name' => 'submitted_at', 'meaning' => 'When the dealer created the ticket', 'type' => '', 'is_pk' => false, 'references' => ''],
+                        ],
+                    ],
+                    [
+                        'name' => 'InquiryLineItem',
+                        'meaning' => 'A part asked about on the ticket.',
+                        'fields' => [
+                            ['name' => 'item_id', 'meaning' => 'Line identifier', 'type' => '', 'is_pk' => true, 'references' => ''],
+                            ['name' => 'inquiry_id', 'meaning' => 'Parent ticket', 'type' => '', 'is_pk' => false, 'references' => 'Inquiry'],
+                            ['name' => 'part_number', 'meaning' => 'Part number (mandatory on create)', 'type' => 'string', 'is_pk' => false, 'references' => ''],
+                            ['name' => 'quantity', 'meaning' => 'Requested quantity when applicable', 'type' => '', 'is_pk' => false, 'references' => ''],
+                        ],
+                    ],
+                    [
+                        'name' => 'InquiryAttachment',
+                        'meaning' => 'Image or PDF supporting the inquiry (FR-02).',
+                        'fields' => [
+                            ['name' => 'attachment_id', 'meaning' => 'Attachment identifier', 'type' => '', 'is_pk' => true, 'references' => ''],
+                            ['name' => 'inquiry_id', 'meaning' => 'Parent ticket', 'type' => '', 'is_pk' => false, 'references' => 'Inquiry'],
+                            ['name' => 'file_name', 'meaning' => 'Original file name', 'type' => 'string', 'is_pk' => false, 'references' => ''],
+                            ['name' => 'notes', 'meaning' => 'Optional caption from the dealer', 'type' => '', 'is_pk' => false, 'references' => ''],
+                        ],
+                    ],
+                ],
+            ],
+        );
     }
 
     protected function seedStateFlow(Project $project, int $agreedId): void

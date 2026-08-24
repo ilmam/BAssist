@@ -6,14 +6,15 @@ use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\ArchitectureController;
 use App\Http\Controllers\BabokDocumentController;
 use App\Http\Controllers\ChangeRequestController;
+use App\Http\Controllers\DataDictionaryController;
 use App\Http\Controllers\DiagramsController;
 use App\Http\Controllers\FeatureController;
 use App\Http\Controllers\GuardrailsController;
 use App\Http\Controllers\HelpController;
 use App\Http\Controllers\HelpGuideController;
-use App\Http\Controllers\QuickGuideController;
 use App\Http\Controllers\ProjectDashboardController;
 use App\Http\Controllers\ProjectExportController;
+use App\Http\Controllers\QuickGuideController;
 use App\Http\Controllers\SolutionRequirementsController;
 use App\Http\Controllers\StrategicBaselineController;
 use App\Http\Controllers\StrategyController;
@@ -82,6 +83,10 @@ Route::middleware('auth')->group(function (): void {
             ->name('architectures.export-dsl');
         Route::get('architectures/{id}/export/json', [ArchitectureController::class, 'exportJson'])
             ->name('architectures.export-json');
+        Route::get('data_dictionaries/{id}/export/csharp', [DataDictionaryController::class, 'exportCsharp'])
+            ->name('data_dictionaries.export-csharp');
+        Route::get('data_dictionaries/{id}/export/php', [DataDictionaryController::class, 'exportPhp'])
+            ->name('data_dictionaries.export-php');
         Route::get('strategic_baselines/for-project/{project}', [StrategicBaselineController::class, 'forProject'])
             ->name('strategic_baselines.for-project');
         CrudRouteRegistrar::registerWebRoutes();

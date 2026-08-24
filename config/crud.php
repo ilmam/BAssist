@@ -1,5 +1,13 @@
 <?php
 
+use App\Http\Controllers\ArchitectureController;
+use App\Http\Controllers\ChangeRequestController;
+use App\Http\Controllers\DataDictionaryController;
+use App\Http\Controllers\FeatureController;
+use App\Http\Controllers\ScenarioController;
+use App\Http\Controllers\StrategicBaselineController;
+use App\Http\Controllers\SwimlaneFlowController;
+
 return [
 
     /*
@@ -108,7 +116,7 @@ return [
             'nav_label' => 'BDD Features',
             'nav_icon' => 'category',
             'nav_icon_v8' => 'category',
-            'controller' => \App\Http\Controllers\FeatureController::class,
+            'controller' => FeatureController::class,
         ],
 
         'FunctionalRequirement' => [
@@ -133,7 +141,7 @@ return [
             'nav_label' => 'Change Requests',
             'nav_icon' => 'arrow-mix',
             'nav_icon_v8' => 'arrow-mix',
-            'controller' => \App\Http\Controllers\ChangeRequestController::class,
+            'controller' => ChangeRequestController::class,
         ],
 
         'Risk' => [
@@ -151,7 +159,7 @@ return [
             'nav_label' => 'Scenarios',
             'nav_icon' => 'category',
             'nav_icon_v8' => 'category',
-            'controller' => \App\Http\Controllers\ScenarioController::class,
+            'controller' => ScenarioController::class,
         ],
 
         'Architecture' => [
@@ -160,7 +168,7 @@ return [
             'nav_label' => 'Architecture (C4)',
             'nav_icon' => 'abstract-26',
             'nav_icon_v8' => 'abstract-26',
-            'controller' => \App\Http\Controllers\ArchitectureController::class,
+            'controller' => ArchitectureController::class,
             // C4 editor needs the full page; never open create/edit/view in a modal.
             'use_modals' => false,
         ],
@@ -179,7 +187,17 @@ return [
             'nav_label' => 'Swimlane Flows',
             'nav_icon' => 'row-horizontal',
             'nav_icon_v8' => 'row-horizontal',
-            'controller' => \App\Http\Controllers\SwimlaneFlowController::class,
+            'controller' => SwimlaneFlowController::class,
+        ],
+
+        'DataDictionary' => [
+            'home' => false,
+            'nav' => false,
+            'nav_label' => 'Data Dictionaries',
+            'nav_icon' => 'tablet-text-down',
+            'nav_icon_v8' => 'tablet-text-down',
+            'controller' => DataDictionaryController::class,
+            'use_modals' => false,
         ],
 
         'Assumption' => [
@@ -212,7 +230,7 @@ return [
             'nav_label' => 'Strategic Baseline',
             'nav_icon' => 'flag',
             'nav_icon_v8' => 'flag',
-            'controller' => \App\Http\Controllers\StrategicBaselineController::class,
+            'controller' => StrategicBaselineController::class,
             // Single document per project; full-page edit, never modal.
             'use_modals' => false,
         ],

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Project;
 use App\Services\ProjectReadinessService;
+use App\Support\CrudEntityRegistry;
 use App\Support\EntityAccess;
 use Illuminate\View\View;
 
@@ -47,6 +48,11 @@ class ProjectDashboardController extends Controller
             'model' => 'NonFunctionalRequirement',
             'count' => 'non_functional_requirements_count',
             'label' => 'non_functional_requirements',
+        ],
+        [
+            'model' => 'DataDictionary',
+            'count' => 'data_dictionaries_count',
+            'label' => 'data_dictionaries',
         ],
         [
             'model' => 'ChangeRequest',
@@ -100,9 +106,7 @@ class ProjectDashboardController extends Controller
         ],
     ];
 
-    public function __construct(protected ProjectReadinessService $readiness)
-    {
-    }
+    public function __construct(protected ProjectReadinessService $readiness) {}
 
     public function show(Project $project): View
     {
@@ -127,6 +131,7 @@ class ProjectDashboardController extends Controller
             'risks',
             'stateFlows',
             'swimlaneFlows',
+            'dataDictionaries',
             'assumptions',
             'constraints',
             'businessRules',
@@ -186,7 +191,7 @@ class ProjectDashboardController extends Controller
                         continue;
                     }
 
-                    $options = \App\Support\CrudEntityRegistry::all()[$entity] ?? [];
+                    $options = CrudEntityRegistry::all()[$entity] ?? [];
                     $links[] = [
                         'label' => $options['nav_label'] ?? $entity,
                         'url' => model_route($entity, 'index').'?'.http_build_query($scopeQuery),

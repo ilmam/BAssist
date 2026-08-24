@@ -97,7 +97,7 @@ return [
                 'label' => 'Requirements Modeling',
                 'short' => 'Modeling',
                 'babok' => 'KA 7 — Requirements Analysis & Design Definition',
-                'purpose' => 'Actors → elicitation → rules & assumptions → solution requirements → diagrams.',
+                'purpose' => 'Actors → elicitation → rules & assumptions → solution requirements → data dictionary → diagrams.',
                 'icon' => 'abstract-26',
                 'icon_v8' => 'abstract-26',
                 'badge_tone' => 'radd',
@@ -125,6 +125,10 @@ return [
                         'icon_v8' => 'subtitle',
                         'entities' => ['Feature', 'FunctionalRequirement', 'NonFunctionalRequirement'],
                         'progress' => 'solution_hub',
+                    ],
+                    [
+                        'entity' => 'DataDictionary',
+                        'progress' => 'entity_present',
                     ],
                     [
                         // Keep as one hub until diagrams get a better home.

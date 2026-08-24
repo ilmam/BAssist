@@ -115,6 +115,12 @@ class Project extends BaseModel
     }
 
     #[Relation('HasMany')]
+    public function dataDictionaries(): HasMany
+    {
+        return $this->hasMany(DataDictionary::class);
+    }
+
+    #[Relation('HasMany')]
     public function assumptions(): HasMany
     {
         return $this->hasMany(Assumption::class);
