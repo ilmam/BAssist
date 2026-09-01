@@ -121,3 +121,12 @@
         @endif
     </div>
 {{ Form::close() }}
+
+@if (! $quickCreate && ($dto->id ?? null) && entity_attachable($model))
+    <div class="{{ $inModal ? 'mt-6 border-top pt-6' : 'card-body border-top' }}">
+        @include('pages.partials.attachments', [
+            'model' => $model,
+            'recordId' => (int) $dto->id,
+        ])
+    </div>
+@endif

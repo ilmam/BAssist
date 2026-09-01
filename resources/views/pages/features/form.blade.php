@@ -155,6 +155,12 @@
 
         @if (! $isCreate && ($dto->id ?? null))
             <x-form-card-body>
+                @include('pages.partials.attachments', [
+                    'model' => $modelName,
+                    'recordId' => (int) $dto->id,
+                ])
+            </x-form-card-body>
+            <x-form-card-body>
                 @include('pages.features.partials.scenarios-panel', [
                     'featureId' => $dto->id,
                     'scenarios' => $scenarios ?? collect(),

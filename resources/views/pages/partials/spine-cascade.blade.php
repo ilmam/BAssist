@@ -8,19 +8,48 @@
 
 @if (is_array($cascade))
     @if ($showParents && ($cascade['parents'] ?? []) !== [])
-        <nav class="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-sm" aria-label="{{ __('ui.cascade_parents') }}">
-            @foreach ($cascade['parents'] as $parent)
-                @php
-                    $href = $inModal ? ($parent['modal_url'] ?? $parent['url']) : $parent['url'];
-                @endphp
-                <a
-                    href="{{ $href }}"
-                    class="text-primary hover:underline {{ $inModal ? 'js-open-modal' : '' }}"
-                    @if ($inModal) data-modal-url="{{ $parent['modal_url'] ?? $parent['url'] }}" @endif
-                >{{ $parent['label'] }}</a>
-                <span class="text-muted-foreground" aria-hidden="true">→</span>
-            @endforeach
-            <span class="font-medium text-foreground">{{ $cascade['current_label'] }}</span>
+        @php
+            $currentCode = null;
+            $currentTitle = $cascade['current_label'] ?? '';
+            if (str_contains($currentTitle, ' — ')) {
+                [$currentCode, $currentTitle] = explode(' — ', $currentTitle, 2);
+            }
+        @endphp
+        <nav aria-label="{{ __('ui.cascade_parents') }}">
+            <ol class="spine-breadcrumb">
+                @foreach ($cascade['parents'] as $parent)
+                    @php
+                        $href = $inModal ? ($parent['modal_url'] ?? $parent['url']) : $parent['url'];
+                    @endphp
+                    <li>
+                        <a
+                            href="{{ $href }}"
+                            class="spine-breadcrumb__link {{ $inModal ? 'js-open-modal' : '' }}"
+                            title="{{ $parent['label'] }}"
+                            @if ($inModal) data-modal-url="{{ $parent['modal_url'] ?? $parent['url'] }}" @endif
+                        >
+                            @if (! empty($parent['code']))
+                                <span class="spine-breadcrumb__code">{{ $parent['code'] }}</span>
+                            @endif
+                            @if (! empty($parent['title']))
+                                <span class="spine-breadcrumb__title">{{ $parent['title'] }}</span>
+                            @elseif (empty($parent['code']))
+                                <span class="spine-breadcrumb__title">{{ $parent['label'] }}</span>
+                            @endif
+                        </a>
+                    </li>
+                @endforeach
+                <li aria-current="page">
+                    <span class="spine-breadcrumb__current" title="{{ $cascade['current_label'] }}">
+                        @if ($currentCode)
+                            <span class="spine-breadcrumb__code">{{ $currentCode }}</span>
+                        @endif
+                        @if ($currentTitle !== '')
+                            <span class="spine-breadcrumb__title">{{ $currentTitle }}</span>
+                        @endif
+                    </span>
+                </li>
+            </ol>
         </nav>
     @endif
 
@@ -70,14 +99,70 @@
 
         @foreach ($cascade['groups'] ?? [] as $group)
             @php
-                $canAdd = entity_can($group['add_model'], 'create');
-                $canView = entity_can($group['add_model'], 'view');
+                $addActions = [];
+                foreach ($group['add_actions'] ?? [] as $action) {
+                    if (
+                        ! empty($action['url'])
+                        && ! empty($action['model'])
+                        && entity_can($action['model'], 'create')
+                    ) {
+                        $addActions[] = $action;
+                    }
+                }
+                $canAddSingle = $addActions === []
+                    && ! empty($group['add_url'])
+                    && ! empty($group['add_model'])
+                    && entity_can($group['add_model'], 'create');
+                $viewModels = array_values(array_unique(array_filter(array_merge(
+                    array_column($group['add_actions'] ?? [], 'model'),
+                    array_column($group['items'] ?? [], 'model'),
+                    [$group['add_model'] ?? ''],
+                ))));
+                $canView = false;
+                foreach ($viewModels as $viewModel) {
+                    if (entity_can($viewModel, 'view')) {
+                        $canView = true;
+                        break;
+                    }
+                }
+                $visibleItems = [];
+                foreach ($group['items'] ?? [] as $item) {
+                    $itemModel = $item['model'] ?? ($group['add_model'] ?? '');
+                    if ($itemModel === '' || entity_can($itemModel, 'view')) {
+                        $visibleItems[] = $item;
+                    }
+                }
             @endphp
-            @if ($canAdd || $canView)
+            @if ($canAddSingle || $addActions !== [] || $canView)
                 <section class="space-y-3" data-spine-cascade-group="{{ $group['key'] }}">
                     <div class="flex flex-wrap items-start justify-between gap-3">
                         <h3 class="text-base font-semibold text-foreground">{{ $group['heading'] }}</h3>
-                        @if ($canAdd && ! empty($group['add_url']))
+                        @if (count($addActions) > 1)
+                            <details class="spine-cascade-add">
+                                <summary>
+                                    {{ __('ui.cascade_add') }}
+                                    <i class="ki-filled ki-down text-xs"></i>
+                                </summary>
+                                <div class="spine-cascade-add__menu">
+                                    @foreach ($addActions as $action)
+                                        <a
+                                            href="{{ $action['url'] }}"
+                                            class="spine-cascade-add__item js-open-modal"
+                                            data-modal-url="{{ $action['url'] }}"
+                                        >{{ $action['label'] }}</a>
+                                    @endforeach
+                                </div>
+                            </details>
+                        @elseif (count($addActions) === 1)
+                            <x-button
+                                type="link"
+                                href="{{ $addActions[0]['url'] }}"
+                                color="primary"
+                                size="sm"
+                                class="js-open-modal"
+                                data-modal-url="{{ $addActions[0]['url'] }}"
+                            >{{ $addActions[0]['label'] }}</x-button>
+                        @elseif ($canAddSingle)
                             <x-button
                                 type="link"
                                 href="{{ $group['add_url'] }}"
@@ -87,9 +172,9 @@
                             >{{ $group['add_label'] }}</x-button>
                         @endif
                     </div>
-                    @if ($canView && ($group['items'] ?? []) !== [])
+                    @if ($canView && $visibleItems !== [])
                         <ul class="divide-y divide-border rounded-lg border border-border">
-                            @foreach ($group['items'] as $item)
+                            @foreach ($visibleItems as $item)
                                 @php
                                     $href = $inModal ? ($item['modal_url'] ?? $item['url']) : $item['url'];
                                 @endphp
@@ -99,7 +184,12 @@
                                         class="flex flex-wrap items-baseline justify-between gap-2 px-4 py-2.5 hover:bg-muted/40 {{ $inModal ? 'js-open-modal' : '' }}"
                                         @if ($inModal) data-modal-url="{{ $item['modal_url'] ?? $item['url'] }}" @endif
                                     >
-                                        <span class="text-sm text-foreground">{{ $item['label'] }}</span>
+                                        <span class="flex min-w-0 items-baseline gap-2">
+                                            @if (! empty($item['kind']))
+                                                <span class="kt-badge kt-badge-sm kt-badge-outline shrink-0">{{ $item['kind'] }}</span>
+                                            @endif
+                                            <span class="text-sm text-foreground">{{ $item['label'] }}</span>
+                                        </span>
                                         @if (! empty($item['meta']))
                                             <span class="text-xs text-muted-foreground">{{ $item['meta'] }}</span>
                                         @endif
@@ -107,7 +197,7 @@
                                 </li>
                             @endforeach
                         </ul>
-                    @elseif ($canAdd || $canView)
+                    @elseif ($canAddSingle || $addActions !== [] || $canView)
                         <p class="text-sm text-muted-foreground">{{ $group['empty'] }}</p>
                     @endif
                 </section>

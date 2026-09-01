@@ -2,9 +2,11 @@
 
 namespace App\Models;
 
+use App\Attributes\Attachable;
 use App\Attributes\Relation;
 use App\Attributes\RoutableAttribute;
 use App\Models\Concerns\AppliesDefaultPriority;
+use App\Models\Concerns\HasAttachments;
 use App\Models\Concerns\HasEntityNumber;
 use App\Models\Concerns\HasEntityStatus;
 use App\Services\GherkinDocumentParser;
@@ -13,9 +15,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[RoutableAttribute]
+#[Attachable]
 class Feature extends BaseModel
 {
     use AppliesDefaultPriority;
+    use HasAttachments;
     use HasEntityNumber;
     use HasEntityStatus;
     use HasFactory;

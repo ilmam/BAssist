@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 class DummyClass extends BaseModel
 {
     use HasFactory;
+    // Attachments: add #[Attachable] and `use HasAttachments`.
 
     protected $displayField = 'DummyDisplayField';
 

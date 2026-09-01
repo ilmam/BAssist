@@ -14,6 +14,7 @@ If you have not added an entity yet, start with [quick-start.md](quick-start.md)
 | `#[Hide]` | `{Model}ViewData` property | Skip this property on details (and list discovery) |
 | `#[Value('code')]` | nested ViewData property | Use `related.code` instead of the default display field |
 | `#[Relation('BelongsTo')]` | model **method** | Registers an Eloquent relation (not a form field) |
+| `#[Attachable]` | model **class** | Turns on the shared attachments panel (also `use HasAttachments`) |
 
 `List` cannot be a PHP class name, so the list marker is `InList`.
 
@@ -109,6 +110,21 @@ public function related() { ... }
 ```
 
 Used by `App\Models\Concerns\RelationsManagerTrait` to list Eloquent relations. Unrelated to form/table display.
+
+---
+
+## Attachable (on the Eloquent model)
+
+```php
+#[RoutableAttribute]
+#[Attachable]
+class FunctionalRequirement extends BaseModel
+{
+    use HasAttachments;
+}
+```
+
+Shows **Attachments** on the details page and view modal (`pages/partials/attachments.blade.php`). Not a form field. Config: `config/attachments.php`. Need Spine requirement types (Business Need, Objective, Stakeholder Need, FR, NFR, Feature) opt in already.
 
 ---
 

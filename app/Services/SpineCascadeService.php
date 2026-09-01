@@ -18,9 +18,10 @@ use Illuminate\Support\Collection;
 /**
  * Parent / children / local gaps for Need Spine detail pages.
  *
- * @phpstan-type CascadeLink array{label: string, url: string, modal_url: string, meta?: string}
+ * @phpstan-type CascadeLink array{label: string, url: string, modal_url: string, model?: string, code?: string|null, title?: string|null, kind?: string, meta?: string}
      * @phpstan-type CascadeGap array{key: string, label: string, action_label: string|null, action_url: string|null, action_model: string|null, action_ability: string, links?: list<CascadeLink>}
- * @phpstan-type CascadeGroup array{key: string, heading: string, empty: string, add_label: string, add_url: string, add_model: string, items: list<CascadeLink>}
+ * @phpstan-type CascadeAddAction array{label: string, url: string, model: string}
+ * @phpstan-type CascadeGroup array{key: string, heading: string, empty: string, add_label: string, add_url: string, add_model: string, items: list<CascadeLink>, add_actions?: list<CascadeAddAction>}
  */
 class SpineCascadeService
 {
@@ -227,15 +228,6 @@ class SpineCascadeService
                 'update',
             );
         }
-        if ($features->isEmpty() && $frs->isEmpty() && $nfrs->isEmpty()) {
-            $gaps[] = $this->gap(
-                'no_packaging',
-                __('ui.cascade_gap_no_packaging'),
-                __('ui.add_feature'),
-                $addFeature,
-                'Feature',
-            );
-        }
         if ($openCrs->isNotEmpty()) {
             $gaps[] = $this->gap(
                 'open_change_requests',
@@ -254,6 +246,7 @@ class SpineCascadeService
         $featureLinks = $features->map(function (Feature $feature) {
             $count = (int) ($feature->scenarios_count ?? $feature->scenarios->count());
             $link = $this->link('Feature', $feature);
+            $link['kind'] = __('ui.cascade_kind_feature');
             $link['meta'] = $count === 0
                 ? __('ui.cascade_meta_no_scenarios')
                 : __('ui.cascade_meta_scenarios', ['count' => $count]);
@@ -261,37 +254,36 @@ class SpineCascadeService
             return $link;
         })->values()->all();
 
+        $frLinks = array_map(function (array $link) {
+            $link['kind'] = __('ui.functional_requirement_short');
+
+            return $link;
+        }, $this->links('FunctionalRequirement', $frs));
+
+        $nfrLinks = array_map(function (array $link) {
+            $link['kind'] = __('ui.non_functional_requirement_short');
+
+            return $link;
+        }, $this->links('NonFunctionalRequirement', $nfrs));
+
         return $this->pack(
             $this->label($need),
             $this->stakeholderNeedAncestors($need),
             $gaps,
             [
                 $this->group(
-                    'features',
-                    __('ui.features'),
-                    __('ui.cascade_empty_features'),
-                    __('ui.add_feature'),
-                    $addFeature,
-                    'Feature',
-                    $featureLinks,
-                ),
-                $this->group(
-                    'functional_requirements',
-                    __('ui.functional_requirements'),
-                    __('ui.cascade_empty_frs'),
-                    __('ui.add_functional_requirement'),
-                    $addFr,
-                    'FunctionalRequirement',
-                    $this->links('FunctionalRequirement', $frs),
-                ),
-                $this->group(
-                    'non_functional_requirements',
-                    __('ui.non_functional_requirements'),
-                    __('ui.cascade_empty_nfrs'),
-                    __('ui.add_nfr'),
-                    $addNfr,
-                    'NonFunctionalRequirement',
-                    $this->links('NonFunctionalRequirement', $nfrs),
+                    'packaging',
+                    __('ui.cascade_packaging'),
+                    __('ui.cascade_empty_packaging'),
+                    '',
+                    '',
+                    '',
+                    array_merge($frLinks, $featureLinks, $nfrLinks),
+                    [
+                        $this->addAction(__('ui.add_functional_requirement'), $addFr, 'FunctionalRequirement'),
+                        $this->addAction(__('ui.add_feature'), $addFeature, 'Feature'),
+                        $this->addAction(__('ui.add_nfr'), $addNfr, 'NonFunctionalRequirement'),
+                    ],
                 ),
             ],
         );
@@ -514,6 +506,7 @@ class SpineCascadeService
 
     /**
      * @param  list<CascadeLink>  $items
+     * @param  list<CascadeAddAction>  $addActions
      * @return CascadeGroup
      */
     protected function group(
@@ -524,8 +517,9 @@ class SpineCascadeService
         string $addUrl,
         string $addModel,
         array $items,
+        array $addActions = [],
     ): array {
-        return [
+        $group = [
             'key' => $key,
             'heading' => $heading,
             'empty' => $empty,
@@ -533,6 +527,23 @@ class SpineCascadeService
             'add_url' => $addUrl,
             'add_model' => $addModel,
             'items' => $items,
+        ];
+        if ($addActions !== []) {
+            $group['add_actions'] = $addActions;
+        }
+
+        return $group;
+    }
+
+    /**
+     * @return CascadeAddAction
+     */
+    protected function addAction(string $label, string $url, string $model): array
+    {
+        return [
+            'label' => $label,
+            'url' => $url,
+            'model' => $model,
         ];
     }
 
@@ -550,8 +561,14 @@ class SpineCascadeService
      */
     protected function link(string $model, Model $record): array
     {
+        $code = $record->code ?? null;
+        $title = trim((string) ($record->title ?? $record->name ?? ''));
+
         return [
             'label' => $this->label($record),
+            'code' => is_string($code) && $code !== '' ? $code : null,
+            'title' => $title !== '' ? $title : null,
+            'model' => $model,
             'url' => model_route($model, 'show', $record->getKey()),
             'modal_url' => model_modal_path($model, 'view', $record->getKey()),
         ];

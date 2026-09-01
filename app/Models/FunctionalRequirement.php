@@ -2,18 +2,22 @@
 
 namespace App\Models;
 
+use App\Attributes\Attachable;
 use App\Attributes\Relation;
 use App\Attributes\RoutableAttribute;
 use App\Models\Concerns\AppliesDefaultPriority;
+use App\Models\Concerns\HasAttachments;
 use App\Models\Concerns\HasEntityNumber;
 use App\Models\Concerns\HasEntityStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 #[RoutableAttribute]
+#[Attachable]
 class FunctionalRequirement extends BaseModel
 {
     use AppliesDefaultPriority;
+    use HasAttachments;
     use HasEntityNumber;
     use HasEntityStatus;
     use HasFactory;

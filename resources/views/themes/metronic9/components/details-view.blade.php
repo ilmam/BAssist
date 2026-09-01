@@ -2,6 +2,7 @@
     use App\Helpers\Ui;
 @endphp
 
+<div class="space-y-6">
 <div @class([
     'grid gap-x-6 gap-y-4',
     'grid-cols-1' => $columns <= 1,
@@ -23,4 +24,11 @@
             >@if ($isEmpty)<span class="text-muted-foreground">—</span>@else{{ $display }}@endif</div>
         </div>
     @endforeach
+</div>
+
+@include('pages.partials.attachments', [
+    'model' => $model,
+    'recordId' => (int) ($dto->id ?? 0),
+    'attachments' => $attachmentRecords ?? [],
+])
 </div>

@@ -146,6 +146,12 @@
 
     @if (! $isCreate && ($dto->id ?? null))
         <div class="mt-6 border-t border-border pt-6">
+            @include('pages.partials.attachments', [
+                'model' => $modelName,
+                'recordId' => (int) $dto->id,
+            ])
+        </div>
+        <div class="mt-6 border-t border-border pt-6">
             @include('pages.features.partials.scenarios-panel', [
                 'featureId' => $dto->id,
                 'scenarios' => $scenarios ?? collect(),

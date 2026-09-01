@@ -1,6 +1,7 @@
 <?php
 
 use App\Helpers\Ui;
+use App\Support\AttachableSupport;
 use App\Support\CrudEntityRegistry;
 use App\Support\EntityAccess;
 use App\Support\HelpRegistry;
@@ -551,6 +552,13 @@ if (! function_exists('entity_can')) {
     function entity_can(string $entity, string $ability): bool
     {
         return EntityAccess::can(auth()->user(), $entity, $ability);
+    }
+}
+
+if (! function_exists('entity_attachable')) {
+    function entity_attachable(string $entity): bool
+    {
+        return AttachableSupport::enabled($entity);
     }
 }
 

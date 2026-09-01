@@ -48,11 +48,12 @@ class FeatureFormTest extends TestCase
         $this->assertStringNotContainsString("__('ui.traceability') · __('ui.stakeholder_need')", $partial);
 
         [$beforeRaw, $rawDialog] = array_pad(explode('<dialog', $partial, 2), 2, '');
-        // Copy / download / print belong in the raw dialog only.
+        // Copy / download live on the Gherkin chrome, not the dialog footer.
         $this->assertStringNotContainsString('data-clipboard-from', $beforeRaw);
         $this->assertStringNotContainsString("__('ui.download_feature')", $beforeRaw);
         $this->assertStringNotContainsString("__('ui.print_feature')", $beforeRaw);
-        $this->assertStringContainsString("__('ui.print_feature')", $rawDialog);
+        $this->assertStringNotContainsString("__('ui.copy_gherkin')", $rawDialog);
+        $this->assertStringNotContainsString("__('ui.print_feature')", $rawDialog);
     }
 
     public function test_details_view_two_column_utility_exists(): void

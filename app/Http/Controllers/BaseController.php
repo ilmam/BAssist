@@ -4,10 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Concerns\ResolvesListFilters;
 use App\Http\Controllers\Concerns\RespondsWithModal;
+use App\Services\AttachmentService;
 use App\Services\SpineCascadeService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Models\Concerns\HasEntityNumber;
+use App\Support\AttachableSupport;
 use App\Support\DtoMetadata;
 use App\Support\EntityFormBuilder;
 use App\Support\ProjectContext;
@@ -116,6 +118,44 @@ class BaseController extends Controller
             model_page_view($this->modelName, 'details'),
             $data
         );
+    }
+
+    public function storeAttachment(Request $request, $id)
+    {
+        $this->assertAttachable();
+        $validated = $request->validate([
+            'file' => ['required', 'file'],
+        ]);
+
+        app(AttachmentService::class)->store($this->modelName, (int) $id, $validated['file']);
+
+        return redirect()
+            ->route(model_route_name($this->modelName, 'show'), $id)
+            ->with('status', __('ui.attachments_saved'));
+    }
+
+    public function showAttachment($id, $attachment)
+    {
+        $this->assertAttachable();
+
+        return app(AttachmentService::class)->download($this->modelName, (int) $id, (int) $attachment);
+    }
+
+    public function destroyAttachment($id, $attachment)
+    {
+        $this->assertAttachable();
+        app(AttachmentService::class)->destroy($this->modelName, (int) $id, (int) $attachment);
+
+        return redirect()
+            ->route(model_route_name($this->modelName, 'show'), $id)
+            ->with('status', __('ui.attachments_deleted'));
+    }
+
+    protected function assertAttachable(): void
+    {
+        if (! AttachableSupport::enabled($this->modelName)) {
+            abort(404);
+        }
     }
 
     /**

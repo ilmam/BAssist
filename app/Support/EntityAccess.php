@@ -132,6 +132,10 @@ class EntityAccess
             return self::UPDATE;
         }
 
+        if (str_starts_with($action, 'attachments.')) {
+            return $action === 'attachments.show' ? self::VIEW : self::UPDATE;
+        }
+
         return match ($action) {
             'create', 'store', 'modalcreate', 'modalquickcreate' => self::CREATE,
             'edit', 'update', 'modaledit' => self::UPDATE,
@@ -150,7 +154,7 @@ class EntityAccess
 
         return match ($method) {
             'create', 'store', 'modalcreate', 'modalquickcreate' => self::CREATE,
-            'edit', 'update', 'modaledit', 'approvetaintform', 'approvetaintstore' => self::UPDATE,
+            'edit', 'update', 'modaledit', 'approvetaintform', 'approvetaintstore', 'storeattachment', 'destroyattachment' => self::UPDATE,
             'destroy', 'modaldelete', 'modalshow' => self::DELETE,
             default => self::VIEW,
         };

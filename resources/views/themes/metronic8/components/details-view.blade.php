@@ -10,3 +10,9 @@
         </div>
     </div>
 @endforeach
+
+@include('pages.partials.attachments', [
+    'model' => $model,
+    'recordId' => (int) ($dto->id ?? 0),
+    'attachments' => $attachmentRecords ?? [],
+])

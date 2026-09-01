@@ -92,8 +92,11 @@ Mark Eloquent relations with `#[Relation('BelongsTo')]` (and the real return typ
 | `HasEntityStatus` | Fills `status_id` on create if empty |
 | `AppliesDefaultPriority` | Fills `priority_id` on create if empty |
 | `HasEntityNumber` | Sequential `number` + `code` (implement `entityNumberPrefix()`) |
+| `HasAttachments` + `#[Attachable]` | Polymorphic files on the details page (upload / download / delete) |
 
 Keep those ids `null` on the edit DTO so the trait can set them. Use `hideQuick: true` if they should not appear on Quick Create.
+
+**Attachments** are not a DTO field. Add `use HasAttachments` and `#[Attachable]` on the model. Every CRUD entity already has `{resource}/{id}/attachments` routes; the marker turns the details panel and write endpoints on. Files live on the `local` disk (`config/attachments.php`). Upload and remove require **update** on the parent entity; download requires **view**.
 
 ---
 

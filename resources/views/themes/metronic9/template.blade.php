@@ -492,6 +492,14 @@
         @include('pages.partials.modal-stack-script')
 
         document.addEventListener('click', function (event) {
+            document.querySelectorAll('details.spine-cascade-add[open]').forEach(function (el) {
+                if (!el.contains(event.target) || event.target.closest('.spine-cascade-add__item')) {
+                    el.removeAttribute('open');
+                }
+            });
+        });
+
+        document.addEventListener('click', function (event) {
             if (handleModalRecordNavButtonClick(event, openModal)) {
                 return;
             }
@@ -652,6 +660,9 @@
                 if (typeof KTSelect !== 'undefined' && typeof KTSelect.createInstances === 'function') {
                     KTSelect.createInstances();
                 }
+                if (typeof KTDropdown !== 'undefined' && typeof KTDropdown.createInstances === 'function') {
+                    KTDropdown.createInstances();
+                }
 
                 document.dispatchEvent(new CustomEvent('bassist:modal-loaded', {
                     detail: { container },
@@ -743,6 +754,9 @@
 
                     if (typeof KTSelect !== 'undefined' && typeof KTSelect.createInstances === 'function') {
                         KTSelect.createInstances();
+                    }
+                    if (typeof KTDropdown !== 'undefined' && typeof KTDropdown.createInstances === 'function') {
+                        KTDropdown.createInstances();
                     }
 
                     document.dispatchEvent(new CustomEvent('bassist:modal-loaded', {

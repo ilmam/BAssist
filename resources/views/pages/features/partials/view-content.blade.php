@@ -2,7 +2,6 @@
     $featureBody = (string) ($feature->body ?? '');
     $assembledGherkin = $assembledGherkin ?? '';
     $rawDialogId = 'feature_raw_'.$dto->id;
-    $assembledExportId = 'assembled_export_'.$dto->id;
     $modelName = class_basename($model);
 @endphp
 
@@ -27,7 +26,7 @@
         'inModal' => $inModal ?? false,
     ])
 
-    {{-- Feature-specific actions (copy / download / print live in the raw dialog) --}}
+    {{-- Feature-specific actions (copy / download live on the Gherkin chrome inside View raw) --}}
     <div class="flex flex-wrap gap-2">
         @if (filled($assembledGherkin))
             <x-button
@@ -40,9 +39,6 @@
             <x-button type="link" href="{{ $importUrl }}" color="primary">{{ __('ui.import_feature_file') }}</x-button>
         @endif
     </div>
-    @if (filled($assembledGherkin))
-        <script type="application/json" id="{{ $assembledExportId }}">@json($assembledGherkin)</script>
-    @endif
 
     {{-- Feature body document --}}
     <section class="space-y-3">
@@ -80,15 +76,6 @@
                 ])
             </div>
             <div class="flex flex-wrap justify-end gap-2 border-t border-border px-4 py-3 shrink-0">
-                <x-button type="button" color="outline" data-clipboard-from="#{{ $assembledExportId }}">
-                    {{ __('ui.copy_gherkin') }}
-                </x-button>
-                @if (! empty($exportUrl))
-                    <x-button type="link" href="{{ $exportUrl }}" color="light">{{ __('ui.download_feature') }}</x-button>
-                @endif
-                @if (! empty($printUrl))
-                    <x-button type="link" href="{{ $printUrl }}" color="light" target="_blank">{{ __('ui.print_feature') }}</x-button>
-                @endif
                 <x-button type="button" color="primary" data-feature-raw-close>{{ __('ui.close') }}</x-button>
             </div>
         </dialog>

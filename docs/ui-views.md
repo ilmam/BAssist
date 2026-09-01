@@ -365,7 +365,9 @@ pages/{resource}/form.blade.php
 pages/{resource}/details.blade.php
 ```
 
-Need Spine details (Business Need, Objective, Stakeholder Need, FR, NFR, Feature, Scenario) also render `pages/partials/spine-cascade.blade.php`: parent crumbs above the record, then local “what’s missing” plus children with create-in-context modal URLs (`?stakeholder_need_id=` / `?feature_id=` / …). `BaseController::detailsViewData()` loads that payload via `SpineCascadeService`. Create forms prefill those parent query keys in `applyStickyContextDefaults()`.
+Need Spine details (Business Need, Objective, Stakeholder Need, FR, NFR, Feature, Scenario) also render `pages/partials/spine-cascade.blade.php`: a breadcrumb of code plus title (`BN-1 Manual inquiries › BO-1 Cut wait time › SN-1 …`) above the record, then local “what’s missing” plus children with create-in-context modal URLs (`?stakeholder_need_id=` / `?feature_id=` / …). Stakeholder Need children share one **Add** dropdown (FR, Feature, NFR). `BaseController::detailsViewData()` loads that payload via `SpineCascadeService`. Create forms prefill those parent query keys in `applyStickyContextDefaults()`.
+
+Entities marked `#[Attachable]` (with `HasAttachments`) show an **Attachments** panel on the same details / view surfaces — upload, download, and remove without a DTO field. Need Spine requirement types opt in; add the marker + trait to any other CRUD entity.
 
 To scaffold owned form markup from DTO metadata (instead of copying generic `<x-form>`):
 

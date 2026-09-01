@@ -47,11 +47,14 @@ class SpineCascadeServiceTest extends TestCase
         $this->assertNotNull($cascade);
         $this->assertStringContainsString($need->code, $cascade['parents'][0]['label']);
         $this->assertStringContainsString($objective->code, $cascade['parents'][1]['label']);
-        $this->assertSame(['no_packaging'], array_column($cascade['gaps'], 'key'));
-        $this->assertStringContainsString('stakeholder_need_id='.$story->id, $cascade['groups'][0]['add_url']);
-        $this->assertSame('Feature', $cascade['groups'][0]['add_model']);
-        $this->assertSame('FunctionalRequirement', $cascade['groups'][1]['add_model']);
-        $this->assertSame('NonFunctionalRequirement', $cascade['groups'][2]['add_model']);
+        $this->assertSame([], array_column($cascade['gaps'], 'key'));
+        $this->assertCount(1, $cascade['groups']);
+        $this->assertSame('packaging', $cascade['groups'][0]['key']);
+        $this->assertSame(
+            ['FunctionalRequirement', 'Feature', 'NonFunctionalRequirement'],
+            array_column($cascade['groups'][0]['add_actions'], 'model')
+        );
+        $this->assertStringContainsString('stakeholder_need_id='.$story->id, $cascade['groups'][0]['add_actions'][0]['url']);
     }
 
     public function test_feature_parent_strip_and_scenario_gap(): void
@@ -67,6 +70,8 @@ class SpineCascadeServiceTest extends TestCase
 
         $this->assertNotNull($cascade);
         $this->assertSame($story->code.' — '.$story->title, $cascade['parents'][2]['label']);
+        $this->assertSame($story->code, $cascade['parents'][2]['code']);
+        $this->assertSame($story->title, $cascade['parents'][2]['title']);
         $this->assertSame(['no_scenarios'], array_column($cascade['gaps'], 'key'));
         $this->assertSame([], $cascade['groups']);
         $this->assertStringContainsString('feature_id='.$feature->id, $cascade['gaps'][0]['action_url']);
@@ -113,6 +118,13 @@ class SpineCascadeServiceTest extends TestCase
             $this->assertIsString($contents);
             $this->assertStringContainsString('pages.partials.spine-cascade', $contents, $relative);
         }
+
+        $partial = file_get_contents(dirname(__DIR__, 2).'/resources/views/pages/partials/spine-cascade.blade.php');
+        $this->assertIsString($partial);
+        $this->assertStringContainsString('spine-breadcrumb', $partial);
+        $this->assertStringContainsString('aria-current="page"', $partial);
+        $this->assertStringContainsString('add_actions', $partial);
+        $this->assertStringContainsString('spine-cascade-add', $partial);
     }
 
     protected function seedNeed(): BusinessNeed

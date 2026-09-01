@@ -66,6 +66,13 @@ class CrudRouteRegistrar
                 ->name("{$resource}.modalquickcreate");
         }
 
+        Route::post("{$resource}/{id}/attachments", [$controller, 'storeAttachment'])
+            ->name("{$resource}.attachments.store");
+        Route::get("{$resource}/{id}/attachments/{attachment}", [$controller, 'showAttachment'])
+            ->name("{$resource}.attachments.show");
+        Route::delete("{$resource}/{id}/attachments/{attachment}", [$controller, 'destroyAttachment'])
+            ->name("{$resource}.attachments.destroy");
+
         foreach ($modalActions as $action) {
             if ($action === 'create') {
                 continue;
