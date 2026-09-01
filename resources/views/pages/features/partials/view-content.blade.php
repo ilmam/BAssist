@@ -57,9 +57,7 @@
                     <h3 class="text-base font-semibold text-foreground">{{ __('ui.view_raw') }}</h3>
                     <p class="text-xs text-muted-foreground">{{ __('ui.view_raw_help') }}</p>
                 </div>
-                <button type="button" class="kt-btn kt-btn-sm kt-btn-icon kt-btn-ghost" data-feature-raw-close aria-label="{{ __('ui.close') }}">
-                    <i class="ki-filled ki-cross"></i>
-                </button>
+                <x-button type="button" color="ghost" size="sm" icon="cross" iconOnly="true" data-feature-raw-close aria-label="{{ __('ui.close') }}"></x-button>
             </div>
             <div class="p-4 overflow-y-auto min-h-0 flex-1">
                 @include('pages.partials.gherkin-document', [
@@ -70,16 +68,16 @@
                 ])
             </div>
             <div class="flex flex-wrap justify-end gap-2 border-t border-border px-4 py-3 shrink-0">
-                <button type="button" class="kt-btn kt-btn-outline" data-clipboard-from="#{{ $assembledExportId }}">
+                <x-button type="button" color="outline" data-clipboard-from="#{{ $assembledExportId }}">
                     {{ __('ui.copy_gherkin') }}
-                </button>
+                </x-button>
                 @if (! empty($exportUrl))
                     <x-button type="link" href="{{ $exportUrl }}" color="light">{{ __('ui.download_feature') }}</x-button>
                 @endif
                 @if (! empty($printUrl))
                     <x-button type="link" href="{{ $printUrl }}" color="light" target="_blank">{{ __('ui.print_feature') }}</x-button>
                 @endif
-                <button type="button" class="kt-btn kt-btn-primary" data-feature-raw-close>{{ __('ui.close') }}</button>
+                <x-button type="button" color="primary" data-feature-raw-close>{{ __('ui.close') }}</x-button>
             </div>
         </dialog>
     @endif

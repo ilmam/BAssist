@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\StakeholderNeed;
 use App\Support\EntityAccess;
+use App\Support\RepositoryResolver;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -126,23 +126,6 @@ class SwimlaneFlowController extends CrudController
      */
     protected function stakeholderNeedOptionsForProject(?int $projectId): array
     {
-        if ($projectId === null || $projectId < 1) {
-            return [];
-        }
-
-        return StakeholderNeed::query()
-            ->where('project_id', $projectId)
-            ->orderBy('number')
-            ->orderBy('title')
-            ->get()
-            ->map(function (StakeholderNeed $need) {
-                $code = $need->code ? $need->code.' — ' : '';
-
-                return [
-                    'value' => (string) $need->id,
-                    'label' => $code.$need->title,
-                ];
-            })
-            ->all();
+        return RepositoryResolver::make('StakeholderNeed')->optionsForProject($projectId);
     }
 }

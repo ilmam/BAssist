@@ -150,7 +150,7 @@ class EntityAccess
 
         return match ($method) {
             'create', 'store', 'modalcreate', 'modalquickcreate' => self::CREATE,
-            'edit', 'update', 'modaledit' => self::UPDATE,
+            'edit', 'update', 'modaledit', 'approvetaintform', 'approvetaintstore' => self::UPDATE,
             'destroy', 'modaldelete', 'modalshow' => self::DELETE,
             default => self::VIEW,
         };

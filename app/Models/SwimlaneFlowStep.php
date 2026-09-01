@@ -35,9 +35,12 @@ class SwimlaneFlowStep extends BaseModel
         'stakeholder_need_id',
     ];
 
-    protected $casts = [
-        'position' => 'integer',
-    ];
+    protected function casts(): array
+    {
+        return array_merge(parent::casts(), [
+            'position' => 'integer',
+        ]);
+    }
 
     protected static function entityNumberPrefix(): string
     {

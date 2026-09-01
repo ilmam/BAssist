@@ -25,9 +25,12 @@ class Scenario extends BaseModel
         'status_id',
     ];
 
-    protected $casts = [
-        'is_outline' => 'boolean',
-    ];
+    protected function casts(): array
+    {
+        return array_merge(parent::casts(), [
+            'is_outline' => 'boolean',
+        ]);
+    }
 
     #[Relation('BelongsTo')]
     public function feature(): BelongsTo

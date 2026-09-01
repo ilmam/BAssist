@@ -3,9 +3,9 @@
 @section('main')
     @php
         $warningLevelClass = [
-            'warning' => 'kt-alert-light kt-alert-warning',
-            'info' => 'kt-alert-light kt-alert-info',
-            'danger' => 'kt-alert-light kt-alert-destructive',
+            'warning' => 'border border-border bg-muted/40 text-foreground',
+            'info' => 'border border-border bg-muted/40 text-foreground',
+            'danger' => 'border border-destructive/40 text-destructive',
         ];
     @endphp
 
@@ -14,7 +14,7 @@
             <x-button type="link" href="{{ $backUrl }}" icon="arrow-left" iconOnly="true" color="ghost" size="sm" activeColor="primary"></x-button>
         </x-slot>
 
-        <div class="kt-card-body border-t border-border p-5 lg:p-7.5 space-y-6">
+        <x-form-card-body class="space-y-6">
             <div class="space-y-1">
                 <p class="text-sm text-muted-foreground">
                     {{ __('ui.feature_import_confirm_help', [
@@ -39,8 +39,8 @@
                                 $level = $warning['level'] ?? 'info';
                                 $alertClass = $warningLevelClass[$level] ?? 'kt-alert-light kt-alert-info';
                             @endphp
-                            <div class="kt-alert {{ $alertClass }}">
-                                <div class="kt-alert-content">
+                            <div class="rounded-md p-3 text-sm {{ $alertClass }}">
+                                <div>
                                     {{ $warning['message'] ?? '' }}
                                 </div>
                             </div>
@@ -107,12 +107,12 @@
                     </span>
                 </label>
             </form>
-        </div>
+        </x-form-card-body>
 
-        <div class="kt-card-footer flex flex-wrap justify-end gap-2.5 border-t border-border p-5 lg:p-7.5">
+        <x-form-card-footer class="flex-wrap">
             <x-button type="link" href="{{ $cancelUrl }}" color="outline">Cancel</x-button>
             <x-button type="link" href="{{ $backUrl }}" color="light">{{ __('ui.feature_import_choose_another') }}</x-button>
             <x-button type="submit" form="feature-import-confirm-form" color="primary">{{ __('ui.feature_import_confirm') }}</x-button>
-        </div>
+        </x-form-card-footer>
     </x-form-card>
 @endsection

@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\RelationsManagerTrait;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 abstract class BaseModel extends Model
 {
-    use \App\Traits\RelationsManagerTrait;
+    use RelationsManagerTrait;
     use SoftDeletes;
 
     public const CREATED_AT = 'created_at';
@@ -22,14 +23,17 @@ abstract class BaseModel extends Model
 
     public $timestamps = true;
 
-    protected $casts = [
-        self::CREATED_AT => 'datetime',
-        self::UPDATED_AT => 'datetime',
-        self::DELETED_AT => 'datetime',
-        self::CREATED_BY => 'integer',
-        self::UPDATED_BY => 'integer',
-        self::DELETED_BY => 'integer',
-    ];
+    protected function casts(): array
+    {
+        return [
+            self::CREATED_AT => 'datetime',
+            self::UPDATED_AT => 'datetime',
+            self::DELETED_AT => 'datetime',
+            self::CREATED_BY => 'integer',
+            self::UPDATED_BY => 'integer',
+            self::DELETED_BY => 'integer',
+        ];
+    }
 
     protected static function booted(): void
     {

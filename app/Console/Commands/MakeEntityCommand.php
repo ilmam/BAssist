@@ -40,10 +40,10 @@ use Illuminate\Support\Str;
  *             customised. The shared CrudController still handles requests —
  *             no controller is generated.
  *
- *   material  hybrid + a dedicated {Model}Controller and
- *             Api/{Model}Controller (both extend CrudController), wired
- *             into config/crud.php via the 'controller' and
- *             'api_controller' keys. Full ownership of every layer.
+ *   material  hybrid + a dedicated {Model}Controller, wired into
+ *             config/crud.php via the 'controller' key. List/DataTables
+ *             API stays on Api\CrudController unless you set
+ *             'api_controller'.
  *
  * ---------------------------------------------------------------------
  * Arguments and options

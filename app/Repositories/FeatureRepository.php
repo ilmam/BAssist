@@ -63,4 +63,40 @@ class FeatureRepository extends BaseRepository
 
         return $feature->fresh();
     }
+
+    public function findForDocument(int $id): Feature
+    {
+        /** @var Feature $feature */
+        $feature = $this->findModel($id, [
+            'scenarios' => fn ($query) => $query->orderBy('id'),
+            'project',
+            'stakeholderNeed',
+            'changeRequest',
+            'swimlaneFlowStep',
+            'priority',
+            'status',
+        ]);
+
+        return $feature;
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public function optionsForProject(int $projectId): array
+    {
+        if ($projectId <= 0) {
+            return [];
+        }
+
+        return Feature::query()
+            ->where('project_id', $projectId)
+            ->orderBy('number')
+            ->orderBy('title')
+            ->get(['id', 'number', 'title'])
+            ->mapWithKeys(fn (Feature $f) => [
+                $f->id => trim(($f->number ? $f->number.' — ' : '').$f->title),
+            ])
+            ->all();
+    }
 }

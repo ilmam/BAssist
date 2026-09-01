@@ -11,8 +11,15 @@
 
 Generic Laravel CRUD with theme-aware UI (Metronic 8/9).
 
-- **[docs/ui-views.md](docs/ui-views.md)** — view conventions, page/modal architecture, per-model overrides
-- **[docs/dto-metadata.md](docs/dto-metadata.md)** — cached DTO attribute metadata (forms, datatables, details) and how to clear the cache
+**New here?** Read **[docs/README.md](docs/README.md)** (reading order + glossary), then:
+
+- **[docs/quick-start.md](docs/quick-start.md)** — add an entity without writing routes or a controller
+- **[docs/conventions.md](docs/conventions.md)** — files that must exist together
+- **[docs/attributes.md](docs/attributes.md)** — `#[Form]`, `#[ListForm]`, `#[InList]`
+- **[docs/ui-views.md](docs/ui-views.md)** — pages vs themes vs modals
+- **[docs/entity-scaffolding.md](docs/entity-scaffolding.md)** — `make:entity` / eject / materialize
+- **[docs/console-commands.md](docs/console-commands.md)** — Artisan flag reference
+- **[docs/dto-metadata.md](docs/dto-metadata.md)** — production DTO cache (when forms look stale)
 
 ## About Laravel
 

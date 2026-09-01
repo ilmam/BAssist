@@ -55,6 +55,14 @@ class ScenarioRepository extends BaseRepository
         return $scenario->fresh();
     }
 
+    public function findForDocument(int $id): Scenario
+    {
+        /** @var Scenario $scenario */
+        $scenario = $this->findModel($id, ['feature.project', 'status']);
+
+        return $scenario;
+    }
+
     protected function attachParentContextIds(Model $model): void
     {
         if ($model->relationLoaded('feature') && $model->feature instanceof Feature) {

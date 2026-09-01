@@ -26,11 +26,14 @@ class Architecture extends BaseModel
         'status_id',
     ];
 
-    protected $casts = [
-        'elements' => 'array',
-        'relationships' => 'array',
-        'layout' => 'array',
-    ];
+    protected function casts(): array
+    {
+        return array_merge(parent::casts(), [
+            'elements' => 'array',
+            'relationships' => 'array',
+            'layout' => 'array',
+        ]);
+    }
 
     #[Relation('BelongsTo')]
     public function project(): BelongsTo

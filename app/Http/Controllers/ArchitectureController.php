@@ -3,24 +3,31 @@
 namespace App\Http\Controllers;
 
 use App\Models\Architecture;
-use App\Models\Feature;
 use App\Models\Project;
 use App\Repositories\ArchitectureRepository;
+use App\Services\C4ArchitectureNormalizer;
 use App\Services\C4MermaidGenerator;
 use App\Services\StructurizrExporter;
 use App\Support\EntityAccess;
+use App\Support\RepositoryResolver;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ArchitectureController extends CrudController
 {
+    public function __construct(
+        protected C4MermaidGenerator $mermaid,
+        protected StructurizrExporter $structurizr,
+        protected C4ArchitectureNormalizer $c4Normalizer,
+    ) {
+    }
     public function show($id)
     {
         $dto = $this->modelRepository->getById($id);
         $fields = $dto->getFields(onlyHeaders: false, withPrefix: false, object: $dto);
         /** @var Architecture $architecture */
-        $architecture = Architecture::query()->with('project')->findOrFail($id);
+        $architecture = $this->modelRepository->findModel($id, ['project']);
 
         return view(model_page_view($this->modelName, 'details'), array_merge(
             $this->diagramPayload($architecture),
@@ -37,7 +44,7 @@ class ArchitectureController extends CrudController
     {
         $form = $this->buildEditForm($id);
         /** @var Architecture $architecture */
-        $architecture = Architecture::query()->findOrFail($id);
+        $architecture = $this->modelRepository->findModel($id);
 
         return view(model_page_view($this->modelName, 'form'), array_merge(
             $this->diagramPayload($architecture),
@@ -62,7 +69,7 @@ class ArchitectureController extends CrudController
             'formFields' => $form['formFields'],
             'operation' => 'create',
             'features' => $this->featureOptions($projectId),
-            'layout' => app(\App\Services\C4ArchitectureNormalizer::class)->normalizeLayout([]),
+            'layout' => $this->c4Normalizer->normalizeLayout([]),
             'mermaidContext' => "C4Context\n",
             'mermaidContainer' => "C4Container\n",
             'mermaidComponent' => "C4Component\n",
@@ -98,7 +105,7 @@ class ArchitectureController extends CrudController
     {
         /** @var ArchitectureRepository $repo */
         $repo = $this->modelRepository;
-        $existing = Architecture::query()->where('project_id', $project->id)->first();
+        $existing = $repo->findForProject($project);
 
         if ($existing === null) {
             EntityAccess::authorize(auth()->user(), $this->modelName, EntityAccess::CREATE);
@@ -117,8 +124,8 @@ class ArchitectureController extends CrudController
 
     public function exportDsl(int $id): StreamedResponse
     {
-        $architecture = Architecture::query()->findOrFail($id);
-        $dsl = app(StructurizrExporter::class)->toDsl(
+        $architecture = $this->modelRepository->findModel($id);
+        $dsl = $this->structurizr->toDsl(
             $architecture->title,
             $architecture->normalizedElements(),
             $architecture->normalizedRelationships()
@@ -133,8 +140,8 @@ class ArchitectureController extends CrudController
 
     public function exportJson(int $id): Response
     {
-        $architecture = Architecture::query()->findOrFail($id);
-        $json = app(StructurizrExporter::class)->toJson(
+        $architecture = $this->modelRepository->findModel($id);
+        $json = $this->structurizr->toJson(
             $architecture->title,
             $architecture->normalizedElements(),
             $architecture->normalizedRelationships()
@@ -152,7 +159,7 @@ class ArchitectureController extends CrudController
         $elements = $architecture->normalizedElements();
         $relationships = $architecture->normalizedRelationships();
         $layout = $architecture->normalizedLayout();
-        $mermaid = app(C4MermaidGenerator::class);
+        $mermaid = $this->mermaid;
 
         $system = $mermaid->resolveSystem($elements, request('system'));
         $container = $mermaid->resolveContainer($elements, request('container'));
@@ -175,18 +182,6 @@ class ArchitectureController extends CrudController
      */
     protected function featureOptions(int $projectId): array
     {
-        if ($projectId <= 0) {
-            return [];
-        }
-
-        return Feature::query()
-            ->where('project_id', $projectId)
-            ->orderBy('number')
-            ->orderBy('title')
-            ->get(['id', 'number', 'title'])
-            ->mapWithKeys(fn (Feature $f) => [
-                $f->id => trim(($f->number ? $f->number.' — ' : '').$f->title),
-            ])
-            ->all();
+        return RepositoryResolver::make('Feature')->optionsForProject($projectId);
     }
 }

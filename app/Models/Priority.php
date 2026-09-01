@@ -21,16 +21,13 @@ class Priority extends BaseModel
         'is_system',
     ];
 
-    protected $casts = [
-        'created_at' => 'datetime',
-        'updated_at' => 'datetime',
-        'deleted_at' => 'datetime',
-        'created_by' => 'integer',
-        'updated_by' => 'integer',
-        'deleted_by' => 'integer',
-        'sort_order' => 'integer',
-        'is_system' => 'boolean',
-    ];
+    protected function casts(): array
+    {
+        return array_merge(parent::casts(), [
+            'sort_order' => 'integer',
+            'is_system' => 'boolean',
+        ]);
+    }
 
     protected static function booted(): void
     {

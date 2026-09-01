@@ -32,13 +32,8 @@
 
 @push('styles')
     <style>
-        /* Slightly loftier stack for narrative baseline fields (scoped) */
-        .strategic-baseline-doc .kt-form-item {
-            margin-bottom: 1.75rem;
-        }
-
-        .strategic-baseline-doc .kt-form-item:last-child {
-            margin-bottom: 0;
+        .strategic-baseline-doc .form-fields-grid {
+            row-gap: 1.75rem;
         }
 
         .strategic-baseline-doc textarea {

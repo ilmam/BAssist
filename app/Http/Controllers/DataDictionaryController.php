@@ -12,6 +12,13 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class DataDictionaryController extends CrudController
 {
+    public function __construct(
+        protected ErdMermaidGenerator $erdMermaid,
+        protected EfModelStubExporter $efExporter,
+        protected DataDictionaryStubExporter $phpExporter,
+    ) {
+    }
+
     public function create()
     {
         $form = $this->buildCreateForm();
@@ -58,8 +65,8 @@ class DataDictionaryController extends CrudController
     {
         EntityAccess::authorize(auth()->user(), 'DataDictionary', EntityAccess::VIEW);
 
-        $dictionary = DataDictionary::query()->findOrFail($id);
-        $body = app(EfModelStubExporter::class)->export(
+        $dictionary = $this->modelRepository->findModel($id);
+        $body = $this->efExporter->export(
             $dictionary->title,
             $dictionary->normalizedEntities()
         );
@@ -74,8 +81,8 @@ class DataDictionaryController extends CrudController
     {
         EntityAccess::authorize(auth()->user(), 'DataDictionary', EntityAccess::VIEW);
 
-        $dictionary = DataDictionary::query()->findOrFail($id);
-        $body = app(DataDictionaryStubExporter::class)->toPhp($dictionary->normalizedEntities());
+        $dictionary = $this->modelRepository->findModel($id);
+        $body = $this->phpExporter->toPhp($dictionary->normalizedEntities());
         $filename = $this->exportBasename($dictionary).'.php';
 
         return response($body, 200, [
@@ -98,8 +105,8 @@ class DataDictionaryController extends CrudController
             'formFields' => $form['formFields'],
             'operation' => $operation,
             'entities' => $entities,
-            'mermaid' => app(ErdMermaidGenerator::class)->generate($entities, 'design'),
-            'mermaidConceptual' => app(ErdMermaidGenerator::class)->generate($entities, 'conceptual'),
+            'mermaid' => $this->erdMermaid->generate($entities, 'design'),
+            'mermaidConceptual' => $this->erdMermaid->generate($entities, 'conceptual'),
             'exportCsharpUrl' => $id !== null ? route('data_dictionaries.export-csharp', $id) : null,
             'exportPhpUrl' => $id !== null ? route('data_dictionaries.export-php', $id) : null,
         ];
@@ -110,7 +117,7 @@ class DataDictionaryController extends CrudController
      */
     protected function viewData(object $dto, array $fields, int $id): array
     {
-        $dictionary = DataDictionary::query()->findOrFail($id);
+        $dictionary = $this->modelRepository->findModel($id);
         $entities = $dictionary->normalizedEntities();
 
         return [
@@ -118,8 +125,8 @@ class DataDictionaryController extends CrudController
             'model' => $this->modelName,
             'fields' => $fields,
             'entities' => $entities,
-            'mermaid' => app(ErdMermaidGenerator::class)->generate($entities, 'design'),
-            'mermaidConceptual' => app(ErdMermaidGenerator::class)->generate($entities, 'conceptual'),
+            'mermaid' => $this->erdMermaid->generate($entities, 'design'),
+            'mermaidConceptual' => $this->erdMermaid->generate($entities, 'conceptual'),
             'exportCsharpUrl' => route('data_dictionaries.export-csharp', $id),
             'exportPhpUrl' => route('data_dictionaries.export-php', $id),
         ];

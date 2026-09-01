@@ -1,53 +1,47 @@
 # DTO metadata cache
 
-Forms, datatable column headers, and detail views need to know which properties on a Data class (DTO) are form fields or display columns. That information lives in PHP attributes (see [attributes.md](attributes.md) for the full reference):
+**When do I care?** On your laptop, usually never — the app reads PHP attributes on first use. In **production**, after you change a DTO (add a field, change `#[Form]`, add a new `*Data.php` file), run the cache commands below or forms/tables can look stale.
 
-- `#[Form('text')]` / `#[ListForm('text')]` — form control type (create/edit; `hideQuick` / `readonly` for Quick Create). Layout spans are not Form attributes — see [ui-views.md](ui-views.md#override-spans)
-- Detail/value projection — all public props on `*ViewData` except `#[Hide]` (optional `#[Value('…')]` nested display override)
-- `#[InList]` / `#[ListForm]` — datatable columns
+Forms, table headers, and details pages need to know which DTO properties are fields or columns. That lives in PHP attributes ([attributes.md](attributes.md)):
 
-Previously, the app discovered those attributes with **PHP reflection on every request**. That is fine for small apps but adds avoidable overhead in production as entity count and traffic grow.
+- `#[Form]` / `#[ListForm]` — form controls (`hideQuick`, `readonly`, optional `uiSpan`)
+- `{Model}ViewData` public properties except `#[Hide]` — details (optional `#[Value('…')]`)
+- `#[InList]` / `#[ListForm]` — table columns
 
-`App\Support\DtoMetadata` centralizes discovery, caches the **schema** (property names and attribute arguments) in Laravel's cache, and reads **values** from live DTO instances at runtime.
+`App\Support\DtoMetadata` reads those attributes once, stores the **schema** (property names and attribute arguments) in Laravel’s cache, and reads **values** from live DTO instances on each request.
 
 ---
 
 ## How it works
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│  Deploy or after DTO changes: dto:cache-metadata            │
-│  Reflection runs once per DTO class → stored in app cache   │
-└─────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────┐
-│  Each HTTP request (production)                              │
-│  DtoMetadata reads schema from cache → no reflection         │
-│  Values read from $dto->property (always runtime)            │
-└─────────────────────────────────────────────────────────────┘
+Deploy or after DTO changes:  php artisan dto:cache-metadata
+  Reflection runs once per DTO class → stored in app cache
+
+Each HTTP request in production
+  Schema comes from cache (no reflection)
+  Field values still come from the live DTO / database
 ```
 
-When cache is **disabled** (default in local dev), each request reflects on first use for that DTO class. That is acceptable for development; enable file cache locally if you prefer parity with production.
+When cache is **off** (typical locally), each request reflects on first use of that DTO class. That is fine for development.
 
 ### What is cached
 
-| Cached (schema) | Not cached (runtime) |
-|-----------------|----------------------|
-| Property names with `Form` | Actual field values (`$dto->category`) |
-| Attribute arguments (`'text'`, `'select'`, model name) | Select option lists from the database |
-| Dot-notation paths for detail/value fields | API/datatable row data |
+| Cached (schema) | Not cached (live data) |
+|-----------------|------------------------|
+| Property names with `Form` | Actual field values |
+| Attribute arguments (`'text'`, `'select'`, related model name) | Dropdown options from the database |
+| Dot-notation paths for details | API / table row data |
 
-Schema is **app-wide** — the same for every user. It is stored in Laravel cache, not in session.
+Schema is the same for every user. It is stored in Laravel cache, not in session.
 
-### Where it is used
+### Where the code uses it
 
-| Feature | API |
-|---------|-----|
+| Feature | Call |
+|---------|------|
 | Create/edit forms | `DtoMetadata::for($editDto)->formFields()` |
-| List column headers | `DtoMetadata::for($viewDto)->listColumns()` |
-| Detail / modal views | `$dto->getFields()` → delegates to `DtoMetadata` |
-| Legacy helper | `AttributeHelper::getPropertyAttributes(..., 'Form')` → delegates to `DtoMetadata` |
+| Table column headers | `DtoMetadata::for($viewDto)->listColumns()` |
+| Details / view modal | `$dto->getFields()` → `DtoMetadata` |
 
 ---
 
@@ -59,154 +53,104 @@ File: `config/dto-metadata.php`
 |-----|---------|---------|
 | `enabled` | `true` when `APP_ENV=production` | Persist schema in Laravel cache |
 | `directories` | `[app_path('Data')]` | Where to scan for Data classes |
-| `cache.store` | `CACHE_STORE` / **`file`** | Cache driver — **Redis not required** |
+| `cache.store` | `CACHE_STORE` / **`file`** | Cache driver — Redis is **not** required |
 | `cache.prefix` | `dto-metadata` | Key prefix |
-| `cache.duration` | `null` (forever) | TTL; `null` = until cleared on deploy |
-
-Environment override:
+| `cache.duration` | `null` (forever) | `null` = until you clear it |
 
 ```env
 DTO_METADATA_CACHE_ENABLED=true
 CACHE_STORE=file
 ```
 
-### Cache driver notes
-
-| Driver | Cross-request persistence | Typical use |
+| Driver | Survives across requests? | Typical use |
 |--------|---------------------------|-------------|
-| **file** (default) | Yes — `storage/framework/cache/` | Production and local; no extra services |
-| **redis** | Yes | Only if your app already uses Redis for cache |
-| **array** | No | Tests only |
-| **session** | Not used | Wrong scope — metadata is not per-user |
-
-With **`file`** cache, warmed metadata survives across requests without Redis, queues, or any other infrastructure.
+| **file** (default) | Yes — `storage/framework/cache/` | Local and production |
+| **redis** | Yes | Only if the app already uses Redis for cache |
+| **array** | No | Tests |
 
 ---
 
-## Artisan commands
+## Commands
 
-### Warm the cache (deploy / after DTO changes in production)
-
-Discover and cache all Data classes under `config('dto-metadata.directories')`:
+### Warm (deploy / after DTO changes in production)
 
 ```bash
 php artisan dto:cache-metadata
+php artisan dto:cache-metadata --class=App\\Data\\{Model}Data
 ```
 
-Cache a single class:
-
-```bash
-php artisan dto:cache-metadata --class=App\\Data\\CategoryData
-```
-
-**Recommended deploy step** (alongside other optimize commands):
+Recommended with other deploy optimize steps:
 
 ```bash
 php artisan config:cache
 php artisan route:cache
 php artisan dto:cache-metadata
-php artisan data:cache-structure   # Spatie Laravel Data (separate cache)
+php artisan data:cache-structure   # Spatie Laravel Data — a separate cache
 ```
 
-### Clear the cache
-
-Clear **all** DTO metadata entries:
+### Clear
 
 ```bash
 php artisan dto:clear-metadata
+php artisan dto:clear-metadata --class=App\\Data\\{Model}Data
 ```
 
-Clear one class (after changing attributes on that DTO):
+Then re-warm in production:
 
 ```bash
-php artisan dto:clear-metadata --class=App\\Data\\CategoryData
+php artisan dto:cache-metadata --class=App\\Data\\{Model}Data
 ```
 
-Then re-warm if you are in production:
-
-```bash
-php artisan dto:cache-metadata --class=App\\Data\\CategoryData
-```
-
-### When you must clear
-
-Run `dto:clear-metadata` (or clear the specific class) whenever you:
+Clear (or clear that class) when you:
 
 - Add, remove, or rename a DTO property
 - Change `Form`, `Hide`, or `Value` on a property
-- Add a new `*Data.php` / `*ViewData.php` class and need production to pick it up without waiting for lazy discovery
+- Add a new `*Data.php` / `*ViewData.php` and need production to pick it up
 
-For **hybrid** entities with materialized form blades, also regenerate owned form markup after changing `Form`:
-
-```bash
-php artisan entity:materialize-form Category --force
-```
-
-Virtual entities pick up form changes automatically via `$formFields`; hybrid entities bake fields into the blade file. See [entity-scaffolding.md](entity-scaffolding.md#materialized-forms).
-
-You do **not** need to clear when only **data values** change (e.g. editing a category name in the database).
-
-### Nuclear option
+For **hybrid** entities (owned form blades), also:
 
 ```bash
-php artisan cache:clear
+php artisan entity:materialize-form {Model} --force
 ```
 
-That clears **all** application cache (Spatie data structures, DTO metadata, etc.). Prefer `dto:clear-metadata` for a targeted reset.
+Virtual entities pick up form changes automatically via `$formFields`. You do **not** need to clear when only **row values** change (someone edits a name in the UI).
+
+Nuclear option: `php artisan cache:clear` wipes **all** app cache. Prefer `dto:clear-metadata`.
 
 ---
 
-## Programmatic API
+## PHP API (advanced)
 
 ```php
 use App\Support\DtoMetadata;
 
-// Form schema
-$fields = DtoMetadata::for(CategoryData::class)->formFields();
-// ['category' => ['text'], 'description' => ['textarea']]
-
-// List columns (includes `id` when the DTO has a public $id property)
-$columns = DtoMetadata::for(CategoryViewData::class)->listColumns();
-
-// Detail view values
+$fields = DtoMetadata::for(\App\Data\{Model}Data::class)->formFields();
+$columns = DtoMetadata::for(\App\Data\{Model}ViewData::class)->listColumns();
 $values = DtoMetadata::for($dto)->extractValues($dto);
 
-// Inspect or force-load cached schema
-$schema = DtoMetadata::for(CategoryData::class)->schema();
-
-// Maintenance
-DtoMetadata::warm();                              // all configured directories
-DtoMetadata::clear();                             // all cached classes
-DtoMetadata::clear(CategoryData::class);          // one class
+DtoMetadata::warm();
+DtoMetadata::clear();
+DtoMetadata::clear(\App\Data\{Model}Data::class);
 ```
 
 ---
 
 ## Adding a new entity
 
-1. Create `App\Data\{Model}Data` with `#[Form]` on editable properties.
-2. Create `App\Data\{Model}ViewData` with `#[InList]` for list columns and `#[Hide]` on plumbing to exclude from detail projection.
-3. In **local** (cache off): metadata is built on first use via reflection.
-4. In **production**: deploy, then run:
-
-```bash
-php artisan dto:cache-metadata
-```
-
-Or clear and re-warm only the affected classes if you prefer a minimal cache update.
+1. Create `{Model}Data` with `#[Form]` and `{Model}ViewData` with `#[InList]` / `#[Hide]` (or use `make:entity`).
+2. **Local** (cache off): metadata is built on first use.
+3. **Production:** after deploy, `php artisan dto:cache-metadata`.
 
 ---
 
-## Related caching
+## Two caches
 
-This project also uses [Spatie Laravel Data structure caching](https://spatie.be/docs/laravel-data) (`config/data.php`, `php artisan data:cache-structure`). That cache is **separate** from DTO metadata:
+This project also uses Spatie’s structure cache (`php artisan data:cache-structure`). After changing DTOs in production, run **both** (or `cache:clear` once).
 
 | Cache | Command | Purpose |
 |-------|---------|---------|
-| Spatie data structures | `data:cache-structure` | Validation, transformation, casting |
-| DTO metadata | `dto:cache-metadata` | Form fields, list columns, detail field discovery |
-
-After changing DTOs, run **both** clear/warm commands in production, or use `cache:clear` once.
+| Spatie data structures | `data:cache-structure` | Validation, casting |
+| DTO metadata | `dto:cache-metadata` | Form fields, list columns, details discovery |
 
 ---
 
@@ -216,18 +160,16 @@ After changing DTOs, run **both** clear/warm commands in production, or use `cac
 
 1. `php artisan dto:clear-metadata`
 2. `php artisan dto:cache-metadata`
-3. If the entity is **hybrid**, refresh materialized form blades: `php artisan entity:materialize-form {Model} --force`
-4. If using `config:cache`, rebuild: `php artisan config:cache`
+3. Hybrid entity: `php artisan entity:materialize-form {Model} --force`
+4. If you use `config:cache`, run `php artisan config:cache` again
 
-**New DTO class not found by warm command**
+**New DTO class not found by the warm command**
 
-- Ensure the class extends `Spatie\LaravelData\Data`
-- Ensure the file lives under `app/Data/` (or a path listed in `config/dto-metadata.php`)
+- The class must extend `Spatie\LaravelData\Data`
+- The file must live under `app/Data/` (or a path in `config/dto-metadata.php`)
 
-**Columns missing `id` on list page**
+**Table is missing `id`**
 
-- `listColumns()` includes `id` only when the DTO declares a public `$id` property (standard for this project's Data classes).
+- `listColumns()` includes `id` only when the DTO has a public `$id` property.
 
-**Do I need Redis?**
-
-- No. The default **file** cache driver is sufficient. Metadata is written to `storage/framework/cache/` and reused on every request until cleared.
+**Do I need Redis?** No. File cache is enough.

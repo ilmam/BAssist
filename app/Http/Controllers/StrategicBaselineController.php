@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Project;
-use App\Models\StrategicBaseline;
 use App\Repositories\StrategicBaselineRepository;
 use App\Support\EntityAccess;
 use Illuminate\Http\Request;
@@ -37,7 +36,7 @@ class StrategicBaselineController extends CrudController
     {
         /** @var StrategicBaselineRepository $repo */
         $repo = $this->modelRepository;
-        $existing = StrategicBaseline::query()->where('project_id', $project->id)->first();
+        $existing = $repo->findForProject($project);
 
         if ($existing === null) {
             EntityAccess::authorize(auth()->user(), $this->modelName, EntityAccess::CREATE);

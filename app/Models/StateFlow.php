@@ -24,9 +24,12 @@ class StateFlow extends BaseModel
         'status_id',
     ];
 
-    protected $casts = [
-        'transitions' => 'array',
-    ];
+    protected function casts(): array
+    {
+        return array_merge(parent::casts(), [
+            'transitions' => 'array',
+        ]);
+    }
 
     #[Relation('BelongsTo')]
     public function project(): BelongsTo

@@ -35,12 +35,12 @@ use Illuminate\Support\Str;
  *
  *  Controller generation (NOT stub-based)
  *   - makeControllers($model)       Delegates to Laravel's make:controller
- *                                   for the web and API controllers, then
+ *                                   for the web {Model}Controller only, then
  *                                   patchToCrudController() rewrites the
  *                                   generated class to extend CrudController
  *                                   and drops the unused Request import.
- *                                   This avoids maintaining duplicate
- *                                   controller stubs.
+ *                                   API stays on shared Api\CrudController
+ *                                   unless you set api_controller in config.
  *
  *  Writing
  *   - writeFiles($files)            Honours --force (skip existing unless
@@ -124,13 +124,12 @@ trait EntityScaffoldTrait
     // -------------------------------------------------------------------------
 
     /**
-     * Generate web and API controllers that extend CrudController.
-     * Delegates to Laravel's own make:controller, then patches the parent class.
+     * Generate a web controller that extends CrudController.
+     * API routes stay on the shared Api\CrudController unless you add api_controller in config.
      */
     protected function makeControllers(string $model): void
     {
         $this->makeOneController("{$model}Controller", false);
-        $this->makeOneController("Api/{$model}Controller", true);
     }
 
     private function makeOneController(string $name, bool $inSubNamespace): void
@@ -267,7 +266,7 @@ trait EntityScaffoldTrait
      * Build the PHP lines for a config/crud.php model entry.
      *
      * @param  array<string, mixed>  $options  Supported keys:
-     *   - controllers (bool)  include 'controller' + 'api_controller' lines
+     *   - controllers (bool)  include 'controller' line
      *   - nav         (bool)
      *   - nav_label   (string)
      *   - nav_icon    (string)
@@ -280,7 +279,6 @@ trait EntityScaffoldTrait
 
         if (! empty($options['controllers'])) {
             $lines[] = "            'controller' => \\App\\Http\\Controllers\\{$model}Controller::class,";
-            $lines[] = "            'api_controller' => \\App\\Http\\Controllers\\Api\\{$model}Controller::class,";
         }
 
         if (! empty($options['home'])) {

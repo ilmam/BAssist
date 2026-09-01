@@ -273,7 +273,6 @@ class EjectEntityCommand extends Command
         if ($includeControllers) {
             foreach ([
                 app_path("Http/Controllers/{$model}Controller.php"),
-                app_path("Http/Controllers/Api/{$model}Controller.php"),
             ] as $path) {
                 $exists = File::exists($path);
                 $this->line(($exists ? '  <comment>overwrite</comment> ' : '  <info>create</info>   ').$path);
@@ -301,7 +300,6 @@ class EjectEntityCommand extends Command
 
         if ($level === 'material') {
             $this->line("  Review App\\Http\\Controllers\\{$model}Controller");
-            $this->line("  Review App\\Http\\Controllers\\Api\\{$model}Controller");
             $this->line('  php artisan route:clear');
         } else {
             $resource = Str::plural(Str::snake($model));

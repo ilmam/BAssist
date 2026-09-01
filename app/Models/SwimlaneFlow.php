@@ -28,9 +28,12 @@ class SwimlaneFlow extends BaseModel
         'status_id',
     ];
 
-    protected $casts = [
-        'elements' => 'array',
-    ];
+    protected function casts(): array
+    {
+        return array_merge(parent::casts(), [
+            'elements' => 'array',
+        ]);
+    }
 
     protected $attributes = [
         'direction' => 'TB',

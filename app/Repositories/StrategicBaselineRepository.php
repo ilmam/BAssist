@@ -38,11 +38,16 @@ class StrategicBaselineRepository extends BaseRepository
         $this->model = new StrategicBaseline();
     }
 
-    public function findOrCreateForProject(Project $project): StrategicBaseline
+    public function findForProject(Project $project): ?StrategicBaseline
     {
-        $existing = StrategicBaseline::query()
+        return StrategicBaseline::query()
             ->where('project_id', $project->id)
             ->first();
+    }
+
+    public function findOrCreateForProject(Project $project): StrategicBaseline
+    {
+        $existing = $this->findForProject($project);
 
         if ($existing) {
             return $existing;

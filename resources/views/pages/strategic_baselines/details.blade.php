@@ -21,8 +21,8 @@
         </x-slot>
         <div class="strategic-baseline-doc__fields">
             @foreach ($fields as $name => $value)
-                <div class="kt-form-item @if (in_array((string) $name, $narrativeFields, true)) strategic-baseline-doc__narrative @endif">
-                    <label class="kt-form-label font-semibold text-foreground">{{ \App\Helpers\Ui::fieldLabel((string) $name) }}</label>
+                <div class="@if (in_array((string) $name, $narrativeFields, true)) strategic-baseline-doc__narrative @endif">
+                    <label class="font-semibold text-foreground">{{ \App\Helpers\Ui::fieldLabel((string) $name) }}</label>
                     <span class="text-sm font-normal text-foreground @if (in_array((string) $name, $narrativeFields, true)) strategic-baseline-doc__prose @endif">{{ $value }}</span>
                 </div>
             @endforeach
@@ -36,11 +36,11 @@
 
 @push('styles')
     <style>
-        .strategic-baseline-doc .kt-form-item {
+        .strategic-baseline-doc__fields > div {
             margin-bottom: 1.75rem;
         }
 
-        .strategic-baseline-doc .kt-form-item:last-child {
+        .strategic-baseline-doc__fields > div:last-child {
             margin-bottom: 0;
         }
 

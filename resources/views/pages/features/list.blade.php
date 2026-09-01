@@ -2,7 +2,6 @@
 
 @section('main')
     @php
-        $theme = function_exists('ui_theme') ? ui_theme() : 'metronic8';
         $narrow = 'width: 6.5rem';
 
         // Keep title breathing room; shrink code / project / status.
@@ -21,17 +20,7 @@
             ];
         })->all();
 
-        if ($theme === 'metronic9') {
-            $scenariosTemplate = '<span class="inline-flex items-center gap-1 text-xs font-medium text-foreground" title="'.e(__('ui.scenarios')).'">'
-                .'<i class="ki-filled ki-'.e(entity_icon('Scenario')).'"></i>'
-                .'<span>{scenarios_count}</span>'
-                .'</span>';
-        } else {
-            $scenariosTemplate = '<span title="'.e(__('ui.scenarios')).'">'
-                .'<i class="fa fa-list"></i> '
-                .'<span>{scenarios_count}</span>'
-                .'</span>';
-        }
+        $scenariosTemplate = '<span class="text-xs font-medium" title="'.e(__('ui.scenarios')).'">{scenarios_count}</span>';
 
         $relationColumns = [
             [

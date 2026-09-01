@@ -134,6 +134,22 @@ class BaseRepository
         );
     }
 
+    /**
+     * Load the Eloquent model for HTTP actions that need relations or domain methods.
+     *
+     * @param  list<string|array<string, mixed>>|\Closure  $with
+     */
+    public function findModel($id, array $with = []): Model
+    {
+        $query = $this->model::query();
+
+        if ($with !== []) {
+            $query->with($with);
+        }
+
+        return $query->findOrFail($id);
+    }
+
     public function editById($Id)
     {
         return $this->editDto::from(

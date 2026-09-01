@@ -39,11 +39,16 @@ class ArchitectureRepository extends BaseRepository
         $this->model = new Architecture();
     }
 
-    public function findOrCreateForProject(Project $project): Architecture
+    public function findForProject(Project $project): ?Architecture
     {
-        $existing = Architecture::query()
+        return Architecture::query()
             ->where('project_id', $project->id)
             ->first();
+    }
+
+    public function findOrCreateForProject(Project $project): Architecture
+    {
+        $existing = $this->findForProject($project);
 
         if ($existing) {
             return $existing;

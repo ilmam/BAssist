@@ -25,9 +25,12 @@ class DataDictionary extends BaseModel
         'status_id',
     ];
 
-    protected $casts = [
-        'entities' => 'array',
-    ];
+    protected function casts(): array
+    {
+        return array_merge(parent::casts(), [
+            'entities' => 'array',
+        ]);
+    }
 
     #[Relation('BelongsTo')]
     public function project(): BelongsTo

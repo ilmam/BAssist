@@ -18,46 +18,6 @@ class ChangeRequestController extends CrudController
     ) {
     }
 
-    public function create()
-    {
-        $form = $this->buildCreateForm();
-
-        return view(model_page_view($this->modelName, 'form'), $this->formViewData($form, 'create'));
-    }
-
-    public function edit($id)
-    {
-        $form = $this->buildEditForm($id);
-
-        return view(model_page_view($this->modelName, 'form'), $this->formViewData($form, 'edit'));
-    }
-
-    public function modalCreate()
-    {
-        $form = $this->buildCreateForm();
-        $data = $this->formViewData($form, 'create');
-
-        return $this->respondModalOrPage(
-            model_modal_view($this->modelName, 'form'),
-            $data,
-            model_page_view($this->modelName, 'form'),
-            $data
-        );
-    }
-
-    public function modalEdit($id)
-    {
-        $form = $this->buildEditForm($id);
-        $data = $this->formViewData($form, 'edit');
-
-        return $this->respondModalOrPage(
-            model_modal_view($this->modelName, 'form'),
-            $data,
-            model_page_view($this->modelName, 'form'),
-            $data
-        );
-    }
-
     /**
      * The "Approved" status option only exists in the select list so that an
      * already-approved CR can still render its current value. Draft/under-review
@@ -82,7 +42,7 @@ class ChangeRequestController extends CrudController
     {
         $dto = $this->modelRepository->getById($id);
         $fields = $dto->getFields(onlyHeaders: false, withPrefix: false, object: $dto);
-        $changeRequest = ChangeRequest::query()->findOrFail((int) $id);
+        $changeRequest = $this->modelRepository->findModel((int) $id);
 
         return view(model_page_view($this->modelName, 'details'), [
             'dto' => $dto,
@@ -98,7 +58,7 @@ class ChangeRequestController extends CrudController
     {
         $dto = $this->modelRepository->getById($id);
         $fields = $dto->getFields(onlyHeaders: false, withPrefix: false, object: $dto);
-        $changeRequest = ChangeRequest::query()->findOrFail((int) $id);
+        $changeRequest = $this->modelRepository->findModel((int) $id);
         $data = [
             'dto' => $dto,
             'model' => $this->modelName,
@@ -120,7 +80,7 @@ class ChangeRequestController extends CrudController
     {
         EntityAccess::authorize(auth()->user(), 'ChangeRequest', EntityAccess::UPDATE);
 
-        $changeRequest = ChangeRequest::query()->with('stakeholderNeed')->findOrFail((int) $id);
+        $changeRequest = $this->modelRepository->findModel((int) $id, ['stakeholderNeed']);
         if (! $this->canApprove($changeRequest)) {
             throw ValidationException::withMessages([
                 'status' => __('ui.change_request_cannot_approve'),
@@ -145,7 +105,7 @@ class ChangeRequestController extends CrudController
     {
         EntityAccess::authorize(auth()->user(), 'ChangeRequest', EntityAccess::UPDATE);
 
-        $changeRequest = ChangeRequest::query()->findOrFail((int) $id);
+        $changeRequest = $this->modelRepository->findModel((int) $id);
         $selected = $request->input('taint_items', []);
         if (! is_array($selected)) {
             $selected = [];
@@ -186,20 +146,6 @@ class ChangeRequestController extends CrudController
         }
 
         return $dto::from($payload);
-    }
-
-    /**
-     * @param  array{dto: object, formFields: array<string, array<string, mixed>>, hiddenDefaults?: array<string, mixed>}  $form
-     * @return array{dto: object, model: string, formFields: array<string, array<string, mixed>>, operation: string}
-     */
-    protected function formViewData(array $form, string $operation): array
-    {
-        return [
-            'dto' => $form['dto'],
-            'model' => $this->modelName,
-            'formFields' => $form['formFields'],
-            'operation' => $operation,
-        ];
     }
 
     protected function canApprove(ChangeRequest $changeRequest): bool

@@ -17,6 +17,11 @@ use Illuminate\View\View;
 
 class GuardrailsController extends Controller
 {
+    public function __construct(
+        protected ProjectContext $projectContext,
+        protected WorkspaceContext $workspaceContext,
+    ) {
+    }
     public function index(Request $request): View
     {
         $this->authorizeView();
@@ -168,7 +173,7 @@ class GuardrailsController extends Controller
             return (int) $raw;
         }
 
-        return app(ProjectContext::class)->id();
+        return $this->projectContext->id();
     }
 
     protected function resolveWorkspaceId(Request $request): ?int
@@ -178,7 +183,7 @@ class GuardrailsController extends Controller
             return (int) $raw;
         }
 
-        return app(WorkspaceContext::class)->id();
+        return $this->workspaceContext->id();
     }
 
     protected function authorizeView(): void

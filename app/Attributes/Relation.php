@@ -6,7 +6,7 @@ use Attribute;
 
 /**
  * Declares an Eloquent relation method for framework relation inventory
- * (e.g. RelationsManagerTrait), not DTO list/form/value display.
+ * (e.g. App\Models\Concerns\RelationsManagerTrait), not DTO list/form/value display.
  *
  * Example:
  *   #[Relation('belongsTo')]

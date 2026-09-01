@@ -1,14 +1,24 @@
-# UI Views — Conventions & Architecture
+# UI views
 
-This document describes how views, themes, pages, modals, and components are organized in this project. Follow these conventions when adding models, customizing screens, or supporting additional themes.
+How list, form, details, and modals are organized. **New to this layer?** Add an entity first: [quick-start.md](quick-start.md). Naming: [conventions.md](conventions.md).
+
+## If you remember three things
+
+1. **Do not put theme CSS in `pages/`.** No Metronic `kt-*` classes. Use `<x-form-card>`, `<x-form-card-body>`, `<x-form-card-footer>`, `<x-button>`, `Form::field(...)`.
+2. **Most entities need no Blade files.** Shared `pages/generic/*` is enough. Drop a file under `pages/{resource}/` only when the generic screen is wrong.
+3. **Full page and modal are two wrappers around the same form.** Virtual entities use `$formFields`. Hybrid entities use `Form::field(...)` lines — refresh with `entity:materialize-form {Model}`.
+
+The rest of this page is a reference. Skip **Record Prev/Next** and **Container-relative layout** until you need them.
+
+`{Model}` = StudlyCase class. `{resource}` = plural snake_case folder (`Invoice` → `invoices`).
 
 ## Design principles
 
-1. **Write business screens once.** Pages describe *what* to show (list, form, details). Themes describe *how* it looks.
-2. **Theme-neutral pages.** CRUD pages live under `resources/views/pages/` and must not contain Metronic-specific CSS classes or markup.
-3. **Theme-specific components.** Visual differences between Metronic 8 and 9 are handled in `resources/views/themes/{theme}/`.
-4. **Convention over configuration.** Drop a blade file in the expected path to override a generic view. Config is only needed for non-standard paths.
-5. **Generic CRUD by default.** New routable models get list / form / details / modals automatically. Custom blades are optional.
+1. **Write business screens once.** Pages describe *what* to show. Themes describe *how* it looks.
+2. **Theme-neutral pages.** CRUD lives under `resources/views/pages/` — no theme-specific CSS there.
+3. **Theme-specific components.** Look-and-feel lives in `resources/views/themes/{theme}/`.
+4. **Convention over configuration.** Create the expected blade path to override. Config is only for odd paths.
+5. **Generic CRUD by default.** Custom blades are optional.
 
 ---
 
@@ -30,25 +40,25 @@ This document describes how views, themes, pages, modals, and components are org
 ### Request flow (full page)
 
 ```
-GET /categories
+GET /{resource}
   → CrudController@index
-  → model_page_view('Category', 'list')
-  → pages/generic/list.blade.php   (or pages/categories/list if override exists)
-  → @extends(ui_layout())          → themes/metronic9/template.blade.php
-  → <x-datatable>                    → themes/metronic9/components/datatable.blade.php
+  → model_page_view('{Model}', 'list')
+  → pages/generic/list.blade.php   (or pages/{resource}/list if that file exists)
+  → @extends(ui_layout())          → themes/{theme}/template.blade.php
+  → <x-datatable>                    → themes/{theme}/components/datatable.blade.php
 ```
 
 ### Request flow (modal fragment)
 
 ```
-GET /categories/modal/5/edit  (with X-Modal-Request: 1)
+GET /{resource}/modal/5/edit  (with header X-Modal-Request: 1)
   → CrudController@modalEdit
-  → model_modal_view('Category', 'form')
+  → model_modal_view('{Model}', 'form')
   → pages/modals/form.blade.php          (virtual)
-     OR pages/categories/modals/form.blade.php   (hybrid override)
-  → <x-modal-content>              → themes/metronic9/components/modal-content.blade.php
-  → <x-form :inModal="true">       → virtual: dynamic fields via $formFields
-     OR inline Form::field lines   → hybrid: materialized form blade
+     OR pages/{resource}/modals/form.blade.php   (hybrid)
+  → <x-modal-content>              → themes/{theme}/components/modal-content.blade.php
+  → <x-form :inModal="true">       → virtual: $formFields
+     OR Form::field lines          → hybrid
 ```
 
 If the same modal URL is opened directly in the browser (no AJAX header), the controller falls back to the **full page** form via `model_page_view()`.
@@ -66,10 +76,11 @@ resources/views/
 │   │   └── details.blade.php
 │   ├── modals/                         # Default modal fragments (AJAX)
 │   │   ├── view.blade.php              # Read-only details in modal
-│   │   ├── form.blade.php              # Edit form in modal
+│   │   ├── form.blade.php              # Create/edit form in modal
+│   │   ├── quick-create.blade.php      # Compact create (list toolbar)
 │   │   └── delete.blade.php            # Delete confirmation in modal
 │   └── {resource}/                     # Optional per-model page overrides
-│       ├── list.blade.php              # e.g. pages/categories/list.blade.php
+│       ├── list.blade.php              # e.g. pages/{resource}/list.blade.php
 │       ├── form.blade.php
 │       ├── details.blade.php
 │       └── modals/                     # Optional per-model modal overrides
@@ -94,17 +105,17 @@ resources/views/
 
 | Concept | Format | Example |
 |---------|--------|---------|
-| Model name (PHP) | StudlyCase | `Category` |
-| Resource name (URLs, folders) | plural snake | `categories` |
+| Model name (PHP) | StudlyCase | `{Model}` |
+| Resource name (URLs, folders) | plural snake | `{resource}` |
 | Page actions | `list`, `form`, `details` | — |
 | Modal actions | `view`, `form`, `delete` | — |
-| Route names | `{resource}.{action}` | `categories.index` |
-| View dot notation | `pages.{resource}.{action}` | `pages.categories.list` |
+| Route names | `{resource}.{action}` | `{resource}.index` |
+| View dot notation | `pages.{resource}.{action}` | `pages.{resource}.list` |
 
 Resource name is always:
 
 ```php
-Str::plural(Str::snake($model)); // Category → categories
+Str::plural(Str::snake($model)); // Invoice → invoices
 ```
 
 ---
@@ -118,33 +129,31 @@ Defined in `app/helpers.php`. Used by `BaseController` for `index`, `create`, `e
 **Resolution order:**
 
 1. **Convention file** — `pages/{resource}/{action}.blade.php` if it exists  
-   Example: `pages/categories/list.blade.php`
-2. **Config escape hatch** — `config('crud.models.{Model}.views.{action}')` if set and view exists
+2. **Config escape hatch** — `config('crud.models.{Model}.views.{action}')` if set and the view exists
 3. **Generic default** — `pages/generic/{action}.blade.php`
 
 ```php
-model_page_view('Category', 'list');    // → pages.generic.list (or override)
-model_page_view('Category', 'form');    // → pages.generic.form
-model_page_view('Category', 'details'); // → pages.generic.details
+model_page_view('{Model}', 'list');    // → pages.generic.list (or your override)
+model_page_view('{Model}', 'form');
+model_page_view('{Model}', 'details');
 ```
 
 No config entry is required for conventional overrides — create the file and it is picked up automatically.
 
 ### Modal fragments — `model_modal_view($model, $action)`
 
-Used by `BaseController` for `modalView`, `modalEdit`, and `modalDelete`.
+Used by `BaseController` for `modalView`, `modalCreate`, `modalEdit`, `modalQuickCreate`, and `modalDelete`.
 
 **Resolution order:**
 
-1. **Convention file** — `pages/{resource}/modals/{action}.blade.php` if it exists  
-   Example: `pages/categories/modals/form.blade.php`
-2. **Config escape hatch** — `config('crud.models.{Model}.modals.{action}')` if set and view exists
+1. **Convention file** — `pages/{resource}/modals/{action}.blade.php` if it exists
+2. **Config escape hatch** — `config('crud.models.{Model}.modals.{action}')` if set and the view exists
 3. **Generic default** — `pages/modals/{action}.blade.php`
 
 ```php
-model_modal_view('Category', 'view');   // → pages.modals.view
-model_modal_view('Category', 'form');   // → pages.modals.form
-model_modal_view('Category', 'delete'); // → pages.modals.delete
+model_modal_view('{Model}', 'view');
+model_modal_view('{Model}', 'form');
+model_modal_view('{Model}', 'delete');
 ```
 
 ---
@@ -159,7 +168,7 @@ A modal and a full page are **different delivery formats**, not different busine
 | **View (hybrid)** | `pages/{resource}/form.blade.php` | `pages/{resource}/modals/form.blade.php` |
 | **Layout** | `@extends(ui_layout())` | None — HTML injected into modal container |
 | **Wrapper** | `<x-form-card>` + back button | `<x-modal-content>` |
-| **Controller** | `create()`, `edit()` | `modalEdit()` (AJAX) |
+| **Controller** | `create()`, `edit()` | `modalCreate()`, `modalEdit()`, `modalQuickCreate()` (AJAX) |
 | **Field rendering (virtual)** | `<x-form :fieldsArray="$formFields">` | `<x-form :inModal="true">` |
 | **Field rendering (hybrid)** | Explicit `Form::field(...)` lines | Explicit `Form::field(...)` lines |
 
@@ -169,7 +178,13 @@ A modal and a full page are **different delivery formats**, not different busine
 
 This is the **only built-in duplication** in the view layer: thin wrappers around the same form layout. Form validation and routes still come from the DTO and repository.
 
-**Note:** Create currently uses only the full page. There is no modal create flow.
+**Create in a modal:** list toolbars and `use_modals` entities open **Quick Create** (`modalQuickCreate`) and full **modal create** (`modalCreate`) as well as full-page `create()`. Set `'use_modals' => false` in `config/crud.php` for an entity to keep create/edit/show on full pages only (datatable links skip modal URLs).
+
+**Card chrome in hybrid forms:** do not put `kt-card-body` / `kt-card-footer` in `pages/`. Use `<x-form-card-body>` and `<x-form-card-footer>` (theme components). Virtual forms get that chrome from `<x-form>` inside `<x-form-card>`.
+
+**Admin exception:** `pages/admin/*` (users, roles) is outside the generic entity ladder. Theme classes there are allowed.
+
+**HTTP and Eloquent:** controllers must not call `Model::query()`. Load rows through the repository (`getById` / `editById` for DTOs, `findModel($id, $with)` when the action needs the Eloquent model).
 
 Modal fallback behavior (`RespondsWithModal` trait): opening a modal URL directly in the browser renders the equivalent **full page** instead of a fragment.
 
@@ -181,7 +196,9 @@ If the open modal is an **edit** form (`data-modal-form` with PUT/PATCH) and the
 
 ### Record Prev/Next in view modals
 
-Framework-level navigation between detail **view** modals for the current list context. Enabled by `config('ui.modal_record_nav')` (env: `UI_MODAL_RECORD_NAV`, default `true`).
+Skip this section unless you are changing view-modal navigation.
+
+Framework-level previous/next between detail **view** modals for the current list. Enabled by `config('ui.modal_record_nav')` (env: `UI_MODAL_RECORD_NAV`, default `true`).
 
 #### How previous / next are determined
 
@@ -253,7 +270,7 @@ On `[data-modal-url]` click, if the URL matches `.../modal/{id}/view` and the tr
 
 #### Hub pages (multi-section lists)
 
-Grouped hubs (e.g. Solution Requirements, Guardrails) should embed standard `<x-datatable defaultButtons>` per section via `pages/partials/hub-entity-section.blade.php` so eye actions open view modals and participate in record nav. Avoid hand-built tables that link to full-page `show` without `data-modal-url`.
+A hub page that lists several entities should embed a standard `<x-datatable defaultButtons>` per section (`pages/partials/hub-entity-section.blade.php`) so the eye action opens a view modal and Prev/Next still work. Avoid hand-built tables that only link to full-page `show` without `data-modal-url`.
 
 #### Non-goals
 
@@ -319,9 +336,11 @@ PHP classes in `app/View/Components/` use the `ResolvesThemeView` trait to rende
 Most models require **no new view files**.
 
 1. Create `App\Models\{Model}` with `#[RoutableAttribute]`
-2. Create `App\Repositories\{Model}Repository` extending `BaseRepository`
-3. Create `App\Data\{Model}Data` with `Form` on properties
-4. Optionally register nav/settings in `config/crud.php`
+2. Create `App\Repositories\{Model}Repository` extending `BaseRepository` (`$editDto` / `$viewDto`)
+3. Create `App\Data\{Model}Data` (`Form` / `ListForm`) and `App\Data\{Model}ViewData` (`InList` / `Hide`)
+4. Optionally set nav / `use_modals` / `controller` in `config/crud.php`
+
+Or `php artisan make:entity {Model}` — see [quick-start.md](quick-start.md) and [conventions.md](conventions.md).
 
 Field metadata is cached in production — see **[docs/dto-metadata.md](dto-metadata.md)** for cache/warm/clear commands.
 
@@ -336,42 +355,42 @@ The generic controller (`CrudController`), generic pages, and generic modals han
 Create the file — no controller or config change needed:
 
 ```
-resources/views/pages/products/list.blade.php
+resources/views/pages/{resource}/list.blade.php
 ```
 
 Override form or details the same way:
 
 ```
-pages/products/form.blade.php
-pages/products/details.blade.php
+pages/{resource}/form.blade.php
+pages/{resource}/details.blade.php
 ```
 
 To scaffold owned form markup from DTO metadata (instead of copying generic `<x-form>`):
 
 ```bash
-php artisan entity:eject Product          # virtual → hybrid (all six blades)
-php artisan entity:materialize-form Product   # form blades only
+php artisan entity:eject {Model}          # virtual → hybrid (all six blades)
+php artisan entity:materialize-form {Model}   # form blades only
 ```
 
-Or scaffold hybrid from the start:
+Or start hybrid:
 
 ```bash
-php artisan make:entity Product --profile=hybrid --fields="..."
+php artisan make:entity {Model} --profile=hybrid --fields="..."
 ```
 
 ### Override a modal
 
 ```
-resources/views/pages/products/modals/form.blade.php
+resources/views/pages/{resource}/modals/form.blade.php
 ```
 
 ### Non-standard view path (config)
 
-Use only when the blade does not follow the `{resource}/{action}` convention:
+Use only when the blade does not follow `{resource}/{action}`:
 
 ```php
 // config/crud.php
-'Product' => [
+'{Model}' => [
     'views' => [
         'list' => 'pages.shared.hierarchical-list',
     ],
@@ -427,8 +446,8 @@ Model name is resolved automatically in `CrudController` from the route name.
 Need to change how a list looks for one model?
   → Create pages/{resource}/list.blade.php
 
-Need a tree instead of a datatable for categories?
-  → Create pages/categories/list.blade.php
+Need a different list layout for one entity?
+  → Create pages/{resource}/list.blade.php
 
 Need different modal chrome (header/footer styling)?
   → Edit themes/{theme}/components/modal-content.blade.php
@@ -447,7 +466,9 @@ Need a shared view used by multiple models?
 
 ## Container-relative layout (framework)
 
-Portable CSS in **`themes/{theme}/assets/css/ui-layout.css`** (framework-level — not BAssist-specific). Loaded by theme templates before any app override CSS (`bassist.css`).
+Skip this section unless you are changing field widths or modal sizing.
+
+Portable CSS in **`themes/{theme}/assets/css/ui-layout.css`**. Loaded by theme templates before any app override CSS.
 
 This is how nested panels (including modals) let children size to the **parent box**, not the browser viewport.
 
@@ -497,15 +518,14 @@ All theme `form` components (Quick Create, modal, and full page create/edit) emi
 
 #### Override spans
 
-`#[Form]` / `#[ListForm]` do **not** take span / `quickSpan`. Spans use the type defaults above. Rare overrides set `$field['ui_span']` at form-assembly time (after `EntityFormBuilder` / `getFormFields()`, or in a per-model form override blade). All theme `form` components (Quick Create, modal, full create/edit) honor spans.
+Type defaults apply when `uiSpan` is omitted. Override on the attribute:
 
 ```php
-// Same at every stop
-$fields['title']['ui_span'] = 6;
-
-// Per stop (partial keys merge onto type defaults)
-$fields['status_id']['ui_span'] = ['sm' => 12, 'md' => 6, 'lg' => 6];
+#[Form('text', uiSpan: 12)]
+#[Form('select', 'Status', uiSpan: ['sm' => 12, 'md' => 6, 'lg' => 6])]
 ```
+
+`ListForm` accepts the same `uiSpan` argument. You can still set `$field['ui_span']` after `EntityFormBuilder` / `getFormFields()` for a one-off. All theme `form` components (Quick Create, modal, full create/edit) honor spans.
 
 ### Force override: `data-ui-size` (explicit only)
 
@@ -546,11 +566,11 @@ Use when you must force density **regardless of container width**. Never auto-sy
 <button data-modal-url="..." data-modal-size="fullscreen">…</button>
 ```
 
-Any modal can also switch sizes at runtime via the header size switcher (Small / Medium / Large / Fullscreen / Side). Swimlane and state-flow diagram modals open in `fullscreen` by default.
+Any modal can also switch sizes at runtime via the header size switcher (Small / Medium / Large / Fullscreen / Side). Some specialized editors open in `fullscreen` by default.
 
 Metronic 8 maps `fullscreen` to Bootstrap’s `modal-fullscreen` class on the dialog.
 
-App-specific modal quirks (e.g. clear-backdrop side sheets) stay in `bassist.css`.
+App-specific modal quirks (for example side-sheet backdrop) belong in the app’s theme override CSS, not in `pages/`.
 
 ---
 
@@ -562,6 +582,8 @@ App-specific modal quirks (e.g. clear-backdrop side sheets) stay in `bassist.css
 | `app/Http/Controllers/BaseController.php` | CRUD + modal actions |
 | `app/Http/Controllers/CrudController.php` | Route-driven model resolution |
 | `app/Http/Controllers/Concerns/RespondsWithModal.php` | AJAX fragment vs full page |
+| `app/View/Components/FormCard.php` | Neutral card shell |
+| `app/View/Components/FormCardBody.php` / `FormCardFooter.php` | Theme card body/footer (use these instead of `kt-card-*` in pages) |
 | `config/ui.php` | Active theme, modal flags (`modal_view`, `modal_record_nav`, …) |
 | `config/crud.php` | Model overrides, nav, optional view paths |
 | `app/Support/CrudEntityRegistry.php` | Auto-discovery of routable models |
@@ -571,7 +593,7 @@ App-specific modal quirks (e.g. clear-backdrop side sheets) stay in `bassist.css
 | `resources/views/pages/partials/modal-close-guard-script.blade.php` | Escape + dirty-edit close confirmation |
 | `resources/views/pages/partials/hub-entity-section.blade.php` | Hub section card with standard DataTable |
 | `public/themes/*/assets/css/ui-layout.css` | Framework container-query layout (`data-ui-*`) |
-| `public/themes/metronic9/assets/css/bassist.css` | BAssist-only UI tweaks |
+| `public/themes/{theme}/assets/css/` | Optional app override CSS (keep out of `pages/`) |
 
 ---
 

@@ -30,15 +30,12 @@ class Stakeholder extends BaseModel
         'status_id',
     ];
 
-    protected $casts = [
-        'created_at' => 'datetime',
-        'updated_at' => 'datetime',
-        'deleted_at' => 'datetime',
-        'created_by' => 'integer',
-        'updated_by' => 'integer',
-        'deleted_by' => 'integer',
-        'is_system' => 'boolean',
-    ];
+    protected function casts(): array
+    {
+        return array_merge(parent::casts(), [
+            'is_system' => 'boolean',
+        ]);
+    }
 
     protected static function booted(): void
     {

@@ -23,7 +23,7 @@
         </x-slot>
 
         {{ Form::open(array_merge($formRoute, ['id' => 'form1', 'files' => true, 'method' => 'post'])) }}
-            <div class="kt-card-body border-t border-border p-5 lg:p-7.5 space-y-8" data-ui-container>
+            <x-form-card-body class="space-y-8" data-ui-container>
                 @if (! in_array($verb, ['POST', 'post'], true))
                     @method($verb)
                 @endif
@@ -54,12 +54,12 @@
                     'editable' => true,
                     'showTitleField' => false,
                 ])
-            </div>
+            </x-form-card-body>
 
-            <div class="kt-card-footer flex justify-end gap-2.5 border-t border-border p-5 lg:p-7.5">
+            <x-form-card-footer>
                 <x-button type="link" href="{{ $cancelRoute }}" color="outline">Cancel</x-button>
                 <x-button type="submit" color="primary">Save</x-button>
-            </div>
+            </x-form-card-footer>
         {{ Form::close() }}
     </x-form-card>
 @endsection

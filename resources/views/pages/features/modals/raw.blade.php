@@ -19,9 +19,9 @@
 
     <x-slot:footer>
         @if (filled($assembledGherkin))
-            <button type="button" class="kt-btn kt-btn-outline" data-clipboard-from="#assembled_export_{{ $feature->id }}">
+            <x-button type="button" color="outline" data-clipboard-from="#assembled_export_{{ $feature->id }}">
                 {{ __('ui.copy_gherkin') }}
-            </button>
+            </x-button>
             @if (! empty($exportUrl))
                 <x-button type="link" href="{{ $exportUrl }}" color="light">{{ __('ui.download_feature') }}</x-button>
             @endif

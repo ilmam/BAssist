@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Feature;
 use App\Services\FeatureImportPreview;
 use App\Services\FeatureImportService;
 use App\Services\GherkinFeatureAssembler;
@@ -12,24 +11,28 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
-use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class FeatureController extends CrudController
 {
+    public function __construct(
+        protected GherkinFeatureAssembler $assembler,
+        protected FeatureImportService $featureImport,
+    ) {
+    }
+
     public function show($id)
     {
         $dto = $this->modelRepository->getById($id);
         $fields = $dto->getFields(onlyHeaders: false, withPrefix: false, object: $dto);
-        $feature = $this->loadFeature((int) $id);
-        $assembler = app(GherkinFeatureAssembler::class);
+        $feature = $this->modelRepository->findForDocument((int) $id);
 
         return view(model_page_view($this->modelName, 'details'), [
             'dto' => $dto,
             'model' => $this->modelName,
             'fields' => $fields,
             'feature' => $feature,
-            'assembledGherkin' => $assembler->assembleFeature($feature),
-            'tagList' => $assembler->featureDisplayTags($feature),
+            'assembledGherkin' => $this->assembler->assembleFeature($feature),
+            'tagList' => $this->assembler->featureDisplayTags($feature),
             'exportUrl' => route('features.export', $feature->id),
             'printUrl' => route('features.print', $feature->id),
             'importUrl' => route('features.import', $feature->id),
@@ -40,15 +43,14 @@ class FeatureController extends CrudController
     {
         $dto = $this->modelRepository->getById($id);
         $fields = $dto->getFields(onlyHeaders: false, withPrefix: false, object: $dto);
-        $feature = $this->loadFeature((int) $id);
-        $assembler = app(GherkinFeatureAssembler::class);
+        $feature = $this->modelRepository->findForDocument((int) $id);
         $data = [
             'dto' => $dto,
             'model' => $this->modelName,
             'fields' => $fields,
             'feature' => $feature,
-            'assembledGherkin' => $assembler->assembleFeature($feature),
-            'tagList' => $assembler->featureDisplayTags($feature),
+            'assembledGherkin' => $this->assembler->assembleFeature($feature),
+            'tagList' => $this->assembler->featureDisplayTags($feature),
             'exportUrl' => route('features.export', $feature->id),
             'printUrl' => route('features.print', $feature->id),
             'importUrl' => route('features.import', $feature->id),
@@ -67,12 +69,11 @@ class FeatureController extends CrudController
      */
     public function modalRaw($id): View
     {
-        $feature = $this->loadFeature((int) $id);
-        $assembler = app(GherkinFeatureAssembler::class);
+        $feature = $this->modelRepository->findForDocument((int) $id);
 
         return view('pages.features.modals.raw', [
             'feature' => $feature,
-            'assembledGherkin' => $assembler->assembleFeature($feature),
+            'assembledGherkin' => $this->assembler->assembleFeature($feature),
             'exportUrl' => route('features.export', $feature->id),
             'printUrl' => route('features.print', $feature->id),
         ]);
@@ -98,15 +99,6 @@ class FeatureController extends CrudController
         );
     }
 
-    public function store(Request $request)
-    {
-        $dtoClass = '\\App\\Data\\'.$this->modelName.'Data';
-        $data = $dtoClass::from($request);
-        $created = $this->modelRepository->create($data->toArray());
-
-        return $this->respondAfterMutation($request, $created);
-    }
-
     /**
      * @param  array{dto: object, formFields: array<string, mixed>}  $form
      * @return array<string, mixed>
@@ -123,7 +115,7 @@ class FeatureController extends CrudController
         ];
 
         if ($featureId !== null && $featureId > 0) {
-            $feature = $this->loadFeature($featureId);
+            $feature = $this->modelRepository->findForDocument($featureId);
             $data['feature'] = $feature;
             $data['scenarios'] = $feature->scenarios;
         }
@@ -133,7 +125,7 @@ class FeatureController extends CrudController
 
     public function importForm($id): View
     {
-        $feature = $this->loadFeature((int) $id);
+        $feature = $this->modelRepository->findForDocument((int) $id);
         $dto = $this->modelRepository->getById($id);
 
         return view('pages.features.import', [
@@ -147,7 +139,7 @@ class FeatureController extends CrudController
 
     public function importPreview(Request $request, $id): RedirectResponse
     {
-        $feature = $this->loadFeature((int) $id);
+        $feature = $this->modelRepository->findForDocument((int) $id);
         $request->validate([
             'feature_file' => ['required', 'file', 'max:1024'],
         ]);
@@ -157,7 +149,7 @@ class FeatureController extends CrudController
         $filename = (string) $file->getClientOriginalName();
 
         try {
-            $preview = app(FeatureImportService::class)->previewReplace($feature, $contents, $filename);
+            $preview = $this->featureImport->previewReplace($feature, $contents, $filename);
         } catch (InvalidArgumentException $e) {
             return redirect()
                 ->route('features.import', $feature->id)
@@ -176,7 +168,7 @@ class FeatureController extends CrudController
 
     public function importPreviewShow(Request $request, $id): View|RedirectResponse
     {
-        $feature = $this->loadFeature((int) $id);
+        $feature = $this->modelRepository->findForDocument((int) $id);
         $payload = $request->session()->get(FeatureImportService::SESSION_KEY);
 
         if (! is_array($payload)
@@ -206,7 +198,7 @@ class FeatureController extends CrudController
 
     public function importConfirm(Request $request, $id): RedirectResponse
     {
-        $feature = $this->loadFeature((int) $id);
+        $feature = $this->modelRepository->findForDocument((int) $id);
         $request->validate([
             'token' => ['required', 'string'],
             'overwrite_title' => ['sometimes', 'boolean'],
@@ -227,7 +219,7 @@ class FeatureController extends CrudController
         $overwriteTitle = $request->boolean('overwrite_title', true);
 
         try {
-            app(FeatureImportService::class)->applyReplace($feature, $source, [
+            $this->featureImport->applyReplace($feature, $source, [
                 'overwrite_title' => $overwriteTitle,
             ]);
         } catch (InvalidArgumentException $e) {
@@ -243,12 +235,11 @@ class FeatureController extends CrudController
             ->with('status', __('ui.feature_import_success'));
     }
 
-    public function export($id): StreamedResponse|Response
+    public function export($id): Response
     {
-        $feature = $this->loadFeature((int) $id);
-        $assembler = app(GherkinFeatureAssembler::class);
-        $body = $assembler->assembleFeature($feature);
-        $filename = $assembler->downloadFilename($feature);
+        $feature = $this->modelRepository->findForDocument((int) $id);
+        $body = $this->assembler->assembleFeature($feature);
+        $filename = $this->assembler->downloadFilename($feature);
 
         return response($body, 200, [
             'Content-Type' => 'text/plain; charset=UTF-8',
@@ -258,30 +249,14 @@ class FeatureController extends CrudController
 
     public function print($id): View
     {
-        $feature = $this->loadFeature((int) $id);
-        $assembler = app(GherkinFeatureAssembler::class);
+        $feature = $this->modelRepository->findForDocument((int) $id);
 
         return view('pages.features.print', [
             'feature' => $feature,
-            'gherkin' => $assembler->assembleFeature($feature),
-            'filename' => $assembler->downloadFilename($feature),
+            'gherkin' => $this->assembler->assembleFeature($feature),
+            'filename' => $this->assembler->downloadFilename($feature),
             'exportUrl' => route('features.export', $feature->id),
             'backUrl' => route('features.show', $feature->id),
         ]);
-    }
-
-    protected function loadFeature(int $id): Feature
-    {
-        return Feature::query()
-            ->with([
-                'scenarios' => fn ($query) => $query->orderBy('id'),
-                'project',
-                'stakeholderNeed',
-                'changeRequest',
-                'swimlaneFlowStep',
-                'priority',
-                'status',
-            ])
-            ->findOrFail($id);
     }
 }

@@ -1,81 +1,63 @@
 # Entity form builder
 
-Create and edit forms need two things: the list of fields to render (with their control types) and, for `select` fields, the option list pulled from the related entity's table. Previously this logic lived **inside `BaseController`** — field discovery plus a loop that resolved each related repository to load dropdown options.
+**When do I care?** When a create/edit form should show dropdowns. You usually do not call this yourself — the shared `CrudController` already does.
 
-That coupled form-building to the generic controller, meaning:
+Create/edit forms need:
 
-- Custom controllers had to duplicate the loop to get populated `select` lists.
-- The `create()` form never actually populated dropdown options — only `edit` did.
+1. Which fields to render (from `#[Form]` on `{Model}Data`)
+2. For `select` fields, the option list from the related model’s repository
 
-`App\Support\EntityFormBuilder` centralizes this concern so **any** controller (generic or custom) produces identical form fields from a single call.
-
----
-
-## How it works
+`App\Support\EntityFormBuilder` does both in one call so generic and custom controllers get the same populated form.
 
 ```
-┌──────────────────────────────────────────────────────────────┐
-│  Controller (generic or custom)                              │
-│  $this->formBuilder()->fields($dtoClass)                     │
-└──────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌──────────────────────────────────────────────────────────────┐
-│  EntityFormBuilder::fields()                                  │
-│  1. DtoMetadata::for($dtoClass)->formFields()  (field schema) │
-│  2. populate `select` option lists from related repositories │
-│  3. FormHelper::getFormFields()  → view-ready structure       │
-└──────────────────────────────────────────────────────────────┘
+Controller
+  $this->formBuilder()->fields($dtoClass)
+        │
+        ▼
+  1. DtoMetadata → field types
+  2. For each select, load options via the related repository
+  3. FormHelper → structure the Blade expects
 ```
 
-For each field, `Form($fieldType, $model)` provides the control type (`$options[0]`) and, for a `select`, the related model name (`$options[1]`). The builder resolves that model's repository and calls `getSelectOptions()` to fill `$options['list']`.
+`#[Form('select', 'RelatedModel')]` supplies the control type and the related model name. The builder calls that model’s `getSelectOptions()`.
 
 ---
 
 ## Usage
 
-Inside any controller extending `BaseController`:
+Inside a controller that extends `BaseController`:
 
 ```php
 $formFields = $this->formBuilder()->fields($this->modelRepository->editDto);
 ```
 
-From anywhere else (custom controller, service, command):
+From anywhere else:
 
 ```php
 use App\Support\EntityFormBuilder;
 
-$formFields = app(EntityFormBuilder::class)->fields(CategoryData::class);
+$formFields = app(EntityFormBuilder::class)->fields(\App\Data\{Model}Data::class);
 ```
 
-The `formBuilder()` accessor on `BaseController` is a `protected` hook — override it to supply a customized builder for a specific controller.
+Override `formBuilder()` on a controller if you need a custom builder.
 
 ---
 
-## Design notes
+## Who owns what
 
-| Concern | Owner |
+| Concern | Class |
 |---------|-------|
-| Which fields exist + their types | `DtoMetadata` (attribute schema) |
-| Populating `select` option lists (runtime) | `EntityFormBuilder` |
-| Generating explicit `Form::field` lines (scaffold time) | `EntityFormMaterializer` |
-| Resolving a related repository | `RepositoryResolver` (injected) |
-| Rendering the form | Blade views / `FormBuilder` facade |
+| Which fields and types | `DtoMetadata` |
+| Filling select options at request time | `EntityFormBuilder` |
+| Writing explicit `Form::field` lines at scaffold time | `EntityFormMaterializer` |
+| Finding a related repository | `RepositoryResolver` |
+| HTML | Blade / `Form` facade |
 
-- **Single responsibility** — form-field construction and dropdown loading live in one class instead of the controller.
-- **Reuse (OCP)** — custom controllers get populated forms for free via one call, with no duplicated loops.
-- **Dependency inversion** — the builder receives a `RepositoryResolver` instance (`RepositoryResolver::for()`), so it can be mocked in tests; `BaseController` resolves the builder through the container.
+| Feature | Used when |
+|---------|-----------|
+| `EntityFormBuilder::fields($editDto)` | **Virtual** entities (`<x-form :fieldsArray="$formFields">`) |
+| `EntityFormMaterializer` | **Hybrid** owned form blades (`entity:eject` / `entity:materialize-form`) |
 
-### Where it is used
+Hybrid blades ignore `$formFields` at render time. After you change `{Model}Data`, run `php artisan entity:materialize-form {Model}`.
 
-| Feature | API | Applies when |
-|---------|-----|--------------|
-| Create form | `EntityFormBuilder::fields($editDto)` | **Virtual** entities (generic `<x-form>`) |
-| Edit / modal-edit form | `EntityFormBuilder::fields($editDto)` (via `buildEditForm()`) | **Virtual** entities |
-| Materialized form blades | `EntityFormMaterializer` (via `entity:eject` / `entity:materialize-form`) | **Hybrid** entities with owned form blades |
-
-For **virtual** entities, the controller still passes `$formFields` to `<x-form>`, which loops fields at render time.
-
-For **hybrid** entities, form blades contain explicit `Form::field(...)` lines generated from the same DTO metadata. The controller may still pass `$formFields`, but materialized blades do not use it — re-run `entity:materialize-form` after DTO changes.
-
-See [entity-scaffolding.md](entity-scaffolding.md#materialized-forms) and [console-commands.md](console-commands.md#entitymaterialize-form).
+See [entity-scaffolding.md](entity-scaffolding.md#materialized-forms).

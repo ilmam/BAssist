@@ -71,6 +71,31 @@ class StakeholderNeedRepository extends BaseRepository
             ->all();
     }
 
+    /**
+     * @return list<array{value: string, label: string}>
+     */
+    public function optionsForProject(?int $projectId): array
+    {
+        if ($projectId === null || $projectId < 1) {
+            return [];
+        }
+
+        return StakeholderNeed::query()
+            ->where('project_id', $projectId)
+            ->orderBy('number')
+            ->orderBy('title')
+            ->get()
+            ->map(function (StakeholderNeed $need) {
+                $code = $need->code ? $need->code.' — ' : '';
+
+                return [
+                    'value' => (string) $need->id,
+                    'label' => $code.$need->title,
+                ];
+            })
+            ->all();
+    }
+
     protected function applyOrphanConstraint(Builder $query): void
     {
         $query->where(function (Builder $inner) {
