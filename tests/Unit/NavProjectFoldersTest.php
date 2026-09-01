@@ -31,6 +31,7 @@ class NavProjectFoldersTest extends TestCase
                 'StakeholderNeed',
                 'guardrails.index',
                 'solution_requirements.index',
+                'DataDictionary',
                 'diagrams.index',
             ],
             $this->childKeys($folders['radd']['children'])
@@ -88,21 +89,14 @@ class NavProjectFoldersTest extends TestCase
         $this->assertContains('strategic_baselines.for-project', $routes);
     }
 
-    public function test_nav_tree_builder_and_menu_support_folder_badges(): void
+    public function test_nav_tree_builder_and_menu_render_project_folders(): void
     {
         $builder = file_get_contents(dirname(__DIR__, 2).'/app/Support/NavTreeBuilder.php');
-        $progress = file_get_contents(dirname(__DIR__, 2).'/app/Support/NavFolderProgress.php');
         $menu = file_get_contents(dirname(__DIR__, 2).'/resources/views/themes/metronic9/partials/menu-items.blade.php');
 
         $this->assertIsString($builder);
-        $this->assertIsString($progress);
         $this->assertIsString($menu);
         $this->assertStringContainsString('projectFolderItems', $builder);
-        $this->assertStringContainsString('NavFolderProgress', $builder);
-        $this->assertStringContainsString('show_folder_badges', $builder);
-        $this->assertStringNotContainsString('phase_index', $builder);
-        $this->assertStringNotContainsString('nav-phase-folder__index', $menu);
-        $this->assertStringContainsString('nav-folder-badge', $menu);
         $this->assertStringContainsString('nav-phase-folder', $menu);
         $this->assertStringContainsString('nav-project-icon', $menu);
         $this->assertStringContainsString("'type' => 'project'", $builder);
@@ -110,21 +104,6 @@ class NavProjectFoldersTest extends TestCase
         $this->assertSame('images/ba-logo.png', config('navigation.hierarchy.project_icon_img'));
         $this->assertFileExists(dirname(__DIR__, 2).'/public/images/ba-logo.png');
         $this->assertStringContainsString('data-folder-key', $menu);
-        $this->assertStringContainsString('guide, never lock', $progress);
-        $this->assertNotSame('ui.nav_folder_badge_title', __('ui.nav_folder_badge_title'));
-
-        // Temporarily disabled — flip config to re-enable badges without code changes.
-        $this->assertFalse(config('navigation.hierarchy.show_folder_badges'));
-    }
-
-    public function test_phase_folders_have_distinct_badge_tones(): void
-    {
-        $folders = collect(config('navigation.hierarchy.project_folders'))->keyBy('key');
-
-        $this->assertSame('strategy', $folders['strategy']['badge_tone'] ?? null);
-        $this->assertSame('radd', $folders['radd']['badge_tone'] ?? null);
-        $this->assertSame('governance', $folders['governance']['badge_tone'] ?? null);
-        $this->assertSame('evaluation', $folders['evaluation']['badge_tone'] ?? null);
     }
 
     public function test_all_projects_and_all_workspaces_nav_links_are_removed(): void

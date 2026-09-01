@@ -50,11 +50,6 @@
                         {{ $item['label'] }}
                     </span>
                 @endif
-                @if (! empty($item['badge']))
-                    <span class="nav-folder-badge shrink-0 flex-none"
-                        data-tone="{{ $item['badge_tone'] ?? 'default' }}"
-                        title="{{ $item['badge_title'] ?? $item['badge'] }}">{{ $item['badge'] }}</span>
-                @endif
                 <span class="kt-menu-arrow nav-phase-folder__arrow text-muted-foreground w-[16px] shrink-0 flex-none justify-end">
                     <span class="inline-flex kt-menu-item-show:hidden">
                         <i class="ki-filled ki-plus text-[11px]"></i>
@@ -91,11 +86,6 @@
                             @if (! empty($item['title'])) title="{{ $item['title'] }}" @endif>
                             {{ $item['label'] }}
                         </span>
-                    @endif
-                    @if (! empty($item['badge']))
-                        <span class="nav-folder-badge shrink-0"
-                            data-tone="{{ $item['badge_tone'] ?? 'default' }}"
-                            title="{{ $item['badge_title'] ?? $item['badge'] }}">{{ $item['badge'] }}</span>
                     @endif
                     <span class="kt-menu-arrow text-muted-foreground w-[20px] shrink-0 justify-end ms-1 me-[-10px]">
                         <span class="inline-flex kt-menu-item-show:hidden">
@@ -134,11 +124,6 @@
                             @if (! empty($item['title'])) title="{{ $item['title'] }}" @endif>
                             {{ $item['label'] }}
                         </span>
-                    @endif
-                    @if (! empty($item['badge']))
-                        <span class="nav-folder-badge shrink-0"
-                            data-tone="{{ $item['badge_tone'] ?? 'default' }}"
-                            title="{{ $item['badge_title'] ?? $item['badge'] }}">{{ $item['badge'] }}</span>
                     @endif
                     <span class="kt-menu-arrow text-muted-foreground w-[20px] shrink-0 justify-end ms-1 me-[-10px]">
                         <span class="inline-flex kt-menu-item-show:hidden">

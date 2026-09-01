@@ -320,7 +320,7 @@ Projects evolve strategy over time (re-baselines after major scope shifts, annua
 | Identity fields | **`title`**, **`baseline_date`**, **`status`** (reuse `draft` / `in_review` / `approved` from `StrategicBaselineStatus`) |
 | Narrative fields | Keep **`current_state`**, **`future_state`**, **`change_strategy`** (unchanged semantics) |
 | Current pointer | **`is_current`** boolean — at most one `true` per project |
-| Resolver (single source of truth) | Used by Package 1, readiness gaps, nav folder progress: **(1)** row with `is_current = true` → **(2)** else latest **approved** by `baseline_date` → **(3)** else latest by `baseline_date` |
+| Resolver (single source of truth) | Used by Package 1, readiness gaps: **(1)** row with `is_current = true` → **(2)** else latest **approved** by `baseline_date` → **(3)** else latest by `baseline_date` |
 | Set as current | User action clears `is_current` on sibling baselines for the same project, then sets target row |
 | Strategy hub UX | Multi-record **list** with create; **full-page form** for narrative fields (not modal-only for long text) |
 | Migration | Backfill existing row: set **`title`** (e.g. from project name or “Initial baseline”), **`baseline_date`** (e.g. `created_at` or approval date), **`is_current = true`** |
@@ -352,7 +352,7 @@ Extract **`StrategicBaselineResolver`** (or equivalent) — one method, e.g. `re
 - `ProjectExportService` / export blade
 - `BabokDocumentService` / BABOK partials (`current-state-and-needs`, `change-strategy-scope`, etc.)
 - `ProjectReadinessService` / dashboard artifact counts
-- `NavFolderProgress` / Strategy folder badge
+- Strategy nav folder
 
 ### UX
 
@@ -378,7 +378,7 @@ Extract **`StrategicBaselineResolver`** (or equivalent) — one method, e.g. `re
 |-------|----------------|
 | Migration | Drop unique on `project_id`; add columns; backfill |
 | Model | `StrategicBaseline.php`, `Project.php` (`hasMany` + deprecated/remove 1:1 helper) |
-| Service | New `StrategicBaselineResolver`; refactor `ProjectExportService`, `BabokDocumentService`, `ProjectReadinessService`, `NavFolderProgress` |
+| Service | New `StrategicBaselineResolver`; refactor `ProjectExportService`, `BabokDocumentService`, `ProjectReadinessService` |
 | Controller / views | `StrategicBaselineController`, `strategy/index.blade.php`, new list + full-page form blades |
 | Config | `config/crud.php`, `routes/web.php`, `lang/en/ui.php` |
 | Docs | `docs/bassist-data-dictionary.md`, `resources/help/` strategy topic |

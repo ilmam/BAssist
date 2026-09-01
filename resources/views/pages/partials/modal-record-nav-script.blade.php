@@ -127,9 +127,9 @@ function captureModalRecordNavForOpen(trigger, url) {
         return Promise.resolve(false);
     }
 
-    const returnUrl = (!window.location.pathname.includes('/modal/'))
-        ? window.location.href
-        : (modalRecordNav?.returnUrl || history.state?.returnUrl || window.location.href);
+    const returnUrl = (!modalUrlFromHash() && !window.location.pathname.includes('/modal/'))
+        ? (window.location.pathname + window.location.search)
+        : stripUrlHash(modalRecordNav?.returnUrl || history.state?.returnUrl || (window.location.pathname + window.location.search));
 
     return fetchModalRecordNavIds(table)
         .then(({ ids, fingerprint }) => setModalRecordNav(ids, parsed.id, parsed, fingerprint, returnUrl))
@@ -208,10 +208,10 @@ function handleModalRecordNavButtonClick(event, openModalFn) {
 
 function modalRecordNavHistoryReturnUrl(options) {
     if (options?.preserveRecordNav && modalRecordNav?.returnUrl) {
-        return modalRecordNav.returnUrl;
+        return stripUrlHash(modalRecordNav.returnUrl);
     }
 
-    return window.location.href;
+    return window.location.pathname + window.location.search;
 }
 
 if (typeof $ !== 'undefined') {

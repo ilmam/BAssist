@@ -101,12 +101,12 @@
         function restoreListUrl() {
             const returnUrl = history.state?.returnUrl || modalReturnUrl;
 
-            if (!returnUrl) {
-                return;
-            }
-
-            if (history.state?.modal || window.location.pathname.includes('/modal/')) {
-                history.replaceState(null, '', returnUrl);
+            if (locationLooksLikeModalOverlay()) {
+                history.replaceState(
+                    null,
+                    '',
+                    returnUrl ? stripUrlHash(returnUrl) : (window.location.pathname + window.location.search)
+                );
             }
 
             modalReturnUrl = null;
@@ -303,7 +303,7 @@
                         bootstrap.Modal.getOrCreateInstance(modalEl, { keyboard: false }).show();
                     }
                     if (!skipHistory) {
-                        history.pushState({ modal: true, returnUrl: modalReturnUrl }, '', url);
+                        history.pushState({ modal: true, returnUrl: modalReturnUrl }, '', overlayHistoryUrl(url));
                     }
                     rememberOpenedModal(url, opts);
                     document.dispatchEvent(new CustomEvent('bassist:modal-loaded', {
@@ -317,6 +317,13 @@
                     console.error(error);
                 });
         }
+
+        (function reopenModalFromHash() {
+            const url = modalUrlFromHash();
+            if (url) {
+                openModal(url, null, { noHistory: true });
+            }
+        })();
 
         document.getElementById('mianModal')?.addEventListener('hide.bs.modal', function (event) {
             if (allowBootstrapModalHide) {

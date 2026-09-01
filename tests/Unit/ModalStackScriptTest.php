@@ -17,6 +17,9 @@ class ModalStackScriptTest extends TestCase
         $this->assertStringContainsString('function closeModalWithStack', $html);
         $this->assertStringContainsString('function restoreParentModalFromStack', $html);
         $this->assertStringContainsString('function handleModalStackPopState', $html);
+        $this->assertStringContainsString('function overlayHistoryUrl', $html);
+        $this->assertStringContainsString('#modal=', $html);
+        $this->assertStringContainsString('modalUrlFromHash', $html);
         $this->assertStringContainsString('fromStack', $html);
         $this->assertStringContainsString('preserveRecordNav', $html);
         $this->assertStringContainsString('contentClone', $html);
@@ -37,7 +40,8 @@ class ModalStackScriptTest extends TestCase
             );
             $this->assertStringContainsString('pushModalStackIfNeeded', $contents);
             $this->assertStringContainsString('closeModalWithStack', $contents);
-            $this->assertStringContainsString('handleModalStackPopState', $contents);
+            $this->assertStringContainsString('overlayHistoryUrl', $contents);
+            $this->assertStringContainsString('reopenModalFromHash', $contents);
             $this->assertStringContainsString('window.bassistOpenModalHtml', $contents);
         }
     }

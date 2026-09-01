@@ -61,7 +61,7 @@ GET /{resource}/modal/5/edit  (with header X-Modal-Request: 1)
      OR Form::field lines          → hybrid
 ```
 
-If the same modal URL is opened directly in the browser (no AJAX header), the controller falls back to the **full page** form via `model_page_view()`.
+If the same modal URL is opened directly in the browser (no AJAX header), the controller **redirects** to the canonical full-page URL (`/{resource}/{id}`, `/{resource}/{id}/edit`, or `/{resource}/create`). Overlay opens from JS keep the **parent** page in the address bar with `#modal=…`; refresh reopens the overlay on that parent.
 
 ---
 
@@ -186,7 +186,7 @@ This is the **only built-in duplication** in the view layer: thin wrappers aroun
 
 **HTTP and Eloquent:** controllers must not call `Model::query()`. Load rows through the repository (`getById` / `editById` for DTOs, `findModel($id, $with)` when the action needs the Eloquent model).
 
-Modal fallback behavior (`RespondsWithModal` trait): opening a modal URL directly in the browser renders the equivalent **full page** instead of a fragment.
+Modal fallback (`RespondsWithModal` + `App\Support\ModalUrl`): a non-AJAX GET to `/modal/…` **redirects** to the matching full-page route so the address bar matches a real page. Theme JS does not put `/modal/…` in the path; it uses the parent URL plus `#modal=` (refresh stays on the list/matrix and reopens the overlay). Unknown overlay paths (for example Feature “view raw”) still render as before.
 
 ### Escape and unsaved edit forms
 
@@ -266,7 +266,7 @@ Keyboard: **ArrowLeft** / **ArrowRight** move prev/next while a view modal with 
 | Opt-out | `ListUi::relatedEntityCell`, ad-hoc `data-modal-nav="off"` | Do not treat host-table rows as siblings |
 | Config | `config/ui.php` → `modal_record_nav` | Feature flag |
 
-On `[data-modal-url]` click, if the URL matches `.../modal/{id}/view` and the trigger is not `data-modal-nav="off"`, theme JS finds the nearest DataTable, builds `{ ids, index, urlForId, returnUrl }`, and reuses `openModal(neighborUrl)` with `preserveRecordNav: true` so history still returns to the list. Closing the modal clears nav state.
+On `[data-modal-url]` click, if the URL matches `.../modal/{id}/view` and the trigger is not `data-modal-nav="off"`, theme JS finds the nearest DataTable, builds `{ ids, index, urlForId, returnUrl }`, and reuses `openModal(neighborUrl)` with `preserveRecordNav: true` so history still returns to the list (hash overlay on the parent URL). Closing the modal clears nav state.
 
 #### Hub pages (multi-section lists)
 
@@ -581,7 +581,8 @@ App-specific modal quirks (for example side-sheet backdrop) belong in the app’
 | `app/helpers.php` | `model_page_view()`, `model_modal_view()`, theme helpers |
 | `app/Http/Controllers/BaseController.php` | CRUD + modal actions |
 | `app/Http/Controllers/CrudController.php` | Route-driven model resolution |
-| `app/Http/Controllers/Concerns/RespondsWithModal.php` | AJAX fragment vs full page |
+| `app/Http/Controllers/Concerns/RespondsWithModal.php` | AJAX fragment vs redirect to canonical page |
+| `app/Support/ModalUrl.php` | Overlay path → canonical full-page URL |
 | `app/View/Components/FormCard.php` | Neutral card shell |
 | `app/View/Components/FormCardBody.php` / `FormCardFooter.php` | Theme card body/footer (use these instead of `kt-card-*` in pages) |
 | `config/ui.php` | Active theme, modal flags (`modal_view`, `modal_record_nav`, …) |

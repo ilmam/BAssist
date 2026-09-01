@@ -6,7 +6,7 @@ title: Readiness & Gaps
 
 Readiness & Gaps is the practice of judging whether the enterprise can absorb a change—and, once a solution is live or in pilot, diagnosing why expected value is missing. In Strategy Analysis it lives mainly in Task 6.4 Define Change Strategy (enterprise readiness and gap analysis). In Solution Evaluation it continues as Tasks 8.3 Assess Solution Limitations and 8.4 Assess Enterprise Limitations.
 
-In this app, the dashboard highlights open items across the need spine, guardrails, and strategy. Treat those checks as guidance, not a hard gate.
+In this app, the project dashboard shows **spine coverage** (need → objective → story → FR/Feature → scenarios) as a percentage and stage bars, then lists remaining gaps grouped as Critical / Watch / Hint. Treat those checks as guidance, not a hard gate.
 
 ## Why It Matters
 
@@ -35,7 +35,7 @@ A brilliant future state fails if the enterprise cannot execute the transition o
 
 - **Upstream:** Current/future state, objectives, risks, assumptions, and constraints feed readiness and gap work.
 - **Downstream:** Results shape change strategy, solution scope, remediation, and post-implementation evaluation.
-- **In-app gaps:** Dashboard readiness items (orphans, open assumptions, critical risks, and similar) are operational signals—use them with, not instead of, the judgment above.
+- **In-app gaps:** Dashboard coverage bars and gap rows (orphans, open assumptions, critical risks, and similar) are operational signals—use them with, not instead of, the judgment above.
 - **The Rule of Integrity:** If readiness reads like a checkbox exercise, the change strategy will fail. Find unstated constraints, political roadblocks, and capability chasms stakeholders prefer to hide.
 
 **Practical tip:** When value is missing after go-live, ask first: “Is the defect in the product, or in the enterprise around the product?” Fixing a training and incentive problem with another release rarely moves the needle.

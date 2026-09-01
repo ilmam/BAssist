@@ -114,7 +114,7 @@ Useful `config/crud.php` keys (the model must still be discovered): `nav`, `nav_
 - **Virtual:** shared `pages/generic/*` and `pages/modals/*`.
 - **Hybrid:** add files under `pages/{resource}/`; they are used automatically.
 - Keep `pages/` free of theme CSS prefixes. Put look-and-feel in `themes/{theme}/`.
-- Modal URLs without the AJAX header render the full page.
+- Modal URLs without the AJAX header **redirect** to the matching full-page route (`show` / `edit` / `create`). JS overlay opens keep the parent URL and `#modal=…`.
 - `'use_modals' => false` makes the table use full-page links.
 
 Helpers: `model_route()`, `model_route_name()`, `model_page_view()`, `model_modal_view()`, `ui_layout()`.

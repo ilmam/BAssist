@@ -22,7 +22,6 @@ class NavTreeBuilder
     public function __construct(
         protected WorkspaceContext $workspaceContext,
         protected ProjectContext $projectContext,
-        protected NavFolderProgress $folderProgress,
     ) {
     }
 
@@ -134,7 +133,7 @@ class NavTreeBuilder
                     'workspace_id' => (int) $workspace->id,
                     'project_id' => (int) $project->id,
                 ],
-                'children' => $this->projectFolderItems($project, $folderTemplates, $projectQuery, $isActiveProject),
+                'children' => $this->projectFolderItems($project, $folderTemplates, $projectQuery),
                 'force_open' => $isActiveProject,
             ];
         }
@@ -151,7 +150,6 @@ class NavTreeBuilder
         Project $project,
         array $folderTemplates,
         array $projectQuery,
-        bool $computeBadges,
     ): array {
         $folders = [];
 
@@ -183,7 +181,7 @@ class NavTreeBuilder
                 continue;
             }
 
-            $item = [
+            $folders[] = [
                 'type' => 'folder',
                 'folder_key' => $folder['key'] ?? null,
                 'short' => $folder['short'] ?? null,
@@ -191,21 +189,10 @@ class NavTreeBuilder
                 'icon' => $folder['icon'] ?? 'folder',
                 'icon_v8' => $folder['icon_v8'] ?? ($folder['icon'] ?? 'folder'),
                 'title' => trim((string) ($folder['purpose'] ?? '')),
-                'badge_tone' => $folder['badge_tone'] ?? ($folder['key'] ?? null),
                 'children' => $children,
                 // Open when a child is active; do not force all folders open.
                 'force_open' => false,
             ];
-
-            if ($computeBadges && config('navigation.hierarchy.show_folder_badges', false)) {
-                $badge = $this->folderProgress->forFolder($project, $folder, $children);
-                if ($badge !== null) {
-                    $item['badge'] = $badge['label'];
-                    $item['badge_title'] = $badge['title'];
-                }
-            }
-
-            $folders[] = $item;
         }
 
         return $folders;

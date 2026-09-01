@@ -18,11 +18,12 @@ class TraceabilityController extends Controller
     {
         $this->authorizeView();
 
-        $matrix = $this->matrix->build($request->only(['project_id', 'orphans_only']));
+        $matrix = $this->matrix->build($request->only(['project_id', 'orphans_only', 'gap']));
 
         return view('pages.traceability.matrix', [
             'rows' => $matrix['rows'],
             'summary' => $matrix['summary'],
+            'gap_counts' => $matrix['gap_counts'] ?? [],
             'projects' => $matrix['projects'],
             'filters' => $matrix['filters'],
         ]);
@@ -32,7 +33,7 @@ class TraceabilityController extends Controller
     {
         $this->authorizeView();
 
-        $matrix = $this->matrix->build($request->only(['project_id', 'orphans_only']));
+        $matrix = $this->matrix->build($request->only(['project_id', 'orphans_only', 'gap']));
         $filename = 'traceability-matrix-'.now()->format('Y-m-d-His').'.csv';
 
         return response()->streamDownload(function () use ($matrix): void {

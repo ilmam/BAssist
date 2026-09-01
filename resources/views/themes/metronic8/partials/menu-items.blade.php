@@ -10,17 +10,11 @@
             @if (! empty($item['route']))
                 <a href="{{ nav_url($item) }}" class="menu-link {{ $isActive ? 'active' : '' }}" onclick="event.stopPropagation()" @if (! empty($item['title'])) title="{{ $item['title'] }}" @endif>
                     <span class="menu-title">{{ $item['label'] }}</span>
-                    @if (! empty($item['badge']))
-                        <span class="badge badge-light-primary ms-2" title="{{ $item['badge_title'] ?? $item['badge'] }}">{{ $item['badge'] }}</span>
-                    @endif
                     <span class="menu-arrow"></span>
                 </a>
             @else
                 <span class="menu-link {{ $isActive ? 'active' : '' }}" @if (! empty($item['title'])) title="{{ $item['title'] }}" @endif>
                     <span class="menu-title">{{ $item['label'] }}</span>
-                    @if (! empty($item['badge']))
-                        <span class="badge badge-light-primary ms-2" title="{{ $item['badge_title'] ?? $item['badge'] }}">{{ $item['badge'] }}</span>
-                    @endif
                     <span class="menu-arrow"></span>
                 </span>
             @endif

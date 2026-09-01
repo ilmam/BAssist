@@ -148,7 +148,7 @@ $this->modelRepository->findModel($id, ['relationName']);
 
 If a model has `project_id` or `workspace_id`, the controller may fill those from the current session (“sticky context”). That is optional; not every entity needs it.
 
-If someone opens a modal URL in a new tab (no AJAX header), they get the **full page** instead of a fragment.
+If someone opens a modal URL in a new tab (no AJAX header), they are **redirected** to the matching full-page screen (`/{resource}/{id}`, edit, or create). Refresh after opening a modal from a list keeps you on that list, with `#modal=…` in the hash so the overlay can reopen.
 
 To keep an entity on full pages only: `'use_modals' => false` in `config/crud.php`.
 

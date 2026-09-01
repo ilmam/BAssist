@@ -58,6 +58,8 @@ class Phase1xGuardrailsTest extends TestCase
         $this->assertIsString($blade);
         $this->assertStringContainsString("__('ui.project_readiness')", $blade);
         $this->assertStringContainsString('$readiness[\'items\']', $blade);
+        $this->assertStringContainsString('$readiness[\'spine\']', $blade);
+        $this->assertStringContainsString("__('ui.readiness_score')", $blade);
     }
 
     public function test_readiness_covers_process_step_gaps(): void

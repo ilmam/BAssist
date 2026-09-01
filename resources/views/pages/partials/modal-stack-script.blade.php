@@ -3,6 +3,55 @@ let modalStack = [];
 let currentModalUrl = null;
 let currentModalMeta = { historyPushed: false, returnUrl: null };
 
+function stripUrlHash(url) {
+    const value = String(url || '');
+    const hashAt = value.indexOf('#');
+
+    return hashAt === -1 ? value : value.slice(0, hashAt);
+}
+
+function parentPageUrl() {
+    if (modalReturnUrl) {
+        return stripUrlHash(modalReturnUrl);
+    }
+
+    if (history.state?.returnUrl) {
+        return stripUrlHash(history.state.returnUrl);
+    }
+
+    return window.location.pathname + window.location.search;
+}
+
+function overlayHistoryUrl(modalUrl) {
+    try {
+        const parsed = new URL(modalUrl, window.location.origin);
+        const token = parsed.pathname + parsed.search;
+
+        return parentPageUrl() + '#modal=' + encodeURIComponent(token);
+    } catch (error) {
+        return parentPageUrl();
+    }
+}
+
+function modalUrlFromHash() {
+    const raw = String(window.location.hash || '');
+    if (!raw.startsWith('#modal=')) {
+        return null;
+    }
+
+    try {
+        return decodeURIComponent(raw.slice('#modal='.length));
+    } catch (error) {
+        return null;
+    }
+}
+
+function locationLooksLikeModalOverlay() {
+    return !!modalUrlFromHash()
+        || !!history.state?.modal
+        || String(window.location.pathname || '').includes('/modal/');
+}
+
 function cloneModalRecordNav(nav) {
     if (!nav) {
         return null;
@@ -139,15 +188,20 @@ function closeModalWithStack(options, closeHostFn) {
 }
 
 function handleModalStackPopState() {
-    if (history.state?.modal) {
+    const overlayUrl = modalUrlFromHash();
+
+    if (history.state?.modal || overlayUrl) {
         if (modalStack.length > 0) {
             restoreParentModalFromStack();
             return true;
         }
 
         // Sibling view navigation (Prev/Next) pushed history without stacking — sync content to URL.
-        if (typeof openModal === 'function' && String(window.location.pathname || '').includes('/modal/')) {
-            openModal(window.location.href, null, {
+        const reopenUrl = overlayUrl
+            || (String(window.location.pathname || '').includes('/modal/') ? window.location.href : null);
+
+        if (typeof openModal === 'function' && reopenUrl) {
+            openModal(reopenUrl, null, {
                 fromStack: true,
                 force: true,
                 noHistory: true,

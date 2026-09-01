@@ -91,57 +91,103 @@
             @endif
         </x-card>
 
+        @php
+            $readinessItems = $readiness['items'] ?? [];
+            $readinessSpine = $readiness['spine'] ?? [];
+            $readinessScore = $readiness['score'] ?? null;
+            $readinessSeverity = $readiness['severity'] ?? ['critical' => 0, 'warn' => 0, 'info' => 0];
+            $readinessGrouped = ['critical' => [], 'warn' => [], 'info' => []];
+            foreach ($readinessItems as $gap) {
+                $readinessGrouped[$gap['severity']][] = $gap;
+            }
+            $scoreTone = $readinessScore === null
+                ? 'text-muted-foreground'
+                : ($readinessScore >= 80 ? 'text-success' : ($readinessScore >= 50 ? 'text-warning' : 'text-destructive'));
+        @endphp
+
         <x-card :title="__('ui.project_readiness')">
             <x-slot:titleAside>
                 <x-help-trigger topic="readiness" />
             </x-slot:titleAside>
             <x-slot:toolbar>
-                <span class="kt-badge kt-badge-outline">
-                    {{ __('ui.readiness_gap_count', ['count' => $readiness['total_gaps'] ?? 0]) }}
-                </span>
+                <div class="flex flex-wrap items-center gap-2">
+                    @if (($readinessSeverity['critical'] ?? 0) > 0)
+                        <span class="kt-badge kt-badge-sm kt-badge-warning">{{ __('ui.readiness_severity_critical') }} {{ $readinessSeverity['critical'] }}</span>
+                    @endif
+                    @if (($readinessSeverity['warn'] ?? 0) > 0)
+                        <span class="kt-badge kt-badge-sm kt-badge-outline kt-badge-warning">{{ __('ui.readiness_severity_warn') }} {{ $readinessSeverity['warn'] }}</span>
+                    @endif
+                    @if (($readinessSeverity['info'] ?? 0) > 0)
+                        <span class="kt-badge kt-badge-sm kt-badge-outline">{{ __('ui.readiness_severity_info') }} {{ $readinessSeverity['info'] }}</span>
+                    @endif
+                    <span class="kt-badge kt-badge-outline">
+                        {{ __('ui.readiness_gap_count', ['count' => $readiness['total_gaps'] ?? 0]) }}
+                    </span>
+                </div>
             </x-slot:toolbar>
 
-            <p class="text-sm text-muted-foreground mb-4">{{ __('ui.project_readiness_help') }}</p>
+            <p class="text-sm text-muted-foreground mb-5">{{ __('ui.project_readiness_help') }}</p>
 
-            @if (($readiness['items'] ?? []) === [])
+            <div class="flex flex-col lg:flex-row gap-6 mb-6">
+                <div class="shrink-0 text-center lg:text-start lg:w-40">
+                    <div class="text-4xl font-semibold leading-none {{ $scoreTone }}">
+                        {{ $readinessScore === null ? '—' : $readinessScore.'%' }}
+                    </div>
+                    <div class="text-xs text-muted-foreground mt-2">{{ __('ui.readiness_score') }}</div>
+                    @if ($readinessScore === null)
+                        <p class="text-xs text-muted-foreground mt-1">{{ __('ui.readiness_score_empty') }}</p>
+                    @endif
+                </div>
+
+                @if ($readinessSpine !== [])
+                    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-3 flex-1 min-w-0">
+                        @foreach ($readinessSpine as $stage)
+                            @php
+                                $href = $stage['url'] ?? null;
+                                $tag = $href ? 'a' : 'div';
+                            @endphp
+                            <{{ $tag }}
+                                @if ($href) href="{{ $href }}" @endif
+                                class="block rounded-lg border border-border p-3 {{ $href ? 'hover:border-primary transition-colors' : '' }}"
+                            >
+                                <div class="text-xs text-muted-foreground mb-1 truncate" title="{{ $stage['label'] }}">{{ $stage['label'] }}</div>
+                                <div class="text-sm font-medium mb-2">
+                                    {{ __('ui.readiness_ready_of_total', ['ready' => $stage['ready'], 'total' => $stage['total']]) }}
+                                </div>
+                                <div class="h-1.5 rounded-full bg-border overflow-hidden">
+                                    <div
+                                        class="h-full rounded-full {{ ($stage['pct'] ?? 0) >= 80 ? 'bg-success' : (($stage['pct'] ?? 0) >= 50 ? 'bg-warning' : 'bg-primary') }}"
+                                        style="width: {{ $stage['pct'] ?? 0 }}%"
+                                    ></div>
+                                </div>
+                            </{{ $tag }}>
+                        @endforeach
+                    </div>
+                @endif
+            </div>
+
+            @if ($readinessItems === [])
                 <p class="text-sm text-secondary-foreground">{{ __('ui.readiness_all_clear') }}</p>
             @else
-                <div class="kt-scrollable-x-auto">
-                    <table class="kt-table">
-                        <thead>
-                            <tr>
-                                <th>{{ __('ui.readiness_gap') }}</th>
-                                <th class="w-24 text-end">{{ __('ui.count') }}</th>
-                                <th class="w-28 text-end">{{ __('ui.actions') }}</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach ($readiness['items'] as $gap)
-                                <tr>
-                                    <td>
-                                        <div class="flex items-center gap-2">
-                                            @if ($gap['severity'] === 'critical')
-                                                <span class="kt-badge kt-badge-sm kt-badge-warning">{{ __('ui.readiness_severity_critical') }}</span>
-                                            @elseif ($gap['severity'] === 'warn')
-                                                <span class="kt-badge kt-badge-sm kt-badge-outline kt-badge-warning">{{ __('ui.readiness_severity_warn') }}</span>
-                                            @else
-                                                <span class="kt-badge kt-badge-sm kt-badge-outline">{{ __('ui.readiness_severity_info') }}</span>
-                                            @endif
-                                            <span>{{ $gap['label'] }}</span>
-                                        </div>
-                                    </td>
-                                    <td class="text-end font-medium">{{ $gap['count'] }}</td>
-                                    <td class="text-end">
-                                        @if (! empty($gap['url']))
-                                            <x-button type="link" href="{{ $gap['url'] }}" color="ghost" size="sm" activeColor="primary">
-                                                {{ __('ui.view') }}
-                                            </x-button>
-                                        @endif
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
+                <h4 class="text-sm font-medium mb-3">{{ __('ui.readiness_gaps_heading') }}</h4>
+                <div class="space-y-4">
+                    @foreach (['critical' => 'readiness_severity_critical', 'warn' => 'readiness_severity_warn', 'info' => 'readiness_severity_info'] as $tone => $severityLabel)
+                        @if ($readinessGrouped[$tone] !== [])
+                            <div class="space-y-2">
+                                <div class="text-xs font-medium text-muted-foreground">{{ __("ui.{$severityLabel}") }}</div>
+                                @foreach ($readinessGrouped[$tone] as $gap)
+                                    @php $gapTag = ! empty($gap['url']) ? 'a' : 'div'; @endphp
+                                    <{{ $gapTag }}
+                                        @if (! empty($gap['url'])) href="{{ $gap['url'] }}" @endif
+                                        class="flex items-center justify-between gap-3 rounded-lg border border-border px-3 py-2.5 {{ ! empty($gap['url']) ? 'hover:border-primary transition-colors' : '' }}"
+                                    >
+                                        <span class="text-sm min-w-0">{{ $gap['label'] }}</span>
+                                        <span class="text-sm font-semibold shrink-0">{{ $gap['count'] }}</span>
+                                    </{{ $gapTag }}>
+                                @endforeach
+                            </div>
+                        @endif
+                    @endforeach
                 </div>
             @endif
         </x-card>

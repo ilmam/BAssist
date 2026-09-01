@@ -30,12 +30,13 @@ class TraceabilityMatrixService
     }
 
     /**
-     * @param  array{project_id?: int|string|null, orphans_only?: bool|string|null}  $filters
+     * @param  array{project_id?: int|string|null, orphans_only?: bool|string|null, gap?: string|null}  $filters
      * @return array{
      *   rows: list<array<string, mixed>>,
      *   summary: array{total: int, gaps: int, orphan_objectives: int, orphan_needs: int, orphan_stakeholder_needs: int, orphan_features: int, orphan_functional_requirements: int, orphan_non_functional_requirements: int, features_without_scenarios: int, process_steps_without_need: int, uncovered_process_steps: int},
+     *   gap_counts: array<string, int>,
      *   projects: Collection<int, Project>,
-     *   filters: array{project_id: int|null, workspace_id: int|null, workspace_name: string|null, orphans_only: bool}
+     *   filters: array{project_id: int|null, workspace_id: int|null, workspace_name: string|null, orphans_only: bool, gap: string|null}
      * }
      */
     public function build(array $filters = []): array
@@ -44,6 +45,9 @@ class TraceabilityMatrixService
             ? (int) $filters['project_id']
             : $this->projectContext->id();
         $orphansOnly = filter_var($filters['orphans_only'] ?? false, FILTER_VALIDATE_BOOLEAN);
+        $gapFilter = isset($filters['gap']) && is_string($filters['gap']) && $filters['gap'] !== ''
+            ? $filters['gap']
+            : null;
         $workspaceId = $this->workspaceContext->id();
         $workspaceName = $workspaceId
             ? Workspace::query()->whereKey($workspaceId)->value('name')
@@ -63,6 +67,20 @@ class TraceabilityMatrixService
 
         if ($orphansOnly) {
             $rows = $rows->filter(fn (array $row) => $row['has_gap'])->values();
+        }
+
+        $gapCounts = [];
+        foreach ($rows as $row) {
+            foreach ($row['gaps'] ?? [] as $gap) {
+                $gapCounts[$gap] = ($gapCounts[$gap] ?? 0) + 1;
+            }
+        }
+        ksort($gapCounts);
+
+        if ($gapFilter !== null) {
+            $rows = $rows->filter(
+                fn (array $row) => in_array($gapFilter, $row['gaps'] ?? [], true)
+            )->values();
         }
 
         $rows = $rows
@@ -99,12 +117,14 @@ class TraceabilityMatrixService
                     fn (array $r) => in_array('uncovered_process_step', $r['gaps'], true)
                 )->count(),
             ],
+            'gap_counts' => $gapCounts,
             'projects' => $this->projectsForFilter($workspaceId),
             'filters' => [
                 'project_id' => $projectId,
                 'workspace_id' => $workspaceId,
                 'workspace_name' => $workspaceName,
                 'orphans_only' => $orphansOnly,
+                'gap' => $gapFilter,
             ],
         ];
     }

@@ -42,17 +42,12 @@ return [
         // Sidebar project mark (BA logo); rendered as <img>, not KeenIcons.
         'project_icon_img' => 'images/ba-logo.png',
 
-        // Temporarily hide BABOK folder progress badges in the sidebar.
-        // Set true to re-enable (NavFolderProgress + blade markup remain in place).
-        'show_folder_badges' => false,
-
         /*
          | Project folders (order = BA journey).
          | Child keys:
          |   entity  — CRUD model leaf (route from registry)
          |   route   — hub / non-CRUD page
          |   entities — visibility gate (any VIEW permission)
-         |   progress — how the folder badge evaluates this leaf
          */
         'project_folders' => [
             [
@@ -63,19 +58,15 @@ return [
                 'purpose' => 'Establishes why we are doing this and sets the baseline.',
                 'icon' => 'compass',
                 'icon_v8' => 'flag',
-                'badge_tone' => 'strategy',
                 'children' => [
                     [
                         'entity' => 'BusinessNeed',
-                        'progress' => 'entity_agreed',
                     ],
                     [
                         'entity' => 'BusinessObjective',
-                        'progress' => 'entity_agreed',
                     ],
                     [
                         'entity' => 'Risk',
-                        'progress' => 'entity_present',
                     ],
                     [
                         'label' => 'Strategic Baseline',
@@ -84,11 +75,9 @@ return [
                         'icon' => 'flag',
                         'icon_v8' => 'flag',
                         'entities' => ['StrategicBaseline'],
-                        'progress' => 'strategic_baseline',
                     ],
                     [
                         'entity' => 'ScopeItem',
-                        'progress' => 'entity_present',
                     ],
                 ],
             ],
@@ -100,15 +89,12 @@ return [
                 'purpose' => 'Actors → elicitation → rules & assumptions → solution requirements → data dictionary → diagrams.',
                 'icon' => 'abstract-26',
                 'icon_v8' => 'abstract-26',
-                'badge_tone' => 'radd',
                 'children' => [
                     [
                         'entity' => 'Stakeholder',
-                        'progress' => 'entity_present',
                     ],
                     [
                         'entity' => 'StakeholderNeed',
-                        'progress' => 'entity_agreed',
                     ],
                     [
                         'label' => 'Rules & Assumptions',
@@ -116,7 +102,6 @@ return [
                         'icon' => 'scroll',
                         'icon_v8' => 'scroll',
                         'entities' => ['Assumption', 'Constraint', 'BusinessRule'],
-                        'progress' => 'guardrails_hub',
                     ],
                     [
                         'label' => 'Solution Requirements',
@@ -124,11 +109,9 @@ return [
                         'icon' => 'subtitle',
                         'icon_v8' => 'subtitle',
                         'entities' => ['Feature', 'FunctionalRequirement', 'NonFunctionalRequirement'],
-                        'progress' => 'solution_hub',
                     ],
                     [
                         'entity' => 'DataDictionary',
-                        'progress' => 'entity_present',
                     ],
                     [
                         // Keep as one hub until diagrams get a better home.
@@ -137,7 +120,6 @@ return [
                         'icon' => 'share',
                         'icon_v8' => 'share',
                         'entities' => ['Architecture', 'StateFlow', 'SwimlaneFlow'],
-                        'progress' => 'diagrams_hub',
                     ],
                 ],
             ],
@@ -149,7 +131,6 @@ return [
                 'purpose' => 'Tracks changes, impact, approvals, and structural lineage.',
                 'icon' => 'arrow-mix',
                 'icon_v8' => 'arrow-mix',
-                'badge_tone' => 'governance',
                 'children' => [
                     [
                         'label' => 'Change Requests',
@@ -157,7 +138,6 @@ return [
                         'icon' => 'arrow-mix',
                         'icon_v8' => 'arrow-mix',
                         'entities' => ['ChangeRequest'],
-                        'progress' => 'change_requests_hub',
                     ],
                     [
                         'label' => 'Traceability',
@@ -165,7 +145,6 @@ return [
                         'icon' => 'fasten',
                         'icon_v8' => 'fasten',
                         'entities' => ['BusinessNeed', 'BusinessObjective', 'StakeholderNeed'],
-                        'progress' => 'traceability_hub',
                     ],
                 ],
             ],
@@ -177,7 +156,6 @@ return [
                 'purpose' => 'Verifies the solution meets quality standards and delivers business value.',
                 'icon' => 'check-squared',
                 'icon_v8' => 'check-squared',
-                'badge_tone' => 'evaluation',
                 'children' => [
                     [
                         'label' => 'Acceptance Test',
@@ -185,7 +163,6 @@ return [
                         'icon' => 'check-squared',
                         'icon_v8' => 'check-squared',
                         'entities' => ['Feature', 'Scenario', 'FunctionalRequirement', 'NonFunctionalRequirement'],
-                        'progress' => 'acceptance_hub',
                     ],
                 ],
             ],

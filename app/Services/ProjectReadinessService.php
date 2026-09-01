@@ -39,7 +39,10 @@ class ProjectReadinessService
     /**
      * @return array{
      *     total_gaps: int,
-     *     items: list<array{key: string, label: string, count: int, severity: string, url: string|null}>
+     *     items: list<array{key: string, label: string, count: int, severity: string, url: string|null}>,
+     *     severity: array{critical: int, warn: int, info: int},
+     *     spine: list<array{key: string, label: string, ready: int, total: int, pct: int|null, url: string|null}>,
+     *     score: int|null
      * }
      */
     public function forProject(Project $project): array
@@ -446,10 +449,144 @@ class ProjectReadinessService
         }
 
         $gapItems = array_values(array_filter($items, fn (array $item) => $item['count'] > 0));
+        $spine = $this->spineCoverage($project, $scopeQuery);
+
+        $severity = ['critical' => 0, 'warn' => 0, 'info' => 0];
+        foreach ($gapItems as $item) {
+            $tone = $item['severity'];
+            if (isset($severity[$tone])) {
+                $severity[$tone] += (int) $item['count'];
+            }
+        }
 
         return [
             'total_gaps' => array_sum(array_column($gapItems, 'count')),
             'items' => $gapItems,
+            'severity' => $severity,
+            'spine' => $spine,
+            'score' => $this->coverageScore($spine),
+        ];
+    }
+
+    /**
+     * @param  array{workspace_id: int, project_id: int}  $scopeQuery
+     * @return list<array{key: string, label: string, ready: int, total: int, pct: int|null, url: string|null}>
+     */
+    protected function spineCoverage(Project $project, array $scopeQuery): array
+    {
+        $stages = [];
+        $projectId = (int) $project->id;
+        $qs = http_build_query($scopeQuery);
+
+        if (entity_can('BusinessNeed', EntityAccess::VIEW)) {
+            $total = BusinessNeed::query()->where('project_id', $projectId)->count();
+            $ready = BusinessNeed::query()
+                ->where('project_id', $projectId)
+                ->whereHas('businessObjectives')
+                ->count();
+            $stages[] = $this->stage(
+                'needs',
+                __('ui.readiness_spine_needs'),
+                $ready,
+                $total,
+                model_route('BusinessNeed', 'index').'?'.$qs,
+            );
+        }
+
+        if (entity_can('BusinessObjective', EntityAccess::VIEW)) {
+            $total = BusinessObjective::query()->where('project_id', $projectId)->count();
+            $ready = BusinessObjective::query()
+                ->where('project_id', $projectId)
+                ->whereHas('businessNeeds')
+                ->count();
+            $stages[] = $this->stage(
+                'objectives',
+                __('ui.readiness_spine_objectives'),
+                $ready,
+                $total,
+                model_route('BusinessObjective', 'index').'?'.$qs,
+            );
+        }
+
+        if (entity_can('StakeholderNeed', EntityAccess::VIEW)) {
+            $total = StakeholderNeed::query()->where('project_id', $projectId)->count();
+            $ready = StakeholderNeed::query()
+                ->where('project_id', $projectId)
+                ->whereHas('businessObjectives')
+                ->count();
+            $stages[] = $this->stage(
+                'stories',
+                __('ui.readiness_spine_stories'),
+                $ready,
+                $total,
+                model_route('StakeholderNeed', 'index').'?'.$qs,
+            );
+
+            $packaged = StakeholderNeed::query()
+                ->where('project_id', $projectId)
+                ->where(function ($query): void {
+                    $query->whereHas('features')
+                        ->orWhereHas('functionalRequirements')
+                        ->orWhereHas('nonFunctionalRequirements');
+                })
+                ->count();
+            $stages[] = $this->stage(
+                'packaging',
+                __('ui.readiness_spine_packaging'),
+                $packaged,
+                $total,
+                route('solution_requirements.index', $scopeQuery),
+            );
+        }
+
+        if (entity_can('Feature', EntityAccess::VIEW)) {
+            $total = Feature::query()->where('project_id', $projectId)->count();
+            $ready = Feature::query()
+                ->where('project_id', $projectId)
+                ->whereHas('scenarios')
+                ->count();
+            $stages[] = $this->stage(
+                'scenarios',
+                __('ui.readiness_spine_scenarios'),
+                $ready,
+                $total,
+                model_route('Feature', 'index').'?'.$qs,
+            );
+        }
+
+        return $stages;
+    }
+
+    /**
+     * @param  list<array{ready: int, total: int}>  $stages
+     */
+    protected function coverageScore(array $stages): ?int
+    {
+        $scored = array_values(array_filter($stages, fn (array $stage) => $stage['total'] > 0));
+        if ($scored === []) {
+            return null;
+        }
+
+        $sum = 0.0;
+        foreach ($scored as $stage) {
+            $sum += $stage['ready'] / $stage['total'];
+        }
+
+        return (int) round(100 * $sum / count($scored));
+    }
+
+    /**
+     * @return array{key: string, label: string, ready: int, total: int, pct: int|null, url: string|null}
+     */
+    protected function stage(string $key, string $label, int $ready, int $total, ?string $url): array
+    {
+        return [
+            'key' => $key,
+            'label' => $label,
+            'ready' => $ready,
+            'total' => $total,
+            'pct' => $total > 0 ? (int) round(100 * $ready / $total) : null,
+            'url' => $url,
         ];
     }
 

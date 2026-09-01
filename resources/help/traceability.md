@@ -12,10 +12,11 @@ As projects evolve, scope creep and "gold-plating" (adding unapproved, unnecessa
 
 ## How to Use
 
-1. **Monitor Link Integrity:** Regularly scan the matrix for *orphan* entities (e.g., software features that lack a parent Business Need) or *barren* entities (e.g., high-level Business Needs that have no downstream BDD Scenarios). Gaps may be highlighted in the matrix or in reviews.
-2. **Perform Instant Impact Analysis:** Before modifying, prioritizing, or retiring any requirement, consult the matrix. Trace forward to see which downstream scenarios, test plans, or developer tasks will break. Trace backward to see which parent needs and objectives are impacted and which stakeholders must be consulted about the change.
-3. **Validate Relationships:** Ensure the links make logical sense based on standard relationship types. Ask yourself: Does this feature genuinely *derive from* that stakeholder requirement? Does this BDD scenario adequately *validate* the feature?
-4. **Export for Audits & Sign-Offs:** Use the matrix views during milestone reviews to demonstrate full requirements coverage to sponsors and regulatory compliance officers—proving definitively that what was built matches what was requested.
+1. **Monitor Link Integrity:** Scan the matrix for *orphan* entities (e.g. features with no parent Stakeholder Need) or *barren* entities (e.g. needs with no downstream FR or BDD scenarios). Use gap chips to show one break type at a time; click a row to highlight its chain.
+2. **Fix gaps in place:** Empty cells can offer **Add story / Add feature / Add scenario**. Click a code or title to open the record (stays on the matrix). “Show gaps” still filters to incomplete rows.
+3. **Perform Instant Impact Analysis:** Before modifying, prioritizing, or retiring any requirement, consult the matrix. Trace forward to see which downstream scenarios or process steps will break. Trace backward to see which parent needs and objectives are impacted and which stakeholders must be consulted about the change.
+4. **Validate Relationships:** Ensure the links make logical sense. Does this feature genuinely *derive from* that stakeholder requirement? Does this BDD scenario adequately *validate* the feature?
+5. **Export for Audits & Sign-Offs:** Export CSV during milestone reviews. The export respects the same project / gaps / gap-type filters as the on-screen matrix.
 
 ## The Bigger Picture & Downstream Links
 
