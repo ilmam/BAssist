@@ -22,14 +22,22 @@ class FeatureController extends CrudController
 
     public function show($id)
     {
-        $dto = $this->modelRepository->getById($id);
-        $fields = $dto->getFields(onlyHeaders: false, withPrefix: false, object: $dto);
         $feature = $this->modelRepository->findForDocument((int) $id);
 
-        return view(model_page_view($this->modelName, 'details'), [
-            'dto' => $dto,
-            'model' => $this->modelName,
-            'fields' => $fields,
+        return view(model_page_view($this->modelName, 'details'), $this->detailsViewData($id, [
+            'feature' => $feature,
+            'assembledGherkin' => $this->assembler->assembleFeature($feature),
+            'tagList' => $this->assembler->featureDisplayTags($feature),
+            'exportUrl' => route('features.export', $feature->id),
+            'printUrl' => route('features.print', $feature->id),
+            'importUrl' => route('features.import', $feature->id),
+        ]));
+    }
+
+    public function modalView($id)
+    {
+        $feature = $this->modelRepository->findForDocument((int) $id);
+        $data = $this->detailsViewData($id, [
             'feature' => $feature,
             'assembledGherkin' => $this->assembler->assembleFeature($feature),
             'tagList' => $this->assembler->featureDisplayTags($feature),
@@ -37,24 +45,6 @@ class FeatureController extends CrudController
             'printUrl' => route('features.print', $feature->id),
             'importUrl' => route('features.import', $feature->id),
         ]);
-    }
-
-    public function modalView($id)
-    {
-        $dto = $this->modelRepository->getById($id);
-        $fields = $dto->getFields(onlyHeaders: false, withPrefix: false, object: $dto);
-        $feature = $this->modelRepository->findForDocument((int) $id);
-        $data = [
-            'dto' => $dto,
-            'model' => $this->modelName,
-            'fields' => $fields,
-            'feature' => $feature,
-            'assembledGherkin' => $this->assembler->assembleFeature($feature),
-            'tagList' => $this->assembler->featureDisplayTags($feature),
-            'exportUrl' => route('features.export', $feature->id),
-            'printUrl' => route('features.print', $feature->id),
-            'importUrl' => route('features.import', $feature->id),
-        ];
 
         return $this->respondModalOrPage(
             model_modal_view($this->modelName, 'view'),

@@ -36,6 +36,7 @@
             'exportUrl' => $exportUrl ?? null,
             'printUrl' => $printUrl ?? null,
             'importUrl' => $importUrl ?? null,
+            'cascade' => $cascade ?? null,
         ])
 
         <x-slot:footer>

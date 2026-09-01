@@ -15,6 +15,8 @@
         'exportUrl' => $exportUrl ?? null,
         'printUrl' => $printUrl ?? null,
         'importUrl' => $importUrl ?? null,
+        'cascade' => $cascade ?? null,
+        'inModal' => true,
     ])
 
     <x-slot:footer>

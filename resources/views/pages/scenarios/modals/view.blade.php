@@ -10,6 +10,8 @@
         'scenario' => $scenario,
         'gherkin' => $gherkin,
         'tagList' => $tagList ?? [],
+        'cascade' => $cascade ?? null,
+        'inModal' => true,
     ])
 
     <x-slot:footer>

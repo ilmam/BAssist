@@ -7,6 +7,12 @@
 @endphp
 
 <div class="space-y-6" data-feature-page>
+    @include('pages.partials.spine-cascade', [
+        'cascade' => $cascade ?? null,
+        'part' => 'before',
+        'inModal' => $inModal ?? false,
+    ])
+
     {{-- Metadata: same field chrome as FR / Stakeholder Need / generic entities --}}
     <x-details-view
         model="{{ $modelName }}"
@@ -14,6 +20,12 @@
         :fields="$fields"
         :columns="2"
     />
+
+    @include('pages.partials.spine-cascade', [
+        'cascade' => $cascade ?? null,
+        'part' => 'after',
+        'inModal' => $inModal ?? false,
+    ])
 
     {{-- Feature-specific actions (copy / download / print live in the raw dialog) --}}
     <div class="flex flex-wrap gap-2">

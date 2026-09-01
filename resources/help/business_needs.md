@@ -25,7 +25,7 @@ Jumping straight to solutions is the most common and expensive trap for business
 - **Downstream (The Drivers):** Each Business Need drives one or more Business Objectives (the measurable **what**), Scope Items, and — through those objectives — Stakeholder Needs and Solution Requirements.
 - **The Rule of Integrity:** Any stakeholder requirement, software feature, or user story that cannot trace back upstream to an active, approved Business Need is an unapproved candidate for scope creep and should be challenged.
 
-**Practical tip:** When a stakeholder says, "I need an automated email system," they are giving you a solution, not a need. Your job is to ask, "What business problem does an automated email system solve for you today?" The answer to that question is your Business Need. Fall in love with the problem, not the software.
+**Practical tip:** When a stakeholder says, "I need an automated email system," they are giving you a solution, not a need. Your job is to ask, "What business problem does an automated email system solve for you today?" The answer to that question is your Business Need. Fall in love with the problem, not the software. On the Need details page, add the next objective from that same card — you do not need to hop to the Objectives list.
 
 ---
 

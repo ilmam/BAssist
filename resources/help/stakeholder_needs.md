@@ -23,7 +23,7 @@ Stakeholder needs keep delivery honest to real roles. Without them, objectives s
 - **Downstream (The Drivers):** Directly spawns Solution Requirements — Functional Requirements and BDD Features with scenarios.
 - **The Rule of Integrity:** Any solution packaging that cannot trace back to an active stakeholder need (and through it to an objective and need) should be challenged as orphan scope.
 
-**Practical tip:** If two different roles need different behaviors to hit the same objective, write two stakeholder needs — don’t collapse them into one vague sentence.
+**Practical tip:** If two different roles need different behaviors to hit the same objective, write two stakeholder needs — don’t collapse them into one vague sentence. Add Features, FRs, and NFRs from the Stakeholder Need details page so they inherit this need as parent.
 
 ---
 

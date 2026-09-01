@@ -14,11 +14,15 @@
                 <x-button type="link" href="{{ model_modal_path($model, 'delete', $dto->id) }}" icon="trash" iconOnly="true" color="danger" activeColor="warning" class="ms-1 js-open-modal" data-modal-url="{{ model_modal_path($model, 'delete', $dto->id) }}"></x-button>
             @endif
         </x-slot>
-        <x-details-view
-            model="{{ $modelName }}"
-            :dto="$dto"
-            :fields="$fields"
-        />
+        <div class="space-y-6">
+            @include('pages.partials.spine-cascade', ['cascade' => $cascade ?? null, 'part' => 'before'])
+            <x-details-view
+                model="{{ $modelName }}"
+                :dto="$dto"
+                :fields="$fields"
+            />
+            @include('pages.partials.spine-cascade', ['cascade' => $cascade ?? null, 'part' => 'after'])
+        </div>
         <x-slot:footer>
             <x-button type="link" href="{{ model_route($model, 'index') }}" color="outline">{{ __('ui.back_to_list') }}</x-button>
             @include('pages.change_requests.partials.request-change-button', [

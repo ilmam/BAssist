@@ -13,35 +13,25 @@ class ScenarioController extends CrudController
 
     public function show($id)
     {
-        $dto = $this->modelRepository->getById($id);
-        $fields = $dto->getFields(onlyHeaders: false, withPrefix: false, object: $dto);
         $scenario = $this->modelRepository->findForDocument((int) $id);
         $body = $this->assembler->assembleScenario($scenario);
 
-        return view(model_page_view($this->modelName, 'details'), [
-            'dto' => $dto,
-            'model' => $this->modelName,
-            'fields' => $fields,
+        return view(model_page_view($this->modelName, 'details'), $this->detailsViewData($id, [
             'scenario' => $scenario,
             'gherkin' => $body,
             'tagList' => $this->assembler->scenarioDisplayTags($scenario),
-        ]);
+        ]));
     }
 
     public function modalView($id)
     {
-        $dto = $this->modelRepository->getById($id);
-        $fields = $dto->getFields(onlyHeaders: false, withPrefix: false, object: $dto);
         $scenario = $this->modelRepository->findForDocument((int) $id);
         $body = $this->assembler->assembleScenario($scenario);
-        $data = [
-            'dto' => $dto,
-            'model' => $this->modelName,
-            'fields' => $fields,
+        $data = $this->detailsViewData($id, [
             'scenario' => $scenario,
             'gherkin' => $body,
             'tagList' => $this->assembler->scenarioDisplayTags($scenario),
-        ];
+        ]);
 
         return $this->respondModalOrPage(
             model_modal_view($this->modelName, 'view'),

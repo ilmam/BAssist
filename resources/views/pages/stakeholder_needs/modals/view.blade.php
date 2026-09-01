@@ -4,11 +4,13 @@
 
 <x-modal-content :title="($dto->code ? $dto->code.' — ' : '').$dto->title">
     <div class="space-y-6">
+        @include('pages.partials.spine-cascade', ['cascade' => $cascade ?? null, 'part' => 'before', 'inModal' => true])
         <x-details-view
             model="{{ $modelName }}"
             :dto="$dto"
             :fields="$fields"
         />
+        @include('pages.partials.spine-cascade', ['cascade' => $cascade ?? null, 'part' => 'after', 'inModal' => true])
     </div>
 
     <x-slot:footer>

@@ -25,7 +25,7 @@ Without clear Business Objectives, initiatives produce "orphan work"—features 
 - **Downstream (The Drivers):** Each Business Objective drives one or more Stakeholder Needs and informs the Strategic Baseline future state and potential value. Solution requirements should remain consistent with those stakeholder needs.
 - **The Rule of Integrity:** A Business Objective with no parent Business Need — or an objective where downstream features cannot trace back through the spine — represents unsupported strategic drift and should be challenged.
 
-**Practical tip:** Think of a Business Need as why you started the journey, and a Business Objective as the destination pin on the GPS. Features are just the roads. Without a need, you are traveling for no reason; without an objective, you cannot tell when you have arrived.
+**Practical tip:** Think of a Business Need as why you started the journey, and a Business Objective as the destination pin on the GPS. Features are just the roads. Without a need, you are traveling for no reason; without an objective, you cannot tell when you have arrived. Add stakeholder needs from the objective’s details page so the parent is already filled in.
 
 ---
 

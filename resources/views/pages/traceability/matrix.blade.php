@@ -210,6 +210,9 @@
                                                data-modal-nav="off">{{ __('ui.matrix_add_story') }}</a>
                                         @endif
                                     @endif
+                                </td>
+                                <td>
+                                    @if (! empty($row['feature_id']))
                                         <a href="{{ model_modal_path('Feature', 'view', $row['feature_id']) }}"
                                            class="text-primary hover:underline js-open-modal"
                                            data-modal-url="{{ model_modal_path('Feature', 'view', $row['feature_id']) }}"
@@ -259,6 +262,10 @@
                                                data-modal-nav="off">{{ __('ui.matrix_add_feature') }}</a>
                                         @endif
                                     @endif
+                                </td>
+                                <td>
+                                    @php
+                                        $stepCode = $row['process_step_code'] ?? $row['design_artifact_code'] ?? null;
                                         $stepLabel = $row['process_step_label'] ?? $row['design_artifact_label'] ?? null;
                                         $stepFlowId = $row['process_step_flow_id'] ?? $row['design_artifact_flow_id'] ?? null;
                                         $stepFlowTitle = $row['process_step_flow_title'] ?? $row['design_artifact_flow_title'] ?? null;

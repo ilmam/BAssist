@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Concerns\ResolvesListFilters;
 use App\Http\Controllers\Concerns\RespondsWithModal;
+use App\Services\SpineCascadeService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Models\Concerns\HasEntityNumber;
@@ -102,17 +103,12 @@ class BaseController extends Controller
 
     public function show($id)
     {
-        $dto = $this->modelRepository->getById($id);
-        $fields = $dto->getFields(onlyHeaders: false, withPrefix: false, object: $dto);
-
-        return view(model_page_view($this->modelName, 'details'), ['dto' => $dto, 'model' => $this->modelName, 'fields' => $fields]);
+        return view(model_page_view($this->modelName, 'details'), $this->detailsViewData($id));
     }
 
     public function modalView($id)
     {
-        $dto = $this->modelRepository->getById($id);
-        $fields = $dto->getFields(onlyHeaders: false, withPrefix: false, object: $dto);
-        $data = ['dto' => $dto, 'model' => $this->modelName, 'fields' => $fields];
+        $data = $this->detailsViewData($id);
 
         return $this->respondModalOrPage(
             model_modal_view($this->modelName, 'view'),
@@ -120,6 +116,25 @@ class BaseController extends Controller
             model_page_view($this->modelName, 'details'),
             $data
         );
+    }
+
+    /**
+     * Shared payload for details pages and view modals.
+     *
+     * @param  array<string, mixed>  $extra
+     * @return array<string, mixed>
+     */
+    protected function detailsViewData($id, array $extra = []): array
+    {
+        $dto = $this->modelRepository->getById($id);
+        $fields = $dto->getFields(onlyHeaders: false, withPrefix: false, object: $dto);
+
+        return array_merge([
+            'dto' => $dto,
+            'model' => $this->modelName,
+            'fields' => $fields,
+            'cascade' => app(SpineCascadeService::class)->for($this->modelName, (int) $id),
+        ], $extra);
     }
 
     public function modalShow($id)
@@ -374,6 +389,22 @@ class BaseController extends Controller
             $workspaceId = app(WorkspaceContext::class)->id();
             if ($workspaceId !== null && empty($payload['workspace_id'])) {
                 $payload['workspace_id'] = $workspaceId;
+            }
+        }
+
+        foreach ([
+            'stakeholder_need_id',
+            'business_objective_id',
+            'primary_business_need_id',
+            'feature_id',
+            'change_request_id',
+        ] as $key) {
+            if (! array_key_exists($key, $payload)) {
+                continue;
+            }
+            $value = (int) request()->query($key, 0);
+            if ($value > 0 && empty($payload[$key])) {
+                $payload[$key] = $value;
             }
         }
 

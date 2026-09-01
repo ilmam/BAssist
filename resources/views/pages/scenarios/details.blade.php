@@ -35,6 +35,7 @@
             'scenario' => $scenario,
             'gherkin' => $gherkin,
             'tagList' => $tagList ?? [],
+            'cascade' => $cascade ?? null,
         ])
 
         <x-slot:footer>

@@ -50,7 +50,7 @@ Feature: Dealer Inquiry State Management
 - **Downstream (The Execution):** Automated acceptance test frameworks (e.g., Cucumber, SpecFlow), QA test suites, and developer Test-Driven Development (TDD) that implement the same examples.
 - **The Rule of Integrity:** Treat a feature without at least one scenario as incomplete for acceptance—a capability without an example cannot be agreed upon or verified. As a BA practice, prefer every scenario to sit under a feature that traces to a validated Stakeholder Need.
 
-**Practical tip:** Never write UI steps in your scenarios! If your scenario says, "When I click the green submit button," you have created a fragile requirement. What happens if the UI changes to a swipe on a mobile app? Your test breaks, even though the business logic hasn't changed. Write "When the agent submits the inquiry." Keep it focused on the behaviour, not the screen layout.
+**Practical tip:** Never write UI steps in your scenarios! If your scenario says, "When I click the green submit button," you have created a fragile requirement. What happens if the UI changes to a swipe on a mobile app? Your test breaks, even though the business logic hasn't changed. Write "When the agent submits the inquiry." Keep it focused on the behaviour, not the screen layout. Add scenarios from the Feature details page so they stay under this feature.
 
 ---
 

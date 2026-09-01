@@ -365,6 +365,8 @@ pages/{resource}/form.blade.php
 pages/{resource}/details.blade.php
 ```
 
+Need Spine details (Business Need, Objective, Stakeholder Need, FR, NFR, Feature, Scenario) also render `pages/partials/spine-cascade.blade.php`: parent crumbs above the record, then local “what’s missing” plus children with create-in-context modal URLs (`?stakeholder_need_id=` / `?feature_id=` / …). `BaseController::detailsViewData()` loads that payload via `SpineCascadeService`. Create forms prefill those parent query keys in `applyStickyContextDefaults()`.
+
 To scaffold owned form markup from DTO metadata (instead of copying generic `<x-form>`):
 
 ```bash
@@ -579,7 +581,9 @@ App-specific modal quirks (for example side-sheet backdrop) belong in the app’
 | File | Role |
 |------|------|
 | `app/helpers.php` | `model_page_view()`, `model_modal_view()`, theme helpers |
-| `app/Http/Controllers/BaseController.php` | CRUD + modal actions |
+| `app/Http/Controllers/BaseController.php` | CRUD + modal actions; `detailsViewData()` attaches spine cascade |
+| `app/Services/SpineCascadeService.php` | Parent / children / local gaps for Need Spine details |
+| `resources/views/pages/partials/spine-cascade.blade.php` | Cascade crumbs, gaps, and in-context create on details + view modals |
 | `app/Http/Controllers/CrudController.php` | Route-driven model resolution |
 | `app/Http/Controllers/Concerns/RespondsWithModal.php` | AJAX fragment vs redirect to canonical page |
 | `app/Support/ModalUrl.php` | Overlay path → canonical full-page URL |
