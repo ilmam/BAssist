@@ -1,0 +1,12 @@
+---
+description: Keep the tracked SQLite database in git as the project data backup
+alwaysApply: true
+---
+
+# Tracked application database
+
+`database/database.sqlite` is the project data backup. There is no separate backup.
+
+- Keep it tracked (`database/.gitignore` already allows this file).
+- Include it in commits when it has changed, including alongside feature work.
+- Do not treat it as a secret, generated artifact, or file to leave unstaged.
