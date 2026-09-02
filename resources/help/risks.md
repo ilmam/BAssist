@@ -12,7 +12,7 @@ Strategy without risk assessment jumps from “where we want to be” to “how 
 
 ## How to Use
 
-1. **Identify:** Name the condition and the negative impact on value. Categorize (technical, organizational, schedule/resource, external/regulatory). Optionally note **Related to** (which BO, BN, SN, FR, or Feature this risk affects — free text until structured linking ships), a **source** (e.g. an unvalidated assumption or CR reference), and a **trigger** (the early-warning signal).
+1. **Identify:** Name the condition and the negative impact on value. Categorize (technical, organizational, schedule/resource, external/regulatory). Optionally note a **trigger** (the early-warning signal).
 2. **Score:** Set Likelihood (1–3) and Impact (1–3). Risk score = Likelihood × Impact. Critical (9) is highlighted in the UI and in Package 1 Step C.
 3. **Respond:** Choose Mitigate, Avoid, Transfer, or Accept when appropriate — and fill **Treatment** (for Accept, that field is the acceptance rationale).
 4. **Own & track:** Assign an owner and keep status current (Open → Mitigated / Realized / Closed).

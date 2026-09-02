@@ -49,14 +49,6 @@
                         <dt>{{ __('ui.risk_trigger') }}</dt>
                         <dd>{{ $risk->trigger }}</dd>
                     @endif
-                    @if ($risk->related_to)
-                        <dt>{{ __('ui.related_to') }}</dt>
-                        <dd>{{ $risk->related_to }}</dd>
-                    @endif
-                    @if ($risk->source)
-                        <dt>{{ __('ui.source') }}</dt>
-                        <dd>{{ $risk->source }}</dd>
-                    @endif
                 </dl>
                 @if ($gap)
                     <p class="risk-gap-flag">{{ __('ui.risk_coverage_gap') }}</p>

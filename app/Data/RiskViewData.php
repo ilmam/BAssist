@@ -40,11 +40,9 @@ class RiskViewData extends BaseData
         public ?string $owner = null,
         #[InList]
         public string $status = '',
+        #[Hide]
         public ?string $source = null,
-        // Not #[InList]: optional cross-reference note, not a core register
-        // column — Risks already has 10 InList columns + actions, more than
-        // any other entity list; keep the default list compact and let this
-        // stay visible on the detail view.
+        #[Hide]
         public ?string $related_to = null,
         #[Hide]
         public bool $is_critical = false,

@@ -51,12 +51,6 @@ class RiskData extends BaseData
 
         #[ListForm('select', 'RiskStatus')]
         public string $status = RiskStatus::OPEN,
-
-        #[Form('text', hideQuick: true, help: 'Optional origin note (e.g. “Assumption: dealers have Wi-Fi”).')]
-        public ?string $source = null,
-
-        #[Form('text', hideQuick: true, help: 'Optional reference to a requirement (e.g. BO-1, BN-2 Improve delivery…).')]
-        public ?string $related_to = null,
     ) {
     }
 
@@ -74,8 +68,6 @@ class RiskData extends BaseData
             'trigger' => ['nullable', 'string', 'max:255'],
             'owner' => ['nullable', 'string', 'max:255'],
             'status' => ['required', 'string', Rule::in(RiskStatus::values())],
-            'source' => ['nullable', 'string', 'max:255'],
-            'related_to' => ['nullable', 'string', 'max:255'],
         ];
     }
 }

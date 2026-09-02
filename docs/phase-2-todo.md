@@ -23,7 +23,7 @@
 These were listed in early Phase 2 / Phase 1.5 roadmaps but are **done** in the current codebase:
 
 - MoSCoW via Priority master (`must` / `should` / `could` / `wont`) — see [`phase-1.x-todo.md`](phase-1.x-todo.md) §3
-- Risk register **v1** (project-scoped; `project_id` + free-text `source` + interim `related_to`)
+- Risk register **v1** (project-scoped; `project_id`. Columns `source` and `related_to` remain in the database but are **hidden from forms, details, and Package 1** — structured subject linking in §1 replaces them.)
 - Change Request + downstream cascade preview (partial “change impact”)
 - Strategic Baseline entity + Strategy nav folder (**v1 — 1:1 per project**; multi-version locked in §10)
 - Project readiness / gap dashboard v1
@@ -35,7 +35,7 @@ These were listed in early Phase 2 / Phase 1.5 roadmaps but are **done** in the 
 
 ### Problem
 
-Risk is only project-scoped today (`risks.project_id` + free-text `source`). An interim **`related_to`** string (nullable, max 255) lets users note which BO / BN / SN / FR / Feature a risk relates to in free text (e.g. `BO-1, BN-2 Improve delivery…`) until structured linking ships — **`source` stays for origin/assumption notes**. When §1 lands, migrate or replace `related_to` with `subject_type` / `subject_id` + computed `subject_label`; existing free-text values can seed manual relinking or a one-off migration heuristic.
+Risk is only project-scoped today (`risks.project_id`). Interim columns **`source`** and **`related_to`** exist on the table but are **not on the edit DTO or details UI** (they added noise without structured traceability). When §1 lands, add `subject_type` / `subject_id` + computed `subject_label`; existing free-text values can seed a one-off migration heuristic if needed.
 
 Uncertainty should tie to requirement levels the same way Change Requests do, with contextual capture from spine entity pages.
 
@@ -51,8 +51,7 @@ Uncertainty should tie to requirement levels the same way Change Requests do, wi
 
 - **`project_id`:** Always required (unchanged). Denormalized for list filters, nav scoping, BABOK pack queries.
 - **Naming:** Use `subject_*` (not `affected_*`) — CR *affects* a requirement; Risk *relates to* a requirement.
-- **Keep `source`:** Free-text origin note (e.g. “Assumption: dealers have Wi‑Fi”, “Triggered by CR-012”) — complementary to structured link.
-- **Replace `related_to`:** Interim free-text requirement reference column — superseded by structured subject; do not keep both long-term.
+- **`source` / `related_to`:** Still on the table, **hidden from UI and edit DTO**. Do not put them back on the form. Structured `subject_*` replaces `related_to`; do not keep both long-term.
 - **Migration:** Add columns + index; existing rows stay `subject_type/id = null` (valid project-level risks).
 - **Shared abstraction:** Extract `RequirementSubjectType` + `RequirementSubjectService` from CR code; refactor CR to consume shared enum/service. Keep `cascadeFor()` CR-only.
 
@@ -154,7 +153,7 @@ Follow-on after §1 ships. Items were explicitly scoped as “v2 polish” in th
 
 - Extend `RequirementSubjectType` with `assumption` (and optionally `constraint`)
 - Assumptions live in guardrails hub, not spine — justify only if guardrail↔risk linking becomes recurring
-- Until then, continue using free-text `source` field
+- Until then, do not surface a free-text `source` field on the risk form
 
 **Acceptance criteria:**
 
@@ -176,6 +175,18 @@ Follow-on after §1 ships. Items were explicitly scoped as “v2 polish” in th
 
 - [ ] Matrix view shows risk signal without breaking existing columns
 - [ ] Orphan / unlinked risks not falsely attributed to spine rows
+
+### 2.6 Traceability — map risks to Business Objectives — **TODO** · logged 2026-09-02
+
+**Do not implement yet.** Product request: risks should map to **Business Objectives** so they show on the traceability surface (not only the risk register).
+
+Depends on §1 subject linking (`subject_type` / `subject_id`). First subject that must be visible in traceability is **Business Objective** — other spine levels can follow the general Risk column in §2.5.
+
+**Acceptance criteria (when scheduled):**
+
+- [ ] A risk can be linked to a Business Objective (same project)
+- [ ] Traceability matrix (or equivalent RTM view) shows that link on the BO row
+- [ ] Unlinked / project-level risks are not shown as if they belonged to an objective
 
 ---
 

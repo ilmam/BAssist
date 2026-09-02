@@ -3,9 +3,10 @@
 namespace Tests\Unit;
 
 use App\Data\RiskData;
+use App\Data\RiskViewData;
 use App\Models\Risk;
 use App\Support\CrudEntityRegistry;
-use App\Support\EntityFormBuilder;
+use App\Support\DtoMetadata;
 use App\Support\RiskCategory;
 use App\Support\RiskImpact;
 use App\Support\RiskLikelihood;
@@ -30,34 +31,24 @@ class RiskTest extends TestCase
 
     public function test_form_exposes_core_risk_fields(): void
     {
-        $fields = (new EntityFormBuilder)->fields(RiskData::class);
+        $fields = DtoMetadata::for(RiskData::class)->formFields();
 
-        $this->assertSame('select', $fields['category']['type'] ?? null);
-        $this->assertSame('select', $fields['likelihood']['type'] ?? null);
-        $this->assertSame('select', $fields['impact']['type'] ?? null);
-        $this->assertSame('select', $fields['response']['type'] ?? null);
-        $this->assertSame('select', $fields['status']['type'] ?? null);
-        $this->assertEqualsCanonicalizing(
-            RiskCategory::values(),
-            array_keys($fields['category']['list'] ?? [])
-        );
-        $this->assertEqualsCanonicalizing(
-            RiskLikelihood::values(),
-            array_keys($fields['likelihood']['list'] ?? [])
-        );
-        $this->assertEqualsCanonicalizing(
-            RiskImpact::values(),
-            array_keys($fields['impact']['list'] ?? [])
-        );
-        $this->assertEqualsCanonicalizing(
-            RiskResponse::values(),
-            array_keys($fields['response']['list'] ?? [])
-        );
-        $this->assertEqualsCanonicalizing(
-            RiskStatus::values(),
-            array_keys($fields['status']['list'] ?? [])
-        );
-        $this->assertSame('text', $fields['related_to']['type'] ?? null);
+        $this->assertSame('select', $fields['category'][0] ?? null);
+        $this->assertSame('RiskCategory', $fields['category'][1] ?? null);
+        $this->assertSame('select', $fields['likelihood'][0] ?? null);
+        $this->assertSame('select', $fields['impact'][0] ?? null);
+        $this->assertSame('select', $fields['response'][0] ?? null);
+        $this->assertSame('select', $fields['status'][0] ?? null);
+        $this->assertArrayNotHasKey('related_to', $fields);
+        $this->assertArrayNotHasKey('source', $fields);
+    }
+
+    public function test_source_and_related_to_are_hidden_on_details(): void
+    {
+        $paths = DtoMetadata::for(RiskViewData::class)->valueFieldPaths(withPrefix: false);
+
+        $this->assertNotContains('source', $paths);
+        $this->assertNotContains('related_to', $paths);
     }
 
     public function test_validation_requires_core_fields(): void
@@ -69,8 +60,8 @@ class RiskTest extends TestCase
         $this->assertContains('required', $rules['likelihood']);
         $this->assertContains('required', $rules['impact']);
         $this->assertContains('required', $rules['status']);
-        $this->assertContains('nullable', $rules['related_to']);
-        $this->assertContains('max:255', $rules['related_to']);
+        $this->assertArrayNotHasKey('related_to', $rules);
+        $this->assertArrayNotHasKey('source', $rules);
     }
 
     public function test_score_matrix_bands_high_and_critical(): void
