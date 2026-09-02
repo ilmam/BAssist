@@ -119,6 +119,10 @@ BLADE;
                 $escapedHelp = str_replace("'", "\\'", $help);
                 $attributeParts[] = "'data-field-help' => '{$escapedHelp}'";
             }
+            if ($type === 'attachments') {
+                $attributeParts[] = "'attachable_model' => \$model";
+                $attributeParts[] = "'record_id' => (int) (\$dto->id ?? 0)";
+            }
 
             $attributesExpression = $attributeParts === []
                 ? 'null'

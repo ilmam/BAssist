@@ -8,7 +8,7 @@ use Attribute;
  * Declares a create/edit form control for a property.
  *
  * Arguments:
- * - $type: control type (text, textarea, code, select, kt-select, …)
+ * - $type: control type (text, textarea, code, select, kt-select, attachments, …)
  * - $model: related entity name for select options (e.g. 'Project')
  * - $hideQuick: when true, omit from Quick Create UI (submitted as hidden
  *   using the DTO property default). Default false = show.
@@ -26,7 +26,7 @@ use Attribute;
  *   ['sm'=>…,'md'=>…,'lg'=>…]). Null keeps type defaults (half width / full for textarea).
  *
  * Quick Create column spans are theme defaults (sm:12 / md:6 / lg:4;
- * textarea/code/dropzone stay 12) — not set here. Rare overrides use
+ * textarea/code/dropzone/attachments stay 12) — not set here. Rare overrides use
  * `$field['ui_span']` at form-assembly time.
  *
  * Examples:
@@ -41,6 +41,8 @@ use Attribute;
  *   #[Form('select', 'StakeholderNeed', help: 'Need Spine link for the matrix.', section: 'traceability')]
  *   #[Form('radio', 'NeedType')]
  *   #[Form('text', uiSpan: 12)]
+ *   #[Form('attachments', hideQuick: true)]
+ *   #[Form('attachments', hideQuick: true, help: 'Specs, evidence, or mockups.')]
  *
  * Status/priority defaults: leave null on the DTO. Models with HasEntityStatus
  * apply EntityStatus::defaultId() on create; models with priority_id use

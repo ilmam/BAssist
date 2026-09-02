@@ -23,6 +23,9 @@ class BusinessObjectiveData extends BaseData
         public ?string $success_measure = null,
         #[Form('text', hideQuick: true)]
         public ?string $potential_value = null,
+
+        #[Form('attachments', hideQuick: true)]
+        public mixed $attachments = null,
     ) {
     }
 

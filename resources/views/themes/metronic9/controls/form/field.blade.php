@@ -36,6 +36,10 @@
         {{ Form::bsFile($name, $value, $attributes) }}
         @break
 
+    @case('attachments')
+        {{ Form::bsAttachments($name, $value, $attributes) }}
+        @break
+
     @case('dropzone')
         {{ Form::bsDropzone($name, $value, $attributes) }}
         @break

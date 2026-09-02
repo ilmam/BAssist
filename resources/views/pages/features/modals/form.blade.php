@@ -136,6 +136,16 @@
                 @endforeach
             </section>
 
+            @if (array_key_exists('attachments', $formFields))
+                <div class="form-fields-grid grid grid-cols-12">
+                    @include('pages.partials.form-field-cells', [
+                        'fields' => ['attachments' => $formFields['attachments']],
+                        'dto' => $dto,
+                        'entityModel' => $modelName,
+                    ])
+                </div>
+            @endif
+
         </div>
 
         <div class="flex justify-end gap-2.5 mt-5">
@@ -145,12 +155,6 @@
     {{ Form::close() }}
 
     @if (! $isCreate && ($dto->id ?? null))
-        <div class="mt-6 border-t border-border pt-6">
-            @include('pages.partials.attachments', [
-                'model' => $modelName,
-                'recordId' => (int) $dto->id,
-            ])
-        </div>
         <div class="mt-6 border-t border-border pt-6">
             @include('pages.features.partials.scenarios-panel', [
                 'featureId' => $dto->id,

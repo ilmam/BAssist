@@ -66,7 +66,7 @@ use Illuminate\Support\Str;
  *                     dateTime, timestamp, foreignId (plus int/bool/etc.
  *                     aliases). Supported form types: text, textarea,
  *                     code, select, checkbox, radio, file, image,
- *                     dropzone, tree, date, datetime-local, number, email,
+ *                     dropzone, attachments, tree, date, datetime-local, number, email,
  *                     password. For code, an optional language token
  *                     (gherkin, javascript, sql, …) becomes
  *                     #[Form('code', language: '…')].
@@ -278,7 +278,7 @@ class MakeEntityCommand extends Command
 
     private function isKnownFormType(string $type): bool
     {
-        return in_array($type, ['text', 'textarea', 'code', 'select', 'kt-select', 'checkbox', 'radio', 'file', 'image', 'dropzone', 'tree', 'date', 'datetime-local', 'number', 'email', 'password'], true);
+        return in_array($type, ['text', 'textarea', 'code', 'select', 'kt-select', 'checkbox', 'radio', 'file', 'image', 'dropzone', 'attachments', 'tree', 'date', 'datetime-local', 'number', 'email', 'password'], true);
     }
 
     private function inferFormType(string $dbType): string

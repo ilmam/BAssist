@@ -36,6 +36,9 @@ class BusinessNeedData extends BaseData
 
         #[Form('textarea', hideQuick: true)]
         public ?string $do_nothing_consequence = null,
+
+        #[Form('attachments', hideQuick: true)]
+        public mixed $attachments = null,
     ) {
     }
 

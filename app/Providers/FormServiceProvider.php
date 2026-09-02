@@ -24,6 +24,7 @@ class FormServiceProvider extends ServiceProvider
         $form->component('bsTextarea', 'textarea', ['name', 'value', 'attributes']);
         $form->component('bsCode', 'code', ['name', 'value', 'attributes']);
         $form->component('bsFile', 'file', ['name', 'value', 'attributes']);
+        $form->component('bsAttachments', 'attachments', ['name', 'value', 'attributes']);
         $form->component('bsTree', 'tree', ['name', 'value', 'textValue', 'attributes']);
         $form->component('bsImage', 'image', ['name', 'path', 'file', 'attributes']);
         $form->component('bsDropzone', 'dropzone', ['name', 'path', 'file', 'attributes']);

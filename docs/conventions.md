@@ -92,11 +92,11 @@ Mark Eloquent relations with `#[Relation('BelongsTo')]` (and the real return typ
 | `HasEntityStatus` | Fills `status_id` on create if empty |
 | `AppliesDefaultPriority` | Fills `priority_id` on create if empty |
 | `HasEntityNumber` | Sequential `number` + `code` (implement `entityNumberPrefix()`) |
-| `HasAttachments` + `#[Attachable]` | Polymorphic files on the details page (upload / download / delete) |
+| `HasAttachments` + `#[Attachable]` | Polymorphic files; add `#[Form('attachments')]` on the edit DTO |
 
 Keep those ids `null` on the edit DTO so the trait can set them. Use `hideQuick: true` if they should not appear on Quick Create.
 
-**Attachments** are not a DTO field. Add `use HasAttachments` and `#[Attachable]` on the model. Every CRUD entity already has `{resource}/{id}/attachments` routes; the marker turns the details panel and write endpoints on. Files live on the `local` disk (`config/attachments.php`). Upload and remove require **update** on the parent entity; download requires **view**.
+**Attachments** are a Form type, not a persisted DTO column. Add `use HasAttachments` and `#[Attachable]` on the model, then `#[Form('attachments', hideQuick: true)]` on `{Model}Data` (help / uiSpan / section / readonly work like any field). Files submit with Save. Download routes stay at `{resource}/{id}/attachments/{attachment}`. Files live on the `local` disk (`config/attachments.php`). Upload and remove require **update** on the parent entity; download requires **view**.
 
 ---
 

@@ -14,7 +14,7 @@ If you have not added an entity yet, start with [quick-start.md](quick-start.md)
 | `#[Hide]` | `{Model}ViewData` property | Skip this property on details (and list discovery) |
 | `#[Value('code')]` | nested ViewData property | Use `related.code` instead of the default display field |
 | `#[Relation('BelongsTo')]` | model **method** | Registers an Eloquent relation (not a form field) |
-| `#[Attachable]` | model **class** | Turns on the shared attachments panel (also `use HasAttachments`) |
+| `#[Attachable]` | model **class** | Enables file storage (also `use HasAttachments`); add `#[Form('attachments')]` on the edit DTO |
 
 `List` cannot be a PHP class name, so the list marker is `InList`.
 
@@ -28,6 +28,7 @@ If you have not added an entity yet, start with [quick-start.md](quick-start.md)
 #[Form('select', 'RelatedModel', ktSelect: false)] // native <select>, not the enhanced widget
 #[Form('textarea', hideQuick: true)]
 #[Form('text', readonly: true)]
+#[Form('attachments', hideQuick: true)]
 ```
 
 - Every `Form` / `ListForm` field appears in **Quick Create** unless you set `hideQuick: true`. Hidden Quick Create fields are still submitted as hidden inputs using the DTO default.
@@ -124,7 +125,14 @@ class FunctionalRequirement extends BaseModel
 }
 ```
 
-Shows **Attachments** on the details page and view modal (`pages/partials/attachments.blade.php`). Not a form field. Config: `config/attachments.php`. Need Spine requirement types (Business Need, Objective, Stakeholder Need, FR, NFR, Feature) opt in already.
+Storage only. The create/edit control is a normal Form field on `{Model}Data`:
+
+```php
+#[Form('attachments', hideQuick: true)]
+public mixed $attachments = null;
+```
+
+Same options as every other field: `hideQuick`, `help`, `uiSpan`, `section`, `readonly`. Not a database column — files save with the entity form (choose files, Save). Existing files can be marked Remove and drop on save. Details pages list downloads only. Config: `config/attachments.php`. Need Spine requirement types (Business Need, Objective, Stakeholder Need, FR, NFR, Feature) opt in already.
 
 ---
 

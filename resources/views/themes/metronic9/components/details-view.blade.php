@@ -30,5 +30,6 @@
     'model' => $model,
     'recordId' => (int) ($dto->id ?? 0),
     'attachments' => $attachmentRecords ?? [],
+    'mode' => 'details',
 ])
 </div>

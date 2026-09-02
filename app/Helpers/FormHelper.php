@@ -20,6 +20,7 @@ class FormHelper
                 case 'radio':
                 case 'file':
                 case 'dropzone':
+                case 'attachments':
                     $type = $field;
                     break;
                 default:

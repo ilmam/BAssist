@@ -31,6 +31,75 @@ class AttachmentTest extends TestCase
         $this->assertFalse(entity_attachable('Priority'));
     }
 
+    public function test_attachments_are_a_form_field_on_requirement_dtos(): void
+    {
+        $fields = \App\Support\DtoMetadata::for(\App\Data\FunctionalRequirementData::class)->formFields();
+
+        $this->assertSame('attachments', $fields['attachments'][0] ?? null);
+        $this->assertArrayNotHasKey('attachments', \App\Support\DtoMetadata::for(\App\Data\FunctionalRequirementData::class)->quickCreateVisibleFormFields());
+    }
+
+    public function test_entity_save_attaches_and_removes_files(): void
+    {
+        Storage::fake('local');
+        $user = $this->actingSuperAdmin();
+        $requirement = $this->seedFunctionalRequirement();
+        $file = UploadedFile::fake()->create('evidence.pdf', 80, 'application/pdf');
+
+        $this->actingAs($user)
+            ->put(route('functional_requirements.update', $requirement->id), [
+                'title' => $requirement->title,
+                'project_id' => $requirement->project_id,
+                'stakeholder_need_id' => $requirement->stakeholder_need_id,
+                'statement' => $requirement->statement,
+                'attachments' => [$file],
+            ])
+            ->assertRedirect(route('functional_requirements.edit', $requirement->id));
+
+        $attachment = Attachment::query()->first();
+        $this->assertNotNull($attachment);
+        $this->assertSame('evidence.pdf', $attachment->original_name);
+
+        $this->actingAs($user)
+            ->get(route('functional_requirements.edit', $requirement->id))
+            ->assertOk()
+            ->assertSee('name="attachments[]"', false)
+            ->assertSee($attachment->original_name, false);
+
+        $this->actingAs($user)
+            ->put(route('functional_requirements.update', $requirement->id), [
+                'title' => $requirement->title,
+                'project_id' => $requirement->project_id,
+                'stakeholder_need_id' => $requirement->stakeholder_need_id,
+                'statement' => $requirement->statement,
+                'remove_attachments' => [$attachment->id],
+            ])
+            ->assertRedirect(route('functional_requirements.edit', $requirement->id));
+
+        $this->assertSoftDeleted($attachment);
+    }
+
+    public function test_entity_save_rejects_disallowed_attachment(): void
+    {
+        Storage::fake('local');
+        $user = $this->actingSuperAdmin();
+        $requirement = $this->seedFunctionalRequirement();
+
+        $this->actingAs($user)
+            ->from(route('functional_requirements.edit', $requirement->id))
+            ->put(route('functional_requirements.update', $requirement->id), [
+                'title' => $requirement->title,
+                'project_id' => $requirement->project_id,
+                'stakeholder_need_id' => $requirement->stakeholder_need_id,
+                'statement' => $requirement->statement,
+                'attachments' => [UploadedFile::fake()->create('payload.exe', 20, 'application/octet-stream')],
+            ])
+            ->assertRedirect()
+            ->assertSessionHasErrors('attachments');
+
+        $this->assertSame(0, Attachment::query()->count());
+    }
+
     public function test_upload_download_and_remove_on_functional_requirement(): void
     {
         Storage::fake('local');

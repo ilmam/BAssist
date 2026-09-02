@@ -99,6 +99,7 @@ class BaseController extends Controller
         $this->mergeStickyContextIntoRequest($request);
         $data = $this->getData($request);
         $created = $this->modelRepository->create($data->toArray());
+        $this->syncAttachments($request, $created);
 
         return $this->respondAfterMutation($request, $created);
     }
@@ -236,6 +237,8 @@ class BaseController extends Controller
         if (! is_object($updated)) {
             $updated = $this->modelRepository->editById($id);
         }
+
+        $this->syncAttachments($request, $updated, (int) $id);
 
         return $this->respondAfterMutation($request, $updated);
     }
@@ -392,7 +395,59 @@ class BaseController extends Controller
     {
         $dtoClass = "\\App\\Data\\".$this->modelName.'Data';
 
-        return $dtoClass::from($request);
+        return $dtoClass::from($request->except($this->attachmentRequestKeys()));
+    }
+
+    /**
+     * @return list<string>
+     */
+    protected function attachmentRequestKeys(): array
+    {
+        $keys = [];
+
+        foreach ($this->attachmentFieldNames() as $name) {
+            $keys[] = $name;
+            $keys[] = 'remove_'.$name;
+        }
+
+        return $keys;
+    }
+
+    /**
+     * @return list<string>
+     */
+    protected function attachmentFieldNames(): array
+    {
+        $names = [];
+        $dtoClass = $this->modelRepository->editDto ?? '';
+        if (! is_string($dtoClass) || $dtoClass === '' || ! class_exists($dtoClass)) {
+            return $names;
+        }
+
+        foreach (DtoMetadata::for($dtoClass)->formFields() as $name => $args) {
+            if (($args[0] ?? '') === 'attachments') {
+                $names[] = $name;
+            }
+        }
+
+        return $names;
+    }
+
+    protected function syncAttachments(Request $request, mixed $record, ?int $id = null): void
+    {
+        if (! AttachableSupport::enabled($this->modelName)) {
+            return;
+        }
+
+        $id ??= $this->mutationRecordId($record);
+        if ($id === null) {
+            return;
+        }
+
+        $service = app(AttachmentService::class);
+        foreach ($this->attachmentFieldNames() as $field) {
+            $service->syncFromRequest($this->modelName, $id, $request, $field);
+        }
     }
 
     protected function buildCreateForm(bool $forQuickCreate = false): array

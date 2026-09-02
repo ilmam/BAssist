@@ -396,6 +396,10 @@ async function saveFormInPlace(form) {
 
         captureFormBaseline(form);
 
+        form.querySelectorAll('input[type="file"]').forEach((input) => {
+            input.value = '';
+        });
+
         // Widgets (KTSelect, editors) can write back into fields a tick after
         // the save resolves; re-snapshot so that does not read as a user edit.
         [50, 300].forEach((ms) => {

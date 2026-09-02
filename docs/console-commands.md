@@ -68,7 +68,7 @@ field:foreignId:RelatedModel:select # related_id:foreignId:RelatedModel:select
 
 **DB types:** `string`, `text`, `integer`, `bigInteger`, `decimal`, `float`, `double`, `boolean`, `date`, `dateTime`, `timestamp`, `foreignId` (aliases `int`, `bool`, `biginteger`, `datetime`, `foreignid`).
 
-**Form types:** `text`, `textarea`, `select`, `checkbox`, `radio`, `file`, `image`, `dropzone`, `tree`, `date`, `datetime-local`, `number`, `email`, `password`. If omitted, a form type is inferred from the DB type.
+**Form types:** `text`, `textarea`, `select`, `checkbox`, `radio`, `file`, `image`, `dropzone`, `attachments`, `tree`, `date`, `datetime-local`, `number`, `email`, `password`. If omitted, a form type is inferred from the DB type.
 
 ### Examples
 

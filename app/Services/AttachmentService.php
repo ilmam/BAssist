@@ -26,8 +26,56 @@ class AttachmentService
     public function store(string $model, int $id, UploadedFile $file): Attachment
     {
         $record = $this->record($model, $id);
-        $this->assertAllowed($file);
+        $this->assertAllowed($file, 'file');
 
+        return $this->write($record, $file, 'file');
+    }
+
+    /**
+     * Save new uploads and remove checked files from a parent entity form.
+     */
+    public function syncFromRequest(string $model, int $id, \Illuminate\Http\Request $request, string $field = 'attachments'): void
+    {
+        $files = $this->uploadedFiles($request, $field);
+        foreach ($files as $file) {
+            $this->assertAllowed($file, $field);
+        }
+
+        $removeIds = array_values(array_filter(array_map('intval', (array) $request->input('remove_'.$field, []))));
+        foreach ($removeIds as $attachmentId) {
+            if ($attachmentId > 0) {
+                $this->destroy($model, $id, $attachmentId);
+            }
+        }
+
+        $record = $this->record($model, $id);
+        foreach ($files as $file) {
+            $this->write($record, $file, $field);
+        }
+    }
+
+    /**
+     * @return list<UploadedFile>
+     */
+    protected function uploadedFiles(\Illuminate\Http\Request $request, string $field): array
+    {
+        $uploaded = $request->file($field);
+        if ($uploaded instanceof UploadedFile) {
+            $uploaded = [$uploaded];
+        }
+
+        if (! is_array($uploaded)) {
+            return [];
+        }
+
+        return array_values(array_filter(
+            $uploaded,
+            static fn ($file) => $file instanceof UploadedFile && $file->isValid()
+        ));
+    }
+
+    protected function write(Model $record, UploadedFile $file, string $errorKey = 'file'): Attachment
+    {
         $disk = (string) config('attachments.disk', 'local');
         $extension = strtolower((string) $file->getClientOriginalExtension());
         $directory = 'attachments/'.Str::snake(class_basename($record)).'/'.$record->getKey();
@@ -35,7 +83,7 @@ class AttachmentService
 
         if (! is_string($path) || $path === '') {
             throw ValidationException::withMessages([
-                'file' => __('ui.attachments_store_failed'),
+                $errorKey => __('ui.attachments_store_failed'),
             ]);
         }
 
@@ -91,12 +139,12 @@ class AttachmentService
         return $attachment;
     }
 
-    protected function assertAllowed(UploadedFile $file): void
+    protected function assertAllowed(UploadedFile $file, string $errorKey = 'file'): void
     {
         $maxKb = (int) config('attachments.max_kilobytes', 10240);
         if ($file->getSize() > $maxKb * 1024) {
             throw ValidationException::withMessages([
-                'file' => __('ui.attachments_too_large', ['max' => $this->maxLabel($maxKb)]),
+                $errorKey => __('ui.attachments_too_large', ['max' => $this->maxLabel($maxKb)]),
             ]);
         }
 
@@ -104,7 +152,7 @@ class AttachmentService
         $allowed = array_map('strtolower', config('attachments.extensions', []));
         if ($extension === '' || ! in_array($extension, $allowed, true)) {
             throw ValidationException::withMessages([
-                'file' => __('ui.attachments_invalid'),
+                $errorKey => __('ui.attachments_invalid'),
             ]);
         }
     }

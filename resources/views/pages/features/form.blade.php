@@ -145,6 +145,16 @@
                     <pre class="field-help whitespace-pre-wrap text-xs font-mono bg-muted/40 border border-border rounded-md p-3">{{ __('ui.gherkin_feature_body_example') }}</pre>
                 </section>
 
+                @if (array_key_exists('attachments', $formFields))
+                    <div class="form-fields-grid grid grid-cols-12">
+                        @include('pages.partials.form-field-cells', [
+                            'fields' => ['attachments' => $formFields['attachments']],
+                            'dto' => $dto,
+                            'entityModel' => $modelName,
+                        ])
+                    </div>
+                @endif
+
             </x-form-card-body>
 
             <x-form-card-footer>
@@ -154,12 +164,6 @@
         {{ Form::close() }}
 
         @if (! $isCreate && ($dto->id ?? null))
-            <x-form-card-body>
-                @include('pages.partials.attachments', [
-                    'model' => $modelName,
-                    'recordId' => (int) $dto->id,
-                ])
-            </x-form-card-body>
             <x-form-card-body>
                 @include('pages.features.partials.scenarios-panel', [
                     'featureId' => $dto->id,

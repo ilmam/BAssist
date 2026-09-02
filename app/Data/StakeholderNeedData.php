@@ -25,6 +25,9 @@ class StakeholderNeedData extends BaseData
         public ?int $priority_id = null,
         #[ListForm('select', 'Status', hideQuick: true)]
         public ?int $status_id = null,
+
+        #[Form('attachments', hideQuick: true)]
+        public mixed $attachments = null,
     ) {
     }
 

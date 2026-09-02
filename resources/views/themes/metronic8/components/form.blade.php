@@ -74,10 +74,15 @@
                         $options['data-field-help'] = $field['help'];
                     }
 
+                    if ($type === 'attachments') {
+                        $options['attachable_model'] = $model;
+                        $options['record_id'] = (int) ($dto->id ?? 0);
+                    }
+
                     // Multi-stop spans via container queries (ui-layout.css).
                     // Defaults: sm:12 md:6 lg:6 (half width) — textarea/code/dropzone stay 12 at all stops.
                     $clamp = static fn (int $n): int => max(1, min(12, $n));
-                    $isWide = in_array($type, ['textarea', 'code', 'dropzone'], true);
+                    $isWide = in_array($type, ['textarea', 'code', 'dropzone', 'attachments'], true);
                     $defaults = $isWide
                         ? ['sm' => 12, 'md' => 12, 'lg' => 12]
                         : ['sm' => 12, 'md' => 6, 'lg' => 6];
@@ -121,12 +126,3 @@
         @endif
     </div>
 {{ Form::close() }}
-
-@if (! $quickCreate && ($dto->id ?? null) && entity_attachable($model))
-    <div class="{{ $inModal ? 'mt-6 border-top pt-6' : 'card-body border-top' }}">
-        @include('pages.partials.attachments', [
-            'model' => $model,
-            'recordId' => (int) $dto->id,
-        ])
-    </div>
-@endif

@@ -5,6 +5,7 @@
     $fields = $fields ?? [];
     $dto = $dto ?? null;
     $quickCreate = (bool) ($quickCreate ?? false);
+    $entityModel = $entityModel ?? '';
 @endphp
 
 @foreach ($fields as $name => $field)
@@ -53,10 +54,15 @@
             $options['inline'] = true;
         }
 
+        if ($type === 'attachments') {
+            $options['attachable_model'] = $entityModel ?? '';
+            $options['record_id'] = (int) ($dto->id ?? 0);
+        }
+
         // Multi-stop spans via container queries (ui-layout.css).
-        // Defaults: sm:12 md:6 lg:6 (half width) — textarea/code/dropzone stay 12 at all stops.
+                    // Defaults: sm:12 md:6 lg:6 (half width) — textarea/code/dropzone/attachments stay 12 at all stops.
         $clamp = static fn (int $n): int => max(1, min(12, $n));
-        $isWide = in_array($type, ['textarea', 'code', 'dropzone'], true);
+        $isWide = in_array($type, ['textarea', 'code', 'dropzone', 'attachments'], true);
         $defaults = $isWide
             ? ['sm' => 12, 'md' => 12, 'lg' => 12]
             : ['sm' => 12, 'md' => 6, 'lg' => 6];

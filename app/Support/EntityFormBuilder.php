@@ -37,7 +37,14 @@ class EntityFormBuilder
      */
     public function quickCreateHiddenDefaults(string $dtoClass, ?object $emptyDto = null): array
     {
-        return DtoMetadata::for($dtoClass)->quickCreateHiddenDefaults($emptyDto);
+        $defaults = DtoMetadata::for($dtoClass)->quickCreateHiddenDefaults($emptyDto);
+        foreach (DtoMetadata::for($dtoClass)->formFields() as $name => $args) {
+            if (($args[0] ?? '') === 'attachments') {
+                unset($defaults[$name]);
+            }
+        }
+
+        return $defaults;
     }
 
     /**

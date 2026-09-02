@@ -22,6 +22,8 @@ class FeatureFormTest extends TestCase
         $this->assertIsString($modal);
         $this->assertStringContainsString("'change_request_id'", $page);
         $this->assertStringContainsString("'change_request_id'", $modal);
+        $this->assertStringContainsString("'attachments'", $page);
+        $this->assertStringContainsString("'attachments'", $modal);
     }
 
     public function test_parent_lineage_is_exclusive_xor(): void

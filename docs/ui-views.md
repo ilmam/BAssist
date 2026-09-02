@@ -488,7 +488,7 @@ This is how nested panels (including modals) let children size to the **parent b
 
 **Behavior (container-relative, not viewport)**
 
-| Stop | Container width | Typical field default | Textarea / dropzone |
+| Stop | Container width | Typical field default | Textarea / dropzone / attachments |
 |------|-----------------|------------------------|---------------------|
 | **sm** | &lt; 640px | 12 | 12 |
 | **md** | 640–959px | 6 | 12 |
