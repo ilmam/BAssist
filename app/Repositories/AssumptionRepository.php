@@ -13,10 +13,23 @@ class AssumptionRepository extends BaseRepository
     public $editDto = AssumptionData::class;
     public $viewDto = AssumptionViewData::class;
 
+    protected array $listFilters = [
+        'project_id',
+        'status',
+    ];
+
+    protected array $listContextFilters = [
+        'workspace_id' => ['project', 'workspace_id'],
+    ];
+
+    protected string|array|null $listTenantScope = ['project.workspace', 'tenant_id'];
+
+    protected array $listContextRelations = [
+        'project.workspace',
+    ];
+
     public function __construct()
     {
         $this->model = new Assumption();
     }
-
-    // Add entity-specific query methods here when the generic repository is not enough.
 }
