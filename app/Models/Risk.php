@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Attributes\Relation;
 use App\Attributes\RoutableAttribute;
+use App\Models\Concerns\BelongsToTenant;
 use App\Models\Concerns\HasEntityNumber;
 use App\Support\RiskCategory;
 use App\Support\RiskImpact;
@@ -18,6 +19,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 #[RoutableAttribute]
 class Risk extends BaseModel
 {
+    use BelongsToTenant;
     use HasEntityNumber;
     use HasFactory;
 

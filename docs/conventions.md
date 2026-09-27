@@ -93,6 +93,7 @@ Mark Eloquent relations with `#[Relation('BelongsTo')]` (and the real return typ
 | `AppliesDefaultPriority` | Fills `priority_id` on create if empty |
 | `HasEntityNumber` | Sequential `number` + `code` (implement `entityNumberPrefix()`) |
 | `HasAttachments` + `#[Attachable]` | Polymorphic files; add `#[Form('attachments')]` on the edit DTO |
+| `BelongsToTenant` | **Required** for any entity that belongs to a project (or otherwise to a tenant). Confines every query to the user's tenant — see [tenancy.md](tenancy.md) |
 
 Keep those ids `null` on the edit DTO so the trait can set them. Use `hideQuick: true` if they should not appear on Quick Create.
 

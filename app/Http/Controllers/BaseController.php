@@ -98,7 +98,9 @@ class BaseController extends Controller
     {
         $this->mergeStickyContextIntoRequest($request);
         $data = $this->getData($request);
-        $created = $this->modelRepository->create($data->toArray());
+        $payload = $data->toArray();
+        $this->modelRepository->assertPayloadInTenant($payload);
+        $created = $this->modelRepository->create($payload);
         $this->syncAttachments($request, $created);
 
         return $this->respondAfterMutation($request, $created);
@@ -231,7 +233,9 @@ class BaseController extends Controller
     {
         $this->mergeStickyContextIntoRequest($request);
         $data = $this->getData($request);
-        $updated = $this->modelRepository->update($id, $data->toArray());
+        $payload = $data->toArray();
+        $this->modelRepository->assertPayloadInTenant($payload);
+        $updated = $this->modelRepository->update($id, $payload);
 
         // BaseRepository::update returns affected row count; some repos return the model.
         if (! is_object($updated)) {

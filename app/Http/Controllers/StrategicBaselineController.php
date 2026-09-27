@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Project;
 use App\Repositories\StrategicBaselineRepository;
 use App\Support\EntityAccess;
+use App\Support\Tenancy;
 use Illuminate\Http\Request;
 
 class StrategicBaselineController extends CrudController
@@ -34,6 +35,8 @@ class StrategicBaselineController extends CrudController
      */
     public function forProject(Request $request, Project $project)
     {
+        Tenancy::assertProject($project);
+
         /** @var StrategicBaselineRepository $repo */
         $repo = $this->modelRepository;
         $existing = $repo->findForProject($project);

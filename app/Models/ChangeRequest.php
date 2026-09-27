@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Attributes\Relation;
 use App\Attributes\RoutableAttribute;
 use App\Models\Concerns\AppliesDefaultPriority;
+use App\Models\Concerns\BelongsToTenant;
 use App\Models\Concerns\HasEntityNumber;
 use App\Support\ChangeRequestImpact;
 use App\Support\ChangeRequestStatus;
@@ -16,6 +17,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class ChangeRequest extends BaseModel
 {
     use AppliesDefaultPriority;
+    use BelongsToTenant;
     use HasEntityNumber;
     use HasFactory;
 

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Attributes\Relation;
+use App\Models\Concerns\BelongsToTenant;
 use App\Models\Concerns\HasEntityNumber;
 use App\Services\SwimlaneMermaidGenerator;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -15,6 +16,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 class SwimlaneFlowStep extends BaseModel
 {
+    use BelongsToTenant;
     use HasEntityNumber;
     use HasFactory;
 

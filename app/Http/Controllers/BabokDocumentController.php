@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Project;
 use App\Services\BabokDocumentService;
 use App\Support\EntityAccess;
+use App\Support\Tenancy;
 use Illuminate\Http\Response;
 use Illuminate\View\View;
 
@@ -42,13 +43,6 @@ class BabokDocumentController extends Controller
     {
         EntityAccess::authorize(auth()->user(), 'Project', EntityAccess::VIEW);
 
-        $tenantId = auth()->user()?->tenant_id;
-        if ($tenantId !== null) {
-            $project->loadMissing('workspace');
-
-            if ((int) $project->workspace?->tenant_id !== (int) $tenantId) {
-                abort(Response::HTTP_NOT_FOUND);
-            }
-        }
+        Tenancy::assertProject($project);
     }
 }

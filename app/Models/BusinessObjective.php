@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Attributes\Attachable;
 use App\Attributes\Relation;
 use App\Attributes\RoutableAttribute;
+use App\Models\Concerns\BelongsToTenant;
 use App\Models\Concerns\HasAttachments;
 use App\Models\Concerns\HasEntityNumber;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -15,6 +16,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 #[Attachable]
 class BusinessObjective extends BaseModel
 {
+    use BelongsToTenant;
     use HasAttachments;
     use HasEntityNumber;
     use HasFactory;

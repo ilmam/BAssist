@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Attributes\Relation;
 use App\Attributes\RoutableAttribute;
+use App\Models\Concerns\BelongsToTenant;
 use App\Models\Concerns\HasEntityStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -11,6 +12,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 #[RoutableAttribute]
 class StateFlow extends BaseModel
 {
+    use BelongsToTenant;
     use HasEntityStatus;
     use HasFactory;
 

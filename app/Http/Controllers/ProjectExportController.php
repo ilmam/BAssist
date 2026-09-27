@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Project;
 use App\Services\ProjectExportService;
 use App\Support\EntityAccess;
+use App\Support\Tenancy;
 use Illuminate\View\View;
 
 class ProjectExportController extends Controller
@@ -17,14 +18,7 @@ class ProjectExportController extends Controller
     {
         EntityAccess::authorize(auth()->user(), 'Project', EntityAccess::VIEW);
 
-        $tenantId = auth()->user()?->tenant_id;
-        if ($tenantId !== null) {
-            $project->loadMissing('workspace');
-
-            if ((int) $project->workspace?->tenant_id !== (int) $tenantId) {
-                abort(404);
-            }
-        }
+        Tenancy::assertProject($project);
 
         $pack = $this->export->build($project);
 

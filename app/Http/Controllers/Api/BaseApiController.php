@@ -34,7 +34,9 @@ class BaseApiController extends \App\Http\Controllers\Controller
     public function store(Request $request)
     {
         $data = $this->getData($request);
-        $newModel = $this->modelRepository->create($data->toArray());
+        $payload = $data->toArray();
+        $this->modelRepository->assertPayloadInTenant($payload);
+        $newModel = $this->modelRepository->create($payload);
 
         return response()->json($newModel, 201);
     }
@@ -49,7 +51,9 @@ class BaseApiController extends \App\Http\Controllers\Controller
     public function update(Request $request, $id)
     {
         $data = $this->getData($request);
-        $this->modelRepository->update($id, $data->toArray());
+        $payload = $data->toArray();
+        $this->modelRepository->assertPayloadInTenant($payload);
+        $this->modelRepository->update($id, $payload);
 
         return response()->json(['success' => true]);
     }

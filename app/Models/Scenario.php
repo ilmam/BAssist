@@ -4,14 +4,19 @@ namespace App\Models;
 
 use App\Attributes\Relation;
 use App\Attributes\RoutableAttribute;
+use App\Models\Concerns\BelongsToTenant;
 use App\Models\Concerns\HasEntityStatus;
 use App\Services\GherkinDocumentParser;
+use App\Support\Tenancy;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\DB;
 
 #[RoutableAttribute]
 class Scenario extends BaseModel
 {
+    use BelongsToTenant;
     use HasEntityStatus;
     use HasFactory;
 
@@ -93,5 +98,16 @@ class Scenario extends BaseModel
     protected function bodyLooksLikeOutline(): bool
     {
         return app(GherkinDocumentParser::class)->bodyLooksLikeOutline($this->body);
+    }
+
+    public function applyTenantConstraint(Builder $query, int $tenantId): void
+    {
+        $query->whereIn(
+            $this->qualifyColumn('feature_id'),
+            DB::table('features')
+                ->select('features.id')
+                ->whereIn('features.project_id', Tenancy::projectIdsQuery($tenantId))
+                ->whereNull('features.deleted_at')
+        );
     }
 }

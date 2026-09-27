@@ -3,9 +3,11 @@
 namespace App\Repositories;
 
 use App\Helpers\ListUi;
+use App\Models\Concerns\BelongsToTenant;
 use App\Models\Project;
 use App\Models\Workspace;
 use App\Support\ProjectContext;
+use App\Support\TenantPayloadGuard;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
@@ -157,9 +159,13 @@ class BaseRepository
         );
     }
 
+    /**
+     * Soft-delete one record. Goes through the tenant-scoped model lookup, so a
+     * record outside the current tenant is a 404 rather than a silent no-op.
+     */
     public function delete($Id)
     {
-        $this->model::destroy($Id);
+        $this->findModel($Id)->delete();
     }
 
     public function create(array $data)
@@ -167,9 +173,27 @@ class BaseRepository
         return $this->model::create($this->filterFillable($data));
     }
 
+    /**
+     * Update one record through Eloquent (tenant scope, model events, casts).
+     * Returns the affected row count (1) to keep the historical contract;
+     * BaseController reloads the edit DTO when it receives a non-object.
+     */
     public function update($id, array $newData)
     {
-        return $this->model::whereId($id)->update($this->filterFillable($newData));
+        $this->findModel($id)->update($this->filterFillable($newData));
+
+        return 1;
+    }
+
+    /**
+     * Reject a write payload that references records in another tenant
+     * (project_id, parent ids, pivot ids, ids inside editor rows).
+     *
+     * @param  array<string, mixed>  $data
+     */
+    public function assertPayloadInTenant(array $data): void
+    {
+        TenantPayloadGuard::assertOwned($this->model, $data);
     }
 
     /**
@@ -314,7 +338,10 @@ class BaseRepository
      */
     protected function applyImplicitTenantScope(Builder $query): void
     {
-        if ($this->listTenantScope === null) {
+        // Tenant-owned models are already confined by TenantScope on every
+        // query (not just lists); only apply this for models without it.
+        if ($this->listTenantScope === null
+            || in_array(BelongsToTenant::class, class_uses_recursive($this->model), true)) {
             return;
         }
 

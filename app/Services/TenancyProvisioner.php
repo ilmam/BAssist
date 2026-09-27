@@ -6,6 +6,7 @@ use App\Models\Tenant;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Support\EntityStatus;
+use App\Support\Tenancy;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -13,13 +14,15 @@ class TenancyProvisioner
 {
     public function provisionFor(User $user): User
     {
-        return DB::transaction(function () use ($user) {
+        // System provisioning creates/looks up tenants the caller does not
+        // belong to yet, so it must run outside the tenant scope.
+        return Tenancy::bypass(fn () => DB::transaction(function () use ($user) {
             if (config('tenancy.mode') === 'shared') {
                 return $this->attachToSharedTenant($user);
             }
 
             return $this->createPersonalTenant($user);
-        });
+        }));
     }
 
     public function ensureSharedTenant(): Tenant

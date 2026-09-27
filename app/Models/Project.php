@@ -4,8 +4,11 @@ namespace App\Models;
 
 use App\Attributes\Relation;
 use App\Attributes\RoutableAttribute;
+use App\Models\Concerns\BelongsToTenant;
 use App\Models\Concerns\HasEntityStatus;
 use App\Services\SystemStakeholderSeeder;
+use App\Support\Tenancy;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -14,6 +17,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 #[RoutableAttribute]
 class Project extends BaseModel
 {
+    use BelongsToTenant;
     use HasEntityStatus;
     use HasFactory;
 
@@ -154,5 +158,10 @@ class Project extends BaseModel
     public function scopeItems(): HasMany
     {
         return $this->hasMany(ScopeItem::class);
+    }
+
+    public function applyTenantConstraint(Builder $query, int $tenantId): void
+    {
+        $query->whereIn($this->qualifyColumn('workspace_id'), Tenancy::workspaceIdsQuery($tenantId));
     }
 }

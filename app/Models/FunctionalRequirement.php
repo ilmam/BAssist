@@ -6,6 +6,7 @@ use App\Attributes\Attachable;
 use App\Attributes\Relation;
 use App\Attributes\RoutableAttribute;
 use App\Models\Concerns\AppliesDefaultPriority;
+use App\Models\Concerns\BelongsToTenant;
 use App\Models\Concerns\HasAttachments;
 use App\Models\Concerns\HasEntityNumber;
 use App\Models\Concerns\HasEntityStatus;
@@ -17,6 +18,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class FunctionalRequirement extends BaseModel
 {
     use AppliesDefaultPriority;
+    use BelongsToTenant;
     use HasAttachments;
     use HasEntityNumber;
     use HasEntityStatus;

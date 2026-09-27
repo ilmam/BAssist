@@ -6,6 +6,7 @@ use App\Models\Project;
 use App\Services\ProjectReadinessService;
 use App\Support\CrudEntityRegistry;
 use App\Support\EntityAccess;
+use App\Support\Tenancy;
 use Illuminate\View\View;
 
 class ProjectDashboardController extends Controller
@@ -112,12 +113,8 @@ class ProjectDashboardController extends Controller
     {
         EntityAccess::authorize(auth()->user(), 'Project', EntityAccess::VIEW);
 
-        $tenantId = auth()->user()?->tenant_id;
+        Tenancy::assertProject($project);
         $project->loadMissing(['workspace', 'status']);
-
-        if ($tenantId !== null && (int) $project->workspace?->tenant_id !== (int) $tenantId) {
-            abort(404);
-        }
 
         $project->loadCount([
             'businessObjectives',

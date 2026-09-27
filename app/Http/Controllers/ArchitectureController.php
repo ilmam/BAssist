@@ -10,6 +10,7 @@ use App\Services\C4MermaidGenerator;
 use App\Services\StructurizrExporter;
 use App\Support\EntityAccess;
 use App\Support\RepositoryResolver;
+use App\Support\Tenancy;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -103,6 +104,8 @@ class ArchitectureController extends CrudController
      */
     public function forProject(Request $request, Project $project)
     {
+        Tenancy::assertProject($project);
+
         /** @var ArchitectureRepository $repo */
         $repo = $this->modelRepository;
         $existing = $repo->findForProject($project);

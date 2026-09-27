@@ -93,4 +93,4 @@ Route::middleware('auth')->group(function (): void {
     });
 });
 
-Route::view('theme-test', 'pages.theme-test')->name('theme.test');
+Route::view('theme-test', 'pages.theme-test')->middleware('auth')->name('theme.test');

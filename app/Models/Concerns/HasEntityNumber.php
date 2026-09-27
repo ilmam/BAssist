@@ -3,6 +3,7 @@
 namespace App\Models\Concerns;
 
 use App\Models\Project;
+use App\Models\Scopes\TenantScope;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Support\Facades\DB;
 
@@ -56,9 +57,12 @@ trait HasEntityNumber
     {
         return (int) DB::transaction(function () use ($projectId) {
             // Serialize numbering within a project when concurrent creates race.
-            Project::query()->whereKey($projectId)->lockForUpdate()->first();
+            Project::withoutGlobalScope(TenantScope::class)->whereKey($projectId)->lockForUpdate()->first();
 
-            return (int) static::withTrashed()
+            // Numbers are unique per project across ALL rows, so this must not be
+            // narrowed by the tenant scope (project_id is tenant-checked upstream).
+            return (int) static::withoutGlobalScope(TenantScope::class)
+                ->withTrashed()
                 ->where('project_id', $projectId)
                 ->max('number') + 1;
         });

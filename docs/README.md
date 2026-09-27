@@ -19,6 +19,7 @@ Then only as needed:
 | Why dropdowns appear on create/edit | [entity-form-builder.md](entity-form-builder.md) |
 | Forms look stale after a DTO change (production cache) | [dto-metadata.md](dto-metadata.md) |
 | Datatable JSON shape | [collection-flattener.md](collection-flattener.md) |
+| Who can see which records (tenants), adding a tenant-owned entity | [tenancy.md](tenancy.md) |
 
 ## Words used everywhere
 
