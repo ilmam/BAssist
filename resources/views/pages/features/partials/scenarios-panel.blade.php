@@ -35,6 +35,12 @@
                 <h4 class="{{ $headingClass }}">
                     {{ $child->gherkinKeyword() }}: {{ $child->title }}
                 </h4>
+                @if ($child->stakeholderNeed)
+                    <p class="{{ $helpClass }}">
+                        {{ __('ui.scenario_covers_need') }}:
+                        <span class="text-foreground">{{ $child->stakeholderNeed->code }} — {{ $child->stakeholderNeed->title }}</span>
+                    </p>
+                @endif
                 <div class="flex flex-wrap gap-2">
                     @if (entity_can('Scenario', 'update'))
                         <x-button

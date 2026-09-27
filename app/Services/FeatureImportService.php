@@ -211,6 +211,16 @@ class FeatureImportService
         $parsed = $this->parse($source);
 
         return DB::transaction(function () use ($feature, $parsed, $overwriteTitle): Feature {
+            $feature->load('scenarios');
+            $preservedNeedByTitle = [];
+            foreach ($feature->scenarios as $existing) {
+                $key = mb_strtolower(trim((string) $existing->title));
+                if ($key === '' || $existing->stakeholder_need_id === null) {
+                    continue;
+                }
+                $preservedNeedByTitle[$key] = (int) $existing->stakeholder_need_id;
+            }
+
             $feature->body = $parsed['preamble'];
             if ($overwriteTitle && $parsed['title'] !== null) {
                 $feature->title = $parsed['title'];
@@ -224,11 +234,13 @@ class FeatureImportService
             $feature->scenarios()->delete();
 
             foreach ($parsed['scenarios'] as $block) {
+                $titleKey = mb_strtolower(trim((string) $block['title']));
                 $scenario = new Scenario([
                     'feature_id' => $feature->id,
                     'title' => $block['title'],
                     'body' => $block['body'],
                     'is_outline' => $block['is_outline'],
+                    'stakeholder_need_id' => $preservedNeedByTitle[$titleKey] ?? null,
                 ]);
                 $scenario->syncDocumentFields($this->parser);
                 $scenario->save();

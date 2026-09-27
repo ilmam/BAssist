@@ -16,6 +16,9 @@ class ScenarioData extends BaseData
         #[Form('select', 'Feature', section: 'traceability')]
         public int $feature_id = 0,
 
+        #[Form('select', 'StakeholderNeed', help: 'Optional. Map this example to another Stakeholder Need it verifies. Leave blank if it only serves this Feature’s parent need. The Feature keeps one owner SN.', section: 'traceability')]
+        public ?int $stakeholder_need_id = null,
+
         /**
          * Entire scenario block as in a .feature file: @tags, Scenario:/Scenario Outline:,
          * steps, and Examples:.
@@ -37,6 +40,7 @@ class ScenarioData extends BaseData
         return [
             'title' => ['required', 'string', 'max:255'],
             'feature_id' => ['required', 'integer', 'exists:features,id'],
+            'stakeholder_need_id' => ['nullable', 'integer', 'exists:stakeholder_needs,id'],
             'body' => ['nullable', 'string'],
             'is_outline' => ['sometimes', 'boolean'],
             'status_id' => ['nullable', 'integer', 'exists:statuses,id'],

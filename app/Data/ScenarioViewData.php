@@ -15,6 +15,9 @@ class ScenarioViewData extends BaseData
         public int $feature_id = 0,
         #[InList]
         public ?FeatureViewData $feature = null,
+        public ?int $stakeholder_need_id = null,
+        #[InList]
+        public ?StakeholderNeedViewData $stakeholder_need = null,
         #[InList]
         public bool $is_outline = false,
         #[Hide]

@@ -390,7 +390,7 @@
                 $mermaidBody = trim($item['mermaid'] ?? '');
                 $hasDiagram = $mermaidBody !== '';
             @endphp
-            <article class="artifact">
+            <article class="artifact{{ $hasDiagram ? ' artifact--diagram' : '' }}">
                 <h3 class="item-title">{{ $flow->title }}</h3>
                 <div class="artifact__panel">
                     <div class="artifact__meta">
@@ -421,7 +421,7 @@
                 $mermaidBody = trim($item['mermaid'] ?? '');
                 $hasDiagram = $mermaidBody !== '';
             @endphp
-            <article class="artifact">
+            <article class="artifact{{ $hasDiagram ? ' artifact--diagram' : '' }}">
                 <h3 class="item-title">{{ $flow->title }}</h3>
                 <div class="artifact__panel">
                     <div class="artifact__meta">
@@ -692,6 +692,9 @@
                                     <span class="artifact__code">{{ $row['feature_code'] }}</span>
                                 @endif
                                 {{ $row['feature_title'] ?? '' }}
+                                @if (! empty($row['scenario_title']))
+                                    <div class="text-muted">{{ __('ui.scenario_covers_need') }}: {{ $row['scenario_title'] }}</div>
+                                @endif
                             @elseif (! empty($row['functional_requirement_code']) || ! empty($row['functional_requirement_title']))
                                 @if (! empty($row['functional_requirement_code']))
                                     <span class="artifact__code">{{ $row['functional_requirement_code'] }}</span>
@@ -702,6 +705,8 @@
                                     <span class="artifact__code">{{ $row['non_functional_requirement_code'] }}</span>
                                 @endif
                                 {{ $row['non_functional_requirement_title'] ?? '' }}
+                            @elseif (! empty($row['deferred_this_release']))
+                                {{ __('ui.matrix_deferred_this_release') }}
                             @else
                                 —
                             @endif

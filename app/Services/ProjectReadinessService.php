@@ -19,23 +19,20 @@ use App\Models\StrategicBaseline;
 use App\Support\AssumptionStatus;
 use App\Support\ChangeRequestStatus;
 use App\Support\EntityAccess;
+use App\Support\EntityPriority;
 use App\Support\EntityStatus;
 use App\Support\RiskImpact;
 use App\Support\RiskLikelihood;
 use App\Support\RiskResponse;
 use App\Support\RiskStatus;
 use App\Support\StrategicBaselineStatus;
+use Illuminate\Database\Eloquent\Builder;
 
 /**
  * Derived readiness / gap summary for a project (encourage, don't police).
  */
 class ProjectReadinessService
 {
-    public function __construct(
-        protected TraceabilityMatrixService $traceability,
-    ) {
-    }
-
     /**
      * @return array{
      *     total_gaps: int,
@@ -113,6 +110,8 @@ class ProjectReadinessService
                 ->whereDoesntHave('features')
                 ->whereDoesntHave('functionalRequirements')
                 ->whereDoesntHave('nonFunctionalRequirements')
+                ->whereDoesntHave('coveringScenarios')
+                ->tap(fn ($query) => $this->excludeOutOfReleaseNeeds($query))
                 ->count();
             $items[] = $this->item(
                 key: 'stories_without_features',
@@ -266,32 +265,6 @@ class ProjectReadinessService
                 label: __('ui.readiness_features_without_scenarios'),
                 count: $count,
                 severity: 'critical',
-                url: route('traceability.index', $scopeQuery + ['orphans_only' => 1]),
-            );
-        }
-
-        if (entity_can('SwimlaneFlow', EntityAccess::VIEW)) {
-            $withoutNeed = $this->traceability->countSwimlaneFlowStepsWithoutNeed(
-                (int) $project->id,
-                (int) $project->workspace_id,
-            );
-            $items[] = $this->item(
-                key: 'process_steps_without_need',
-                label: __('ui.readiness_process_steps_without_need'),
-                count: $withoutNeed,
-                severity: 'warn',
-                url: route('traceability.index', $scopeQuery + ['orphans_only' => 1]),
-            );
-
-            $uncovered = $this->traceability->countUncoveredSwimlaneFlowSteps(
-                (int) $project->id,
-                (int) $project->workspace_id,
-            );
-            $items[] = $this->item(
-                key: 'uncovered_process_steps',
-                label: __('ui.readiness_uncovered_process_steps'),
-                count: $uncovered,
-                severity: 'warn',
                 url: route('traceability.index', $scopeQuery + ['orphans_only' => 1]),
             );
         }
@@ -527,7 +500,9 @@ class ProjectReadinessService
                 ->where(function ($query): void {
                     $query->whereHas('features')
                         ->orWhereHas('functionalRequirements')
-                        ->orWhereHas('nonFunctionalRequirements');
+                        ->orWhereHas('nonFunctionalRequirements')
+                        ->orWhereHas('coveringScenarios');
+                    $this->orOutOfReleaseNeeds($query);
                 })
                 ->count();
             $stages[] = $this->stage(
@@ -607,5 +582,43 @@ class ProjectReadinessService
             'severity' => $severity,
             'url' => $url,
         ];
+    }
+
+    /**
+     * Won't / Deprecated needs stay on the spine; they are not current-release packaging gaps.
+     */
+    protected function excludeOutOfReleaseNeeds(Builder $query): void
+    {
+        $wontId = EntityPriority::id(EntityPriority::WONT);
+        $deprecatedId = EntityStatus::id(EntityStatus::DEPRECATED);
+
+        if ($wontId !== null) {
+            $query->where(function (Builder $inner) use ($wontId): void {
+                $inner->whereNull('priority_id')->orWhere('priority_id', '!=', $wontId);
+            });
+        }
+
+        if ($deprecatedId !== null) {
+            $query->where(function (Builder $inner) use ($deprecatedId): void {
+                $inner->whereNull('status_id')->orWhere('status_id', '!=', $deprecatedId);
+            });
+        }
+    }
+
+    /**
+     * Treat Won't / Deprecated as packaged for the current-release spine.
+     */
+    protected function orOutOfReleaseNeeds(Builder $query): void
+    {
+        $wontId = EntityPriority::id(EntityPriority::WONT);
+        $deprecatedId = EntityStatus::id(EntityStatus::DEPRECATED);
+
+        if ($wontId !== null) {
+            $query->orWhere('priority_id', $wontId);
+        }
+
+        if ($deprecatedId !== null) {
+            $query->orWhere('status_id', $deprecatedId);
+        }
     }
 }

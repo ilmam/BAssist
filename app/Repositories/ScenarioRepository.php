@@ -6,7 +6,9 @@ use App\Data\ScenarioData;
 use App\Data\ScenarioViewData;
 use App\Models\Feature;
 use App\Models\Scenario;
+use App\Models\StakeholderNeed;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Validation\ValidationException;
 
 class ScenarioRepository extends BaseRepository
 {
@@ -16,6 +18,7 @@ class ScenarioRepository extends BaseRepository
 
     protected array $listFilters = [
         'feature_id',
+        'stakeholder_need_id',
         'status_id',
     ];
 
@@ -37,6 +40,7 @@ class ScenarioRepository extends BaseRepository
 
     public function create(array $data)
     {
+        $this->assertCoveringNeedInProject($data);
         $scenario = new Scenario($this->filterFillable($data));
         $scenario->syncDocumentFields();
         $scenario->save();
@@ -48,6 +52,10 @@ class ScenarioRepository extends BaseRepository
     {
         /** @var Scenario $scenario */
         $scenario = Scenario::query()->findOrFail($id);
+        $this->assertCoveringNeedInProject(array_merge(
+            ['feature_id' => $scenario->feature_id],
+            $newData,
+        ));
         $scenario->fill($this->filterFillable($newData));
         $scenario->syncDocumentFields();
         $scenario->save();
@@ -58,9 +66,30 @@ class ScenarioRepository extends BaseRepository
     public function findForDocument(int $id): Scenario
     {
         /** @var Scenario $scenario */
-        $scenario = $this->findModel($id, ['feature.project', 'status']);
+        $scenario = $this->findModel($id, ['feature.project', 'stakeholderNeed', 'status']);
 
         return $scenario;
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    protected function assertCoveringNeedInProject(array $data): void
+    {
+        $needId = (int) ($data['stakeholder_need_id'] ?? 0);
+        if ($needId <= 0) {
+            return;
+        }
+
+        $featureId = (int) ($data['feature_id'] ?? 0);
+        $feature = Feature::query()->find($featureId);
+        $need = StakeholderNeed::query()->find($needId);
+
+        if ($feature === null || $need === null || (int) $need->project_id !== (int) $feature->project_id) {
+            throw ValidationException::withMessages([
+                'stakeholder_need_id' => __('ui.scenario_covering_need_project_mismatch'),
+            ]);
+        }
     }
 
     protected function attachParentContextIds(Model $model): void

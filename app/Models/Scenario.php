@@ -20,6 +20,7 @@ class Scenario extends BaseModel
     protected $fillable = [
         'title',
         'feature_id',
+        'stakeholder_need_id',
         'is_outline',
         'body',
         'status_id',
@@ -36,6 +37,12 @@ class Scenario extends BaseModel
     public function feature(): BelongsTo
     {
         return $this->belongsTo(Feature::class);
+    }
+
+    #[Relation('BelongsTo')]
+    public function stakeholderNeed(): BelongsTo
+    {
+        return $this->belongsTo(StakeholderNeed::class);
     }
 
     #[Relation('BelongsTo')]

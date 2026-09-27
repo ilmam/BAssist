@@ -20,7 +20,7 @@ Clear Given / When / Then examples reduce rework: edge cases surface early, busi
 2. **Add Scenarios:** Cover the happy path and meaningful exceptions with concrete Given / When / Then steps. Prefer business outcomes over UI choreography.
 3. **Bind the Guardrails:** Reflect applicable Business Rules, Constraints, and Assumptions in the steps or tags so policy is testable, not buried in footnotes.
 4. **Keep Examples Deterministic:** Each scenario should have an unambiguous pass or fail—no "usually" or "the system somehow knows."
-5. **Trace Upstream:** Link the feature to the Stakeholder Need it realises so behaviour stays anchored to a real voice and problem.
+5. **Trace Upstream:** Link the feature to the Stakeholder Need it realises so behaviour stays anchored to a real voice and problem. If one example also verifies a *different* Stakeholder Need, optionally map that **scenario** to the other need. The Feature keeps one owner; the matrix treats the mapped scenario as coverage for the extra need.
 6. **Optional BPD coverage:** When a swimlane process/decision step elaborates this behaviour, select that process step on the Feature form. Lineage still runs through the Stakeholder Need; the step link is for process coverage only.
 
 **Example — Dealer Inquiry State Management**

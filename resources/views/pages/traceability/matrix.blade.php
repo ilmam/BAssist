@@ -225,6 +225,17 @@
                                         <span class="text-muted-foreground text-xs ms-1">
                                             ({{ __('ui.scenarios') }}: {{ $row['scenarios_count'] ?? 0 }})
                                         </span>
+                                        @if (! empty($row['scenario_id']))
+                                            <div class="text-xs text-muted-foreground mt-1">
+                                                {{ __('ui.scenario_covers_need') }}:
+                                                <a href="{{ model_modal_path('Scenario', 'view', $row['scenario_id']) }}"
+                                                   class="text-primary hover:underline js-open-modal"
+                                                   data-modal-url="{{ model_modal_path('Scenario', 'view', $row['scenario_id']) }}"
+                                                   data-modal-nav="off">
+                                                    {{ $row['scenario_title'] }}
+                                                </a>
+                                            </div>
+                                        @endif
                                         @if ($addScenarioUrl)
                                             <a href="{{ $addScenarioUrl }}"
                                                class="text-xs text-primary hover:underline js-open-modal ms-1"
@@ -253,13 +264,25 @@
                                             {{ $row['non_functional_requirement_title'] }}
                                         </a>
                                         <span class="text-muted-foreground text-xs ms-1">({{ __('ui.non_functional_requirement_short') }})</span>
+                                    @elseif (! empty($row['scenario_id']))
+                                        <a href="{{ model_modal_path('Scenario', 'view', $row['scenario_id']) }}"
+                                           class="text-primary hover:underline js-open-modal"
+                                           data-modal-url="{{ model_modal_path('Scenario', 'view', $row['scenario_id']) }}"
+                                           data-modal-nav="off">
+                                            {{ $row['scenario_title'] }}
+                                        </a>
+                                        <span class="text-muted-foreground text-xs ms-1">({{ __('ui.scenario_covers_need') }})</span>
                                     @else
-                                        <span class="text-muted-foreground">—</span>
-                                        @if ($addFeatureUrl)
-                                            <a href="{{ $addFeatureUrl }}"
-                                               class="text-xs text-primary hover:underline js-open-modal ms-1"
-                                               data-modal-url="{{ $addFeatureUrl }}"
-                                               data-modal-nav="off">{{ __('ui.matrix_add_feature') }}</a>
+                                        @if (! empty($row['deferred_this_release']))
+                                            <span class="text-muted-foreground">{{ __('ui.matrix_deferred_this_release') }}</span>
+                                        @else
+                                            <span class="text-muted-foreground">—</span>
+                                            @if ($addFeatureUrl)
+                                                <a href="{{ $addFeatureUrl }}"
+                                                   class="text-xs text-primary hover:underline js-open-modal ms-1"
+                                                   data-modal-url="{{ $addFeatureUrl }}"
+                                                   data-modal-nav="off">{{ __('ui.matrix_add_feature') }}</a>
+                                            @endif
                                         @endif
                                     @endif
                                 </td>

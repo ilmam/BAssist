@@ -25,7 +25,7 @@
         @php
             $mermaidBody = trim($view['mermaid'] ?? '');
         @endphp
-        <article class="artifact">
+        <article class="artifact{{ $mermaidBody !== '' ? ' artifact--diagram' : '' }}">
             <h3 class="item-title">{{ $view['title'] ?? __('ui.architecture_c4') }}</h3>
             @if ($mermaidBody !== '')
                 <div

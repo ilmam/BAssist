@@ -97,6 +97,23 @@ class ProjectExportArchitectureTest extends TestCase
         $this->assertStringContainsString("__('ui.architecture_c4')", $blade);
     }
 
+    public function test_print_pack_fits_diagrams_to_the_page(): void
+    {
+        $js = file_get_contents(dirname(__DIR__, 2).'/resources/js/project-export-print.js');
+        $css = file_get_contents(dirname(__DIR__, 2).'/resources/views/layouts/print.blade.php');
+
+        $this->assertIsString($js);
+        $this->assertIsString($css);
+        $this->assertStringContainsString('fitExportSvg', $js);
+        $this->assertStringContainsString('applyPrintFit', $js);
+        $this->assertStringContainsString('state: {', $js);
+        $this->assertStringContainsString('useMaxWidth: true', $js);
+        $this->assertStringContainsString('max-height: 230mm', $css);
+        $this->assertStringContainsString('diagram--compact', $js);
+        $this->assertStringContainsString('mmToPx(88)', $js);
+        $this->assertStringContainsString('max-width: 88mm', $css);
+    }
+
     protected function makeService(): ProjectExportService
     {
         return new ProjectExportService(

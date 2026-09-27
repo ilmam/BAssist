@@ -56,15 +56,23 @@ class ProcessStepTest extends TestCase
         $this->assertStringContainsString("update(['elements' => null])", $migration);
     }
 
-    public function test_readiness_uses_process_step_gap_keys(): void
+    public function test_readiness_does_not_treat_optional_process_steps_as_gaps(): void
     {
         $service = file_get_contents(dirname(__DIR__, 2).'/app/Services/ProjectReadinessService.php');
 
         $this->assertIsString($service);
-        $this->assertStringContainsString("key: 'process_steps_without_need'", $service);
-        $this->assertStringContainsString("key: 'uncovered_process_steps'", $service);
-        $this->assertStringContainsString('countSwimlaneFlowStepsWithoutNeed', $service);
-        $this->assertStringContainsString('countUncoveredSwimlaneFlowSteps', $service);
+        $this->assertStringNotContainsString("key: 'process_steps_without_need'", $service);
+        $this->assertStringNotContainsString("key: 'uncovered_process_steps'", $service);
+        $this->assertStringNotContainsString('countSwimlaneFlowStepsWithoutNeed', $service);
+        $this->assertStringNotContainsString('countUncoveredSwimlaneFlowSteps', $service);
+    }
+
+    public function test_matrix_does_not_inject_process_step_gap_rows(): void
+    {
+        $service = file_get_contents(dirname(__DIR__, 2).'/app/Services/TraceabilityMatrixService.php');
+
+        $this->assertIsString($service);
+        $this->assertStringNotContainsString('processStepGapRows', $service);
     }
 
     public function test_swimlane_repository_syncs_rows_not_json(): void

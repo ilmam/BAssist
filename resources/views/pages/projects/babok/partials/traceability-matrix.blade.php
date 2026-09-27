@@ -71,6 +71,11 @@
                                 <span class="artifact__code">{{ $row['feature_code'] }}</span>
                             @endif
                             {{ $row['feature_title'] ?? '' }}
+                            @if (! empty($row['scenario_title']))
+                                <div class="text-muted">{{ __('ui.scenario_covers_need') }}: {{ $row['scenario_title'] }}</div>
+                            @endif
+                        @elseif (! empty($row['deferred_this_release']))
+                            {{ __('ui.matrix_deferred_this_release') }}
                         @else
                             —
                         @endif

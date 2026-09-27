@@ -68,7 +68,7 @@ class FeatureRepository extends BaseRepository
     {
         /** @var Feature $feature */
         $feature = $this->findModel($id, [
-            'scenarios' => fn ($query) => $query->orderBy('id'),
+            'scenarios' => fn ($query) => $query->with('stakeholderNeed')->orderBy('id'),
             'project',
             'stakeholderNeed',
             'changeRequest',

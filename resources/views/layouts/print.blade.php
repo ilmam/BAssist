@@ -150,6 +150,12 @@
             page-break-inside: avoid;
         }
 
+        /* Tall Mermaid figures must be allowed to split or print leaves blank pages. */
+        .artifact.artifact--diagram {
+            break-inside: auto;
+            page-break-inside: auto;
+        }
+
         .artifact:last-child { border-bottom: 0; }
 
         .artifact__code {
@@ -219,21 +225,34 @@
             border: 1px solid var(--line);
             border-radius: 8px;
             background: #fff;
-            overflow-x: auto;
-            break-inside: avoid;
-            page-break-inside: avoid;
+            width: 100%;
+            max-width: 100%;
+            overflow: hidden;
+            break-inside: auto;
+            page-break-inside: auto;
         }
 
         .diagram .mermaid,
         .diagram .bassist-mermaid {
             margin: 0;
+            width: 100%;
+            max-width: 100%;
             background: transparent;
+            overflow: hidden;
+        }
+
+        .diagram--compact {
+            max-width: 22rem;
+            margin-inline: auto;
         }
 
         .diagram .mermaid svg,
         .diagram .bassist-mermaid svg {
-            max-width: 100%;
-            height: auto;
+            max-width: 100% !important;
+            width: auto;
+            height: auto !important;
+            display: block;
+            margin-inline: auto;
         }
 
         table.matrix {
@@ -317,6 +336,45 @@
             .artifact {
                 break-inside: avoid;
                 page-break-inside: avoid;
+            }
+
+            .artifact.artifact--diagram,
+            .artifact:has(.diagram) {
+                break-inside: auto;
+                page-break-inside: auto;
+            }
+
+            .diagram,
+            .diagram .mermaid,
+            .diagram .bassist-mermaid {
+                break-inside: avoid;
+                page-break-inside: avoid;
+                overflow: hidden;
+                max-width: 100%;
+            }
+
+            .diagram svg {
+                break-inside: avoid;
+                page-break-inside: avoid;
+                max-width: 100% !important;
+                max-height: 230mm !important;
+                display: block;
+                margin-inline: auto;
+            }
+
+            .artifact--compact-diagram {
+                break-inside: avoid;
+                page-break-inside: avoid;
+            }
+
+            .diagram--compact {
+                max-width: 88mm;
+                margin-inline: auto;
+            }
+
+            .diagram--compact svg {
+                max-width: 88mm !important;
+                max-height: 140mm !important;
             }
 
             .artifact__panel,

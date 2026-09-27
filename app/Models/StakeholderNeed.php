@@ -9,6 +9,7 @@ use App\Models\Concerns\AppliesDefaultPriority;
 use App\Models\Concerns\HasAttachments;
 use App\Models\Concerns\HasEntityNumber;
 use App\Models\Concerns\HasEntityStatus;
+use App\Support\EntityPriority;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -37,6 +38,20 @@ class StakeholderNeed extends BaseModel
     protected static function entityNumberPrefix(): string
     {
         return 'SN';
+    }
+
+    /**
+     * Won't (this release) or Deprecated — kept on the spine, not a current-release packaging gap.
+     */
+    public function isOutOfThisRelease(): bool
+    {
+        if ($this->isDeprecated()) {
+            return true;
+        }
+
+        $priorityId = $this->priority_id === null ? null : (int) $this->priority_id;
+
+        return EntityPriority::code($priorityId) === EntityPriority::WONT;
     }
 
     #[Relation('BelongsTo')]
@@ -75,6 +90,15 @@ class StakeholderNeed extends BaseModel
     public function features(): HasMany
     {
         return $this->hasMany(Feature::class);
+    }
+
+    /**
+     * Scenarios that verify this need while remaining children of another Feature.
+     */
+    #[Relation('HasMany')]
+    public function coveringScenarios(): HasMany
+    {
+        return $this->hasMany(Scenario::class);
     }
 
     #[Relation('HasMany')]

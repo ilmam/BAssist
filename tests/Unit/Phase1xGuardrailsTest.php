@@ -62,26 +62,13 @@ class Phase1xGuardrailsTest extends TestCase
         $this->assertStringContainsString("__('ui.readiness_score')", $blade);
     }
 
-    public function test_readiness_covers_process_step_gaps(): void
+    public function test_readiness_does_not_treat_optional_process_steps_as_gaps(): void
     {
-        $this->assertNotSame(
-            'ui.readiness_process_steps_without_need',
-            __('ui.readiness_process_steps_without_need')
-        );
-        $this->assertStringContainsString(
-            'stakeholder need',
-            __('ui.readiness_process_steps_without_need')
-        );
-        $this->assertStringContainsString(
-            'elaborating',
-            __('ui.readiness_uncovered_process_steps')
-        );
-
         $service = file_get_contents(dirname(__DIR__, 2).'/app/Services/ProjectReadinessService.php');
         $this->assertIsString($service);
-        $this->assertStringContainsString("key: 'process_steps_without_need'", $service);
-        $this->assertStringContainsString("key: 'uncovered_process_steps'", $service);
-        $this->assertStringContainsString('countSwimlaneFlowStepsWithoutNeed', $service);
-        $this->assertStringContainsString('countUncoveredSwimlaneFlowSteps', $service);
+        $this->assertStringNotContainsString("key: 'process_steps_without_need'", $service);
+        $this->assertStringNotContainsString("key: 'uncovered_process_steps'", $service);
+        $this->assertStringNotContainsString('countSwimlaneFlowStepsWithoutNeed', $service);
+        $this->assertStringNotContainsString('countUncoveredSwimlaneFlowSteps', $service);
     }
 }

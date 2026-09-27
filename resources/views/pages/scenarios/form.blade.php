@@ -20,7 +20,7 @@
             : ['route' => [$route, $dto->id]];
 
         $metaFields = ['title', 'status_id', 'is_outline'];
-        $traceabilityFields = ['feature_id'];
+        $traceabilityFields = ['feature_id', 'stakeholder_need_id'];
         $documentFields = ['body'];
     @endphp
 

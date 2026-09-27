@@ -319,6 +319,9 @@ class StateDiagramMermaidGenerator
 
     protected function sanitizeTrigger(string $trigger): string
     {
-        return str_replace(["\n", "\r", ':'], [' ', ' ', ' '], trim($trigger));
+        // Mermaid treats `;` as a statement terminator, so leftover words become stray states.
+        $clean = str_replace(["\n", "\r", ':', ';', '#'], [' ', ' ', ' ', '.', ''], trim($trigger));
+
+        return preg_replace('/\s+/', ' ', $clean) ?? $clean;
     }
 }

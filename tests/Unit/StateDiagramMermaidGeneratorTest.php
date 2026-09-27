@@ -343,4 +343,31 @@ class StateDiagramMermaidGeneratorTest extends TestCase
             $mermaid
         );
     }
+
+    public function test_semicolon_in_trigger_does_not_create_stray_states(): void
+    {
+        $generator = new StateDiagramMermaidGenerator();
+
+        $mermaid = $generator->generate(null, [
+            ['from' => 'In draft patch', 'to' => 'Scheduled', 'trigger' => 'Patch scheduled; vehicle gets start and end times'],
+            ['from' => 'Approved', 'to' => '[*]', 'trigger' => 'Dealer annexes generated; patch closed for this sitting'],
+        ]);
+
+        $this->assertStringContainsString(
+            'InDraftPatch --> Scheduled : Patch scheduled. vehicle gets start and end times',
+            $mermaid
+        );
+        $this->assertStringContainsString(
+            'Approved --> [*] : Dealer annexes generated. patch closed for this sitting',
+            $mermaid
+        );
+        $this->assertStringNotContainsString(";\n", $mermaid);
+        $this->assertSame(2, substr_count($mermaid, '-->'));
+        $this->assertStringNotContainsString("\n    vehicle", $mermaid);
+        $this->assertStringNotContainsString("\n    start", $mermaid);
+        $this->assertStringNotContainsString("\n    end", $mermaid);
+        $this->assertStringNotContainsString("\n    times", $mermaid);
+        $this->assertStringNotContainsString("\n    patch", $mermaid);
+        $this->assertStringNotContainsString("\n    sitting", $mermaid);
+    }
 }

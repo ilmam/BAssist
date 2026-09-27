@@ -23,6 +23,9 @@ class ScenarioFormLabelTest extends TestCase
 
         $this->assertStringContainsString("__('ui.scenario_document')", $page);
         $this->assertStringContainsString("__('ui.scenario_document')", $modal);
+        $this->assertStringContainsString("'feature_id'", $page);
+        $this->assertStringContainsString("'stakeholder_need_id'", $page);
+        $this->assertStringContainsString("'stakeholder_need_id'", $modal);
         $this->assertStringContainsString("'label' => ''", $page);
         $this->assertStringContainsString("'label' => ''", $modal);
     }

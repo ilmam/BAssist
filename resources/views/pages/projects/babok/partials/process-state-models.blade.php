@@ -18,7 +18,7 @@
             $flow = $item['model'];
             $mermaidBody = trim($item['mermaid'] ?? '');
         @endphp
-        <article class="artifact">
+        <article class="artifact{{ $mermaidBody !== '' ? ' artifact--diagram' : '' }}">
             <h3 class="item-title">{{ $flow->title }}</h3>
             @if ($flow->description)
                 <p class="prose">{{ $flow->description }}</p>
@@ -43,7 +43,7 @@
             $flow = $item['model'];
             $mermaidBody = trim($item['mermaid'] ?? '');
         @endphp
-        <article class="artifact">
+        <article class="artifact{{ $mermaidBody !== '' ? ' artifact--diagram' : '' }}">
             <h3 class="item-title">{{ $flow->title }}</h3>
             @if ($flow->description)
                 <p class="prose">{{ $flow->description }}</p>

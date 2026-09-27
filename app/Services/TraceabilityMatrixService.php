@@ -7,6 +7,7 @@ use App\Models\BusinessObjective;
 use App\Models\Feature;
 use App\Models\FunctionalRequirement;
 use App\Models\NonFunctionalRequirement;
+use App\Models\Scenario;
 use App\Models\SwimlaneFlowStep;
 use App\Models\Project;
 use App\Models\StakeholderNeed;
@@ -19,7 +20,9 @@ use Illuminate\Support\Collection;
 /**
  * Builds a derived traceability matrix from FK / pivot links.
  * Chain: Need (why) ↔ Objective (what) ↔ Stakeholder Need → (Feature → Scenarios | Functional Requirement | Non-Functional Requirement)
- * BPD coverage: FR|Feature.swimlane_flow_step_id ← SwimlaneFlowStep; steps optionally link upstream to SN.
+ * BPD coverage: FR|Feature.swimlane_flow_step_id ← SwimlaneFlowStep is optional and shown
+ * only on FR/Feature rows that actually link a step. Unlinked process/decision boxes
+ * are not injected as matrix gap rows.
  */
 class TraceabilityMatrixService
 {
@@ -53,8 +56,6 @@ class TraceabilityMatrixService
             ? Workspace::query()->whereKey($workspaceId)->value('name')
             : null;
 
-        $coverage = $this->processStepCoverage($projectId, $workspaceId);
-
         $rows = collect()
             ->merge($this->rowsFromNeeds($projectId, $workspaceId))
             ->merge($this->orphanObjectiveRows($projectId, $workspaceId))
@@ -62,7 +63,6 @@ class TraceabilityMatrixService
             ->merge($this->orphanFeatureRows($projectId, $workspaceId))
             ->merge($this->orphanFunctionalRequirementRows($projectId, $workspaceId))
             ->merge($this->orphanNonFunctionalRequirementRows($projectId, $workspaceId))
-            ->merge($this->processStepGapRows($coverage))
             ->values();
 
         if ($orphansOnly) {
@@ -90,6 +90,7 @@ class TraceabilityMatrixService
                 ['objective_number', 'asc'],
                 ['stakeholder_need_number', 'asc'],
                 ['feature_code', 'asc'],
+                ['scenario_title', 'asc'],
                 ['functional_requirement_code', 'asc'],
                 ['non_functional_requirement_code', 'asc'],
                 ['process_step_code', 'asc'],
@@ -138,7 +139,7 @@ class TraceabilityMatrixService
             ->with([
                 'project:id,name,code',
                 'businessObjectives:id,number,title',
-                'businessObjectives.stakeholderNeeds:id,number,title,project_id',
+                'businessObjectives.stakeholderNeeds:id,number,title,project_id,priority_id,status_id',
                 'businessObjectives.stakeholderNeeds.stakeholders:id,name',
                 'businessObjectives.stakeholderNeeds.features' => fn ($query) => $query
                     ->withCount('scenarios')
@@ -152,6 +153,7 @@ class TraceabilityMatrixService
                 'businessObjectives.stakeholderNeeds.nonFunctionalRequirements' => fn ($query) => $query
                     ->orderBy('number')
                     ->orderBy('title'),
+                'businessObjectives.stakeholderNeeds.coveringScenarios' => fn ($query) => $this->coveringScenarioEagerLoad($query),
                 'businessObjectives.stakeholderNeeds.changeRequests.features' => fn ($query) => $query
                     ->whereNull('stakeholder_need_id')
                     ->withCount('scenarios')
@@ -185,9 +187,13 @@ class TraceabilityMatrixService
                     : $objective->stakeholderNeeds->all();
 
                 foreach ($stakeholderNeeds as $stakeholderNeed) {
-                    [$features, $functionalRequirements, $nonFunctionalRequirements] = $this->packagingForStakeholderNeed($stakeholderNeed);
+                    [$features, $functionalRequirements, $nonFunctionalRequirements, $coveringScenarios] = $this->packagingForStakeholderNeed($stakeholderNeed);
 
-                    if ($features->isEmpty() && $functionalRequirements->isEmpty() && $nonFunctionalRequirements->isEmpty()) {
+                    if ($features->isEmpty()
+                        && $functionalRequirements->isEmpty()
+                        && $nonFunctionalRequirements->isEmpty()
+                        && $coveringScenarios->isEmpty()
+                    ) {
                         $rows[] = $this->makeRow(
                             project: $need->project,
                             objective: $objective,
@@ -199,7 +205,7 @@ class TraceabilityMatrixService
                             processStep: null,
                             gapType: $objective === null || $stakeholderNeed === null
                                 ? 'incomplete_chain'
-                                : 'missing_feature',
+                                : ($stakeholderNeed->isOutOfThisRelease() ? null : 'missing_feature'),
                         );
                         continue;
                     }
@@ -245,6 +251,22 @@ class TraceabilityMatrixService
                             gapType: $objective === null ? 'incomplete_chain' : null,
                         );
                     }
+
+                    foreach ($coveringScenarios as $coveringScenario) {
+                        $coverFeature = $coveringScenario->feature;
+                        $rows[] = $this->makeRow(
+                            project: $need->project,
+                            objective: $objective,
+                            need: $need,
+                            stakeholderNeed: $stakeholderNeed,
+                            feature: $coverFeature,
+                            functionalRequirement: null,
+                            nonFunctionalRequirement: null,
+                            processStep: $coverFeature?->swimlaneFlowStep,
+                            gapType: $objective === null ? 'incomplete_chain' : null,
+                            scenario: $coveringScenario,
+                        );
+                    }
                 }
             }
         }
@@ -261,7 +283,7 @@ class TraceabilityMatrixService
             ->whereDoesntHave('businessNeeds')
             ->with([
                 'project:id,name,code',
-                'stakeholderNeeds:id,number,title,project_id',
+                'stakeholderNeeds:id,number,title,project_id,priority_id,status_id',
                 'stakeholderNeeds.stakeholders:id,name',
                 'stakeholderNeeds.features' => fn ($query) => $query
                     ->withCount('scenarios')
@@ -275,6 +297,7 @@ class TraceabilityMatrixService
                 'stakeholderNeeds.nonFunctionalRequirements' => fn ($query) => $query
                     ->orderBy('number')
                     ->orderBy('title'),
+                'stakeholderNeeds.coveringScenarios' => fn ($query) => $this->coveringScenarioEagerLoad($query),
                 'stakeholderNeeds.changeRequests.features' => fn ($query) => $query
                     ->whereNull('stakeholder_need_id')
                     ->withCount('scenarios')
@@ -303,9 +326,13 @@ class TraceabilityMatrixService
                 : $objective->stakeholderNeeds->all();
 
             foreach ($stakeholderNeeds as $stakeholderNeed) {
-                [$features, $functionalRequirements, $nonFunctionalRequirements] = $this->packagingForStakeholderNeed($stakeholderNeed);
+                [$features, $functionalRequirements, $nonFunctionalRequirements, $coveringScenarios] = $this->packagingForStakeholderNeed($stakeholderNeed);
 
-                if ($features->isEmpty() && $functionalRequirements->isEmpty() && $nonFunctionalRequirements->isEmpty()) {
+                if ($features->isEmpty()
+                    && $functionalRequirements->isEmpty()
+                    && $nonFunctionalRequirements->isEmpty()
+                    && $coveringScenarios->isEmpty()
+                ) {
                     $rows[] = $this->makeRow(
                         project: $objective->project,
                         objective: $objective,
@@ -361,6 +388,22 @@ class TraceabilityMatrixService
                         gapType: 'orphan_objective',
                     );
                 }
+
+                foreach ($coveringScenarios as $coveringScenario) {
+                    $coverFeature = $coveringScenario->feature;
+                    $rows[] = $this->makeRow(
+                        project: $objective->project,
+                        objective: $objective,
+                        need: null,
+                        stakeholderNeed: $stakeholderNeed,
+                        feature: $coverFeature,
+                        functionalRequirement: null,
+                        nonFunctionalRequirement: null,
+                        processStep: $coverFeature?->swimlaneFlowStep,
+                        gapType: 'orphan_objective',
+                        scenario: $coveringScenario,
+                    );
+                }
             }
         }
 
@@ -389,6 +432,7 @@ class TraceabilityMatrixService
                 'nonFunctionalRequirements' => fn ($query) => $query
                     ->orderBy('number')
                     ->orderBy('title'),
+                'coveringScenarios' => fn ($query) => $this->coveringScenarioEagerLoad($query),
                 'changeRequests.features' => fn ($query) => $query
                     ->whereNull('stakeholder_need_id')
                     ->withCount('scenarios')
@@ -412,9 +456,13 @@ class TraceabilityMatrixService
         $rows = [];
 
         foreach ($stakeholderNeeds as $stakeholderNeed) {
-            [$features, $functionalRequirements, $nonFunctionalRequirements] = $this->packagingForStakeholderNeed($stakeholderNeed);
+            [$features, $functionalRequirements, $nonFunctionalRequirements, $coveringScenarios] = $this->packagingForStakeholderNeed($stakeholderNeed);
 
-            if ($features->isEmpty() && $functionalRequirements->isEmpty() && $nonFunctionalRequirements->isEmpty()) {
+            if ($features->isEmpty()
+                && $functionalRequirements->isEmpty()
+                && $nonFunctionalRequirements->isEmpty()
+                && $coveringScenarios->isEmpty()
+            ) {
                 $rows[] = $this->makeRow(
                     project: $stakeholderNeed->project,
                     objective: null,
@@ -468,6 +516,22 @@ class TraceabilityMatrixService
                     nonFunctionalRequirement: $nonFunctionalRequirement,
                     processStep: null,
                     gapType: 'orphan_stakeholder_need',
+                );
+            }
+
+            foreach ($coveringScenarios as $coveringScenario) {
+                $coverFeature = $coveringScenario->feature;
+                $rows[] = $this->makeRow(
+                    project: $stakeholderNeed->project,
+                    objective: null,
+                    need: null,
+                    stakeholderNeed: $stakeholderNeed,
+                    feature: $coverFeature,
+                    functionalRequirement: null,
+                    nonFunctionalRequirement: null,
+                    processStep: $coverFeature?->swimlaneFlowStep,
+                    gapType: 'orphan_stakeholder_need',
+                    scenario: $coveringScenario,
                 );
             }
         }
@@ -555,65 +619,8 @@ class TraceabilityMatrixService
     }
 
     /**
-     * Process/decision steps missing SN and/or elaborating FR|Feature.
+     * Process/decision coverage for optional BPD links. Not used as RTM gap rows.
      *
-     * @param  array{without_need: list<SwimlaneFlowStep>, uncovered: list<SwimlaneFlowStep>}  $coverage
-     * @return list<array<string, mixed>>
-     */
-    protected function processStepGapRows(array $coverage): array
-    {
-        $byId = [];
-
-        foreach ($coverage['without_need'] as $step) {
-            $byId[$step->id] = [
-                'step' => $step,
-                'missing_need' => true,
-                'uncovered' => false,
-            ];
-        }
-
-        foreach ($coverage['uncovered'] as $step) {
-            if (! isset($byId[$step->id])) {
-                $byId[$step->id] = [
-                    'step' => $step,
-                    'missing_need' => false,
-                    'uncovered' => true,
-                ];
-            } else {
-                $byId[$step->id]['uncovered'] = true;
-            }
-        }
-
-        $rows = [];
-
-        foreach ($byId as $entry) {
-            /** @var SwimlaneFlowStep $step */
-            $step = $entry['step'];
-            $gapType = $entry['missing_need'] && $entry['uncovered']
-                ? 'process_step_gap'
-                : ($entry['missing_need'] ? 'missing_step_stakeholder_need' : 'uncovered_process_step');
-
-            $rows[] = $this->makeRow(
-                project: $step->project,
-                objective: null,
-                need: null,
-                stakeholderNeed: $step->stakeholderNeed,
-                feature: null,
-                functionalRequirement: null,
-                nonFunctionalRequirement: null,
-                processStep: $step,
-                gapType: $gapType,
-                forceGaps: array_values(array_filter([
-                    $entry['missing_need'] ? 'missing_step_stakeholder_need' : null,
-                    $entry['uncovered'] ? 'uncovered_process_step' : null,
-                ])),
-            );
-        }
-
-        return $rows;
-    }
-
-    /**
      * @return array{without_need: list<SwimlaneFlowStep>, uncovered: list<SwimlaneFlowStep>}
      */
     protected function processStepCoverage(?int $projectId, ?int $workspaceId): array
@@ -702,6 +709,7 @@ class TraceabilityMatrixService
         ?SwimlaneFlowStep $processStep,
         ?string $gapType,
         ?array $forceGaps = null,
+        ?Scenario $scenario = null,
     ): array {
         $gaps = $forceGaps ?? [];
         $scenarioCount = $feature !== null
@@ -724,10 +732,10 @@ class TraceabilityMatrixService
             if ($stakeholderNeed === null && $objective === null && $need !== null) {
                 $gaps[] = 'missing_stakeholder_need';
             }
-            if ($feature === null && $functionalRequirement === null && $nonFunctionalRequirement === null && $stakeholderNeed !== null) {
+            if ($feature === null && $functionalRequirement === null && $nonFunctionalRequirement === null && $scenario === null && $stakeholderNeed !== null && ! $stakeholderNeed->isOutOfThisRelease()) {
                 $gaps[] = 'missing_feature';
             }
-            if ($feature !== null && $scenarioCount === 0) {
+            if ($feature !== null && $scenario === null && $scenarioCount === 0) {
                 $gaps[] = 'missing_scenarios';
             }
             if ($gapType === 'orphan_objective') {
@@ -772,11 +780,14 @@ class TraceabilityMatrixService
             'stakeholder_need_number' => $stakeholderNeed?->number,
             'stakeholder_need_code' => $stakeholderNeed?->code,
             'stakeholder_need_title' => $stakeholderNeed?->title,
+            'deferred_this_release' => $stakeholderNeed?->isOutOfThisRelease() ?? false,
             'stakeholder_names' => $stakeholderNames,
             'feature_id' => $feature?->id,
             'feature_code' => $feature?->code,
             'feature_title' => $feature?->title,
-            'scenarios_count' => $feature !== null ? $scenarioCount : null,
+            'scenarios_count' => $scenario !== null ? 1 : ($feature !== null ? $scenarioCount : null),
+            'scenario_id' => $scenario?->id,
+            'scenario_title' => $scenario?->title,
             'functional_requirement_id' => $functionalRequirement?->id,
             'functional_requirement_code' => $functionalRequirement?->code,
             'functional_requirement_title' => $functionalRequirement?->title,
@@ -818,13 +829,14 @@ class TraceabilityMatrixService
 
     /**
      * SN-direct packaging plus CR-only packaging under this Stakeholder Need.
+     * Covering scenarios verify this SN while remaining children of another Feature.
      *
-     * @return array{0: Collection<int, Feature>, 1: Collection<int, FunctionalRequirement>, 2: Collection<int, NonFunctionalRequirement>}
+     * @return array{0: Collection<int, Feature>, 1: Collection<int, FunctionalRequirement>, 2: Collection<int, NonFunctionalRequirement>, 3: Collection<int, Scenario>}
      */
     protected function packagingForStakeholderNeed(?StakeholderNeed $stakeholderNeed): array
     {
         if ($stakeholderNeed === null) {
-            return [collect(), collect(), collect()];
+            return [collect(), collect(), collect(), collect()];
         }
 
         $features = $stakeholderNeed->relationLoaded('features')
@@ -835,6 +847,9 @@ class TraceabilityMatrixService
             : collect();
         $nonFunctionalRequirements = $stakeholderNeed->relationLoaded('nonFunctionalRequirements')
             ? $stakeholderNeed->nonFunctionalRequirements
+            : collect();
+        $coveringScenarios = $stakeholderNeed->relationLoaded('coveringScenarios')
+            ? $stakeholderNeed->coveringScenarios
             : collect();
 
         if ($stakeholderNeed->relationLoaded('changeRequests')) {
@@ -851,11 +866,40 @@ class TraceabilityMatrixService
             }
         }
 
+        $ownedFeatureIds = $features->pluck('id')->all();
+        $coveringScenarios = $coveringScenarios
+            ->filter(function (Scenario $scenario) use ($stakeholderNeed, $ownedFeatureIds): bool {
+                if (in_array($scenario->feature_id, $ownedFeatureIds, true)) {
+                    return false;
+                }
+
+                $parentNeedId = $scenario->relationLoaded('feature')
+                    ? $scenario->feature?->stakeholder_need_id
+                    : null;
+
+                return $parentNeedId === null || (int) $parentNeedId !== (int) $stakeholderNeed->id;
+            })
+            ->values();
+
         return [
             $features->unique('id')->values(),
             $functionalRequirements->unique('id')->values(),
             $nonFunctionalRequirements->unique('id')->values(),
+            $coveringScenarios,
         ];
+    }
+
+    /**
+     * @param  \Illuminate\Database\Eloquent\Relations\Relation|\Illuminate\Database\Eloquent\Builder  $query
+     * @return \Illuminate\Database\Eloquent\Relations\Relation|\Illuminate\Database\Eloquent\Builder
+     */
+    protected function coveringScenarioEagerLoad($query)
+    {
+        return $query
+            ->with(['feature' => fn ($featureQuery) => $featureQuery
+                ->withCount('scenarios')
+                ->with(['swimlaneFlowStep.swimlaneFlow:id,title', 'swimlaneFlowStep.project:id,name,code'])])
+            ->orderBy('title');
     }
 
     /**
