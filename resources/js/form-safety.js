@@ -305,6 +305,119 @@ function saveErrorDetail(payload) {
     return payload?.message || 'Please check the form and try again.';
 }
 
+/**
+ * Validation errors from the server (422 JSON: { errors: { field: [msg] } }).
+ * Each message goes to its field's slot ([data-field-error-for], rendered by
+ * form-field-error.blade.php); anything without a visible field goes to the
+ * form summary ([data-form-errors]). Mirrors the server-rendered placement
+ * after a full-page redirect. See docs/validation.md.
+ */
+function clearFormErrors(form) {
+    if (!form) {
+        return;
+    }
+
+    form.querySelectorAll('[data-field-error-for]').forEach((slot) => {
+        slot.textContent = '';
+        slot.hidden = true;
+    });
+    form.querySelectorAll('[aria-invalid="true"]').forEach((control) => {
+        control.removeAttribute('aria-invalid');
+    });
+
+    const summary = form.querySelector('[data-form-errors]');
+    if (summary) {
+        summary.hidden = true;
+        const list = summary.querySelector('[data-form-errors-list]');
+        if (list) {
+            list.innerHTML = '';
+        }
+    }
+}
+
+function errorSlotFor(form, key) {
+    const escape = window.CSS?.escape ?? ((value) => value);
+    const exact = form.querySelector(`[data-field-error-for="${escape(key)}"]`);
+    if (exact) {
+        return { slot: exact, field: key };
+    }
+
+    // attachments.0 → the attachments field; deeper paths (editor rows) → summary.
+    const match = /^([^.]+)\.\d+$/.exec(key);
+    if (match) {
+        const base = form.querySelector(`[data-field-error-for="${escape(match[1])}"]`);
+        if (base) {
+            return { slot: base, field: match[1] };
+        }
+    }
+
+    return null;
+}
+
+function showFormErrors(form, payload) {
+    const errors = payload?.errors;
+    if (!form || !errors || typeof errors !== 'object') {
+        return false;
+    }
+
+    clearFormErrors(form);
+
+    const escape = window.CSS?.escape ?? ((value) => value);
+    const unplaced = [];
+    let firstInvalid = null;
+
+    Object.entries(errors).forEach(([key, messages]) => {
+        const list = Array.isArray(messages) ? messages.map(String) : [String(messages)];
+        const target = errorSlotFor(form, key);
+
+        if (!target) {
+            unplaced.push(...list);
+            return;
+        }
+
+        if (target.slot.hidden) {
+            target.slot.textContent = list[0] ?? '';
+            target.slot.hidden = false;
+        }
+
+        form.querySelectorAll(`[name="${escape(target.field)}"], [name="${escape(target.field)}[]"]`).forEach((control) => {
+            control.setAttribute('aria-invalid', 'true');
+            firstInvalid ??= control;
+        });
+        firstInvalid ??= target.slot;
+    });
+
+    if (unplaced.length > 0) {
+        const summary = form.querySelector('[data-form-errors]');
+        const summaryList = summary?.querySelector('[data-form-errors-list]');
+        if (!summary || !summaryList) {
+            return false;
+        }
+
+        [...new Set(unplaced)].forEach((message) => {
+            const item = document.createElement('li');
+            item.textContent = message;
+            summaryList.appendChild(item);
+        });
+        summary.hidden = false;
+        firstInvalid ??= summary;
+    }
+
+    if (firstInvalid) {
+        firstInvalid.scrollIntoView?.({ block: 'center', behavior: 'smooth' });
+        if (typeof firstInvalid.focus === 'function' && firstInvalid.matches?.('input, select, textarea')) {
+            firstInvalid.focus({ preventScroll: true });
+        }
+    }
+
+    return true;
+}
+
+if (typeof window !== 'undefined') {
+    window.bassistShowFormErrors = showFormErrors;
+    window.bassistClearFormErrors = clearFormErrors;
+}
+
 function setHiddenValue(form, name, value) {
     let input = form.querySelector(`input[type="hidden"][name="${name}"]`);
     if (!input) {
@@ -387,6 +500,7 @@ async function saveFormInPlace(form) {
             throw payload;
         }
 
+        clearFormErrors(form);
         adoptSavedRecord(form, payload?.record);
 
         // Editors own their own dirty flags; let them reset before we snapshot.
@@ -419,7 +533,9 @@ async function saveFormInPlace(form) {
         return true;
     } catch (payload) {
         // Stay put on failure so the user keeps their edits and their place.
-        window.alert(`Save failed.\n${saveErrorDetail(payload)}`);
+        if (!showFormErrors(form, payload)) {
+            window.alert(`Save failed.\n${saveErrorDetail(payload)}`);
+        }
         return false;
     } finally {
         savingForms.delete(form);

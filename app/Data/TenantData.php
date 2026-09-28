@@ -17,13 +17,4 @@ class TenantData extends BaseData
         public ?int $status_id = null,
     ) {
     }
-
-    public static function rules()
-    {
-        return [
-            'name' => ['required', 'string', 'max:255'],
-            'slug' => ['required', 'string', 'max:255'],
-            'status_id' => ['nullable', 'integer', 'exists:statuses,id'],
-        ];
-    }
 }

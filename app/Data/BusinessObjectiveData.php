@@ -4,6 +4,7 @@ namespace App\Data;
 
 use App\Attributes\Form;
 use App\Attributes\ListForm;
+use Spatie\LaravelData\Attributes\Validation\Max;
 
 class BusinessObjectiveData extends BaseData
 {
@@ -19,22 +20,13 @@ class BusinessObjectiveData extends BaseData
         public ?int $primary_business_need_id = null,
         #[Form('textarea', hideQuick: true)]
         public ?string $description = null,
-        #[Form('text', hideQuick: true)]
+        #[Form('text', hideQuick: true), Max(2000)]
         public ?string $success_measure = null,
-        #[Form('text', hideQuick: true)]
+        #[Form('text', hideQuick: true), Max(2000)]
         public ?string $potential_value = null,
 
         #[Form('attachments', hideQuick: true)]
         public mixed $attachments = null,
     ) {
-    }
-
-    public static function rules()
-    {
-        return [
-            'title' => ['required', 'string', 'max:255'],
-            'project_id' => ['required', 'integer', 'exists:projects,id'],
-            'primary_business_need_id' => ['nullable', 'integer', 'exists:business_needs,id'],
-        ];
     }
 }

@@ -6,7 +6,6 @@ use App\Attributes\Form;
 use App\Attributes\ListForm;
 use App\Support\ChangeRequestImpact;
 use App\Support\ChangeRequestStatus;
-use Illuminate\Validation\Rule;
 
 class ChangeRequestData extends BaseData
 {
@@ -46,21 +45,5 @@ class ChangeRequestData extends BaseData
         #[ListForm('select', 'ChangeRequestStatus', help: 'Use Approve & mark for revision to move to Approved (confirms which FR/BDD to taint).')]
         public string $status = ChangeRequestStatus::DRAFT,
     ) {
-    }
-
-    public static function rules()
-    {
-        return [
-            'title' => ['required', 'string', 'max:255'],
-            'project_id' => ['required', 'integer', 'exists:projects,id'],
-            'problem' => ['required', 'string'],
-            'proposed_change' => ['required', 'string'],
-            'requestor' => ['required', 'string', 'max:255'],
-            'impact_level' => ['required', 'string', Rule::in(ChangeRequestImpact::values())],
-            'impact_notes' => ['nullable', 'string'],
-            'stakeholder_need_id' => ['nullable', 'integer', 'exists:stakeholder_needs,id'],
-            'priority_id' => ['nullable', 'integer', 'exists:priorities,id'],
-            'status' => ['required', 'string', Rule::in(ChangeRequestStatus::values())],
-        ];
     }
 }

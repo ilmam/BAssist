@@ -30,16 +30,4 @@ class StakeholderNeedData extends BaseData
         public mixed $attachments = null,
     ) {
     }
-
-    public static function rules()
-    {
-        return [
-            'title' => ['required', 'string', 'max:255'],
-            'project_id' => ['required', 'integer', 'exists:projects,id'],
-            'business_objective_id' => ['required', 'integer', 'exists:business_objectives,id'],
-            'stakeholder_id' => ['required', 'integer', 'exists:stakeholders,id'],
-            'priority_id' => ['nullable', 'integer', 'exists:priorities,id'],
-            'status_id' => ['nullable', 'integer', 'exists:statuses,id'],
-        ];
-    }
 }

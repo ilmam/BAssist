@@ -4,6 +4,8 @@ namespace App\Data;
 
 use App\Attributes\Form;
 use App\Attributes\ListForm;
+use App\Models\StakeholderNeed;
+use App\Rules\RecordExists;
 use App\Services\SwimlaneMermaidGenerator;
 use Illuminate\Validation\Rule;
 
@@ -36,13 +38,8 @@ class SwimlaneFlowData extends BaseData
     public static function rules()
     {
         return [
-            'title' => ['required', 'string', 'max:255'],
-            'project_id' => ['required', 'integer', 'exists:projects,id'],
-            'description' => ['nullable', 'string'],
             'direction' => ['nullable', 'string', Rule::in(['TB', 'LR', 'tb', 'lr'])],
             'color_mode' => ['nullable', 'string', Rule::in(SwimlaneMermaidGenerator::colorModes())],
-            'status_id' => ['nullable', 'integer', 'exists:statuses,id'],
-            'elements' => ['nullable', 'array'],
             'elements.*.id' => ['nullable', 'integer', 'min:1'],
             'elements.*.lane' => ['nullable', 'string', 'max:255'],
             'elements.*.lane_color' => ['nullable', 'string', Rule::in(['', ...SwimlaneMermaidGenerator::laneColorKeys()])],
@@ -52,7 +49,7 @@ class SwimlaneFlowData extends BaseData
             'elements.*.label' => ['nullable', 'string', 'max:255'],
             'elements.*.line_title' => ['nullable', 'string', 'max:255'],
             'elements.*.code' => ['nullable', 'string', 'max:32'],
-            'elements.*.stakeholder_need_id' => ['nullable', 'integer', 'exists:stakeholder_needs,id'],
+            'elements.*.stakeholder_need_id' => ['nullable', 'integer', new RecordExists(StakeholderNeed::class)],
             'elements.*' => [
                 function (string $attribute, mixed $value, \Closure $fail): void {
                     if (! is_array($value)) {

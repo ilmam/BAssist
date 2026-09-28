@@ -25,8 +25,8 @@ class ProcessStepTest extends TestCase
 
         $this->assertSame('select', $frFields['swimlane_flow_step_id']['type'] ?? null);
         $this->assertSame('select', $featureFields['swimlane_flow_step_id']['type'] ?? null);
-        $this->assertContains('nullable', FunctionalRequirementData::rules()['swimlane_flow_step_id']);
-        $this->assertContains('nullable', FeatureData::rules()['swimlane_flow_step_id']);
+        $this->assertContains('nullable', $this->entityRules(FunctionalRequirementData::class)['swimlane_flow_step_id']);
+        $this->assertContains('nullable', $this->entityRules(FeatureData::class)['swimlane_flow_step_id']);
         $this->assertArrayHasKey('', $frFields['swimlane_flow_step_id']['list'] ?? []);
         $this->assertArrayHasKey('', $featureFields['swimlane_flow_step_id']['list'] ?? []);
     }

@@ -5,6 +5,8 @@ namespace App\Data;
 use App\Attributes\Form;
 use App\Attributes\Hide;
 use App\Attributes\ListForm;
+use App\Models\Feature;
+use App\Rules\RecordExists;
 use Illuminate\Validation\Rule;
 
 class ArchitectureData extends BaseData
@@ -41,11 +43,6 @@ class ArchitectureData extends BaseData
     public static function rules()
     {
         return [
-            'title' => ['required', 'string', 'max:255'],
-            'project_id' => ['required', 'integer', 'exists:projects,id'],
-            'description' => ['nullable', 'string'],
-            'status_id' => ['nullable', 'integer', 'exists:statuses,id'],
-            'elements' => ['nullable', 'array'],
             'elements.*.key' => ['nullable', 'string', 'max:64'],
             'elements.*.kind' => ['nullable', 'string', Rule::in(['person', 'system', 'container', 'component', 'group', ''])],
             'elements.*.name' => ['nullable', 'string', 'max:255'],
@@ -55,19 +52,17 @@ class ArchitectureData extends BaseData
             'elements.*.external' => ['nullable'],
             'elements.*.form' => ['nullable', 'string', Rule::in(['box', 'database', 'queue'])],
             'elements.*.feature_ids' => ['nullable', 'array'],
-            'elements.*.feature_ids.*' => ['integer', 'exists:features,id'],
+            'elements.*.feature_ids.*' => ['integer', new RecordExists(Feature::class)],
             'elements.*.bg_color' => ['nullable', 'string', 'max:32'],
             'elements.*.font_color' => ['nullable', 'string', 'max:32'],
             'elements.*.border_color' => ['nullable', 'string', 'max:32'],
             'elements.*.style' => ['nullable', 'array'],
-            'relationships' => ['nullable', 'array'],
             'relationships.*.from_key' => ['nullable', 'string', 'max:64'],
             'relationships.*.to_key' => ['nullable', 'string', 'max:64'],
             'relationships.*.label' => ['nullable', 'string', 'max:255'],
             'relationships.*.technology' => ['nullable', 'string', 'max:255'],
             'relationships.*.direction' => ['nullable', 'string', Rule::in(['', 'rel', 'up', 'down', 'left', 'right', 'back', 'bi'])],
             'relationships.*.line_color' => ['nullable', 'string', 'max:32'],
-            'layout' => ['nullable', 'array'],
             'layout.shapes_per_row' => ['nullable', 'integer', 'min:1', 'max:12'],
             'layout.boundaries_per_row' => ['nullable', 'integer', 'min:1', 'max:12'],
         ];

@@ -5,7 +5,6 @@ namespace App\Data;
 use App\Attributes\Form;
 use App\Attributes\ListForm;
 use App\Support\ConstraintStatus;
-use Illuminate\Validation\Rule;
 
 class ConstraintData extends BaseData
 {
@@ -22,16 +21,5 @@ class ConstraintData extends BaseData
         #[Form('text', hideQuick: true)]
         public ?string $source = null,
     ) {
-    }
-
-    public static function rules()
-    {
-        return [
-            'title' => ['required', 'string', 'max:255'],
-            'project_id' => ['required', 'integer', 'exists:projects,id'],
-            'description' => ['nullable', 'string'],
-            'status' => ['required', 'string', Rule::in(ConstraintStatus::values())],
-            'source' => ['nullable', 'string', 'max:255'],
-        ];
     }
 }

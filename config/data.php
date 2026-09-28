@@ -61,6 +61,8 @@ return [
         Spatie\LaravelData\RuleInferrers\NullableRuleInferrer::class,
         Spatie\LaravelData\RuleInferrers\RequiredRuleInferrer::class,
         Spatie\LaravelData\RuleInferrers\BuiltInTypesRuleInferrer::class,
+        // BAssist: rules from #[Form] / #[ListForm] / #[OneOf] (docs/validation.md)
+        App\Support\Validation\FormRuleInferrer::class,
         Spatie\LaravelData\RuleInferrers\AttributesRuleInferrer::class,
     ],
 

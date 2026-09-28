@@ -4,8 +4,6 @@ namespace App\Data;
 
 use App\Attributes\Form;
 use App\Attributes\ListForm;
-use App\Support\NeedType;
-use Illuminate\Validation\Rule;
 
 class BusinessNeedData extends BaseData
 {
@@ -40,14 +38,5 @@ class BusinessNeedData extends BaseData
         #[Form('attachments', hideQuick: true)]
         public mixed $attachments = null,
     ) {
-    }
-
-    public static function rules()
-    {
-        return [
-            'title' => ['required', 'string', 'max:255'],
-            'need_type' => ['nullable', 'string', Rule::in(NeedType::values())],
-            'project_id' => ['required', 'integer', 'exists:projects,id'],
-        ];
     }
 }

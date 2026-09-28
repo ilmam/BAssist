@@ -44,7 +44,7 @@ class FunctionalRequirementTest extends TestCase
 
     public function test_validation_requires_statement(): void
     {
-        $rules = FunctionalRequirementData::rules();
+        $rules = $this->entityRules(FunctionalRequirementData::class);
 
         $this->assertContains('required', $rules['statement']);
         $this->assertContains('required', $rules['title']);
@@ -56,14 +56,14 @@ class FunctionalRequirementTest extends TestCase
      */
     public function test_parent_lineage_is_exclusive_xor(): void
     {
-        $rules = FunctionalRequirementData::rules();
+        $rules = $this->entityRules(FunctionalRequirementData::class);
 
         $this->assertContains('nullable', $rules['stakeholder_need_id']);
-        $this->assertContains('required_without:change_request_id', $rules['stakeholder_need_id']);
+        $this->assertContains('required_without_all:change_request_id', $rules['stakeholder_need_id']);
         $this->assertContains('prohibits:change_request_id', $rules['stakeholder_need_id']);
 
         $this->assertContains('nullable', $rules['change_request_id']);
-        $this->assertContains('required_without:stakeholder_need_id', $rules['change_request_id']);
+        $this->assertContains('required_without_all:stakeholder_need_id', $rules['change_request_id']);
         $this->assertContains('prohibits:stakeholder_need_id', $rules['change_request_id']);
         $this->assertNotContains('required', $rules['change_request_id']);
         $this->assertNotContains('required', $rules['stakeholder_need_id']);

@@ -20,6 +20,7 @@ Then only as needed:
 | Forms look stale after a DTO change (production cache) | [dto-metadata.md](dto-metadata.md) |
 | Datatable JSON shape | [collection-flattener.md](collection-flattener.md) |
 | Who can see which records (tenants), adding a tenant-owned entity | [tenancy.md](tenancy.md) |
+| How saves are validated, declaring special validation rules | [validation.md](validation.md) |
 
 ## Words used everywhere
 

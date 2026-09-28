@@ -52,7 +52,7 @@ class ChangeRequestFormTest extends TestCase
 
     public function test_validation_requires_core_intake_fields(): void
     {
-        $rules = ChangeRequestData::rules();
+        $rules = $this->entityRules(ChangeRequestData::class);
 
         $this->assertContains('required', $rules['problem']);
         $this->assertContains('required', $rules['proposed_change']);

@@ -34,11 +34,6 @@ class DataDictionaryData extends BaseData
         $types = implode(',', array_merge(['', 'auto'], DataTypeInference::TYPES));
 
         return [
-            'title' => ['required', 'string', 'max:255'],
-            'project_id' => ['required', 'integer', 'exists:projects,id'],
-            'description' => ['nullable', 'string'],
-            'status_id' => ['nullable', 'integer', 'exists:statuses,id'],
-            'entities' => ['nullable', 'array'],
             'entities.*.name' => ['nullable', 'string', 'max:255'],
             'entities.*.meaning' => ['nullable', 'string', 'max:2000'],
             'entities.*.fields' => ['nullable', 'array'],

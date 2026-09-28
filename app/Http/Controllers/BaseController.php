@@ -14,6 +14,7 @@ use App\Support\DtoMetadata;
 use App\Support\EntityFormBuilder;
 use App\Support\ProjectContext;
 use App\Support\RepositoryResolver;
+use App\Support\Validation\EntityValidator;
 use App\Support\WorkspaceContext;
 
 class BaseController extends Controller
@@ -395,11 +396,16 @@ class BaseController extends Controller
         return array_values(array_unique($columns));
     }
 
-    private function getData(Request $request)
+    /**
+     * Validate the submitted form against the entity's edit DTO and build it.
+     * All levels of validation live on the DTO (docs/validation.md).
+     */
+    protected function getData(Request $request)
     {
-        $dtoClass = "\\App\\Data\\".$this->modelName.'Data';
-
-        return $dtoClass::from($request->except($this->attachmentRequestKeys()));
+        return EntityValidator::validate(
+            $this->modelRepository->editDto,
+            $request->except($this->attachmentRequestKeys())
+        );
     }
 
     /**

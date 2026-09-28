@@ -33,7 +33,7 @@ This guide is framework-only. Your app’s business meaning belongs in your own 
 | In a typical Laravel tutorial | Here |
 |-------------------------------|------|
 | You register `Route::resource` | You put `#[RoutableAttribute]` on the model; routes are registered for you |
-| You write a Form Request | Validation lives on `{Model}Data` (`rules()`) |
+| You write a Form Request | Validation is inferred from `{Model}Data`; declare only special rules ([validation.md](validation.md)) |
 | You write an API Resource | List/detail JSON comes from `{Model}ViewData` |
 | You write a Policy | `EntityAccess` + `entity_can()` |
 | You write `{Model}Controller` | Shared `CrudController` until you need extra actions |
@@ -91,7 +91,7 @@ You now have:
 |------|------|
 | `app/Models/{Model}.php` | Database row (`BaseModel` + `#[RoutableAttribute]`) |
 | `app/Repositories/{Model}Repository.php` | Load/save |
-| `app/Data/{Model}Data.php` | Create/edit form + validation |
+| `app/Data/{Model}Data.php` | Create/edit form; its properties also define validation |
 | `app/Data/{Model}ViewData.php` | Table columns + details page |
 | a migration | Table with id, your fields, timestamps, audit users, soft deletes |
 
@@ -144,7 +144,7 @@ $this->modelRepository->findModel($id, ['relationName']);
 
 **New record (modal):** `/{resource}/modal/create` with header `X-Modal-Request` → modal form. The list “quick create” button uses a smaller modal (`modalQuickCreate`).
 
-**Save:** `POST /{resource}` → `{Model}Data::from($request)` (validates) → repository `create()`.
+**Save:** `POST /{resource}` → `EntityValidator` validates against `{Model}Data` → repository `create()`. Invalid input goes back to the form with errors under each field ([validation.md](validation.md)).
 
 If a model has `project_id` or `workspace_id`, the controller may fill those from the current session (“sticky context”). That is optional; not every entity needs it.
 

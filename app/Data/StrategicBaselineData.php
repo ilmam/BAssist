@@ -5,7 +5,6 @@ namespace App\Data;
 use App\Attributes\Form;
 use App\Attributes\ListForm;
 use App\Support\StrategicBaselineStatus;
-use Illuminate\Validation\Rule;
 
 class StrategicBaselineData extends BaseData
 {
@@ -27,16 +26,5 @@ class StrategicBaselineData extends BaseData
         #[ListForm('select', 'StrategicBaselineStatus')]
         public string $status = StrategicBaselineStatus::DRAFT,
     ) {
-    }
-
-    public static function rules()
-    {
-        return [
-            'project_id' => ['required', 'integer', 'exists:projects,id'],
-            'current_state' => ['nullable', 'string'],
-            'future_state' => ['nullable', 'string'],
-            'change_strategy' => ['nullable', 'string'],
-            'status' => ['required', 'string', Rule::in(StrategicBaselineStatus::values())],
-        ];
     }
 }

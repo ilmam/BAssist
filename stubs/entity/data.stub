@@ -13,9 +13,9 @@ DummyDataProperties
     ) {
     }
 
-    public static function rules()
-    {
-        // TODO: Add validation rules for this entity.
-        return [];
-    }
+    // Validation is inferred from the properties above (required, type, length,
+    // valid option, related record). Declare only special cases — #[OneOf],
+    // #[Rule]/#[Max] on a property, rules() across fields, or after() for
+    // business checks. See docs/validation.md; check with:
+    //   php artisan entity:rules DummyClass
 }

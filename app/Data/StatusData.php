@@ -4,6 +4,7 @@ namespace App\Data;
 
 use App\Attributes\Form;
 use App\Attributes\ListForm;
+use Spatie\LaravelData\Attributes\Validation\Min;
 
 class StatusData extends BaseData
 {
@@ -13,19 +14,10 @@ class StatusData extends BaseData
         public string $name = '',
         #[ListForm('text')]
         public string $code = '',
-        #[Form('number')]
+        #[Form('number'), Min(0)]
         public int $sort_order = 0,
         #[Form('textarea', hideQuick: true)]
         public ?string $description = null,
     ) {
-    }
-
-    public static function rules()
-    {
-        return [
-            'name' => ['required', 'string', 'max:255'],
-            'code' => ['required', 'string', 'max:255'],
-            'sort_order' => ['nullable', 'integer', 'min:0'],
-        ];
     }
 }

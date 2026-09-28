@@ -76,6 +76,13 @@ class FormHelper
             if (! empty($args['section'])) {
                 $fieldOptions['section'] = (string) $args['section'];
             }
+            // Browser hints from the server-side rules (ValidationHints).
+            if (! empty($args['required'])) {
+                $fieldOptions['required'] = true;
+            }
+            if (! empty($args['maxlength'])) {
+                $fieldOptions['maxlength'] = (int) $args['maxlength'];
+            }
             $formFields[$fild] = $fieldOptions;
 
         }

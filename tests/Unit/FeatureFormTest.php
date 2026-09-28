@@ -28,14 +28,14 @@ class FeatureFormTest extends TestCase
 
     public function test_parent_lineage_is_exclusive_xor(): void
     {
-        $rules = FeatureData::rules();
+        $rules = $this->entityRules(FeatureData::class);
 
         $this->assertContains('nullable', $rules['stakeholder_need_id']);
-        $this->assertContains('required_without:change_request_id', $rules['stakeholder_need_id']);
+        $this->assertContains('required_without_all:change_request_id', $rules['stakeholder_need_id']);
         $this->assertContains('prohibits:change_request_id', $rules['stakeholder_need_id']);
 
         $this->assertContains('nullable', $rules['change_request_id']);
-        $this->assertContains('required_without:stakeholder_need_id', $rules['change_request_id']);
+        $this->assertContains('required_without_all:stakeholder_need_id', $rules['change_request_id']);
         $this->assertContains('prohibits:stakeholder_need_id', $rules['change_request_id']);
         $this->assertNotContains('required', $rules['stakeholder_need_id']);
     }

@@ -4,9 +4,9 @@ namespace App\Data;
 
 use App\Attributes\Form;
 use App\Attributes\ListForm;
-use App\Support\NfrCategory;
-use Illuminate\Validation\Rule;
+use App\Attributes\OneOf;
 
+#[OneOf('stakeholder_need_id', 'change_request_id')]
 class NonFunctionalRequirementData extends BaseData
 {
     public function __construct(
@@ -46,20 +46,5 @@ class NonFunctionalRequirementData extends BaseData
         #[Form('attachments', hideQuick: true)]
         public mixed $attachments = null,
     ) {
-    }
-
-    public static function rules()
-    {
-        return [
-            'title' => ['required', 'string', 'max:255'],
-            'project_id' => ['required', 'integer', 'exists:projects,id'],
-            'stakeholder_need_id' => ['nullable', 'integer', 'exists:stakeholder_needs,id', 'required_without:change_request_id', 'prohibits:change_request_id'],
-            'change_request_id' => ['nullable', 'integer', 'exists:change_requests,id', 'required_without:stakeholder_need_id', 'prohibits:stakeholder_need_id'],
-            'category' => ['required', 'string', Rule::in(NfrCategory::values())],
-            'description' => ['required', 'string'],
-            'acceptance_criteria' => ['nullable', 'string'],
-            'priority_id' => ['nullable', 'integer', 'exists:priorities,id'],
-            'status_id' => ['nullable', 'integer', 'exists:statuses,id'],
-        ];
     }
 }

@@ -58,6 +58,7 @@
 
 {{ Form::open($formOpenOptions) }}
     <div class="{{ $inModal ? '' : 'kt-card-body border-t border-border p-5 lg:p-7.5' }} {{ count($fieldChunks) > 1 ? 'form-body-sections' : '' }}" data-ui-container>
+        @include('pages.partials.form-errors-summary', ['fieldNames' => $fieldsArray])
         @if (! in_array($verb, ['POST', 'post'], true))
             @method($verb)
         @endif

@@ -25,13 +25,4 @@ class StakeholderData extends BaseData
         public ?int $status_id = null,
     ) {
     }
-
-    public static function rules()
-    {
-        return [
-            'name' => ['required', 'string', 'max:255'],
-            'project_id' => ['required', 'integer', 'exists:projects,id'],
-            'status_id' => ['nullable', 'integer', 'exists:statuses,id'],
-        ];
-    }
 }

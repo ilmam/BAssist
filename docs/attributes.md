@@ -15,6 +15,7 @@ If you have not added an entity yet, start with [quick-start.md](quick-start.md)
 | `#[Value('code')]` | nested ViewData property | Use `related.code` instead of the default display field |
 | `#[Relation('BelongsTo')]` | model **method** | Registers an Eloquent relation (not a form field) |
 | `#[Attachable]` | model **class** | Enables file storage (also `use HasAttachments`); add `#[Form('attachments')]` on the edit DTO |
+| `#[OneOf('a', 'b')]` | `{Model}Data` **class** | Exactly one of the listed fields must be filled in. Other validation: [validation.md](validation.md) |
 
 `List` cannot be a PHP class name, so the list marker is `InList`.
 

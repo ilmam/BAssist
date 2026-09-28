@@ -7,9 +7,7 @@ use App\Attributes\ListForm;
 use App\Support\RiskCategory;
 use App\Support\RiskImpact;
 use App\Support\RiskLikelihood;
-use App\Support\RiskResponse;
 use App\Support\RiskStatus;
-use Illuminate\Validation\Rule;
 
 class RiskData extends BaseData
 {
@@ -52,22 +50,5 @@ class RiskData extends BaseData
         #[ListForm('select', 'RiskStatus')]
         public string $status = RiskStatus::OPEN,
     ) {
-    }
-
-    public static function rules()
-    {
-        return [
-            'title' => ['required', 'string', 'max:255'],
-            'project_id' => ['required', 'integer', 'exists:projects,id'],
-            'description' => ['nullable', 'string'],
-            'category' => ['required', 'string', Rule::in(RiskCategory::values())],
-            'likelihood' => ['required', 'string', Rule::in(RiskLikelihood::values())],
-            'impact' => ['required', 'string', Rule::in(RiskImpact::values())],
-            'response' => ['nullable', 'string', Rule::in(RiskResponse::values())],
-            'treatment' => ['nullable', 'string'],
-            'trigger' => ['nullable', 'string', 'max:255'],
-            'owner' => ['nullable', 'string', 'max:255'],
-            'status' => ['required', 'string', Rule::in(RiskStatus::values())],
-        ];
     }
 }

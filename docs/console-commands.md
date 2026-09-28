@@ -9,6 +9,7 @@ Five commands this project adds. If you are new, run `make:entity` from [quick-s
 | [`entity:materialize-form`](#entitymaterialize-form) | Refresh owned form blades after DTO edits | [entity-scaffolding.md](entity-scaffolding.md) |
 | [`dto:cache-metadata`](#dtocache-metadata) | Warm DTO attribute cache | [dto-metadata.md](dto-metadata.md) |
 | [`dto:clear-metadata`](#dtoclear-metadata) | Clear DTO attribute cache | [dto-metadata.md](dto-metadata.md) |
+| [`entity:rules`](#entityrules) | Show the validation rules enforced for an entity | [validation.md](validation.md) |
 
 Command classes: `app/Console/Commands/`. Shared helpers: `EntityScaffoldTrait` ([Shared internals](#shared-internals-entityscaffoldtrait)).
 
@@ -179,6 +180,17 @@ Inverse of cache. Run when attributes change.
 ```bash
 php artisan dto:clear-metadata
 php artisan dto:clear-metadata --class="App\Data\{Model}Data"
+```
+
+---
+
+## `entity:rules`
+
+Print the validation rules the framework enforces for an entity's edit DTO, and which level declared each field's rules (`inferred`, `#[OneOf]`, a property attribute such as `#[Max]`, or `rules()`). A note is added when the DTO has an `after()` hook. See [validation.md](validation.md).
+
+```bash
+php artisan entity:rules FunctionalRequirement
+php artisan entity:rules StateFlow
 ```
 
 ---

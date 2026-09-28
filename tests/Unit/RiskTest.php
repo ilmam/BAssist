@@ -53,7 +53,7 @@ class RiskTest extends TestCase
 
     public function test_validation_requires_core_fields(): void
     {
-        $rules = RiskData::rules();
+        $rules = $this->entityRules(RiskData::class);
 
         $this->assertContains('required', $rules['title']);
         $this->assertContains('required', $rules['category']);

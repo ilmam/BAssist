@@ -509,7 +509,8 @@ class MakeEntityCommand extends Command
         $this->line("  php artisan dto:cache-metadata --class=App\\\\Data\\\\{$model}Data");
         $this->line("  php artisan dto:cache-metadata --class=App\\\\Data\\\\{$model}ViewData");
         $this->line('  php artisan data:cache-structure');
+        $this->line("  php artisan entity:rules {$model}   # the validation rules inferred for it");
         $this->newLine();
-        $this->comment('Placeholders for later: add scaffold tests, richer validation rules, factories, seeders, policies, and relation methods.');
+        $this->comment('Placeholders for later: add scaffold tests, special validation rules (docs/validation.md), factories, seeders, policies, and relation methods.');
     }
 }

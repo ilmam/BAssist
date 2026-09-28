@@ -4,6 +4,7 @@ namespace App\Data;
 
 use App\Attributes\Form;
 use App\Attributes\ListForm;
+use Spatie\LaravelData\Attributes\Validation\Max;
 
 class StateFlowData extends BaseData
 {
@@ -22,8 +23,10 @@ class StateFlowData extends BaseData
         /** @var list<array{from?: string, to?: string, trigger?: string|null}> */
         public array $transitions = [],
 
+        #[Max(255)]
         public ?string $initial_state = null,
 
+        #[Max(1000)]
         public ?string $final_states = null,
 
         #[ListForm('select', 'Status', hideQuick: true)]
@@ -34,13 +37,6 @@ class StateFlowData extends BaseData
     public static function rules()
     {
         return [
-            'title' => ['required', 'string', 'max:255'],
-            'project_id' => ['required', 'integer', 'exists:projects,id'],
-            'description' => ['nullable', 'string'],
-            'status_id' => ['nullable', 'integer', 'exists:statuses,id'],
-            'initial_state' => ['nullable', 'string', 'max:255'],
-            'final_states' => ['nullable', 'string', 'max:1000'],
-            'transitions' => ['nullable', 'array'],
             'transitions.*.from' => ['nullable', 'string', 'max:255'],
             'transitions.*.to' => ['nullable', 'string', 'max:255'],
             'transitions.*.trigger' => ['nullable', 'string', 'max:255'],

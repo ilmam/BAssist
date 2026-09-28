@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use App\Helpers\FormHelper;
+use App\Support\Validation\ValidationHints;
 
 /**
  * Builds view-ready form field definitions for an entity's DTO.
@@ -28,6 +29,8 @@ class EntityFormBuilder
         $fields = $forQuickCreate
             ? $metadata->quickCreateVisibleFormFields()
             : $metadata->formFields();
+
+        $fields = ValidationHints::apply($dtoClass, $fields);
 
         return FormHelper::getFormFields($this->populateSelectOptions($fields));
     }

@@ -26,6 +26,7 @@
 
 {{ Form::open($formOpenOptions) }}
     <div class="{{ $inModal ? '' : 'card-body border-top p-9' }}" data-ui-container>
+        @include('pages.partials.form-errors-summary', ['fieldNames' => $fieldsArray])
         <div class="{{ $fieldsWrapperClass }}">
             @if (! in_array($verb, ['POST', 'post'], true))
                 @method($verb)
@@ -46,6 +47,12 @@
                     $fieldName = is_numeric($name) ? $field : $name;
                     $type = \App\Helpers\FormHelper::getFieldType($field);
                     $fieldValue = $dto->{$fieldName} ?? null;
+
+                    // After a failed save (redirect back), show what the user typed.
+                    if (session()->hasOldInput() && ! in_array($type, ['attachments', 'file', 'image', 'dropzone'], true)) {
+                        $fieldValue = old($fieldName, $fieldValue);
+                    }
+                    $fieldHasError = isset($errors) && ($errors->has($fieldName) || $errors->has($fieldName.'.*'));
 
                     $list = null;
                     $options = [];
@@ -72,6 +79,17 @@
 
                     if (! empty($field['help'])) {
                         $options['data-field-help'] = $field['help'];
+                    }
+
+                    // Browser hints derived from the server-side rules (ValidationHints).
+                    if (! empty($field['required'])) {
+                        $options['required'] = 'required';
+                    }
+                    if (! empty($field['maxlength'])) {
+                        $options['maxlength'] = (int) $field['maxlength'];
+                    }
+                    if ($fieldHasError) {
+                        $options['aria-invalid'] = 'true';
                     }
 
                     if ($type === 'attachments') {
@@ -108,6 +126,7 @@
                     data-ui-span-lg="{{ $span['lg'] }}"
                 >
                     {{ Form::field($type, $fieldName, $fieldValue, $list, $options ?: null) }}
+                    @include('pages.partials.form-field-error', ['fieldName' => $fieldName])
                 </div>
             @endforeach
         </div>

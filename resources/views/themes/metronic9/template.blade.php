@@ -1258,6 +1258,8 @@
                     return response.json();
                 })
                 .then((payload) => {
+                    window.bassistClearFormErrors?.(form);
+
                     if (isQuickCreate && quickRoot) {
                         if (payload?.record) {
                             upsertQuickCreateRecord(quickRoot, payload.record);
@@ -1284,6 +1286,11 @@
                 .catch((payload) => {
                     if (submitButton) {
                         submitButton.disabled = false;
+                    }
+
+                    // Validation errors go under their fields (form-safety.js).
+                    if (window.bassistShowFormErrors?.(form, payload)) {
+                        return;
                     }
 
                     const messages = payload?.errors

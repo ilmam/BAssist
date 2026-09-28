@@ -7,6 +7,7 @@ use App\Http\Controllers\Concerns\ResolvesListFilters;
 use Illuminate\Http\Request;
 use App\Support\CollectionFlattener;
 use App\Support\RepositoryResolver;
+use App\Support\Validation\EntityValidator;
 use Yajra\DataTables\Facades\DataTables;
 
 class BaseApiController extends \App\Http\Controllers\Controller
@@ -65,11 +66,9 @@ class BaseApiController extends \App\Http\Controllers\Controller
         return response()->json(['success' => true]);
     }
 
-    private function getData(Request $request)
+    protected function getData(Request $request)
     {
-        $dtoClass = "\\App\\Data\\".$this->modelName.'Data';
-
-        return $dtoClass::from($request);
+        return EntityValidator::validate($this->modelRepository->editDto, $request->all());
     }
 
     protected function initiateModelRepository($modelName)

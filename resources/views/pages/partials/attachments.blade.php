@@ -40,12 +40,7 @@
 
         <p class="text-xs text-muted-foreground">{{ __('ui.attachments_hint', ['max' => $maxLabel]) }}</p>
 
-        @error($fieldName)
-            <p class="text-sm text-danger">{{ $message }}</p>
-        @enderror
-        @error($fieldName.'.*')
-            <p class="text-sm text-danger">{{ $message }}</p>
-        @enderror
+        {{-- Errors for this field render in the generic slot (form-field-error). --}}
 
         @if ($attachments !== [])
             <ul class="divide-y divide-border rounded-lg border border-border">

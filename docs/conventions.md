@@ -32,7 +32,7 @@ Do not put form controls and detail-only fields on the same class.
 
 | Class | Job | Typical `#[…]` |
 |-------|-----|----------------|
-| `{Model}Data` | Create/edit form, Quick Create, save validation (`rules()`) | `Form`, `ListForm` |
+| `{Model}Data` | Create/edit form, Quick Create, save validation (inferred; see [validation.md](validation.md)) | `Form`, `ListForm`, `OneOf` |
 | `{Model}ViewData` | Table rows and the details page | `InList`, `Hide`, optional `Value` |
 
 - **`ListForm`** = “this is a form field **and** a table column” (put it on the **edit** DTO).
@@ -131,6 +131,7 @@ Helpers: `model_route()`, `model_route_name()`, `model_page_view()`, `model_moda
 - Hybrid: Blade contains `Form::field(...)` lines. After you change `{Model}Data`, run `php artisan entity:materialize-form {Model}`.
 - `#[Form('select', 'RelatedModel')]` loads options from that model’s repository.
 - If the DTO has `project_id` and sticky project context is on, that field is hidden and filled for you.
+- Validation comes from the same declarations: don't write `rules()` for ordinary fields. Only declare special cases (levels 1–4 in [validation.md](validation.md)); `php artisan entity:rules {Model}` shows what is enforced.
 - Column width: [ui-views.md — override spans](ui-views.md#override-spans).
 
 ---

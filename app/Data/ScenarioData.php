@@ -34,16 +34,4 @@ class ScenarioData extends BaseData
         public ?int $status_id = null,
     ) {
     }
-
-    public static function rules()
-    {
-        return [
-            'title' => ['required', 'string', 'max:255'],
-            'feature_id' => ['required', 'integer', 'exists:features,id'],
-            'stakeholder_need_id' => ['nullable', 'integer', 'exists:stakeholder_needs,id'],
-            'body' => ['nullable', 'string'],
-            'is_outline' => ['sometimes', 'boolean'],
-            'status_id' => ['nullable', 'integer', 'exists:statuses,id'],
-        ];
-    }
 }

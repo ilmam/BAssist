@@ -346,12 +346,62 @@ class DtoMetadata
                 continue;
             }
 
+            // A field the user must fill in cannot be hidden: its hidden default
+            // would always fail validation. Such fields stay visible on Quick
+            // Create even when marked hideQuick (docs/validation.md).
+            if (! $instance->readonly && self::mustBeFilledByUser($property)) {
+                continue;
+            }
+
             $meta[$property->getName()] = [
                 'hidden' => true,
             ];
         }
 
         return $meta;
+    }
+
+    /**
+     * Context keys filled by the framework (sticky project / workspace), never by
+     * the user, even though they are required.
+     */
+    public const CONTEXT_FILLED_FIELDS = ['project_id', 'workspace_id'];
+
+    /**
+     * Required by its PHP type (not nullable) and its default is empty, so a
+     * record can only be saved when the user supplies a value.
+     */
+    protected static function mustBeFilledByUser(ReflectionProperty $property): bool
+    {
+        if (in_array($property->getName(), self::CONTEXT_FILLED_FIELDS, true)) {
+            return false;
+        }
+
+        $type = $property->getType();
+        if ($type === null || $type->allowsNull()) {
+            return false;
+        }
+
+        if (! $property->hasDefaultValue() && ! $property->isPromoted()) {
+            return true;
+        }
+
+        $default = $property->isPromoted()
+            ? self::promotedDefault($property)
+            : $property->getDefaultValue();
+
+        return $default === '' || $default === null || $default === 0;
+    }
+
+    protected static function promotedDefault(ReflectionProperty $property): mixed
+    {
+        foreach ($property->getDeclaringClass()->getConstructor()?->getParameters() ?? [] as $parameter) {
+            if ($parameter->getName() === $property->getName()) {
+                return $parameter->isDefaultValueAvailable() ? $parameter->getDefaultValue() : null;
+            }
+        }
+
+        return null;
     }
 
     /**
