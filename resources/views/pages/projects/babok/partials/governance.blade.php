@@ -66,6 +66,7 @@
     </table>
     @foreach ($change_requests as $cr)
         <article class="artifact">
+            @include('pages.projects.partials.print-item-comments', ['item' => $cr])
             <h3 class="item-title">
                 @if ($cr->code)
                     <span class="artifact__code">{{ $cr->code }}</span>

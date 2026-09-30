@@ -7,7 +7,10 @@
 @endphp
 
 @if (is_array($cascade))
-    @if ($showParents && ($cascade['parents'] ?? []) !== [])
+    @php $hasLineage = ! empty($cascade['lineage']['steps'] ?? []); @endphp
+    @if ($showParents && $hasLineage)
+        @include('pages.partials.lineage', ['lineage' => $cascade['lineage'], 'inModal' => $inModal])
+    @elseif ($showParents && ($cascade['parents'] ?? []) !== [])
         @php
             $currentCode = null;
             $currentTitle = $cascade['current_label'] ?? '';
@@ -54,7 +57,7 @@
     @endif
 
     @if ($showRest)
-        @if (($cascade['gaps'] ?? []) !== [])
+        @if (! $hasLineage && ($cascade['gaps'] ?? []) !== [])
             <section class="rounded-lg border border-border bg-muted/20 p-4 space-y-3" data-spine-cascade-gaps>
                 <h3 class="text-sm font-semibold text-foreground">{{ __('ui.cascade_missing') }}</h3>
                 <ul class="space-y-2">

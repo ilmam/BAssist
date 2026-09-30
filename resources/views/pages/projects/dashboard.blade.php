@@ -95,14 +95,18 @@
             $readinessItems = $readiness['items'] ?? [];
             $readinessSpine = $readiness['spine'] ?? [];
             $readinessScore = $readiness['score'] ?? null;
+            $readinessFolders = array_values(array_filter($readiness['folders'] ?? [], fn ($f) => ($f['checks'] ?? 0) > 0));
             $readinessSeverity = $readiness['severity'] ?? ['critical' => 0, 'warn' => 0, 'info' => 0];
-            $readinessGrouped = ['critical' => [], 'warn' => [], 'info' => []];
+            $severityTone = ['critical' => 'danger', 'warn' => 'warning', 'info' => 'info'];
+            $severityRank = ['critical' => 0, 'warn' => 1, 'info' => 2];
+            $gapsByFolder = [];
             foreach ($readinessItems as $gap) {
-                $readinessGrouped[$gap['severity']][] = $gap;
+                $gapsByFolder[$gap['folder'] ?? 'other'][] = $gap;
             }
-            $scoreTone = $readinessScore === null
-                ? 'text-muted-foreground'
-                : ($readinessScore >= 80 ? 'text-success' : ($readinessScore >= 50 ? 'text-warning' : 'text-destructive'));
+            foreach ($gapsByFolder as &$folderGaps) {
+                usort($folderGaps, fn ($a, $b) => [$severityRank[$a['severity']] ?? 9, -$a['count']] <=> [$severityRank[$b['severity']] ?? 9, -$b['count']]);
+            }
+            unset($folderGaps);
         @endphp
 
         <x-card :title="__('ui.project_readiness')">
@@ -111,83 +115,121 @@
             </x-slot:titleAside>
             <x-slot:toolbar>
                 <div class="flex flex-wrap items-center gap-2">
-                    @if (($readinessSeverity['critical'] ?? 0) > 0)
-                        <span class="kt-badge kt-badge-sm kt-badge-warning">{{ __('ui.readiness_severity_critical') }} {{ $readinessSeverity['critical'] }}</span>
-                    @endif
-                    @if (($readinessSeverity['warn'] ?? 0) > 0)
-                        <span class="kt-badge kt-badge-sm kt-badge-outline kt-badge-warning">{{ __('ui.readiness_severity_warn') }} {{ $readinessSeverity['warn'] }}</span>
-                    @endif
-                    @if (($readinessSeverity['info'] ?? 0) > 0)
-                        <span class="kt-badge kt-badge-sm kt-badge-outline">{{ __('ui.readiness_severity_info') }} {{ $readinessSeverity['info'] }}</span>
-                    @endif
-                    <span class="kt-badge kt-badge-outline">
-                        {{ __('ui.readiness_gap_count', ['count' => $readiness['total_gaps'] ?? 0]) }}
-                    </span>
+                    @foreach (['critical', 'warn', 'info'] as $sev)
+                        @if (($readinessSeverity[$sev] ?? 0) > 0)
+                            <x-status-badge :tone="$severityTone[$sev]">{{ __('ui.readiness_severity_'.$sev) }} · {{ $readinessSeverity[$sev] }}</x-status-badge>
+                        @endif
+                    @endforeach
                 </div>
             </x-slot:toolbar>
 
             <p class="text-sm text-muted-foreground mb-5">{{ __('ui.project_readiness_help') }}</p>
 
-            <div class="flex flex-col lg:flex-row gap-6 mb-6">
-                <div class="shrink-0 text-center lg:text-start lg:w-40">
-                    <div class="text-4xl font-semibold leading-none {{ $scoreTone }}">
-                        {{ $readinessScore === null ? '—' : $readinessScore.'%' }}
+            {{-- Overall score + BABOK folder health --}}
+            <div class="ba-readiness-grid">
+                <div class="ba-readiness-score">
+                    <x-progress-ring :pct="$readinessScore" size="96" stroke="9" />
+                    <div class="min-w-0">
+                        <div class="text-sm font-semibold text-foreground">{{ __('ui.readiness_score') }}</div>
+                        <div class="text-xs text-muted-foreground mt-1">
+                            {{ $readinessScore === null ? __('ui.readiness_score_empty') : __('ui.readiness_score_caption') }}
+                        </div>
+                        <div class="text-xs text-muted-foreground mt-2">{{ trans_choice('ui.readiness_folder_gaps', $readiness['total_gaps'] ?? 0, ['count' => $readiness['total_gaps'] ?? 0]) }}</div>
                     </div>
-                    <div class="text-xs text-muted-foreground mt-2">{{ __('ui.readiness_score') }}</div>
-                    @if ($readinessScore === null)
-                        <p class="text-xs text-muted-foreground mt-1">{{ __('ui.readiness_score_empty') }}</p>
-                    @endif
                 </div>
 
-                @if ($readinessSpine !== [])
-                    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-3 flex-1 min-w-0">
-                        @foreach ($readinessSpine as $stage)
-                            @php
-                                $href = $stage['url'] ?? null;
-                                $tag = $href ? 'a' : 'div';
-                            @endphp
-                            <{{ $tag }}
-                                @if ($href) href="{{ $href }}" @endif
-                                class="block rounded-lg border border-border p-3 {{ $href ? 'hover:border-primary transition-colors' : '' }}"
-                            >
-                                <div class="text-xs text-muted-foreground mb-1 truncate" title="{{ $stage['label'] }}">{{ $stage['label'] }}</div>
-                                <div class="text-sm font-medium mb-2">
-                                    {{ __('ui.readiness_ready_of_total', ['ready' => $stage['ready'], 'total' => $stage['total']]) }}
-                                </div>
-                                <div class="h-1.5 rounded-full bg-border overflow-hidden">
-                                    <div
-                                        class="h-full rounded-full {{ ($stage['pct'] ?? 0) >= 80 ? 'bg-success' : (($stage['pct'] ?? 0) >= 50 ? 'bg-warning' : 'bg-primary') }}"
-                                        style="width: {{ $stage['pct'] ?? 0 }}%"
-                                    ></div>
-                                </div>
-                            </{{ $tag }}>
-                        @endforeach
-                    </div>
-                @endif
+                @foreach ($readinessFolders as $folder)
+                    <a href="#readiness-{{ $folder['key'] }}" class="ba-folder-card">
+                        <x-progress-ring :pct="$folder['pct']" size="52" stroke="6" />
+                        <div class="min-w-0">
+                            <div class="flex items-center gap-1.5 text-sm font-semibold text-foreground">
+                                <i class="ki-filled ki-{{ $folder['icon'] }} text-muted-foreground"></i>
+                                <span class="truncate">{{ $folder['short'] }}</span>
+                            </div>
+                            @if ($folder['babok'])
+                                <div class="text-[11px] text-muted-foreground truncate" title="{{ $folder['babok'] }}">{{ $folder['babok'] }}</div>
+                            @endif
+                            <div class="mt-1.5">
+                                @if ($folder['gaps'] === 0)
+                                    <x-status-badge tone="success">{{ __('ui.readiness_all_clear_short') }}</x-status-badge>
+                                @else
+                                    <x-status-badge :tone="$folder['critical'] > 0 ? 'danger' : 'warning'">{{ trans_choice('ui.readiness_folder_gaps', $folder['gaps'], ['count' => $folder['gaps']]) }}</x-status-badge>
+                                @endif
+                            </div>
+                        </div>
+                    </a>
+                @endforeach
             </div>
 
-            @if ($readinessItems === [])
-                <p class="text-sm text-secondary-foreground">{{ __('ui.readiness_all_clear') }}</p>
-            @else
-                <h4 class="text-sm font-medium mb-3">{{ __('ui.readiness_gaps_heading') }}</h4>
-                <div class="space-y-4">
-                    @foreach (['critical' => 'readiness_severity_critical', 'warn' => 'readiness_severity_warn', 'info' => 'readiness_severity_info'] as $tone => $severityLabel)
-                        @if ($readinessGrouped[$tone] !== [])
-                            <div class="space-y-2">
-                                <div class="text-xs font-medium text-muted-foreground">{{ __("ui.{$severityLabel}") }}</div>
-                                @foreach ($readinessGrouped[$tone] as $gap)
-                                    @php $gapTag = ! empty($gap['url']) ? 'a' : 'div'; @endphp
-                                    <{{ $gapTag }}
-                                        @if (! empty($gap['url'])) href="{{ $gap['url'] }}" @endif
-                                        class="flex items-center justify-between gap-3 rounded-lg border border-border px-3 py-2.5 {{ ! empty($gap['url']) ? 'hover:border-primary transition-colors' : '' }}"
-                                    >
-                                        <span class="text-sm min-w-0">{{ $gap['label'] }}</span>
-                                        <span class="text-sm font-semibold shrink-0">{{ $gap['count'] }}</span>
-                                    </{{ $gapTag }}>
-                                @endforeach
-                            </div>
-                        @endif
+            {{-- Need spine coverage --}}
+            @if ($readinessSpine !== [])
+                <h4 class="ba-section-label">{{ __('ui.readiness_spine_heading') }}</h4>
+                <ol class="ba-spine">
+                    @foreach ($readinessSpine as $stage)
+                        @php
+                            $pct = $stage['pct'];
+                            $tone = $pct === null ? 'neutral' : ($pct >= 80 ? 'success' : ($pct >= 50 ? 'warning' : 'danger'));
+                        @endphp
+                        <li>
+                            <a href="{{ $stage['url'] ?? '#' }}" class="ba-spine__step ba-spine__step--{{ $tone }}">
+                                <span class="ba-spine__label" title="{{ $stage['label'] }}">{{ $stage['label'] }}</span>
+                                <span class="ba-spine__value">{{ $pct === null ? '—' : $pct.'%' }}</span>
+                                <span class="ba-spine__meta">{{ __('ui.readiness_ready_of_total', ['ready' => $stage['ready'], 'total' => $stage['total']]) }}</span>
+                                <span class="ba-spine__bar"><span style="width: {{ $pct ?? 0 }}%"></span></span>
+                            </a>
+                        </li>
                     @endforeach
+                </ol>
+            @endif
+
+            {{-- Gaps, grouped by BABOK folder, each with a fix action --}}
+            @if ($readinessItems === [])
+                <x-empty-state icon="verify" :title="__('ui.readiness_all_clear_title')" :hint="__('ui.readiness_all_clear')" compact />
+            @else
+                <div>
+                    <h4 class="ba-section-label">{{ __('ui.readiness_gaps_heading') }}</h4>
+                    @foreach ($readiness['folders'] ?? [] as $folder)
+                        @continue(empty($gapsByFolder[$folder['key']]))
+                        <section id="readiness-{{ $folder['key'] }}" class="ba-folder-section">
+                            <h4 class="ba-folder-section__title">
+                                <i class="ki-filled ki-{{ $folder['icon'] }} text-muted-foreground"></i>
+                                {{ $folder['label'] }}
+                            </h4>
+                            <ul class="ba-gap-list">
+                                @foreach ($gapsByFolder[$folder['key']] as $gap)
+                                    <li class="ba-gap">
+                                        <x-status-badge :tone="$severityTone[$gap['severity']] ?? 'neutral'" class="ba-gap__sev">{{ __('ui.readiness_severity_'.$gap['severity']) }}</x-status-badge>
+                                        <span class="ba-gap__label">{{ $gap['label'] }}</span>
+                                        <span class="ba-gap__count" title="{{ __('ui.readiness_affected_items') }}">{{ $gap['count'] }}</span>
+                                        <span class="ba-gap__actions">
+                                            @if (! empty($gap['fix_modal']))
+                                                <x-button type="link" href="{{ $gap['url'] ?? '#' }}" icon="plus" color="primary" size="sm"
+                                                          class="js-open-modal" data-modal-url="{{ $gap['fix_modal'] }}">{{ __('ui.readiness_fix_add') }}</x-button>
+                                            @elseif (! empty($gap['url']))
+                                                <x-button type="link" href="{{ $gap['url'] }}" icon="arrow-right" color="light" size="sm">{{ __('ui.readiness_fix_review') }}</x-button>
+                                            @endif
+                                        </span>
+                                    </li>
+                                @endforeach
+                            </ul>
+                        </section>
+                    @endforeach
+                    @if (! empty($gapsByFolder['other']))
+                        <ul class="ba-gap-list">
+                            @foreach ($gapsByFolder['other'] as $gap)
+                                <li class="ba-gap">
+                                    <x-status-badge :tone="$severityTone[$gap['severity']] ?? 'neutral'" class="ba-gap__sev">{{ __('ui.readiness_severity_'.$gap['severity']) }}</x-status-badge>
+                                    <span class="ba-gap__label">{{ $gap['label'] }}</span>
+                                    <span class="ba-gap__count">{{ $gap['count'] }}</span>
+                                    <span class="ba-gap__actions">
+                                        @if (! empty($gap['url']))
+                                            <x-button type="link" href="{{ $gap['url'] }}" icon="arrow-right" color="light" size="sm">{{ __('ui.readiness_fix_review') }}</x-button>
+                                        @endif
+                                    </span>
+                                </li>
+                            @endforeach
+                        </ul>
+                    @endif
                 </div>
             @endif
         </x-card>

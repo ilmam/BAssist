@@ -26,6 +26,7 @@
             $mermaidBody = trim($view['mermaid'] ?? '');
         @endphp
         <article class="artifact{{ $mermaidBody !== '' ? ' artifact--diagram' : '' }}">
+            @include('pages.projects.partials.print-item-comments', ['item' => $view])
             <h3 class="item-title">{{ $view['title'] ?? __('ui.architecture_c4') }}</h3>
             @if ($mermaidBody !== '')
                 <div

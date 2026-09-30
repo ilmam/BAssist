@@ -399,13 +399,54 @@
         @page {
             margin: 14mm;
         }
+    
+        /* Open comments in printed documents (#8): Word-style margin balloons */
+        .print-pack.has-comment-margin { max-width: 1200px; padding-right: 290px; }
+        .has-comment-margin .artifact { position: relative; }
+        .print-comments {
+            float: right; clear: right; position: relative;
+            width: 260px; margin: 0 -290px .5rem 0; padding: 0;
+            font: 11.5px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif; color: #3f2d0c;
+            break-inside: avoid;
+        }
+        .print-comments::before {
+            content: ""; position: absolute; top: .9rem; right: 100%; width: 30px;
+            border-top: 1px dashed #d97706;
+        }
+        .print-comments__thread {
+            background: #fff7e6; border: 1px solid #f5c26b; border-left: 3px solid #d97706;
+            border-radius: 4px; padding: 6px 8px; box-shadow: 0 1px 2px rgba(0,0,0,.06);
+        }
+        .print-comments__thread + .print-comments__thread { margin-top: 6px; }
+        .print-comments__line + .print-comments__line { margin-top: 5px; }
+        .print-comments__line--reply { margin-left: 8px; padding-left: 6px; border-left: 2px solid #fcd34d; }
+        .print-comments__who { display: flex; align-items: baseline; gap: 5px; flex-wrap: wrap; }
+        .print-comments__num { font: 700 10px/1 ui-monospace, Consolas, monospace; color: #fff; background: #d97706; border-radius: 3px; padding: 2px 4px; }
+        .print-comments__when { color: #92400e; font-size: 10px; }
+        .print-comments__text { margin-top: 1px; overflow-wrap: anywhere; }
+        .has-comment-margin .artifact:has(> .print-comments) .item-title { background: #fff3c4; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+        @media print {
+            .print-pack.has-comment-margin { max-width: none; padding-right: 62mm; }
+            .print-comments { width: 56mm; margin-right: -62mm; font-size: 8pt; }
+            .print-comments::before { width: 6mm; }
+            .print-comments__thread { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .has-comment-margin .artifact:has(> .print-comments) .item-title { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        }
+        .print-notice { margin: 0 0 1rem; padding: .625rem .875rem; border-radius: 8px; background: #fffbeb; border: 1px solid #fcd34d; color: #78350f; font: 600 13px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
+        .print-appendix__table { width: 100%; border-collapse: collapse; font: 12.5px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; margin-top: .75rem; }
+        .print-appendix__table th, .print-appendix__table td { border: 1px solid #e5e7eb; padding: 6px 8px; vertical-align: top; text-align: left; }
+        .print-appendix__table th { background: #f8fafc; font-weight: 600; }
+        .print-appendix__table tr { break-inside: avoid; }
+        .ba-mention { font-weight: 600; color: #1b84ff; }
+        .print-btn--on { border-color: #d97706 !important; color: #92400e !important; background: #fffbeb !important; }
     </style>
     @stack('styles')
 </head>
 <body>
     @yield('toolbar')
 
-    <main class="print-pack">
+    <main class="print-pack @yield('pack-class')">
+        @stack('print-notice')
         @yield('content')
     </main>
 

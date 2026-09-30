@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\CommentService;
+use App\Support\PrintComments;
+
 use App\Models\Project;
 use App\Services\ProjectExportService;
 use App\Support\EntityAccess;
@@ -21,6 +24,13 @@ class ProjectExportController extends Controller
         Tenancy::assertProject($project);
 
         $pack = $this->export->build($project);
+
+        $includeComments = request()->query('comments', '1') !== '0';
+        app()->instance(PrintComments::class, new PrintComments(
+            $includeComments,
+            $includeComments ? app(CommentService::class)->openThreadsForProject($project) : [],
+        ));
+        $pack['includeComments'] = $includeComments;
 
         return view('pages.projects.export', $pack);
     }

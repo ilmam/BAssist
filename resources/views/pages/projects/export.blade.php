@@ -2,11 +2,19 @@
 
 @section('title', ($project->name ?? __('ui.project')).' — '.__('ui.project_export_pack'))
 
+@section('pack-class', app(\App\Support\PrintComments::class)->hasAny() ? 'has-comment-margin' : '')
+
 @section('toolbar')
     <div class="print-toolbar no-print">
         <p class="print-toolbar__hint">{{ __('ui.project_export_print_hint') }}</p>
         <div class="print-toolbar__actions">
             <a class="print-btn" href="{{ model_route('Project', 'index') }}">{{ __('ui.back_to_projects') }}</a>
+            <a class="print-btn {{ ($includeComments ?? true) ? 'print-btn--on' : '' }}"
+               href="{{ request()->fullUrlWithQuery(['comments' => ($includeComments ?? true) ? '0' : null]) }}"
+               aria-pressed="{{ ($includeComments ?? true) ? 'true' : 'false' }}"
+               title="{{ __('ui.comments_print_toggle_help') }}">
+                {{ ($includeComments ?? true) ? __('ui.comments_print_on') : __('ui.comments_print_off') }}
+            </a>
             <button type="button" class="print-btn print-btn--primary" data-print-pack>
                 {{ __('ui.print_to_pdf') }}
             </button>
@@ -201,6 +209,7 @@
                     <td>
                         @foreach ($inScopeItems as $item)
                             <article class="artifact">
+                                @include('pages.projects.partials.print-item-comments', ['item' => $item])
                                 <h3 class="item-title">{{ $item->title }}</h3>
                                 @if ($item->description)
                                     <p class="prose">{{ $item->description }}</p>
@@ -211,6 +220,7 @@
                     <td>
                         @foreach ($outScopeItems as $item)
                             <article class="artifact">
+                                @include('pages.projects.partials.print-item-comments', ['item' => $item])
                                 <h3 class="item-title">{{ $item->title }}</h3>
                                 @if ($item->description)
                                     <p class="prose">{{ $item->description }}</p>
@@ -227,6 +237,7 @@
         <h2 id="section-business-needs" class="section-title">{{ __('ui.business_needs') }}</h2>
         @foreach ($needs as $need)
             <article class="artifact">
+                @include('pages.projects.partials.print-item-comments', ['item' => $need])
                 <h3 class="item-title">
                     @if ($need->code)
                         <span class="artifact__code">{{ $need->code }}</span>
@@ -277,6 +288,7 @@
         <h2 id="section-business-objectives" class="section-title">{{ __('ui.business_objectives') }}</h2>
         @foreach ($objectives as $objective)
             <article class="artifact">
+                @include('pages.projects.partials.print-item-comments', ['item' => $objective])
                 <h3 class="item-title">
                     @if ($objective->code)
                         <span class="artifact__code">{{ $objective->code }}</span>
@@ -339,6 +351,7 @@
         <h2 id="section-stakeholder-needs" class="section-title">{{ __('ui.stakeholder_needs') }}</h2>
         @foreach ($stakeholder_needs as $sn)
             <article class="artifact">
+                @include('pages.projects.partials.print-item-comments', ['item' => $sn])
                 <h3 class="item-title">
                     @if ($sn->code)
                         <span class="artifact__code">{{ $sn->code }}</span>
@@ -391,6 +404,7 @@
                 $hasDiagram = $mermaidBody !== '';
             @endphp
             <article class="artifact{{ $hasDiagram ? ' artifact--diagram' : '' }}">
+                @include('pages.projects.partials.print-item-comments', ['item' => $item])
                 <h3 class="item-title">{{ $flow->title }}</h3>
                 <div class="artifact__panel">
                     <div class="artifact__meta">
@@ -422,6 +436,7 @@
                 $hasDiagram = $mermaidBody !== '';
             @endphp
             <article class="artifact{{ $hasDiagram ? ' artifact--diagram' : '' }}">
+                @include('pages.projects.partials.print-item-comments', ['item' => $item])
                 <h3 class="item-title">{{ $flow->title }}</h3>
                 <div class="artifact__panel">
                     <div class="artifact__meta">
@@ -448,6 +463,7 @@
         <h2 id="section-assumptions" class="section-title">{{ __('ui.assumptions') }}</h2>
         @foreach ($assumptions as $item)
             <article class="artifact">
+                @include('pages.projects.partials.print-item-comments', ['item' => $item])
                 <h3 class="item-title">{{ $item->title }}</h3>
                 <div class="artifact__meta">
                     <span><strong>{{ __('ui.status') }}</strong>{{ $item->statusLabel() }}</span>
@@ -474,6 +490,7 @@
         <h2 id="section-constraints" class="section-title">{{ __('ui.constraints') }}</h2>
         @foreach ($constraints as $item)
             <article class="artifact">
+                @include('pages.projects.partials.print-item-comments', ['item' => $item])
                 <h3 class="item-title">{{ $item->title }}</h3>
                 <div class="artifact__meta">
                     <span><strong>{{ __('ui.status') }}</strong>{{ $item->statusLabel() }}</span>
@@ -495,6 +512,7 @@
         <h2 id="section-business-rules" class="section-title">{{ __('ui.business_rules') }}</h2>
         @foreach ($business_rules as $item)
             <article class="artifact">
+                @include('pages.projects.partials.print-item-comments', ['item' => $item])
                 <h3 class="item-title">{{ $item->title }}</h3>
                 <div class="artifact__meta">
                     <span><strong>{{ __('ui.status') }}</strong>{{ $item->statusLabel() }}</span>
@@ -516,6 +534,7 @@
         <h2 id="section-functional-requirements" class="section-title section-title--break">{{ __('ui.functional_requirements') }}</h2>
         @foreach ($functional_requirements as $requirement)
             <article class="artifact">
+                @include('pages.projects.partials.print-item-comments', ['item' => $requirement])
                 <h3 class="item-title">
                     @if ($requirement->code)
                         <span class="artifact__code">{{ $requirement->code }}</span>
@@ -559,6 +578,7 @@
         <h2 id="section-non-functional-requirements" class="section-title section-title--break">{{ __('ui.non_functional_requirements') }}</h2>
         @foreach ($non_functional_requirements as $requirement)
             <article class="artifact">
+                @include('pages.projects.partials.print-item-comments', ['item' => $requirement])
                 <h3 class="item-title">
                     @if ($requirement->code)
                         <span class="artifact__code">{{ $requirement->code }}</span>
@@ -603,6 +623,7 @@
                 $gherkinBody = trim($item['gherkin'] ?? '');
             @endphp
             <article class="artifact">
+                @include('pages.projects.partials.print-item-comments', ['item' => $item])
                 <h3 class="item-title">
                     @if ($feature->code)
                         <span class="artifact__code">{{ $feature->code }}</span>
@@ -753,6 +774,7 @@
             </tbody>
         </table>
     @endif
+    @include('pages.projects.partials.print-comments-appendix')
 @endsection
 
 @push('styles')

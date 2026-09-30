@@ -6,6 +6,7 @@
     <h2 class="section-title">{{ __('ui.functional_requirements') }}</h2>
     @foreach ($functional_requirements as $requirement)
         <article class="artifact">
+            @include('pages.projects.partials.print-item-comments', ['item' => $requirement])
             <h3 class="item-title">
                 @if ($requirement->code)
                     <span class="artifact__code">{{ $requirement->code }}</span>
@@ -49,6 +50,7 @@
     <h2 class="section-title">{{ __('ui.non_functional_requirements') }}</h2>
     @foreach ($non_functional_requirements as $requirement)
         <article class="artifact">
+            @include('pages.projects.partials.print-item-comments', ['item' => $requirement])
             <h3 class="item-title">
                 @if ($requirement->code)
                     <span class="artifact__code">{{ $requirement->code }}</span>
@@ -89,6 +91,7 @@
     <h2 class="section-title section-title--break">{{ __('ui.constraints') }}</h2>
     @foreach ($constraints as $item)
         <article class="artifact">
+            @include('pages.projects.partials.print-item-comments', ['item' => $item])
             <h3 class="item-title">{{ $item->title }}</h3>
             @if ($item->description)
                 <p class="prose">{{ $item->description }}</p>
@@ -101,6 +104,7 @@
     <h2 class="section-title">{{ __('ui.business_rules') }}</h2>
     @foreach ($business_rules as $item)
         <article class="artifact">
+            @include('pages.projects.partials.print-item-comments', ['item' => $item])
             <h3 class="item-title">{{ $item->title }}</h3>
             @if ($item->description)
                 <p class="prose">{{ $item->description }}</p>

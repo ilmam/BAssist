@@ -20,6 +20,7 @@
     <h2 class="section-title">{{ __('ui.assumptions') }}</h2>
     @foreach ($assumptions as $item)
         <article class="artifact">
+            @include('pages.projects.partials.print-item-comments', ['item' => $item])
             <h3 class="item-title">{{ $item->title }}</h3>
             <div class="artifact__meta">
                 <span><strong>{{ __('ui.status') }}</strong>{{ $item->statusLabel() }}</span>

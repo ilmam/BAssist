@@ -568,3 +568,65 @@ if (! function_exists('is_super_admin')) {
         return EntityAccess::isSuperAdmin(auth()->user());
     }
 }
+
+if (! function_exists('ui_status_tones')) {
+    /**
+     * Single colour language for status / priority / risk-level values across the app.
+     * Keys are normalised codes (lowercase, spaces/hyphens → underscore, apostrophes dropped).
+     * Tones: success, warning, danger, info, neutral. Also consumed by DataTables JS.
+     *
+     * @return array<string, string>
+     */
+    function ui_status_tones(): array
+    {
+        return [
+            // Spine lifecycle
+            'draft' => 'info',
+            'agreed' => 'success',
+            'need_revision' => 'warning',
+            'deprecated' => 'neutral',
+            // Change requests / baselines
+            'under_review' => 'warning',
+            'in_review' => 'warning',
+            'approved' => 'success',
+            'rejected' => 'danger',
+            'implemented' => 'success',
+            // Guardrails
+            'open' => 'warning',
+            'validated' => 'success',
+            'invalidated' => 'danger',
+            'active' => 'success',
+            'waived' => 'neutral',
+            'retired' => 'neutral',
+            // Risks
+            'mitigated' => 'success',
+            'realized' => 'danger',
+            'closed' => 'neutral',
+            'high' => 'danger',
+            'medium' => 'warning',
+            'low' => 'neutral',
+            'mitigate' => 'info',
+            'avoid' => 'info',
+            'transfer' => 'info',
+            'accept' => 'info',
+            // MoSCoW priority
+            'must' => 'danger',
+            'should' => 'warning',
+            'could' => 'info',
+            'wont' => 'neutral',
+        ];
+    }
+}
+
+if (! function_exists('ui_status_tone')) {
+    function ui_status_tone(?string $value): string
+    {
+        if ($value === null || trim($value) === '') {
+            return 'neutral';
+        }
+
+        $key = (string) preg_replace('/[\s\-]+/', '_', str_replace(["'", '’'], '', mb_strtolower(trim($value))));
+
+        return ui_status_tones()[$key] ?? 'neutral';
+    }
+}

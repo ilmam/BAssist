@@ -25,12 +25,20 @@
 
 @section('title', ($project->name ?? __('ui.project')).' — '.$document['title'])
 
+@section('pack-class', app(\App\Support\PrintComments::class)->hasAny() ? 'has-comment-margin' : '')
+
 @section('toolbar')
     <div class="print-toolbar no-print">
         <p class="print-toolbar__hint">{{ __('ui.project_export_print_hint') }}</p>
         <div class="print-toolbar__actions">
             <a class="print-btn" href="{{ route('projects.babok.index', $project) }}">{{ __('ui.babok_documents') }}</a>
             <a class="print-btn" href="{{ route('projects.export', $project) }}">{{ __('ui.export_pack') }}</a>
+            <a class="print-btn {{ ($includeComments ?? true) ? 'print-btn--on' : '' }}"
+               href="{{ request()->fullUrlWithQuery(['comments' => ($includeComments ?? true) ? '0' : null]) }}"
+               aria-pressed="{{ ($includeComments ?? true) ? 'true' : 'false' }}"
+               title="{{ __('ui.comments_print_toggle_help') }}">
+                {{ ($includeComments ?? true) ? __('ui.comments_print_on') : __('ui.comments_print_off') }}
+            </a>
             <button type="button" class="print-btn print-btn--primary" data-print-pack>
                 {{ __('ui.print_to_pdf') }}
             </button>
@@ -87,6 +95,7 @@
         </header>
         @include('pages.projects.babok.partials.'.$section['partial'])
     @endforeach
+    @include('pages.projects.partials.print-comments-appendix')
 @endsection
 
 @push('styles')

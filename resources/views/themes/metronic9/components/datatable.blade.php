@@ -7,15 +7,67 @@
 @php
     $tableMinWidth = \App\Helpers\DatatableUi::minTableWidth($options['columns']);
     $tableDomId = (string) ($options['id'] ?? (is_string($id) && $id !== '' ? $id : 'datatable'));
+    // Status / priority / risk-level columns render as tone badges (see ui_status_tones()).
+    $badgeFieldPattern = '/(^|\.)(status|priority|impact|likelihood|response|severity)(\.(name|code|label))?$/';
+    $emptyStateHtml = $options['emptyStateHtml'] ?? \Illuminate\Support\Facades\Blade::render(
+        '<x-empty-state icon="questionnaire-tablet" :title="$t" :hint="$h" compact />',
+        ['t' => __('ui.list_empty_title'), 'h' => __('ui.list_empty_hint')],
+    );
+    // #6 quick edit + bulk: enabled by the list page with the model's status / priority options.
+    $quickEdit = $options['quickEdit'] ?? [];
+    $quickModel = (string) ($options['model'] ?? '');
+    $quickEnabled = $quickEdit !== [] && $quickModel !== '';
+    $quickFieldFor = [
+        'status.name' => 'status_id',
+        'status.code' => 'status_id',
+        'priority.name' => 'priority_id',
+        'priority.code' => 'priority_id',
+    ];
+    $noMatchHtml = \Illuminate\Support\Facades\Blade::render(
+        '<x-empty-state icon="magnifier" :title="$t" :hint="$h" compact />',
+        ['t' => __('ui.list_no_match_title'), 'h' => __('ui.list_no_match_hint')],
+    );
 @endphp
 
-<div class="kt-card-table">
+<div class="kt-card-table"
+    @if ($quickEnabled)
+        data-quick-table="#{{ $tableDomId }}"
+        data-quick-model="{{ $quickModel }}"
+        data-quick-update-url="{{ route('quick.update', ['model' => $quickModel, 'id' => '__ID__']) }}"
+        data-quick-bulk-url="{{ route('quick.bulk', ['model' => $quickModel]) }}"
+        data-csrf="{{ csrf_token() }}"
+    @endif
+>
+    @if ($quickEnabled)
+        <script type="application/json" data-quick-options>@json($quickEdit)</script>
+        <div class="ba-bulkbar" data-bulkbar hidden role="region" aria-label="{{ __('ui.bulk_actions') }}">
+            <span class="ba-bulkbar__count" data-bulk-count aria-live="polite"></span>
+            @foreach ($quickEdit as $field => $choices)
+                <label class="ba-bulkbar__field">
+                    <span>{{ __('ui.bulk_set_'.$field) }}</span>
+                    <select data-bulk-field="{{ $field }}">
+                        <option value="">{{ __('ui.bulk_choose') }}</option>
+                        @foreach ($choices as $choice)
+                            <option value="{{ $choice['id'] }}">{{ $choice['name'] }}</option>
+                        @endforeach
+                    </select>
+                </label>
+            @endforeach
+            <button type="button" class="{{ ui_btn_classes('primary', 'sm') }}" data-bulk-apply>{{ __('ui.bulk_apply') }}</button>
+            <button type="button" class="{{ ui_btn_classes('ghost', 'sm') }}" data-bulk-clear>{{ __('ui.bulk_clear') }}</button>
+        </div>
+    @endif
     <div class="kt-table-wrapper">
         <table class="kt-table kt-table-border w-full dataTable no-footer {{ $class }}"
             id="{{ $tableDomId }}"
             style="width: 100%;@if ($tableMinWidth !== '') {{ ' '.$tableMinWidth.';' }}@endif">
             <thead>
                 <tr>
+                    @if ($quickEnabled)
+                        <th class="ba-select-col" style="width: 40px;">
+                            <input type="checkbox" class="ba-check" data-bulk-all aria-label="{{ __('ui.bulk_select_all') }}">
+                        </th>
+                    @endif
                     @foreach ($options['columns'] as $col)
                         @php
                             $colStyle = \App\Helpers\DatatableUi::columnStyle($col, $loop->index);
@@ -51,13 +103,47 @@
             var pageLength = {!! json_encode((int) ($options['pageLength'] ?? 10)) !!};
             var codeModalUrl = {!! json_encode($options['codeModalUrl'] ?? null) !!};
             var codePageUrl = {!! json_encode($options['codePageUrl'] ?? null) !!};
+            var baTones = {!! json_encode(ui_status_tones()) !!};
+            var baDecode = function(html) { return $('<textarea>').html(String(html)).text(); };
+            var baStatusRender = function(data, type) {
+                if (data === null || data === undefined || data === '') {
+                    return type === 'display' ? '<span class="text-muted-foreground">—</span>' : '';
+                }
+                if (type !== 'display') {
+                    return data;
+                }
+                var raw = baDecode(data).trim();
+                var key = raw.toLowerCase().replace(/['’]/g, '').replace(/[\s\-]+/g, '_');
+                var tone = baTones[key] || 'neutral';
+                var label = /^[a-z_]+$/.test(raw)
+                    ? raw.replace(/_/g, ' ').replace(/\b\w/g, function(c) { return c.toUpperCase(); })
+                    : raw;
+                return '<span class="ba-badge ba-badge--' + tone + '"><span class="ba-badge__dot" aria-hidden="true"></span>'
+                    + $('<div>').text(label).html() + '</span>';
+            };
             var table = $(dtid).DataTable({
                 processing: true,
+                language: {
+                    emptyTable: {!! json_encode($emptyStateHtml) !!},
+                    zeroRecords: {!! json_encode($noMatchHtml) !!}
+                },
                 serverSide: true,
                 autoWidth: autoWidth,
                 pageLength: pageLength,
                 ajax: ajaxUrl,
                 columns: [
+                    @if ($quickEnabled)
+                        {
+                            data: null,
+                            orderable: false,
+                            searchable: false,
+                            className: 'ba-select-col',
+                            render: function(data, type, row) {
+                                if (type !== 'display' || !row.id) { return ''; }
+                                return '<input type="checkbox" class="ba-check" data-bulk-row value="' + Number(row.id) + '" aria-label="{{ __('ui.bulk_select_row') }}">';
+                            }
+                        },
+                    @endif
                     @foreach ($options['columns'] as $col)
                         @php $dataField = \App\Helpers\DatatableUi::columnDataField($col); @endphp
                         @if ($dataField !== null && $dataField === 'code')
@@ -70,15 +156,29 @@
                                     if (data === null || data === undefined || data === '') {
                                         return '';
                                     }
-                                    var text = $('<div>').text(String(data)).html();
+                                    var text = $('<div>').text(baDecode(data)).html();
                                     if (!codeModalUrl || !codePageUrl || !row.id) {
-                                        return text;
+                                        return '<span class="ba-code-chip">' + text + '</span>';
                                     }
                                     var modalUrl = String(codeModalUrl).split('{id}').join(String(row.id));
                                     var pageUrl = String(codePageUrl).split('{id}').join(String(row.id));
-                                    return '<a href="' + pageUrl + '" class="text-primary hover:underline js-open-modal" data-modal-url="' + modalUrl + '">' + text + '</a>';
+                                    return '<a href="' + pageUrl + '" class="ba-code-chip js-open-modal" data-modal-url="' + modalUrl + '">' + text + '</a>';
                                 }
                             },
+                        @elseif ($dataField !== null && $quickEnabled && isset($quickFieldFor[$dataField], $quickEdit[$quickFieldFor[$dataField]]))
+                            {
+                                data: '{{ $dataField }}',
+                                defaultContent: '',
+                                render: function(data, type, row) {
+                                    var html = baStatusRender(data, type);
+                                    if (type !== 'display' || !row.id) { return html; }
+                                    var field = '{{ $quickFieldFor[$dataField] }}';
+                                    if (!data) { html = '<span class="ba-badge ba-badge--neutral">{{ __('ui.quick_set') }}</span>'; }
+                                    return '<button type="button" class="ba-quick-badge" data-quick-field="' + field + '" data-quick-id="' + Number(row.id) + '" data-quick-current="' + (row[field] == null ? '' : Number(row[field])) + '" aria-haspopup="listbox" title="{{ __('ui.quick_change') }}">' + html + '<i class="ki-filled ki-down" aria-hidden="true"></i></button>';
+                                }
+                            },
+                        @elseif ($dataField !== null && preg_match($badgeFieldPattern, $dataField))
+                            { data: '{{ $dataField }}', defaultContent: '', render: baStatusRender },
                         @elseif ($dataField !== null)
                             { data: '{{ $dataField }}' },
                         @else
@@ -134,6 +234,7 @@
                     }
                 },
                 initComplete: function() {
+                    document.dispatchEvent(new CustomEvent('ba:datatable-ready', { detail: { selector: dtid, table: table } }));
                     $('._dtSearch').on('keyup', function() {
                         table.search($(this).val()).draw();
                     });

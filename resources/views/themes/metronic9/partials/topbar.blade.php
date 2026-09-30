@@ -1,5 +1,10 @@
 @auth
     <div class="flex items-center gap-3">
+        <button type="button" class="ba-palette-trigger" data-palette-open aria-label="{{ __('ui.palette_label') }}" aria-keyshortcuts="Control+K Meta+K">
+            <i class="ki-filled ki-magnifier" aria-hidden="true"></i>
+            <span>{{ __('ui.palette_trigger') }}</span>
+            <kbd>Ctrl K</kbd>
+        </button>
         <button
             type="button"
             class="kt-btn kt-btn-ghost kt-btn-sm gap-1.5 topbar-quick-guide"

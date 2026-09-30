@@ -6,13 +6,16 @@ use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\ArchitectureController;
 use App\Http\Controllers\BabokDocumentController;
 use App\Http\Controllers\ChangeRequestController;
+use App\Http\Controllers\CommentController;
 use App\Http\Controllers\DataDictionaryController;
 use App\Http\Controllers\DiagramsController;
 use App\Http\Controllers\FeatureController;
 use App\Http\Controllers\GuardrailsController;
 use App\Http\Controllers\HelpController;
 use App\Http\Controllers\HelpGuideController;
+use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProjectDashboardController;
+use App\Http\Controllers\QuickActionsController;
 use App\Http\Controllers\ProjectExportController;
 use App\Http\Controllers\QuickGuideController;
 use App\Http\Controllers\SolutionRequirementsController;
@@ -24,11 +27,14 @@ use App\Support\CrudRouteRegistrar;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth')->group(function (): void {
-    Route::get('/', function () {
-        $homeRoute = CrudRouteRegistrar::homeRouteNameFor(auth()->user());
-
-        return $homeRoute ? redirect()->route($homeRoute) : abort(403);
-    });
+    Route::get('/', [HomeController::class, 'index'])->name('home');
+    Route::get('quick-search', [QuickActionsController::class, 'search'])->name('quick.search');
+    Route::patch('quick-update/{model}/{id}', [QuickActionsController::class, 'update'])->whereNumber('id')->name('quick.update');
+    Route::post('quick-update/{model}', [QuickActionsController::class, 'bulkUpdate'])->name('quick.bulk');
+    Route::get('comments/{model}/{id}', [CommentController::class, 'index'])->whereNumber('id')->name('comments.index');
+    Route::post('comments/{model}/{id}', [CommentController::class, 'store'])->whereNumber('id')->name('comments.store');
+    Route::post('comments/{comment}/resolve', [CommentController::class, 'resolve'])->name('comments.resolve');
+    Route::delete('comments/{comment}', [CommentController::class, 'destroy'])->name('comments.destroy');
 
     Route::get('help/guide', [HelpGuideController::class, 'index'])->name('help.guide');
     Route::get('help/guide/{key}', [HelpGuideController::class, 'show'])->name('help.guide.show');

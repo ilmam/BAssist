@@ -15,7 +15,7 @@ return [
     'items' => [
         [
             'label' => 'Dashboard',
-            'route' => 'theme.test',
+            'route' => 'home',
             'icon' => 'element-11',
             'icon_v8' => 'element-11',
         ],

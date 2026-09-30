@@ -20,6 +20,7 @@
 @else
     @foreach ($needs as $need)
         <article class="artifact">
+            @include('pages.projects.partials.print-item-comments', ['item' => $need])
             <h3 class="item-title">
                 @if ($need->code)
                     <span class="artifact__code">{{ $need->code }}</span>

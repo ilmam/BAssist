@@ -68,6 +68,8 @@ class ChangeRequestAffectedService
                     'type' => 'scenario',
                     'code' => null,
                     'title' => (string) $scenario->title,
+                    'model' => 'Feature',
+                    'id' => (int) $feature->getKey(),
                 ];
             }
         }
@@ -90,6 +92,8 @@ class ChangeRequestAffectedService
             'type' => $type,
             'code' => $model->getAttribute('code'),
             'title' => (string) ($model->getAttribute('title') ?? $model->getKey()),
+            'model' => class_basename($model),
+            'id' => (int) $model->getKey(),
         ];
     }
 

@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\TraceabilityGraphService;
+
 use App\Services\TraceabilityMatrixService;
 use App\Support\EntityAccess;
 use Illuminate\Http\Request;
@@ -20,7 +22,13 @@ class TraceabilityController extends Controller
 
         $matrix = $this->matrix->build($request->only(['project_id', 'orphans_only', 'gap']));
 
+        $graphService = app(TraceabilityGraphService::class);
+        $viewMode = $request->query('view') === 'graph' ? 'graph' : 'table';
+
         return view('pages.traceability.matrix', [
+            'viewMode' => $viewMode,
+            'coverage' => $graphService->coverage($matrix['rows']),
+            'graph' => $viewMode === 'graph' ? $graphService->graph($matrix['rows']) : null,
             'rows' => $matrix['rows'],
             'summary' => $matrix['summary'],
             'gap_counts' => $matrix['gap_counts'] ?? [],

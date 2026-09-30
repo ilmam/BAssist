@@ -32,6 +32,34 @@ class HelpRegistry
     }
 
     /**
+     * First prose paragraph of a model's help guide as plain text (for empty states / tooltips).
+     */
+    public static function summaryForModel(string $model, int $limit = 240): ?string
+    {
+        $path = self::path(self::keyForModel($model));
+        if (! is_file($path)) {
+            return null;
+        }
+
+        $raw = (string) file_get_contents($path);
+        [, $markdown] = self::splitFrontMatter($raw);
+
+        foreach (preg_split('/\R{2,}/', trim($markdown)) ?: [] as $block) {
+            $block = trim($block);
+            if ($block === '' || preg_match('/^(#|>|-|\*|\d+\.|\||```)/', $block)) {
+                continue;
+            }
+
+            $text = preg_replace('/\[([^\]]+)\]\([^)]+\)/', '$1', $block) ?? $block;
+            $text = trim((string) preg_replace('/\s+/', ' ', str_replace(['**', '__', '`', '*'], '', $text)));
+
+            return $text === '' ? null : Str::limit($text, $limit);
+        }
+
+        return null;
+    }
+
+    /**
      * Load and render a help guide.
      *
      * @return array{key: string, title: string, html: string}|null

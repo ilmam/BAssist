@@ -39,7 +39,8 @@ class ProjectReadinessService
      *     items: list<array{key: string, label: string, count: int, severity: string, url: string|null}>,
      *     severity: array{critical: int, warn: int, info: int},
      *     spine: list<array{key: string, label: string, ready: int, total: int, pct: int|null, url: string|null}>,
-     *     score: int|null
+     *     score: int|null,
+     *     folders: list<array<string, mixed>>
      * }
      */
     public function forProject(Project $project): array
@@ -421,6 +422,7 @@ class ProjectReadinessService
             );
         }
 
+        $items = array_map(fn (array $item) => $this->decorate($item), $items);
         $gapItems = array_values(array_filter($items, fn (array $item) => $item['count'] > 0));
         $spine = $this->spineCoverage($project, $scopeQuery);
 
@@ -438,7 +440,110 @@ class ProjectReadinessService
             'severity' => $severity,
             'spine' => $spine,
             'score' => $this->coverageScore($spine),
+            'folders' => $this->folderHealth($items),
         ];
+    }
+
+    /**
+     * Readiness check key → BABOK project folder (config navigation.hierarchy.project_folders).
+     *
+     * @var array<string, string>
+     */
+    protected const FOLDER_FOR_CHECK = [
+        'needs_without_objective' => 'strategy',
+        'orphan_objectives' => 'strategy',
+        'objectives_without_stories' => 'strategy',
+        'active_critical_risks' => 'strategy',
+        'critical_risks_without_response' => 'strategy',
+        'critical_risks_without_treatment' => 'strategy',
+        'accepted_risks_without_rationale' => 'strategy',
+        'risks_captured' => 'strategy',
+        'baseline_missing' => 'strategy',
+        'baseline_draft' => 'strategy',
+        'scope_items_captured' => 'strategy',
+        'orphan_stories' => 'radd',
+        'stories_without_features' => 'radd',
+        'orphan_functional_requirements' => 'radd',
+        'frs_without_acceptance' => 'radd',
+        'orphan_non_functional_requirements' => 'radd',
+        'nfrs_without_acceptance' => 'radd',
+        'need_revision_packaging' => 'radd',
+        'orphan_features' => 'radd',
+        'open_assumptions' => 'radd',
+        'constraints_captured' => 'radd',
+        'rules_captured' => 'radd',
+        'unconfirmed_change_requests' => 'governance',
+        'crs_without_stakeholder_need' => 'governance',
+        'features_without_scenarios' => 'evaluation',
+    ];
+
+    /**
+     * "Nothing captured yet" checks → entity whose create modal fixes the gap.
+     *
+     * @var array<string, string>
+     */
+    protected const CREATE_FIX_FOR_CHECK = [
+        'risks_captured' => 'Risk',
+        'constraints_captured' => 'Constraint',
+        'rules_captured' => 'BusinessRule',
+        'scope_items_captured' => 'ScopeItem',
+    ];
+
+    /**
+     * Attach folder + optional one-click "fix" action to a readiness check.
+     *
+     * @param  array{key: string, label: string, count: int, severity: string, url: string|null}  $item
+     * @return array<string, mixed>
+     */
+    protected function decorate(array $item): array
+    {
+        $item['folder'] = self::FOLDER_FOR_CHECK[$item['key']] ?? 'other';
+        $item['fix_modal'] = null;
+
+        $entity = self::CREATE_FIX_FOR_CHECK[$item['key']] ?? null;
+        if ($entity !== null && entity_can($entity, EntityAccess::CREATE)) {
+            $item['fix_modal'] = model_modal_path($entity, 'create');
+        }
+
+        return $item;
+    }
+
+    /**
+     * Per-folder health: share of applicable checks that currently pass.
+     *
+     * @param  list<array<string, mixed>>  $items  All checks (passing and failing).
+     * @return list<array{key: string, label: string, short: string, babok: string|null, icon: string, checks: int, passing: int, gaps: int, critical: int, pct: int|null}>
+     */
+    protected function folderHealth(array $items): array
+    {
+        $folders = [];
+
+        foreach (config('navigation.hierarchy.project_folders', []) as $folder) {
+            if (! is_array($folder) || ! isset($folder['key'])) {
+                continue;
+            }
+
+            $key = (string) $folder['key'];
+            $checks = array_values(array_filter($items, fn (array $item) => $item['folder'] === $key));
+            $failing = array_values(array_filter($checks, fn (array $item) => $item['count'] > 0));
+            $total = count($checks);
+            $passing = $total - count($failing);
+
+            $folders[] = [
+                'key' => $key,
+                'label' => (string) ($folder['label'] ?? $key),
+                'short' => (string) ($folder['short'] ?? ($folder['label'] ?? $key)),
+                'babok' => isset($folder['babok']) ? (string) $folder['babok'] : null,
+                'icon' => (string) ($folder['icon'] ?? 'folder'),
+                'checks' => $total,
+                'passing' => $passing,
+                'gaps' => (int) array_sum(array_column($failing, 'count')),
+                'critical' => count(array_filter($failing, fn (array $item) => $item['severity'] === 'critical')),
+                'pct' => $total > 0 ? (int) round(100 * $passing / $total) : null,
+            ];
+        }
+
+        return $folders;
     }
 
     /**

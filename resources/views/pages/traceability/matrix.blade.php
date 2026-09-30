@@ -48,6 +48,14 @@
         </x-slot:titleAside>
         <x-slot:toolbar>
             <div class="flex flex-wrap items-center gap-2">
+                <div class="ba-segmented" role="group" aria-label="{{ __('ui.trace_view_mode') }}">
+                    <a href="{{ route('traceability.index', $queryBase) }}" @class(['is-active' => $viewMode === 'table']) @if ($viewMode === 'table') aria-current="page" @endif>
+                        <i class="ki-filled ki-row-horizontal"></i>{{ __('ui.trace_view_table') }}
+                    </a>
+                    <a href="{{ route('traceability.index', $queryBase + ['view' => 'graph']) }}" @class(['is-active' => $viewMode === 'graph']) @if ($viewMode === 'graph') aria-current="page" @endif>
+                        <i class="ki-filled ki-share"></i>{{ __('ui.trace_view_graph') }}
+                    </a>
+                </div>
                 <a href="{{ $orphansToggle }}"
                    class="{{ ui_btn_classes(($filters['orphans_only'] ?? false) ? 'primary' : 'outline') }}">
                     {{ __('ui.show_gaps') }}
@@ -121,6 +129,33 @@
             </div>
         @endif
 
+        @if (($coverage ?? []) !== [] && ($coverage[0]['total'] ?? 0) > 0)
+            <h4 class="ba-section-label">{{ __('ui.trace_coverage_heading') }}</h4>
+            <ol class="ba-spine ba-trace-coverage">
+                @foreach ($coverage as $level)
+                    @php
+                        $pct = $level['pct'];
+                        $tone = $pct === null ? 'neutral' : ($pct >= 80 ? 'success' : ($pct >= 50 ? 'warning' : 'danger'));
+                        $href = ($pct !== null && $pct < 100 && $level['gap'] && isset(($gap_counts ?? [])[$level['gap']]))
+                            ? route('traceability.index', $chipBase + ['gap' => $level['gap'], 'view' => $viewMode === 'graph' ? 'graph' : null])
+                            : null;
+                    @endphp
+                    <li>
+                        <a href="{{ $href ?? '#' }}" class="ba-spine__step ba-spine__step--{{ $tone }}" @if (! $href) aria-disabled="true" tabindex="-1" @endif
+                           title="{{ $href ? __('ui.trace_coverage_filter') : '' }}">
+                            <span class="ba-spine__label">{{ $level['label'] }}</span>
+                            <span class="ba-spine__value">{{ $pct === null ? '—' : $pct.'%' }}</span>
+                            <span class="ba-spine__meta">{{ __('ui.readiness_ready_of_total', ['ready' => $level['filled'], 'total' => $level['total']]) }}</span>
+                            <span class="ba-spine__bar"><span style="width: {{ $pct ?? 0 }}%"></span></span>
+                        </a>
+                    </li>
+                @endforeach
+            </ol>
+        @endif
+
+        @if ($viewMode === 'graph')
+            @include('pages.traceability.partials.graph', ['graph' => $graph])
+        @else
         <div class="kt-card-table">
             <div class="kt-table-wrapper">
                 <table class="kt-table kt-table-border w-full" data-traceability-table>
@@ -172,7 +207,11 @@
                                             {{ $row['need_title'] }}
                                         </a>
                                     @else
-                                        <span class="text-muted-foreground">—</span>
+                                        @if (in_array('missing_need', $row['gaps'] ?? [], true))
+                                            <x-status-badge tone="warning">{{ __('ui.trace_cell_missing') }}</x-status-badge>
+                                        @else
+                                            <span class="text-muted-foreground">—</span>
+                                        @endif
                                     @endif
                                 </td>
                                 <td>
@@ -187,7 +226,11 @@
                                             {{ $row['objective_title'] }}
                                         </a>
                                     @else
-                                        <span class="text-muted-foreground">—</span>
+                                        @if (in_array('missing_objective', $row['gaps'] ?? [], true))
+                                            <x-status-badge tone="warning">{{ __('ui.trace_cell_missing') }}</x-status-badge>
+                                        @else
+                                            <span class="text-muted-foreground">—</span>
+                                        @endif
                                     @endif
                                 </td>
                                 <td>
@@ -202,7 +245,11 @@
                                             {{ $row['stakeholder_need_title'] }}
                                         </a>
                                     @else
-                                        <span class="text-muted-foreground">—</span>
+                                        @if (in_array('missing_stakeholder_need', $row['gaps'] ?? [], true))
+                                            <x-status-badge tone="warning">{{ __('ui.trace_cell_missing') }}</x-status-badge>
+                                        @else
+                                            <span class="text-muted-foreground">—</span>
+                                        @endif
                                         @if ($addStoryUrl)
                                             <a href="{{ $addStoryUrl }}"
                                                class="text-xs text-primary hover:underline js-open-modal ms-1"
@@ -348,6 +395,7 @@
                 </table>
             </div>
         </div>
+        @endif
     </x-card>
 @endsection
 

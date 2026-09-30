@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\CommentService;
+use App\Support\PrintComments;
+
 use App\Models\Project;
 use App\Services\BabokDocumentService;
 use App\Support\EntityAccess;
@@ -35,6 +38,13 @@ class BabokDocumentController extends Controller
         }
 
         $payload = $this->documents->build($project, $document);
+
+        $includeComments = request()->query('comments', '1') !== '0';
+        app()->instance(PrintComments::class, new PrintComments(
+            $includeComments,
+            $includeComments ? app(CommentService::class)->openThreadsForProject($project) : [],
+        ));
+        $payload['includeComments'] = $includeComments;
 
         return view('pages.projects.babok.document', $payload);
     }

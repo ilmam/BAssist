@@ -19,6 +19,7 @@
             }
         @endphp
         <article class="{{ implode(' ', $classes) }}">
+            @include('pages.projects.partials.print-item-comments', ['item' => $risk])
             <h3 class="item-title">
                 @if ($risk->code)
                     <span class="artifact__code">{{ $risk->code }}</span>

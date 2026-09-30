@@ -54,6 +54,7 @@
                 $gherkinBody = trim($item['gherkin'] ?? '');
             @endphp
             <article class="artifact">
+                @include('pages.projects.partials.print-item-comments', ['item' => $item])
                 <h3 class="item-title">
                     @if ($feature->code)
                         <span class="artifact__code">{{ $feature->code }}</span>

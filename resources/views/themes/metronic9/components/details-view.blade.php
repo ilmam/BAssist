@@ -32,4 +32,13 @@
     'attachments' => $attachmentRecords ?? [],
     'mode' => 'details',
 ])
+
+@if ($commentThreads !== null)
+    @include('pages.partials.comments', [
+        'commentModel' => $model,
+        'commentRecordId' => (int) ($dto->id ?? 0),
+        'threads' => $commentThreads,
+        'mentionUsers' => $mentionUsers,
+    ])
+@endif
 </div>

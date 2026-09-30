@@ -19,6 +19,7 @@
             $mermaidBody = trim($item['mermaid'] ?? '');
         @endphp
         <article class="artifact{{ $mermaidBody !== '' ? ' artifact--diagram' : '' }}">
+            @include('pages.projects.partials.print-item-comments', ['item' => $item])
             <h3 class="item-title">{{ $flow->title }}</h3>
             @if ($flow->description)
                 <p class="prose">{{ $flow->description }}</p>
@@ -44,6 +45,7 @@
             $mermaidBody = trim($item['mermaid'] ?? '');
         @endphp
         <article class="artifact{{ $mermaidBody !== '' ? ' artifact--diagram' : '' }}">
+            @include('pages.projects.partials.print-item-comments', ['item' => $item])
             <h3 class="item-title">{{ $flow->title }}</h3>
             @if ($flow->description)
                 <p class="prose">{{ $flow->description }}</p>

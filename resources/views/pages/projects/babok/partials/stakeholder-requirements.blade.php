@@ -4,6 +4,7 @@
     <h2 class="section-title">{{ __('ui.stakeholder_needs') }}</h2>
     @foreach ($stakeholder_needs as $sn)
         <article class="artifact">
+            @include('pages.projects.partials.print-item-comments', ['item' => $sn])
             <h3 class="item-title">
                 @if ($sn->code)
                     <span class="artifact__code">{{ $sn->code }}</span>

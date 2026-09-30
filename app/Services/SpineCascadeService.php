@@ -42,7 +42,7 @@ class SpineCascadeService
 
         $record = CrudEntityRegistry::repository($modelName)->findModel($id, $with);
 
-        return match ($modelName) {
+        $cascade = match ($modelName) {
             'BusinessNeed' => $this->forNeed($record),
             'BusinessObjective' => $this->forObjective($record),
             'StakeholderNeed' => $this->forStakeholderNeed($record),
@@ -52,6 +52,330 @@ class SpineCascadeService
             'Scenario' => $this->forScenario($record),
             default => null,
         };
+
+        if ($cascade === null) {
+            return null;
+        }
+
+        $cascade['lineage'] = $this->lineage($modelName, $record, $cascade);
+
+        return $cascade;
+    }
+
+    /**
+     * Spine levels shown on the lineage rail (1 = why … 5 = how it is proven).
+     *
+     * @var array<int, list<string>>
+     */
+    protected const LEVELS = [
+        1 => ['BusinessNeed'],
+        2 => ['BusinessObjective'],
+        3 => ['StakeholderNeed'],
+        4 => ['Feature', 'FunctionalRequirement', 'NonFunctionalRequirement'],
+        5 => ['Scenario'],
+    ];
+
+    /**
+     * Why each gap matters, with the BABOK task it supports (shown on the Next step card).
+     *
+     * @var array<string, string>
+     */
+    protected const GAP_REASONS = [
+        'no_objectives' => 'ui.lineage_why_no_objectives',
+        'no_parent_need' => 'ui.lineage_why_no_parent_need',
+        'no_stories' => 'ui.lineage_why_no_stories',
+        'no_parent_objective' => 'ui.lineage_why_no_parent_objective',
+        'no_packaging' => 'ui.lineage_why_no_packaging',
+        'open_change_requests' => 'ui.lineage_why_open_change_requests',
+        'no_parent_story' => 'ui.lineage_why_no_parent_story',
+        'no_scenarios' => 'ui.lineage_why_no_scenarios',
+        'no_parent_feature' => 'ui.lineage_why_no_parent_feature',
+        'no_acceptance' => 'ui.lineage_why_no_acceptance',
+    ];
+
+    /**
+     * Five-step lineage rail, the single most useful next step, and quick actions.
+     *
+     * @param  array<string, mixed>  $cascade
+     * @return array{steps: list<array<string, mixed>>, complete: int, total: int, next: array<string, mixed>|null, others: list<array<string, mixed>>, quick: list<array<string, mixed>>, also: list<array<string, mixed>>}
+     */
+    protected function lineage(string $modelName, Model $record, array $cascade): array
+    {
+        $current = $this->levelOf($modelName);
+        $gaps = $cascade['gaps'] ?? [];
+
+        // FR / NFR: acceptance criteria are the proof step.
+        if (in_array($modelName, ['FunctionalRequirement', 'NonFunctionalRequirement'], true)
+            && blank($record->getAttribute('acceptance_criteria'))) {
+            $gaps[] = $this->gap(
+                'no_acceptance',
+                __('ui.lineage_gap_no_acceptance'),
+                __('ui.lineage_write_criteria'),
+                model_modal_path($modelName, 'edit', $record->getKey()),
+                $modelName,
+                'update',
+            );
+        }
+        // Stakeholder need with no solution packaging yet.
+        if ($modelName === 'StakeholderNeed'
+            && ! in_array('no_packaging', array_column($gaps, 'key'), true)
+            && $record->functionalRequirements->isEmpty()
+            && $record->nonFunctionalRequirements->isEmpty()
+            && $record->features->isEmpty()) {
+            $gaps[] = $this->gap(
+                'no_packaging',
+                __('ui.cascade_gap_no_packaging'),
+                __('ui.add_functional_requirement'),
+                $this->createUrl('FunctionalRequirement', ['stakeholder_need_id' => $record->getKey()]),
+                'FunctionalRequirement',
+            );
+        }
+
+        $gapsByKey = [];
+        foreach ($gaps as $gap) {
+            $gapsByKey[$gap['key']] = $gap;
+        }
+
+        $parentsByLevel = [];
+        $also = [];
+        foreach ($cascade['parents'] ?? [] as $parent) {
+            $level = $this->levelOf((string) $parent['model']);
+            if ($level === null) {
+                $also[] = $parent; // e.g. originating change request
+                continue;
+            }
+            $parentsByLevel[$level] = $parent;
+        }
+
+        $steps = [];
+        foreach (self::LEVELS as $level => $models) {
+            $step = [
+                'level' => $level,
+                'name' => __('ui.lineage_level_'.$level),
+                'state' => 'later',
+                'link' => null,
+                'count' => null,
+                'note' => null,
+                'action' => null,
+            ];
+
+            if ($level < $current) {
+                if (isset($parentsByLevel[$level])) {
+                    $step['state'] = 'done';
+                    $step['link'] = $parentsByLevel[$level];
+                } elseif (! isset($parentsByLevel[$level + 1]) && $level + 1 < $current) {
+                    // A higher parent can only follow once the nearer link exists.
+                    $step['state'] = 'blocked';
+                    $step['note'] = __('ui.lineage_follows', ['step' => $level + 1]);
+                } else {
+                    $step['state'] = 'missing';
+                    $step['note'] = __('ui.lineage_not_linked');
+                    $step['action'] = $this->gapAction($gapsByKey, ['no_parent_need', 'no_parent_objective', 'no_parent_story', 'no_parent_feature']);
+                    if ($step['action'] !== null) {
+                        $step['action']['label'] = __('ui.lineage_link_level_'.$level);
+                    }
+                }
+            } elseif ($level === $current) {
+                $step['state'] = 'current';
+                $step['name'] = $this->entityName($modelName);
+                $step['link'] = [
+                    'code' => $record->getAttribute('code'),
+                    'title' => trim((string) ($record->getAttribute('title') ?? '')),
+                ];
+            } elseif ($level === $current + 1 || ($current === 3 && $level === 5)) {
+                [$count, $gapKey, $label] = $this->downstream($modelName, $record, $level, $cascade);
+                if ($count > 0) {
+                    $step['state'] = 'done';
+                    $step['count'] = $count;
+                    $step['note'] = $label;
+                } else {
+                    $gap = $gapKey !== null ? ($gapsByKey[$gapKey] ?? null) : null;
+                    $step['state'] = $gap !== null ? 'missing' : 'optional';
+                    $step['note'] = $label;
+                    $step['action'] = $gap !== null ? $this->actionFromGap($gap) : null;
+                }
+            }
+
+            if ($level === 4 && $current === 4) {
+                $step['name'] = $this->entityName($modelName);
+            }
+
+            $steps[] = $step;
+        }
+
+        // Siblings: other solution items under the same stakeholder need.
+        if ($current === 4 && isset($parentsByLevel[3]) && $record->getAttribute('stakeholder_need_id')) {
+            $class = $record::class;
+            $siblings = $class::query()
+                ->where('stakeholder_need_id', $record->getAttribute('stakeholder_need_id'))
+                ->whereKeyNot($record->getKey())
+                ->count();
+            if ($siblings > 0) {
+                foreach ($steps as &$step) {
+                    if ($step['state'] === 'current') {
+                        $step['note'] = trans_choice('ui.lineage_siblings', $siblings, [
+                            'count' => $siblings,
+                            'parent' => $parentsByLevel[3]['code'] ?? '',
+                        ]);
+                    }
+                }
+                unset($step);
+            }
+        }
+
+        $relevant = array_filter($steps, fn ($s) => in_array($s['state'], ['done', 'missing', 'current'], true));
+        $done = count(array_filter($relevant, fn ($s) => in_array($s['state'], ['done', 'current'], true)));
+
+        $actionable = array_values(array_filter(
+            $gaps,
+            fn (array $gap) => ! empty($gap['action_url'])
+                && (empty($gap['action_model']) || entity_can((string) $gap['action_model'], (string) ($gap['action_ability'] ?? 'create'))),
+        ));
+        $next = null;
+        if ($actionable !== []) {
+            $first = $actionable[0];
+            $parentLevel = ['no_parent_need' => 1, 'no_parent_objective' => 2, 'no_parent_story' => 3, 'no_parent_feature' => 4][$first['key']] ?? null;
+            $nextAction = $this->actionFromGap($first);
+            if ($nextAction !== null && $parentLevel !== null) {
+                $nextAction['label'] = __('ui.lineage_link_level_'.$parentLevel);
+            }
+            $next = [
+                'title' => $first['label'],
+                'why' => isset(self::GAP_REASONS[$first['key']]) ? __(self::GAP_REASONS[$first['key']]) : null,
+                'action' => $nextAction,
+            ];
+        }
+
+        return [
+            'steps' => $steps,
+            'complete' => $done,
+            'total' => count($relevant),
+            'next' => $next,
+            'others' => array_map(fn (array $gap) => [
+                'title' => $gap['label'],
+                'action' => $this->actionFromGap($gap),
+            ], array_slice($actionable, 1)),
+            'quick' => $this->quickActions($modelName, $record),
+            'also' => $also,
+        ];
+    }
+
+    protected function levelOf(string $model): ?int
+    {
+        foreach (self::LEVELS as $level => $models) {
+            if (in_array($model, $models, true)) {
+                return $level;
+            }
+        }
+
+        return null;
+    }
+
+    protected function entityName(string $model): string
+    {
+        $label = (string) (CrudEntityRegistry::all()[$model]['nav_label'] ?? \Illuminate\Support\Str::headline($model));
+
+        return \Illuminate\Support\Str::singular($label);
+    }
+
+    /**
+     * @param  array<string, mixed>  $cascade
+     * @return array{0: int, 1: string|null, 2: string}
+     */
+    protected function downstream(string $model, Model $record, int $level, array $cascade): array
+    {
+        $groupCount = function (string $key) use ($cascade): int {
+            foreach ($cascade['groups'] ?? [] as $group) {
+                if (($group['key'] ?? null) === $key) {
+                    return count($group['items'] ?? []);
+                }
+            }
+
+            return 0;
+        };
+
+        return match (true) {
+            $model === 'BusinessNeed' => [$c = $groupCount('objectives'), 'no_objectives', trans_choice('ui.lineage_count_objectives', $c, ['count' => $c])],
+            $model === 'BusinessObjective' => [$c = $groupCount('stories'), 'no_stories', trans_choice('ui.lineage_count_stories', $c, ['count' => $c])],
+            $model === 'StakeholderNeed' && $level === 4 => [$c = $groupCount('packaging'), 'no_packaging', trans_choice('ui.lineage_count_packaging', $c, ['count' => $c])],
+            $model === 'StakeholderNeed' && $level === 5 => [$c = $record->coveringScenarios()->count(), null, trans_choice('ui.lineage_count_scenarios', $c, ['count' => $c])],
+            $model === 'Feature' => [$c = $record->scenarios->count(), 'no_scenarios', trans_choice('ui.lineage_count_scenarios', $c, ['count' => $c])],
+            in_array($model, ['FunctionalRequirement', 'NonFunctionalRequirement'], true) => [
+                $written = blank($record->getAttribute('acceptance_criteria')) ? 0 : 1,
+                'no_acceptance',
+                $written ? __('ui.lineage_acceptance_written') : __('ui.lineage_acceptance_missing'),
+            ],
+            default => [0, null, ''],
+        };
+    }
+
+    /**
+     * @param  array<string, array<string, mixed>>  $gapsByKey
+     * @param  list<string>  $keys
+     * @return array{label: string, url: string}|null
+     */
+    protected function gapAction(array $gapsByKey, array $keys): ?array
+    {
+        foreach ($keys as $key) {
+            if (isset($gapsByKey[$key])) {
+                return $this->actionFromGap($gapsByKey[$key]);
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @param  array<string, mixed>  $gap
+     * @return array{label: string, url: string}|null
+     */
+    protected function actionFromGap(array $gap): ?array
+    {
+        if (empty($gap['action_url']) || blank($gap['action_label'] ?? null)) {
+            return null;
+        }
+        if (! empty($gap['action_model']) && ! entity_can((string) $gap['action_model'], (string) ($gap['action_ability'] ?? 'create'))) {
+            return null;
+        }
+
+        return ['label' => (string) $gap['action_label'], 'url' => (string) $gap['action_url']];
+    }
+
+    /**
+     * "Raise a risk / change request / derive …" — each opens pre-linked to this item's need.
+     *
+     * @return list<array{label: string, url: string, icon: string}>
+     */
+    protected function quickActions(string $model, Model $record): array
+    {
+        $needId = match ($model) {
+            'StakeholderNeed' => (int) $record->getKey(),
+            'Feature', 'FunctionalRequirement', 'NonFunctionalRequirement' => (int) ($record->getAttribute('stakeholder_need_id') ?? 0),
+            'Scenario' => (int) ($record->feature?->stakeholder_need_id ?? 0),
+            default => 0,
+        };
+
+        $candidates = [
+            ['Risk', __('ui.lineage_quick_risk'), 'shield-cross', []],
+            ['ChangeRequest', __('ui.lineage_quick_cr'), 'arrow-mix', ['stakeholder_need_id' => $needId]],
+        ];
+
+        if ($model === 'FunctionalRequirement' && $needId > 0) {
+            $candidates[] = ['NonFunctionalRequirement', __('ui.lineage_quick_nfr'), 'setting-2', ['stakeholder_need_id' => $needId]];
+        }
+        if ($model === 'Feature') {
+            $candidates[] = ['Scenario', __('ui.add_scenario'), 'check-squared', ['feature_id' => (int) $record->getKey(), 'stakeholder_need_id' => $needId]];
+        }
+
+        $actions = [];
+        foreach ($candidates as [$entity, $label, $icon, $query]) {
+            if (! array_key_exists($entity, CrudEntityRegistry::all()) || ! entity_can($entity, 'create')) {
+                continue;
+            }
+            $actions[] = ['label' => $label, 'url' => $this->createUrl($entity, $query), 'icon' => $icon];
+        }
+
+        return $actions;
     }
 
     /**
