@@ -26,6 +26,7 @@ class ActivityLog extends Model
         'event',
         'changes',
         'note',
+        'via',
     ];
 
     protected function casts(): array

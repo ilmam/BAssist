@@ -12,7 +12,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // One per request: how the request arrived (web, API token, MCP).
+        $this->app->scoped(\App\Support\RequestChannel::class);
     }
 
     /**

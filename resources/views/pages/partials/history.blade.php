@@ -29,6 +29,9 @@
                         <div class="ba-history__line">
                             <strong>{{ $entry->user?->name ?? __('ui.history_system') }}</strong>
                             {{ __('ui.history_event_'.$entry->event) }}
+                            @if ($entry->via)
+                                ({{ __('ui.history_via_'.$entry->via) }})
+                            @endif
                             <time datetime="{{ $entry->created_at?->toIso8601String() }}">{{ $entry->created_at?->format('Y-m-d H:i') }}</time>
                         </div>
                         @if ($entry->event === 'updated' && is_array($entry->changes))

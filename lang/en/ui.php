@@ -1115,4 +1115,8 @@ return [
     'api_token_last_used' => 'Last used',
     'api_token_never_used' => 'Never',
     'api_token_expired' => 'Expired',
+
+    // History: channel a change came through (App\Support\RequestChannel)
+    'history_via_api' => 'via API token',
+    'history_via_mcp' => 'via AI assistant',
 ];

@@ -33,6 +33,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'can' => \Illuminate\Auth\Middleware\Authorize::class,
             'entity.access' => \App\Http\Middleware\AuthorizeEntityAccess::class,
             'api.ability' => \App\Http\Middleware\EnforceApiTokenAbility::class,
+            'mcp.channel' => \App\Http\Middleware\MarkMcpChannel::class,
             'super.admin' => \App\Http\Middleware\EnsureSuperAdmin::class,
             'guest' => \App\Http\Middleware\RedirectIfAuthenticated::class,
             'password.confirm' => \Illuminate\Auth\Middleware\RequirePassword::class,

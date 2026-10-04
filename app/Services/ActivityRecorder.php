@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\ActivityLog;
+use App\Support\RequestChannel;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 
@@ -47,6 +48,7 @@ class ActivityRecorder
             'event' => $event,
             'changes' => $changes,
             'note' => $note,
+            'via' => app(RequestChannel::class)->current(),
         ]);
     }
 

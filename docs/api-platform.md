@@ -37,7 +37,7 @@ It is deliberately general purpose. Nothing in it is written for one particular 
             │                                  Api\FeatureGherkinController
             │                                  Api\LineageController
             ▼                                              ▼
-       Repositories                                    Services
+       Repositories                            ProjectInsightsService → Services
             └──────────────────────┬───────────────────────┘
                                    ▼
                     Eloquent models + TenantScope       tenant isolation
@@ -53,7 +53,7 @@ Three rules hold the design together.
 |---|---|---|
 | Tenant isolation | `TenantScope` on every tenant-owned model, `TenantPayloadGuard` on writes ([tenancy.md](tenancy.md)) | Another tenant's record is a 404 |
 | Role permissions | `entity.access` middleware and `EntityAccess::authorize()` | Missing permission is a 403 |
-| History | `#[Tracked]` models record the acting user | Changes made by token are attributed to the token's owner |
+| History | `#[Tracked]` models record the acting user and the channel (`activity_log.via`, set by `RequestChannel`) | A change made by token is attributed to the token's owner and labelled "via API token", or "via AI assistant" when it came through [MCP](mcp.md) |
 
 **3. A token can only narrow access, never widen it.** Abilities are checked in addition to the role, not instead of it.
 
@@ -64,11 +64,13 @@ Three rules hold the design together.
 | `routes/api.php` | All API routes, inside `auth:sanctum` + `api.ability` |
 | `app/Http/Middleware/EnforceApiTokenAbility.php` | `api.ability`: read tokens may only GET |
 | `app/Support/ApiTokenAbility.php` | Ability names and allowed token lifetimes |
+| `app/Services/ProjectInsightsService.php` | Authorizes and assembles the derived views; shared by the API controllers and the MCP tools |
 | `app/Http/Controllers/Api/ProjectInsightsController.php` | Readiness, traceability, acceptance plan, project Gherkin |
 | `app/Http/Controllers/Api/FeatureGherkinController.php` | One feature as a `.feature` document |
 | `app/Http/Controllers/Api/LineageController.php` | Lineage of one spine record |
 | `app/Http/Controllers/Api/CrudController.php` | Entity CRUD (existing; see [quick-start.md](quick-start.md)) |
 | `app/Http/Controllers/ApiTokenController.php` | Profile page: create, list, revoke tokens |
+| `app/Support/RequestChannel.php` | Which channel the request came through (web, API token, MCP), for the history |
 | `resources/views/pages/profile/api-tokens.blade.php` | That page |
 | `tests/Feature/ApiPlatformTest.php`, `ApiTokenPageTest.php` | Tests |
 
@@ -170,7 +172,7 @@ The web UI keeps a "sticky" workspace and project in the session (`WorkspaceCont
 ## Adding an endpoint
 
 1. **Find or write the service.** If a web page already shows the data, call the same service. If not, put the logic in a service first so a page can use it later.
-2. **Add a thin controller action** under `app/Http/Controllers/Api/`. It should authorize, call the service and return JSON. Nothing else.
+2. **Add a thin controller action** under `app/Http/Controllers/Api/`. It should call the service and return JSON. Nothing else. For a derived project view, put the authorization and assembly in `ProjectInsightsService` so the MCP tools get it too.
 3. **Authorize the same way the web page does**, with `EntityAccess::authorize()`. For a project-level route, type-hint `Project $project` (binding is tenant-scoped) and call `Tenancy::assertProject()`.
 4. **Register the route** in `routes/api.php`, inside the `auth:sanctum` + `api.ability` group. Use `GET` for anything read only so read tokens can call it.
 5. **Test it** in `tests/Feature/ApiPlatformTest.php`: with a read token, with another tenant's record (expect 404) and with a role that lacks the permission (expect 403).
@@ -189,11 +191,15 @@ The tests use real tokens (`createToken()` + `withToken()`), not `Sanctum::actin
 
 ## Deployment notes
 
-- `php artisan migrate` creates `personal_access_tokens` if it is missing (the migration ships with the app).
+- `php artisan migrate` creates `personal_access_tokens` if it is missing and adds `activity_log.via`.
 - Serve the API over HTTPS only; a bearer token is a password.
 - Set `SANCTUM_STATEFUL_DOMAINS` to the host(s) the web UI is served from.
 - Optional: set `SANCTUM_TOKEN_PREFIX` (for example `bassist_`) so leaked tokens are recognisable by secret scanners.
 - Optional: schedule `php artisan sanctum:prune-expired --hours=24` to delete expired tokens.
+
+## AI assistants
+
+The MCP endpoint (`/mcp`) is a second door onto the same services, for AI assistants. It uses the same tokens and the same rules. See [mcp.md](mcp.md).
 
 ## Not included yet
 

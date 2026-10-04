@@ -46,6 +46,7 @@ These are not part of the reusable CRUD framework; they only make sense for a BA
 | Home page, readiness panel, lineage rail, traceability graph | [ux-features.md](ux-features.md) |
 | Comments and sign-offs printed in the BABOK documents / PDF export | [collaboration.md](collaboration.md) |
 | Calling BAssist from another program: API tokens, readiness / traceability / lineage / Gherkin endpoints, adding an endpoint | [api-platform.md](api-platform.md) |
+| Letting an AI assistant read and maintain the spine: the MCP endpoint, its tools, adding a tool | [mcp.md](mcp.md) |
 
 ## Words used everywhere
 
