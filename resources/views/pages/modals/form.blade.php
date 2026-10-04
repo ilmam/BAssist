@@ -7,6 +7,9 @@
 @endphp
 
 <x-modal-content :title="$title">
+    <x-slot:actions>
+        <x-open-as-page :href="record_form_page_url($modelName, $dto ?? null)" />
+    </x-slot:actions>
     <x-form
         id="modalForm"
         route="{{ $route }}"

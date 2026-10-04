@@ -1,10 +1,9 @@
 @php
     $modelName = class_basename($model);
-    $editModalUrl = model_modal_path($model, 'edit', $dto->id);
     $addScenarioModalUrl = model_modal_path('Scenario', 'create').'?feature_id='.$dto->id;
 @endphp
 
-<x-modal-content :title="($dto->code ? $dto->code.' — ' : '').$dto->title" size="full">
+<x-record-view :model="$model" :dto="$dto" :in-modal="true" size="full">
     @include('pages.features.partials.view-content', [
         'dto' => $dto,
         'model' => $model,
@@ -20,7 +19,9 @@
     ])
 
     <x-slot:footer>
-        @include('pages.partials.modal-record-nav')
+        @if (entity_can($model, 'update') && ! empty($importUrl))
+            <x-button type="link" href="{{ $importUrl }}" color="light">{{ __('ui.import_feature_file') }}</x-button>
+        @endif
         @if (entity_can('Scenario', 'create'))
             <x-button
                 type="link"
@@ -30,15 +31,5 @@
                 data-modal-url="{{ $addScenarioModalUrl }}"
             >{{ __('ui.add_scenario') }}</x-button>
         @endif
-        @if (entity_can($model, 'update'))
-            <x-button
-                type="link"
-                href="{{ $editModalUrl }}"
-                color="primary"
-                class="js-open-modal"
-                data-modal-url="{{ $editModalUrl }}"
-            >{{ __('ui.edit') }}</x-button>
-        @endif
-        <x-modal-dismiss text="Close" />
     </x-slot:footer>
-</x-modal-content>
+</x-record-view>

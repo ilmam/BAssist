@@ -102,6 +102,7 @@ class LineageTest extends TestCase
         $this->withHeader('X-Modal-Request', '1')
             ->get(model_modal_path('StakeholderNeed', 'view', $story->id))
             ->assertOk()
-            ->assertSee('ba-lineage-compact', false);
+            ->assertSee('ba-lineage__rail', false)
+            ->assertDontSee('ba-lineage-compact', false);
     }
 }

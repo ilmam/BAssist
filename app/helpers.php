@@ -630,3 +630,38 @@ if (! function_exists('ui_status_tone')) {
         return ui_status_tones()[$key] ?? 'neutral';
     }
 }
+
+if (! function_exists('record_title')) {
+    /**
+     * Title of a record view, identical on the full page and in the pop-up:
+     * "FR-12 — Title", falling back to the title / name alone, then the entity name.
+     */
+    function record_title(string $model, ?object $dto): string
+    {
+        $text = trim((string) ($dto->title ?? $dto->name ?? ''));
+        $code = trim((string) ($dto->code ?? ''));
+
+        if ($code !== '' && $text !== '') {
+            return $code.' — '.$text;
+        }
+        if ($code !== '' || $text !== '') {
+            return $code.$text;
+        }
+
+        $label = Str::headline(class_basename($model));
+
+        return isset($dto->id) ? $label.' #'.$dto->id : $label;
+    }
+}
+
+if (! function_exists('record_form_page_url')) {
+    /** Full-page twin of a create / edit pop-up (keeps prefill query parameters). */
+    function record_form_page_url(string $model, ?object $dto): string
+    {
+        $model = class_basename($model);
+        $url = empty($dto->id) ? model_route($model, 'create') : model_route($model, 'edit', $dto->id);
+        $query = request()->getQueryString();
+
+        return $query ? $url.'?'.$query : $url;
+    }
+}

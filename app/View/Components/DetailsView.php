@@ -36,27 +36,36 @@ class DetailsView extends Component
             $this->attachmentRecords = app(AttachmentService::class)->list($model, (int) $dto->id);
         }
 
-        if (CommentService::supports($model) && isset($dto->id) && (int) $dto->id > 0 && entity_can($model, 'view')) {
+        // Optional features, each switched on by a model attribute (see App\Support\EntityFeatures).
+        if (! isset($dto->id) || (int) $dto->id <= 0 || ! entity_can($model, 'view')) {
+            return;
+        }
+
+        $record = null;
+        $resolve = function () use (&$record, $model, $dto) {
+            return $record ??= \App\Support\CrudEntityRegistry::repository($model)->findModel((int) $dto->id);
+        };
+
+        if (CommentService::supports($model)) {
             $comments = app(CommentService::class);
-            $record = $comments->record($model, (int) $dto->id);
-            $this->commentThreads = $comments->threads($record);
+            $this->commentThreads = $comments->threads($resolve());
             $this->mentionUsers = $comments->tenantUsers();
             if (auth()->user() !== null) {
-                $comments->markMentionsSeen($record, auth()->user());
+                $comments->markMentionsSeen($resolve(), auth()->user());
             }
         }
 
-        if (CommentService::supports($model) && isset($record)) {
-            $this->history = app(\App\Services\ActivityRecorder::class)->historyFor($record);
+        if (\App\Support\EntityFeatures::tracked($model) || \App\Services\ApprovalService::supports($model)) {
+            $this->history = app(\App\Services\ActivityRecorder::class)->historyFor($resolve());
+        }
 
-            if (\App\Services\ApprovalService::supports($model)) {
-                $approvals = app(\App\Services\ApprovalService::class);
-                $this->review = [
-                    'current' => $approvals->current($record),
-                    'reset' => $approvals->lastReset($record),
-                    'canApprove' => $approvals->canApprove($model),
-                ];
-            }
+        if (\App\Services\ApprovalService::supports($model)) {
+            $approvals = app(\App\Services\ApprovalService::class);
+            $this->review = [
+                'current' => $approvals->current($resolve()),
+                'reset' => $approvals->lastReset($resolve()),
+                'canApprove' => $approvals->canApprove($model),
+            ];
         }
     }
 

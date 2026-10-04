@@ -35,6 +35,22 @@ One colour language for status, priority and risk levels.
 - **Precompiled CSS caveat:** Metronic's `styles.css` is prebuilt, so arbitrary Tailwind utilities (e.g. `xl:grid-cols-2`, some `mb-*`) may not exist. For new layouts add a `ba-*` class to `bassist.css` instead of relying on an unused utility.
 - **Metronic 8:** the `ba-*` styles and the datatable changes are in the Metronic 9 theme only.
 
+## Page and pop-up are the same screen
+
+Every view and form opens in a pop-up by default; the full page is its permalink. Both must show the same thing, so the shell is framework code and an entity writes its content once.
+
+| Component (`resources/views/components/`) | Use |
+|-----------|-----|
+| `<x-record-view :model :dto [:in-modal] [title] [size] [:page-only]>` | Shell of a record view. Supplies the title (`record_title()` → "FR-12 — Title"), header actions and footer. Page footer = *Back to list* + your `footer` slot; pop-up footer = previous/next + your `footer` slot + *Close*. |
+| `<x-record-actions>` | Edit / Delete (+ "open as page" in the pop-up). Used by `record-view`; do not hand-write these buttons. |
+| `<x-record-form :model :dto :title :form-route [:in-modal] [size] [:cancel-url]>` | Shell of a **custom** form: `<form>`, Cancel / Save, permalink. Slots: default = fields, `after` = content below the form. |
+| `<x-open-as-page :href>` | The permalink icon. `x-modal-content` accepts it (or anything) in its `actions` slot. |
+
+- **Custom view:** `details.blade.php` and `modals/view.blade.php` both wrap the same body in `<x-record-view>`; the pop-up adds `:in-modal="true"`.
+- **Custom form:** put the fields in `pages/{entity}/partials/form-content.blade.php` (uses `<x-record-form :in-modal="$inModal">`). `form.blade.php` and `modals/form.blade.php` are one-line includes. Never copy fields into two files.
+- **Page-only entities** (data dictionary, architecture, strategic baseline: their modal routes redirect to the page; some have no list or view at all) pass `:page-only="true"` or keep their own page template.
+- **Quick add** is the one intentional exception: a reduced form that only exists as a pop-up.
+
 ## Readiness
 
 `ProjectReadinessService::forProject()` returns `items` (gaps with `count > 0`), `severity`, `spine`, `score` and `folders`.
@@ -58,7 +74,7 @@ One colour language for status, priority and risk levels.
 - The **next step** is the first actionable gap. Its "why" text comes from `GAP_REASONS` → `ui.lineage_why_*`. **A new gap key needs a reason string** or the card shows no explanation.
 - Gaps added by the lineage layer (not in the original cascade): `no_acceptance` (FR/NFR without acceptance criteria) and `no_packaging` (stakeholder need with no FR/NFR/feature).
 - Quick actions use `createUrl()` with prefill query keys. Only the keys whitelisted in `BaseController` (`stakeholder_need_id`, `feature_id`, `change_request_id`, …) are applied.
-- The shared partial renders the rail on full pages and the compact chain when `inModal` is true, so no per-entity Blade changes are needed.
+- The same rail is rendered on the full page and in the pop-up. It stacks by **container** width (`@container`), not viewport, so it also fits small and side pop-ups.
 
 ## Traceability
 

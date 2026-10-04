@@ -15,8 +15,8 @@ class ScenarioFormLabelTest extends TestCase
 
     public function test_scenario_form_blades_hide_body_field_label(): void
     {
-        $page = file_get_contents(dirname(__DIR__, 2).'/resources/views/pages/scenarios/form.blade.php');
-        $modal = file_get_contents(dirname(__DIR__, 2).'/resources/views/pages/scenarios/modals/form.blade.php');
+        $page = file_get_contents(dirname(__DIR__, 2).'/resources/views/pages/scenarios/partials/form-content.blade.php');
+        $modal = file_get_contents(dirname(__DIR__, 2).'/resources/views/pages/scenarios/partials/form-content.blade.php');
 
         $this->assertIsString($page);
         $this->assertIsString($modal);

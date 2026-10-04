@@ -19,19 +19,11 @@ use Illuminate\Validation\ValidationException;
  */
 class CommentService
 {
-    /** Entities that can carry comments (must have a project_id). */
-    public const COMMENTABLE = [
-        'BusinessNeed', 'BusinessObjective', 'Stakeholder', 'StakeholderNeed', 'Feature',
-        'FunctionalRequirement', 'NonFunctionalRequirement', 'ChangeRequest', 'Risk',
-        'Assumption', 'Constraint', 'BusinessRule', 'ScopeItem', 'DataDictionary',
-        'StateFlow', 'SwimlaneFlow',
-    ];
-
     public const MAX_LENGTH = 4000;
 
     public static function supports(string $model): bool
     {
-        return in_array($model, self::COMMENTABLE, true)
+        return \App\Support\EntityFeatures::commentable($model)
             && array_key_exists($model, CrudEntityRegistry::all());
     }
 

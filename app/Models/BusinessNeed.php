@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Attributes\Commentable;
+use App\Attributes\Tracked;
 use App\Attributes\Attachable;
 use App\Attributes\Relation;
 use App\Attributes\RoutableAttribute;
@@ -14,6 +16,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 #[RoutableAttribute]
 #[Attachable]
+#[Commentable]
+#[Tracked]
 class BusinessNeed extends BaseModel
 {
     use BelongsToTenant;

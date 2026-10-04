@@ -83,8 +83,8 @@ class FormSafetyTest extends TestCase
 
     public function test_entity_forms_use_expected_ids_and_submit_buttons(): void
     {
-        $page = file_get_contents(resource_path('views/pages/swimlane_flows/form.blade.php'));
-        $modal = file_get_contents(resource_path('views/pages/swimlane_flows/modals/form.blade.php'));
+        $page = file_get_contents(resource_path('views/components/record-form.blade.php'));
+        $modal = file_get_contents(resource_path('views/components/record-form.blade.php'));
         $generic = file_get_contents(resource_path('views/themes/metronic9/components/form.blade.php'));
 
         $this->assertIsString($page);

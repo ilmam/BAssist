@@ -1,9 +1,8 @@
 {{--
-    Lineage rail + Next step (#3). Full page = design A; $inModal = compact design C.
+    Lineage rail + Next step (#3). Same rail on the full page and in the pop-up; it stacks when its container is narrow.
     Data: SpineCascadeService::lineage() via $lineage.
 --}}
 @php
-    $inModal = (bool) ($inModal ?? false);
     $steps = $lineage['steps'] ?? [];
     $next = $lineage['next'] ?? null;
     $others = $lineage['others'] ?? [];
@@ -12,65 +11,25 @@
     $complete = (int) ($lineage['complete'] ?? 0);
     $total = (int) ($lineage['total'] ?? 0);
     $isComplete = $total > 0 && $complete >= $total;
-    $linkHref = fn (array $link) => $inModal ? ($link['modal_url'] ?? $link['url'] ?? '#') : ($link['url'] ?? '#');
 @endphp
 
 @if ($steps !== [])
-    @if ($inModal)
-        {{-- C · compact chain --}}
-        <div class="ba-lineage-compact" aria-label="{{ __('ui.lineage_title') }}">
-            <ol class="ba-lineage-compact__chain">
-                @foreach ($steps as $step)
-                    @continue(in_array($step['state'], ['later', 'optional', 'blocked'], true))
-                    <li class="ba-lineage-compact__item ba-lineage-compact__item--{{ $step['state'] }}" title="{{ $step['name'] }}">
-                        @if ($step['state'] === 'done' && ! empty($step['link']['url']))
-                            <a href="{{ $linkHref($step['link']) }}" class="ba-code-chip js-open-modal" data-modal-url="{{ $step['link']['modal_url'] ?? $step['link']['url'] }}" data-modal-nav="off">{{ $step['link']['code'] ?? $step['name'] }}</a>
-                        @elseif ($step['state'] === 'done')
-                            <x-status-badge tone="success">{{ $step['note'] }}</x-status-badge>
-                        @elseif ($step['state'] === 'current')
-                            <span class="ba-code-chip ba-code-chip--current" aria-current="true">{{ $step['link']['code'] ?? $step['name'] }}</span>
-                        @else
-                            <x-status-badge tone="warning">{{ $step['name'] }} · {{ __('ui.lineage_not_linked') }}</x-status-badge>
-                        @endif
-                    </li>
-                @endforeach
-            </ol>
-            @if ($next)
-                <div class="ba-lineage-compact__next">
-                    <span><strong>{{ __('ui.lineage_next_step') }}:</strong> {{ $next['title'] }}</span>
-                    @if ($next['action'])
-                        <a href="{{ $next['action']['url'] }}" class="{{ ui_btn_classes('primary', 'sm') }} js-open-modal" data-modal-url="{{ $next['action']['url'] }}">{{ $next['action']['label'] }}</a>
-                    @endif
-                </div>
-            @endif
-            @if ($quick !== [])
-                <div class="ba-lineage-compact__quick">
-                    @foreach ($quick as $action)
-                        <a href="{{ $action['url'] }}" class="{{ ui_btn_classes('outline', 'sm') }} js-open-modal" data-modal-url="{{ $action['url'] }}"><i class="ki-filled ki-plus"></i>{{ $action['label'] }}</a>
-                    @endforeach
-                </div>
-            @endif
-        </div>
-    @else
         {{-- A · lineage rail --}}
-        <section class="ba-lineage" aria-labelledby="ba-lineage-title">
-            <header class="ba-lineage__head">
-                <div class="ba-lineage__heading">
-                    <h2 id="ba-lineage-title">{{ __('ui.lineage_title') }}</h2>
-                    <span>{{ __('ui.lineage_subtitle') }}</span>
-                </div>
+        <x-section :title="__('ui.lineage_title')" icon="route" :meta="__('ui.lineage_subtitle')" key="lineage">
+            <x-slot:badge>
                 @if ($isComplete)
                     <x-status-badge tone="success">{{ __('ui.lineage_complete') }}</x-status-badge>
                 @else
                     <x-status-badge tone="warning">{{ __('ui.lineage_progress', ['done' => $complete, 'total' => $total]) }}</x-status-badge>
                 @endif
-            </header>
+            </x-slot:badge>
+        <section class="ba-lineage" aria-label="{{ __('ui.lineage_title') }}">
 
             <ol class="ba-lineage__rail">
                 @foreach ($steps as $step)
                     <li class="ba-lineage__step ba-lineage__step--{{ $step['state'] }}" @if ($step['state'] === 'current') aria-current="true" @endif>
                         @if ($step['state'] === 'done' && ! empty($step['link']['url']))
-                            <a class="ba-lineage__node" href="{{ $step['link']['url'] }}">
+                            <a class="ba-lineage__node js-open-modal" href="{{ $step['link']['url'] }}" data-modal-url="{{ $step['link']['modal_url'] ?? $step['link']['url'] }}" data-modal-nav="off">
                                 <span class="ba-lineage__level">{{ $step['level'] }} · {{ $step['name'] }}</span>
                                 <x-code-chip :code="$step['link']['code'] ?? null" />
                                 <span class="ba-lineage__title">{{ $step['link']['title'] ?? $step['link']['label'] ?? '' }}</span>
@@ -170,5 +129,5 @@
                 </section>
             @endif
         </div>
-    @endif
+        </x-section>
 @endif

@@ -48,8 +48,11 @@
     ])
 >
     <div @class(['kt-modal-header', 'shrink-0' => $useFlexShell])>
-        <h3 class="kt-modal-title">{{ $title }}</h3>
+        <h3 class="kt-modal-title min-w-0">{{ $title }}</h3>
         <div class="flex items-center gap-1.5 shrink-0">
+            @isset($actions)
+                <div class="flex items-center gap-1" data-modal-actions>{{ $actions }}</div>
+            @endisset
             <div
                 class="flex items-center gap-0.5 rounded-md border border-border p-0.5"
                 role="group"

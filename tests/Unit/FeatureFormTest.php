@@ -15,8 +15,8 @@ class FeatureFormTest extends TestCase
      */
     public function test_form_blades_render_change_request_field(): void
     {
-        $page = file_get_contents(dirname(__DIR__, 2).'/resources/views/pages/features/form.blade.php');
-        $modal = file_get_contents(dirname(__DIR__, 2).'/resources/views/pages/features/modals/form.blade.php');
+        $page = file_get_contents(dirname(__DIR__, 2).'/resources/views/pages/features/partials/form-content.blade.php');
+        $modal = file_get_contents(dirname(__DIR__, 2).'/resources/views/pages/features/partials/form-content.blade.php');
 
         $this->assertIsString($page);
         $this->assertIsString($modal);
@@ -71,8 +71,8 @@ class FeatureFormTest extends TestCase
 
     public function test_form_blades_use_half_width_for_non_gherkin_fields(): void
     {
-        $page = file_get_contents(dirname(__DIR__, 2).'/resources/views/pages/features/form.blade.php');
-        $modal = file_get_contents(dirname(__DIR__, 2).'/resources/views/pages/features/modals/form.blade.php');
+        $page = file_get_contents(dirname(__DIR__, 2).'/resources/views/pages/features/partials/form-content.blade.php');
+        $modal = file_get_contents(dirname(__DIR__, 2).'/resources/views/pages/features/partials/form-content.blade.php');
         $dtoSource = file_get_contents(dirname(__DIR__, 2).'/app/Data/FeatureData.php');
 
         $this->assertIsString($page);

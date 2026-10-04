@@ -16,16 +16,18 @@
         ->map(fn ($u) => '@'.\Illuminate\Support\Str::before((string) $u->name, ' '))->implode(', ');
 @endphp
 
-<section class="ba-comments" id="{{ $panelId }}" data-comments-panel data-csrf="{{ csrf_token() }}" aria-labelledby="{{ $panelId }}-title">
-    <header class="ba-comments__head">
-        <h3 id="{{ $panelId }}-title">{{ __('ui.comments_title') }}</h3>
-        <button type="button" class="ba-review__help ba-link-btn" data-help-url="{{ route('help.guide.show', 'collaboration') }}">{{ __('ui.review_how_it_works') }}</button>
+<x-section class="ba-comments-section" id="{{ $panelId }}" data-comments-panel data-csrf="{{ csrf_token() }}" :title="__('ui.comments_title')" icon="messages" key="comments">
+    <x-slot:badge>
         @if ($open->isNotEmpty())
             <x-status-badge tone="warning">{{ trans_choice('ui.comments_open_count', $open->count(), ['count' => $open->count()]) }}</x-status-badge>
         @elseif ($threads->isNotEmpty())
             <x-status-badge tone="success">{{ __('ui.comments_all_resolved') }}</x-status-badge>
         @endif
-    </header>
+    </x-slot:badge>
+    <x-slot:actions>
+        <button type="button" class="ba-review__help ba-link-btn" data-help-url="{{ route('help.guide.show', 'collaboration') }}">{{ __('ui.review_how_it_works') }}</button>
+    </x-slot:actions>
+    <div class="ba-comments">
 
     <form class="ba-comments__form" method="post" action="{{ $storeUrl }}" data-comments-form>
         @csrf
@@ -105,4 +107,5 @@
             </details>
         @endif
     @endforeach
-</section>
+    </div>
+</x-section>

@@ -9,6 +9,9 @@
 @endphp
 <div class="modal-header">
     <h3 class="modal-title">{{ $title }}</h3>
+    @isset($actions)
+        <div class="d-flex align-items-center gap-1 ms-auto me-2">{{ $actions }}</div>
+    @endisset
     <button type="button" class="btn btn-icon btn-sm btn-active-light-primary" data-bs-dismiss="modal" aria-label="Close">
         <i class="fa fa-times"></i>
     </button>

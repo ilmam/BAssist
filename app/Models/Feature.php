@@ -2,6 +2,9 @@
 
 namespace App\Models;
 
+use App\Attributes\Commentable;
+use App\Attributes\Tracked;
+use App\Attributes\Approvable;
 use App\Attributes\Attachable;
 use App\Attributes\Relation;
 use App\Attributes\RoutableAttribute;
@@ -17,6 +20,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[RoutableAttribute]
 #[Attachable]
+#[Commentable]
+#[Tracked]
+#[Approvable]
 class Feature extends BaseModel
 {
     use AppliesDefaultPriority;

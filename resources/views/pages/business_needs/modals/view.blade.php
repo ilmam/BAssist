@@ -2,19 +2,14 @@
     $modelName = class_basename($model);
 @endphp
 
-<x-modal-content :title="($dto->code ? $dto->code.' — ' : '').$dto->title">
+<x-record-view :model="$model" :dto="$dto" :in-modal="true">
     <div class="space-y-6">
         @include('pages.partials.spine-cascade', ['cascade' => $cascade ?? null, 'part' => 'before', 'inModal' => true])
         <x-details-view
             model="{{ $modelName }}"
             :dto="$dto"
-            :fields="$fields"
-        />
+            :fields="$fields">
         @include('pages.partials.spine-cascade', ['cascade' => $cascade ?? null, 'part' => 'after', 'inModal' => true])
+        </x-details-view>
     </div>
-
-    <x-slot:footer>
-        @include('pages.partials.modal-record-nav')
-        <x-modal-dismiss text="Close" />
-    </x-slot:footer>
-</x-modal-content>
+</x-record-view>

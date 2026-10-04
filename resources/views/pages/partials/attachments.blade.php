@@ -24,7 +24,7 @@
 @if ($showPanel)
     <div class="entity-attachments space-y-2" data-entity-attachments data-attachments-field="{{ $fieldName }}">
         @if (! $isField)
-            <h3 class="text-base font-semibold text-foreground">{{ __('ui.attachments') }}</h3>
+            <h3 class="ba-subheading"><i class="ki-filled ki-paper-clip" aria-hidden="true"></i>{{ __('ui.attachments') }} <span>{{ trans_choice('ui.section_files', count($attachments), ['count' => count($attachments)]) }}</span></h3>
         @endif
         @if ($isField && $canUpdate)
             <input

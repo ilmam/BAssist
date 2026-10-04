@@ -5,16 +5,7 @@
         $modelName = class_basename($model);
     @endphp
 
-    <x-card :title="$modelName.' Details'">
-        <x-slot:toolbar>
-            @if (entity_can($model, 'update'))
-                <x-button type="link" href="{{ model_route($model, 'edit', $dto->id) }}" icon="pencil" iconOnly="true" color="primary" activeColor="primary"></x-button>
-            @endif
-            @if (entity_can($model, 'delete'))
-                <x-button type="link" href="{{ model_modal_path($model, 'delete', $dto->id) }}" icon="trash" iconOnly="true" color="danger" activeColor="warning" class="ms-1 js-open-modal" data-modal-url="{{ model_modal_path($model, 'delete', $dto->id) }}"></x-button>
-            @endif
-        </x-slot>
-
+    <x-record-view :model="$model" :dto="$dto" :page-only="true">
         @include('pages.data_dictionaries.partials.view-content', [
             'dto' => $dto,
             'model' => $model,
@@ -25,12 +16,5 @@
             'exportCsharpUrl' => $exportCsharpUrl ?? null,
             'exportPhpUrl' => $exportPhpUrl ?? null,
         ])
-
-        <x-slot:footer>
-            <x-button type="link" href="{{ model_route($model, 'index') }}" color="outline">Back to list</x-button>
-            @if (entity_can($model, 'update'))
-                <x-button type="link" href="{{ model_route($model, 'edit', $dto->id) }}" color="primary">Edit</x-button>
-            @endif
-        </x-slot:footer>
-    </x-card>
+    </x-record-view>
 @endsection

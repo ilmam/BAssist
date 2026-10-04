@@ -26,7 +26,7 @@ class RolePermissionSync
             $canUpdate = filter_var($flags['update'] ?? false, FILTER_VALIDATE_BOOL);
             $canDelete = filter_var($flags['delete'] ?? false, FILTER_VALIDATE_BOOL);
             $canApprove = filter_var($flags['approve'] ?? false, FILTER_VALIDATE_BOOL)
-                && in_array($entity, \App\Services\ApprovalService::APPROVABLE, true);
+                && EntityFeatures::approvable($entity);
 
             if (! $canView && ! $canCreate && ! $canUpdate && ! $canDelete && ! $canApprove) {
                 $role->entityPermissions()->where('entity', $entity)->delete();

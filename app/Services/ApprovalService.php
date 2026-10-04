@@ -20,9 +20,6 @@ use Illuminate\Validation\ValidationException;
  */
 class ApprovalService
 {
-    /** Items that go through review. Change requests keep their own approve-and-taint flow. */
-    public const APPROVABLE = ['StakeholderNeed', 'Feature', 'FunctionalRequirement', 'NonFunctionalRequirement'];
-
     /** Columns whose change does NOT reset an approval (workflow / bookkeeping, not content). */
     protected const NON_CONTENT = [
         'status_id', 'priority_id', 'number', 'project_id', 'workspace_id', 'tenant_id',
@@ -31,7 +28,7 @@ class ApprovalService
 
     public static function supports(string $model): bool
     {
-        return in_array($model, self::APPROVABLE, true) && array_key_exists($model, CrudEntityRegistry::all());
+        return \App\Support\EntityFeatures::approvable($model) && array_key_exists($model, CrudEntityRegistry::all());
     }
 
     public static function supportsRecord(Model $record): bool
@@ -139,7 +136,7 @@ class ApprovalService
         $deprecated = EntityStatus::id(EntityStatus::DEPRECATED);
         $items = collect();
 
-        foreach (self::APPROVABLE as $model) {
+        foreach (\App\Support\EntityFeatures::models(\App\Attributes\Approvable::class) as $model) {
             if (! $this->canApprove($model)) {
                 continue;
             }

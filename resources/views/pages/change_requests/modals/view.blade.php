@@ -2,7 +2,7 @@
     $modelName = class_basename($model);
 @endphp
 
-<x-modal-content :title="($dto->code ? $dto->code.' — ' : '').$dto->title">
+<x-record-view :model="$model" :dto="$dto" :in-modal="true">
     <x-details-view
         model="{{ $modelName }}"
         :dto="$dto"
@@ -12,7 +12,6 @@
     @include('pages.change_requests.partials.cascade', ['cascade' => $cascade ?? []])
 
     <x-slot:footer>
-        @include('pages.partials.modal-record-nav')
         @if (! empty($canApprove) && ! empty($approveUrl))
             <x-button
                 type="link"
@@ -22,6 +21,5 @@
                 data-modal-url="{{ $approveUrl }}"
             >{{ __('ui.change_request_approve_taint') }}</x-button>
         @endif
-        <x-modal-dismiss text="Close" />
     </x-slot:footer>
-</x-modal-content>
+</x-record-view>

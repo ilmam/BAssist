@@ -49,7 +49,7 @@
                                 </td>
                             @endforeach
                             <td class="text-center">
-                                @if (in_array($model, \App\Services\ApprovalService::APPROVABLE, true))
+                                @if (\App\Support\EntityFeatures::approvable($model))
                                     <input
                                         type="checkbox"
                                         name="permissions[{{ $model }}][approve]"

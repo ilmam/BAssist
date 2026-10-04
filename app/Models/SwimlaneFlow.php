@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Attributes\Commentable;
+use App\Attributes\Tracked;
 use App\Attributes\Relation;
 use App\Attributes\RoutableAttribute;
 use App\Models\Concerns\BelongsToTenant;
@@ -12,6 +14,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[RoutableAttribute]
+#[Commentable]
+#[Tracked]
 class SwimlaneFlow extends BaseModel
 {
     use BelongsToTenant;

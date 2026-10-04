@@ -39,7 +39,7 @@ class ModalRecordNavTest extends TestCase
     #[Test]
     public function default_view_modal_includes_record_nav_mount(): void
     {
-        $contents = file_get_contents(resource_path('views/pages/modals/view.blade.php'));
+        $contents = file_get_contents(resource_path('views/components/record-view.blade.php'));
 
         $this->assertNotFalse($contents);
         $this->assertStringContainsString("@include('pages.partials.modal-record-nav')", $contents);

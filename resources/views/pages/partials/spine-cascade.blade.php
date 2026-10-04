@@ -137,10 +137,15 @@
                 }
             @endphp
             @if ($canAddSingle || $addActions !== [] || $canView)
-                <section class="space-y-3" data-spine-cascade-group="{{ $group['key'] }}">
-                    <div class="flex flex-wrap items-start justify-between gap-3">
-                        <h3 class="text-base font-semibold text-foreground">{{ $group['heading'] }}</h3>
-                        @if (count($addActions) > 1)
+                <x-section :title="$group['heading']" icon="{{ $group['icon'] ?? 'element-11' }}" :meta="$canView ? (string) count($visibleItems) : null" data-spine-cascade-group="{{ $group['key'] }}" key="related-{{ $group['key'] }}">
+                    @if (count($addActions) === 1 || ($addActions === [] && $canAddSingle))
+                        @php $add = $addActions[0] ?? ['url' => $group['add_url'], 'label' => $group['add_label']]; @endphp
+                        <x-slot:actions>
+                            <a href="{{ $add['url'] }}" class="{{ ui_btn_classes('outline', 'sm') }} js-open-modal" data-modal-url="{{ $add['url'] }}"><i class="ki-filled ki-plus"></i>{{ $add['label'] }}</a>
+                        </x-slot:actions>
+                    @endif
+                    @if (count($addActions) > 1)
+                        <div class="flex justify-end mb-3">
                             <details class="spine-cascade-add">
                                 <summary>
                                     {{ __('ui.cascade_add') }}
@@ -156,25 +161,8 @@
                                     @endforeach
                                 </div>
                             </details>
-                        @elseif (count($addActions) === 1)
-                            <x-button
-                                type="link"
-                                href="{{ $addActions[0]['url'] }}"
-                                color="primary"
-                                size="sm"
-                                class="js-open-modal"
-                                data-modal-url="{{ $addActions[0]['url'] }}"
-                            >{{ $addActions[0]['label'] }}</x-button>
-                        @elseif ($canAddSingle)
-                            <x-button
-                                type="link"
-                                href="{{ $group['add_url'] }}"
-                                color="primary"
-                                class="js-open-modal"
-                                data-modal-url="{{ $group['add_url'] }}"
-                            >{{ $group['add_label'] }}</x-button>
-                        @endif
-                    </div>
+                        </div>
+                    @endif
                     @if ($canView && $visibleItems !== [])
                         <ul class="divide-y divide-border rounded-lg border border-border">
                             @foreach ($visibleItems as $item)
@@ -203,7 +191,7 @@
                     @elseif ($canAddSingle || $addActions !== [] || $canView)
                         <p class="text-sm text-muted-foreground">{{ $group['empty'] }}</p>
                     @endif
-                </section>
+                </x-section>
             @endif
         @endforeach
     @endif

@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Attributes\Commentable;
+use App\Attributes\Tracked;
 use App\Attributes\Relation;
 use App\Attributes\RoutableAttribute;
 use App\Models\Concerns\AppliesDefaultPriority;
@@ -14,6 +16,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[RoutableAttribute]
+#[Commentable]
+#[Tracked]
 class ChangeRequest extends BaseModel
 {
     use AppliesDefaultPriority;

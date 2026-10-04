@@ -17,11 +17,7 @@
     };
 @endphp
 
-<details class="ba-history">
-    <summary>
-        <span class="ba-history__title">{{ __('ui.history_title') }}</span>
-        <span class="ba-history__count">{{ trans_choice('ui.history_count', $history->count(), ['count' => $history->count()]) }}</span>
-    </summary>
+<x-section class="ba-history" :title="__('ui.history_title')" icon="time" :meta="trans_choice('ui.history_count', $history->count(), ['count' => $history->count()])" :open="false" key="history">
     @if ($history->isEmpty())
         <p class="ba-comments__empty">{{ __('ui.history_empty') }}</p>
     @else
@@ -52,4 +48,4 @@
             @endforeach
         </ol>
     @endif
-</details>
+</x-section>

@@ -4,7 +4,7 @@
     $gap = (bool) ($dto->has_coverage_gap ?? false);
 @endphp
 
-<x-modal-content :title="$modelName.' Details'">
+<x-record-view :model="$model" :dto="$dto" :in-modal="true">
     @if ($critical || $gap)
         <div class="risk-alert risk-alert--{{ $gap ? 'gap' : 'critical' }} mb-5">
             @if ($critical)
@@ -22,9 +22,4 @@
         :dto="$dto"
         :fields="$fields"
     />
-
-    <x-slot:footer>
-        @include('pages.partials.modal-record-nav')
-        <x-modal-dismiss text="Close" />
-    </x-slot:footer>
-</x-modal-content>
+</x-record-view>

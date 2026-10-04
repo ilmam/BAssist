@@ -17,14 +17,14 @@
         model="{{ $modelName }}"
         :dto="$dto"
         :fields="$fields"
-        :columns="2"
-    />
+        :columns="2">
 
     @include('pages.partials.spine-cascade', [
         'cascade' => $cascade ?? null,
         'part' => 'after',
         'inModal' => $inModal ?? false,
     ])
+    </x-details-view>
 
     {{-- Feature-specific actions (copy / download live on the Gherkin chrome inside View raw) --}}
     <div class="flex flex-wrap gap-2">

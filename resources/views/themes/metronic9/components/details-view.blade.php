@@ -2,7 +2,12 @@
     use App\Helpers\Ui;
 @endphp
 
-<div class="space-y-6">
+<div class="ba-sections">
+@if ($review !== null)
+    @include('pages.partials.review-bar', ['reviewModel' => $model, 'reviewRecordId' => (int) ($dto->id ?? 0), 'review' => $review])
+@endif
+
+<x-section :title="__('ui.section_details')" icon="document" key="details">
 <div @class([
     'grid gap-x-6 gap-y-4',
     'grid-cols-1' => $columns <= 1,
@@ -26,16 +31,15 @@
     @endforeach
 </div>
 
+<div class="ba-section__sub">
 @include('pages.partials.attachments', [
     'model' => $model,
     'recordId' => (int) ($dto->id ?? 0),
     'attachments' => $attachmentRecords ?? [],
     'mode' => 'details',
 ])
-
-@if ($review !== null)
-    @include('pages.partials.review-bar', ['reviewModel' => $model, 'reviewRecordId' => (int) ($dto->id ?? 0), 'review' => $review])
-@endif
+</div>
+</x-section>
 
 @if ($commentThreads !== null)
     @include('pages.partials.comments', [
@@ -49,4 +53,6 @@
 @if ($history !== null)
     @include('pages.partials.history', ['history' => $history])
 @endif
+{{-- Related records (children, linked items) passed by the entity view come last: everything above is about this record only. --}}
+{{ $slot ?? '' }}
 </div>

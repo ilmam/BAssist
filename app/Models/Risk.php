@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Attributes\Commentable;
+use App\Attributes\Tracked;
 use App\Attributes\Relation;
 use App\Attributes\RoutableAttribute;
 use App\Models\Concerns\BelongsToTenant;
@@ -17,6 +19,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 #[RoutableAttribute]
+#[Commentable]
+#[Tracked]
 class Risk extends BaseModel
 {
     use BelongsToTenant;

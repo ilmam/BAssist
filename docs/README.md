@@ -22,14 +22,30 @@ Then only as needed:
 | Who can see which records (tenants), adding a tenant-owned entity | [tenancy.md](tenancy.md) |
 | How saves are validated, declaring special validation rules | [validation.md](validation.md) |
 
+## Optional framework features (reusable)
+
+Part of the framework: a new project gets them without writing code. Each is switched on per entity.
+
+| Feature | Switch on with | Doc |
+|---------|----------------|-----|
+| File attachments | `#[Attachable]` + `HasAttachments` on the model | [attributes.md](attributes.md) |
+| Comments (threads, @mentions, resolve) | `#[Commentable]` on the model | [collaboration.md](collaboration.md) |
+| History (who changed what, old → new) | `#[Tracked]` on the model | [collaboration.md](collaboration.md) |
+| Review (Approve / Request changes) | `#[Approvable]` on the model | [collaboration.md](collaboration.md) |
+| Same screen as page and pop-up, collapsible sections | `<x-record-view>`, `<x-record-form>`, `<x-section>` | [ux-features.md](ux-features.md#page-and-pop-up-are-the-same-screen) |
+| Pinned list columns, status badges, code chips, empty states, quick edit, Ctrl+K | automatic in the datatable / layout | [ux-features.md](ux-features.md) |
+
+**Not yet portable — read before copying to another project:** comments and review still carry two BAssist assumptions (a `projects` table, BABOK status names). See "What is framework and what is BAssist" in [collaboration.md](collaboration.md).
+
 ## Application features (BAssist-specific)
 
-These are not part of the reusable CRUD framework; read them when working on BAssist's own screens.
+These are not part of the reusable CRUD framework; they only make sense for a BABOK tool.
 
 | When | Doc |
 |------|-----|
-| Home page, readiness panel, badges / chips / empty states, lineage rail, traceability graph, Ctrl+K and list power tools | [ux-features.md](ux-features.md) |
-| Comments, approvals (review), history, and how they print in the BABOK documents | [collaboration.md](collaboration.md) |
+| Home page, readiness panel, lineage rail, traceability graph | [ux-features.md](ux-features.md) |
+| Comments and sign-offs printed in the BABOK documents / PDF export | [collaboration.md](collaboration.md) |
+| Calling BAssist from another program: API tokens, readiness / traceability / lineage / Gherkin endpoints, adding an endpoint | [api-platform.md](api-platform.md) |
 
 ## Words used everywhere
 

@@ -149,6 +149,7 @@
                         @if ($dataField !== null && $dataField === 'code')
                             {
                                 data: 'code',
+                                className: 'ba-col-code',
                                 render: function(data, type, row) {
                                     if (type !== 'display') {
                                         return data;
@@ -187,6 +188,9 @@
                                 searchable: false,
                                 data: null,
                                 defaultContent: '',
+                                @if (is_array($col) && array_key_exists('buttons', $col) && $loop->last)
+                                    className: 'ba-col-actions',
+                                @endif
                                 render: function(data, type, row, meta) {
                                     @if (is_array($col) && array_key_exists('buttons', $col))
                                         var str = {!! json_encode(\App\Helpers\Ui::TableActionCol($col['buttons'], (bool) ($col['collapsed'] ?? false))) !!};

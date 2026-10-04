@@ -1,8 +1,10 @@
 @php
     $modelName = class_basename($model);
+    $backUrl = ! empty($scenario->feature_id) ? model_route('Feature', 'show', $scenario->feature_id) : null;
+    $backLabel = ! empty($scenario->feature_id) ? __('ui.back_to_feature') : null;
 @endphp
 
-<x-modal-content :title="$scenario->gherkinKeyword().': '.$dto->title" size="full">
+<x-record-view :model="$model" :dto="$dto" :title="$scenario->gherkinKeyword().': '.$dto->title" :back-url="$backUrl" :back-label="$backLabel" :in-modal="true" size="full">
     @include('pages.scenarios.partials.view-content', [
         'dto' => $dto,
         'model' => $model,
@@ -13,18 +15,4 @@
         'cascade' => $cascade ?? null,
         'inModal' => true,
     ])
-
-    <x-slot:footer>
-        @include('pages.partials.modal-record-nav')
-        @if (entity_can($model, 'update'))
-            <x-button
-                type="link"
-                href="{{ model_modal_path($model, 'edit', $dto->id) }}"
-                color="primary"
-                class="js-open-modal"
-                data-modal-url="{{ model_modal_path($model, 'edit', $dto->id) }}"
-            >{{ __('ui.edit') }}</x-button>
-        @endif
-        <x-modal-dismiss text="Close" />
-    </x-slot:footer>
-</x-modal-content>
+</x-record-view>
