@@ -29,6 +29,7 @@ return [
         ['key' => 'features', 'label' => 'Features (BDD)'],
         ['key' => 'traceability', 'label' => 'Traceability'],
         ['key' => 'acceptance_plan', 'label' => 'Acceptance Plan'],
+        ['key' => 'collaboration', 'label' => 'Collaboration: Comments, Review & History'],
     ],
 
 ];

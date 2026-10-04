@@ -108,6 +108,17 @@
             @endif
         </x-card>
 
+        @if ($reviews->isNotEmpty())
+            <x-card :title="__('ui.home_reviews_title')">
+                <p class="text-sm text-muted-foreground mb-2">{{ __('ui.home_reviews_hint') }}</p>
+                <ul class="ba-item-list">
+                    @foreach ($reviews as $item)
+                        @include('pages.partials.home-item-row', ['item' => $item])
+                    @endforeach
+                </ul>
+            </x-card>
+        @endif
+
         @if ($mentions->isNotEmpty())
             <x-card :title="__('ui.home_mentions_title')">
                 <ul class="ba-item-list">

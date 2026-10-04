@@ -89,6 +89,8 @@ class HomeController extends Controller
             'kpis' => $this->kpis($projectTotal, $canProjects),
             'awaiting' => $this->awaitingDecision(),
             'activity' => $this->recentActivity(),
+            'reviews' => app(\App\Services\ApprovalService::class)->awaitingReview()
+                ->map(fn (Model $m) => $this->row(class_basename($m), $m)),
             'mentions' => auth()->user() ? app(\App\Services\CommentService::class)->mentionsFor(auth()->user()) : collect(),
         ]);
     }

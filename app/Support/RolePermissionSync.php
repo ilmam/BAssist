@@ -25,8 +25,10 @@ class RolePermissionSync
             $canCreate = filter_var($flags['create'] ?? false, FILTER_VALIDATE_BOOL);
             $canUpdate = filter_var($flags['update'] ?? false, FILTER_VALIDATE_BOOL);
             $canDelete = filter_var($flags['delete'] ?? false, FILTER_VALIDATE_BOOL);
+            $canApprove = filter_var($flags['approve'] ?? false, FILTER_VALIDATE_BOOL)
+                && in_array($entity, \App\Services\ApprovalService::APPROVABLE, true);
 
-            if (! $canView && ! $canCreate && ! $canUpdate && ! $canDelete) {
+            if (! $canView && ! $canCreate && ! $canUpdate && ! $canDelete && ! $canApprove) {
                 $role->entityPermissions()->where('entity', $entity)->delete();
 
                 continue;
@@ -42,13 +44,14 @@ class RolePermissionSync
                     'can_create' => $canCreate,
                     'can_update' => $canUpdate,
                     'can_delete' => $canDelete,
+                    'can_approve' => $canApprove,
                 ],
             );
         }
     }
 
     /**
-     * @return array<string, array{view: bool, create: bool, update: bool, delete: bool}>
+     * @return array<string, array{view: bool, create: bool, update: bool, delete: bool, approve: bool}>
      */
     public static function matrixFor(Role $role): array
     {
@@ -62,6 +65,7 @@ class RolePermissionSync
                 'create' => (bool) ($permission?->can_create ?? false),
                 'update' => (bool) ($permission?->can_update ?? false),
                 'delete' => (bool) ($permission?->can_delete ?? false),
+                'approve' => (bool) ($permission?->can_approve ?? false),
             ];
         }
 

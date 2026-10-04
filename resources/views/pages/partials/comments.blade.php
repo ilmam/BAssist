@@ -19,6 +19,7 @@
 <section class="ba-comments" id="{{ $panelId }}" data-comments-panel data-csrf="{{ csrf_token() }}" aria-labelledby="{{ $panelId }}-title">
     <header class="ba-comments__head">
         <h3 id="{{ $panelId }}-title">{{ __('ui.comments_title') }}</h3>
+        <button type="button" class="ba-review__help ba-link-btn" data-help-url="{{ route('help.guide.show', 'collaboration') }}">{{ __('ui.review_how_it_works') }}</button>
         @if ($open->isNotEmpty())
             <x-status-badge tone="warning">{{ trans_choice('ui.comments_open_count', $open->count(), ['count' => $open->count()]) }}</x-status-badge>
         @elseif ($threads->isNotEmpty())

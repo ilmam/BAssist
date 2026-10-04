@@ -96,7 +96,7 @@
             });
         })();
     </script>
-    @vite(['resources/js/form-safety.js', 'resources/js/state-flow-diagram.js', 'resources/js/swimlane-flow-diagram.js', 'resources/js/architecture-c4-diagram.js', 'resources/js/data-dictionary-diagram.js', 'resources/js/code-editor.js', 'resources/js/command-palette.js', 'resources/js/comments.js'])
+    @vite(['resources/js/form-safety.js', 'resources/js/state-flow-diagram.js', 'resources/js/swimlane-flow-diagram.js', 'resources/js/architecture-c4-diagram.js', 'resources/js/data-dictionary-diagram.js', 'resources/js/code-editor.js', 'resources/js/command-palette.js', 'resources/js/comments.js', 'resources/js/review.js'])
     @stack('scripts')
     <script>
         let modalReturnUrl = null;

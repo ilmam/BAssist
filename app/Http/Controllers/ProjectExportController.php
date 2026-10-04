@@ -29,6 +29,7 @@ class ProjectExportController extends Controller
         app()->instance(PrintComments::class, new PrintComments(
             $includeComments,
             $includeComments ? app(CommentService::class)->openThreadsForProject($project) : [],
+            app(\App\Services\ApprovalService::class)->currentForProject($project),
         ));
         $pack['includeComments'] = $includeComments;
 

@@ -20,6 +20,12 @@ class DetailsView extends Component
 
     public ?\Illuminate\Support\Collection $mentionUsers = null;
 
+    /** Review state (#8) for approvable items; null = no review bar. */
+    public ?array $review = null;
+
+    /** History entries (#8); null = no history panel. */
+    public ?\Illuminate\Support\Collection $history = null;
+
     public function __construct(
         public string $model,
         public object $dto,
@@ -37,6 +43,19 @@ class DetailsView extends Component
             $this->mentionUsers = $comments->tenantUsers();
             if (auth()->user() !== null) {
                 $comments->markMentionsSeen($record, auth()->user());
+            }
+        }
+
+        if (CommentService::supports($model) && isset($record)) {
+            $this->history = app(\App\Services\ActivityRecorder::class)->historyFor($record);
+
+            if (\App\Services\ApprovalService::supports($model)) {
+                $approvals = app(\App\Services\ApprovalService::class);
+                $this->review = [
+                    'current' => $approvals->current($record),
+                    'reset' => $approvals->lastReset($record),
+                    'canApprove' => $approvals->canApprove($model),
+                ];
             }
         }
     }

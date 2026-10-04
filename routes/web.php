@@ -16,6 +16,7 @@ use App\Http\Controllers\HelpGuideController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProjectDashboardController;
 use App\Http\Controllers\QuickActionsController;
+use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\ProjectExportController;
 use App\Http\Controllers\QuickGuideController;
 use App\Http\Controllers\SolutionRequirementsController;
@@ -35,6 +36,8 @@ Route::middleware('auth')->group(function (): void {
     Route::post('comments/{model}/{id}', [CommentController::class, 'store'])->whereNumber('id')->name('comments.store');
     Route::post('comments/{comment}/resolve', [CommentController::class, 'resolve'])->name('comments.resolve');
     Route::delete('comments/{comment}', [CommentController::class, 'destroy'])->name('comments.destroy');
+    Route::post('review/{model}/{id}/approve', [ReviewController::class, 'approve'])->whereNumber('id')->name('review.approve');
+    Route::post('review/{model}/{id}/request-changes', [ReviewController::class, 'requestChanges'])->whereNumber('id')->name('review.changes');
 
     Route::get('help/guide', [HelpGuideController::class, 'index'])->name('help.guide');
     Route::get('help/guide/{key}', [HelpGuideController::class, 'show'])->name('help.guide.show');

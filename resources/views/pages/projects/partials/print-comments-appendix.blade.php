@@ -46,3 +46,42 @@
         </table>
     </section>
 @endif
+
+@php $signoffs = app(\App\Support\PrintComments::class)->signoffs(); @endphp
+@if ($signoffs !== [])
+    @php
+        $approvedCount = collect($signoffs)->filter(fn ($r) => $r['approval']?->isApproved())->count();
+    @endphp
+    <section class="print-appendix">
+        <header class="section-banner section-banner--break">
+            <h2 class="section-title" style="margin-bottom: 0;">{{ __('ui.review_signoff_title') }}</h2>
+        </header>
+        <p class="muted">{{ __('ui.review_signoff_intro', ['approved' => $approvedCount, 'total' => count($signoffs)]) }}</p>
+        <table class="print-appendix__table">
+            <thead>
+                <tr>
+                    <th>{{ __('ui.comments_appendix_item') }}</th>
+                    <th>{{ __('ui.review_signoff_decision') }}</th>
+                    <th>{{ __('ui.review_signoff_by') }}</th>
+                    <th>{{ __('ui.review_signoff_date') }}</th>
+                    <th>{{ __('ui.review_signoff_note') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach ($signoffs as $row)
+                    @php $sig = $row['approval']; $item = $row['item']; @endphp
+                    <tr>
+                        <td>
+                            @if ($item->getAttribute('code'))<span class="artifact__code">{{ $item->getAttribute('code') }}</span>@endif
+                            {{ $item->getAttribute('title') }}
+                        </td>
+                        <td>{{ $sig ? ($sig->isApproved() ? __('ui.review_state_approved') : __('ui.review_state_changes')) : __('ui.review_state_none') }}</td>
+                        <td>{{ $sig?->user?->name ?? '—' }}</td>
+                        <td>{{ $sig?->created_at?->format('Y-m-d') ?? '—' }}</td>
+                        <td>{{ $sig?->note ?? '' }}</td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </section>
+@endif

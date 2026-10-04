@@ -33,6 +33,10 @@
     'mode' => 'details',
 ])
 
+@if ($review !== null)
+    @include('pages.partials.review-bar', ['reviewModel' => $model, 'reviewRecordId' => (int) ($dto->id ?? 0), 'review' => $review])
+@endif
+
 @if ($commentThreads !== null)
     @include('pages.partials.comments', [
         'commentModel' => $model,
@@ -40,5 +44,9 @@
         'threads' => $commentThreads,
         'mentionUsers' => $mentionUsers,
     ])
+@endif
+
+@if ($history !== null)
+    @include('pages.partials.history', ['history' => $history])
 @endif
 </div>

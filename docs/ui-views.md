@@ -8,6 +8,8 @@ How list, form, details, and modals are organized. **New to this layer?** Add an
 2. **Most entities need no Blade files.** Shared `pages/generic/*` is enough. Drop a file under `pages/{resource}/` only when the generic screen is wrong.
 3. **Full page and modal are two wrappers around the same form.** Virtual entities use `$formFields`. Hybrid entities use `Form::field(...)` lines — refresh with `entity:materialize-form {Model}`.
 
+Shared UI pieces added later (status badges, code chips, empty states, progress rings, list quick-edit) are described in [ux-features.md](ux-features.md).
+
 The rest of this page is a reference. Skip **Record Prev/Next** and **Container-relative layout** until you need them.
 
 `{Model}` = StudlyCase class. `{resource}` = plural snake_case folder (`Invoice` → `invoices`).

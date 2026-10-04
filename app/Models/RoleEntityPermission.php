@@ -14,6 +14,7 @@ class RoleEntityPermission extends Model
         'can_create',
         'can_update',
         'can_delete',
+        'can_approve',
     ];
 
     protected function casts(): array
@@ -23,6 +24,7 @@ class RoleEntityPermission extends Model
             'can_create' => 'boolean',
             'can_update' => 'boolean',
             'can_delete' => 'boolean',
+            'can_approve' => 'boolean',
         ];
     }
 

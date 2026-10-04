@@ -21,3 +21,16 @@
         @endforeach
     </aside>
 @endif
+@php $printSignoff = $printComments->signoff($item ?? null); @endphp
+@if ($printSignoff !== null)
+    @php $sig = $printSignoff['approval']; @endphp
+    <p class="print-signoff print-signoff--{{ $sig ? ($sig->isApproved() ? 'approved' : 'changes') : 'pending' }}">
+        @if ($sig && $sig->isApproved())
+            ✓ {{ __('ui.review_print_approved', ['name' => $sig->user?->name ?? '—', 'date' => $sig->created_at?->format('Y-m-d')]) }}
+        @elseif ($sig)
+            ✗ {{ __('ui.review_print_changes', ['name' => $sig->user?->name ?? '—', 'date' => $sig->created_at?->format('Y-m-d')]) }}
+        @else
+            ○ {{ __('ui.review_print_pending') }}
+        @endif
+    </p>
+@endif

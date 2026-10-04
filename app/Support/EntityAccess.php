@@ -19,6 +19,9 @@ class EntityAccess
 
     public const DELETE = 'delete';
 
+    /** Sign off requirement-level items (BABOK 5.5). Separate from update on purpose. */
+    public const APPROVE = 'approve';
+
     public static function can(?User $user, string $entity, string $ability): bool
     {
         if ($user === null) {
@@ -42,6 +45,7 @@ class EntityAccess
             self::CREATE => $permission->can_create,
             self::UPDATE => $permission->can_update,
             self::DELETE => $permission->can_delete,
+            self::APPROVE => (bool) ($permission->can_approve ?? false),
             default => $permission->can_view,
         };
     }

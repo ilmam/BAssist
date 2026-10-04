@@ -437,6 +437,10 @@
         .print-appendix__table th, .print-appendix__table td { border: 1px solid #e5e7eb; padding: 6px 8px; vertical-align: top; text-align: left; }
         .print-appendix__table th { background: #f8fafc; font-weight: 600; }
         .print-appendix__table tr { break-inside: avoid; }
+        .print-signoff { float: right; margin: .1rem 0 .25rem 1rem; font: 600 11.5px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif; }
+        .print-signoff--approved { color: #15803d; }
+        .print-signoff--changes { color: #b91c1c; }
+        .print-signoff--pending { color: #6b7280; font-weight: 500; }
         .ba-mention { font-weight: 600; color: #1b84ff; }
         .print-btn--on { border-color: #d97706 !important; color: #92400e !important; background: #fffbeb !important; }
     </style>

@@ -22,6 +22,15 @@ Then only as needed:
 | Who can see which records (tenants), adding a tenant-owned entity | [tenancy.md](tenancy.md) |
 | How saves are validated, declaring special validation rules | [validation.md](validation.md) |
 
+## Application features (BAssist-specific)
+
+These are not part of the reusable CRUD framework; read them when working on BAssist's own screens.
+
+| When | Doc |
+|------|-----|
+| Home page, readiness panel, badges / chips / empty states, lineage rail, traceability graph, Ctrl+K and list power tools | [ux-features.md](ux-features.md) |
+| Comments, approvals (review), history, and how they print in the BABOK documents | [collaboration.md](collaboration.md) |
+
 ## Words used everywhere
 
 | Term | Meaning |
