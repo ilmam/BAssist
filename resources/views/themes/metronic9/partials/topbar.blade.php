@@ -39,6 +39,9 @@
                 <i class="ki-filled ki-down text-xs text-muted-foreground"></i>
             </button>
             <div class="kt-dropdown-menu min-w-[160px]" data-kt-dropdown-menu="true">
+                <a href="{{ route('profile.api-tokens.index') }}" class="kt-dropdown-menu-link w-full text-start">
+                    {{ __('ui.api_tokens') }}
+                </a>
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
                     <button type="submit" class="kt-dropdown-menu-link w-full text-start" data-kt-dropdown-dismiss="true">

@@ -3,6 +3,7 @@
 use App\Http\Controllers\AcceptancePlanController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\ApiTokenController;
 use App\Http\Controllers\ArchitectureController;
 use App\Http\Controllers\BabokDocumentController;
 use App\Http\Controllers\ChangeRequestController;
@@ -38,6 +39,11 @@ Route::middleware('auth')->group(function (): void {
     Route::delete('comments/{comment}', [CommentController::class, 'destroy'])->name('comments.destroy');
     Route::post('review/{model}/{id}/approve', [ReviewController::class, 'approve'])->whereNumber('id')->name('review.approve');
     Route::post('review/{model}/{id}/request-changes', [ReviewController::class, 'requestChanges'])->whereNumber('id')->name('review.changes');
+
+    // Personal API tokens (see docs/api-platform.md).
+    Route::get('profile/api-tokens', [ApiTokenController::class, 'index'])->name('profile.api-tokens.index');
+    Route::post('profile/api-tokens', [ApiTokenController::class, 'store'])->name('profile.api-tokens.store');
+    Route::delete('profile/api-tokens/{token}', [ApiTokenController::class, 'destroy'])->whereNumber('token')->name('profile.api-tokens.destroy');
 
     Route::get('help/guide', [HelpGuideController::class, 'index'])->name('help.guide');
     Route::get('help/guide/{key}', [HelpGuideController::class, 'show'])->name('help.guide.show');
