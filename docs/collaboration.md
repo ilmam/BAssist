@@ -69,6 +69,29 @@ Comments can also be posted and read through the MCP endpoint (`add-comment`, `l
 
 - **`comments.via`** records the channel a comment came through (null for the web UI, `api`, `mcp`), set from `RequestChannel` in `CommentService::add()`. The panel shows "(via AI assistant)" next to the author.
 - **`Project` is `#[Commentable]`**, so a project-wide remark has a home. `CommentService::projectIdOf()` returns the project's own id for it.
-- **Readiness** has an "Open comment threads" check (`open_comment_threads`, warning, Governance folder), and `ProjectInsightsService::lineage()` returns `open_comments` for the record.
+- **Readiness** tracks every thread that is not closed, in three lines by who has to act (see below), and `ProjectInsightsService::lineage()` returns `open_comments` (open plus answered) for the record.
 
-`CommentService::listThreads()` and `threadToArray()` are the read side for callers outside the web UI. Resolving a thread is only possible from the web UI.
+`CommentService::listThreads()` and `threadToArray()` are the read side for callers outside the web UI.
+
+## Thread statuses
+
+A thread is `open`, `answered`, `implemented` or `closed` (`App\Support\CommentStatus`, column `comments.status` on the thread row; replies leave it null). The status says who has to act next: an analyst answers an open thread, the decision of an answered thread gets applied, an analyst verifies an implemented one and closes it.
+
+| Piece | Where |
+|---|---|
+| Constants, `ACTIVE`, `BLOCKING`, badge tone | `app/Support/CommentStatus.php` |
+| Transitions | `CommentService::add()` (new thread, replies), `markImplemented()`, `setResolved()` |
+| Counts per status | `CommentService::statusCounts()` |
+| Columns `status`, `implemented_at`, `implemented_by` and the backfill | `2026_10_05_140000_add_status_to_comments.php` |
+| Route `comments.implemented` | `CommentController::implemented()` |
+
+Rules:
+
+- A reply from a person sets the thread to `answered`, also when it was implemented or closed. That is how an analyst sends work back: reply, and it is waiting for implementation again.
+- A reply through the MCP channel does not change the status (except that it reopens a closed thread), so an assistant's question is never mistaken for an answer.
+- **Mark implemented** needs update permission on the record's entity. **Close** needs the approve permission, because closing is a sign-off. Before this change anyone who could comment could resolve; users without approve can no longer close threads.
+- `resolved_at` / `resolved_by` are still written on close, so older code that reads them keeps working. `Comment::currentStatus()` falls back to them for rows without a status.
+- The migration backfills existing threads: resolved → closed, unresolved with a reply → answered, otherwise open.
+- Readiness keys: `comments_awaiting_answer`, `comments_awaiting_implementation` (both warnings), `comments_awaiting_verification` (info). The former `open_comment_threads` key is gone.
+
+The transition table and the assistant side (`mark-comment-implemented`) are in [mcp.md](mcp.md#findings-are-comments).

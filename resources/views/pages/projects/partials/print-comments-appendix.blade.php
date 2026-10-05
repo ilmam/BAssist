@@ -28,6 +28,7 @@
                     <th>#</th>
                     <th>{{ __('ui.comments_appendix_item') }}</th>
                     <th>{{ __('ui.comments_appendix_comment') }}</th>
+                    <th>{{ __('ui.comments_appendix_status') }}</th>
                     <th>{{ __('ui.comments_appendix_by') }}</th>
                     <th>{{ __('ui.comments_appendix_age') }}</th>
                     <th>{{ __('ui.comments_appendix_replies') }}</th>
@@ -47,6 +48,7 @@
                             {{ $item->getAttribute('title') ?? $item->getAttribute('name') }}
                         </td>
                         <td>{!! \App\Services\CommentService::render(\Illuminate\Support\Str::limit($thread->body, 280)) !!}</td>
+                        <td>{{ __('ui.comments_status_'.$thread->currentStatus()) }}</td>
                         <td>{{ $thread->author?->name ?? '—' }}</td>
                         <td>{{ trans_choice('ui.comments_age_days', $days, ['count' => $days]) }}</td>
                         <td>{{ $thread->replies->count() }}</td>

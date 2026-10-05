@@ -1024,8 +1024,8 @@ return [
     'comments_title' => 'Comments',
     'comments_open_title' => 'Open comments',
     'comments_open_count' => '{1} :count open comment|[2,*] :count open comments',
-    'comments_resolved_count' => '{1} :count resolved thread|[2,*] :count resolved threads',
-    'comments_all_resolved' => 'All resolved',
+    'comments_resolved_count' => '{1} :count closed thread|[2,*] :count closed threads',
+    'comments_all_resolved' => 'All closed',
     'comments_new' => 'New comment',
     'comments_placeholder' => 'Ask a question or leave a note for the team…',
     'comments_mention_hint' => 'Type @Name to notify someone · Ctrl+Enter to post',
@@ -1033,9 +1033,9 @@ return [
     'comments_empty' => 'No comments yet. Start the discussion here instead of in chat so it stays with this item.',
     'comments_reply' => 'Reply',
     'comments_reply_post' => 'Post reply',
-    'comments_resolve' => 'Resolve',
+    'comments_resolve' => 'Close',
     'comments_reopen' => 'Reopen',
-    'comments_resolved_by' => 'Resolved by :name :when',
+    'comments_resolved_by' => 'Closed by :name :when',
     'comments_delete' => 'Delete',
     'comments_delete_confirm' => 'Click again to delete',
     'comments_former_user' => 'Former user',
@@ -1120,8 +1120,10 @@ return [
     'history_via_api' => 'via API token',
     'history_via_mcp' => 'via AI assistant',
 
-    // Open comment threads as a readiness check
-    'readiness_open_comment_threads' => 'Open comment threads',
+    // Comment threads as readiness checks, one per status
+    'readiness_comments_awaiting_answer' => 'Comments waiting for an answer',
+    'readiness_comments_awaiting_implementation' => 'Answered comments not yet implemented',
+    'readiness_comments_awaiting_verification' => 'Implemented comments to verify and close',
 
     // Project-wide comments in the export pack
     'comments_project_title' => 'Project-wide open questions',
@@ -1133,4 +1135,20 @@ return [
     'comments_project_page_empty' => 'Nothing is waiting for an answer.',
     'comments_project_wide' => 'Whole project',
     'comments_reply_count' => '{1} 1 reply|[2,*] :count replies',
+
+    // Comment thread statuses (App\Support\CommentStatus)
+    'comments_status_open' => 'Open',
+    'comments_status_answered' => 'Answered',
+    'comments_status_implemented' => 'Implemented',
+    'comments_status_closed' => 'Closed',
+    'comments_waiting_open' => 'Waiting for an answer',
+    'comments_waiting_answered' => 'Decision given, to be implemented',
+    'comments_waiting_implemented' => 'Applied, waiting to be verified and closed',
+    'comments_waiting_closed' => 'Verified',
+    'comments_mark_implemented' => 'Mark implemented',
+    'comments_implement_closed' => 'This thread is closed. Reply to reopen it first.',
+    'comments_implement_no_decision' => 'No person has answered this thread yet, so there is no decision to implement.',
+    'comments_implement_not_yours' => 'The latest answer on this thread was written by :name, not by you. Ask the user to confirm it before implementing.',
+    'comments_status_filter_all' => 'All not closed',
+    'comments_appendix_status' => 'Status',
 ];

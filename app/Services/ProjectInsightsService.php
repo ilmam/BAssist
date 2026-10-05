@@ -156,12 +156,19 @@ class ProjectInsightsService
             throw new NotFoundHttpException('Lineage is not available for this entity.');
         }
 
-        // Open comment threads on the record: unresolved questions block its build gate.
-        $openComments = CommentService::supports($model)
-            ? $this->comments->openCount(CrudEntityRegistry::repository($model)->findModel($id))
-            : 0;
+        // Comment threads on the record, by status. open_comments counts the ones
+        // that block its build gate: open (no answer) and answered (not yet
+        // applied). Implemented threads only wait for a person to verify.
+        $comments = CommentService::supports($model)
+            ? $this->comments->statusCounts(null, CrudEntityRegistry::repository($model)->findModel($id))
+            : ['open' => 0, 'answered' => 0, 'implemented' => 0];
 
-        return ['entity' => $model, 'id' => $id, 'open_comments' => $openComments] + $result;
+        return [
+            'entity' => $model,
+            'id' => $id,
+            'open_comments' => $comments['open'] + $comments['answered'],
+            'comments' => $comments,
+        ] + $result;
     }
 
     /**

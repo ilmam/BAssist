@@ -20,7 +20,7 @@ class ListCommentsTool extends BAssistTool
 
     protected string $title = 'List comment threads';
 
-    protected string $description = 'Comment threads on a project\'s records: review remarks and findings raised during delivery, each with the record it is on. Give project_id for the whole project, or entity and id for one record. state is open (default), resolved or all. Use since with state resolved to see what people have answered since a previous session.';
+    protected string $description = 'Comment threads on a project\'s records: review remarks and findings raised during delivery, each with the record it is on, its status and what it is waiting for. Give project_id for the whole project, or entity and id for one record. Statuses: open (no answer yet), answered (a person replied with a decision that is not applied yet), implemented (applied, waiting for a person to verify), closed. state: answered lists the decisions waiting to be implemented. Each comment says whether you (the signed-in user) wrote it (author_is_you) and whether it came through an AI assistant (via: mcp).';
 
     public function handle(
         Request $request,
@@ -32,7 +32,7 @@ class ListCommentsTool extends BAssistTool
             'project_id' => ['nullable', 'integer', 'required_without:entity'],
             'entity' => ['nullable', 'string', 'max:100', 'required_with:id'],
             'id' => ['nullable', 'integer', 'required_with:entity'],
-            'state' => ['nullable', 'in:open,resolved,all'],
+            'state' => ['nullable', 'in:active,open,answered,implemented,closed,resolved,all'],
             'since' => ['nullable', 'date'],
         ]);
 
@@ -51,11 +51,12 @@ class ListCommentsTool extends BAssistTool
             $threads = $comments->listThreads(
                 $project,
                 $record,
-                $validated['state'] ?? 'open',
+                $validated['state'] ?? 'active',
                 isset($validated['since']) ? Carbon::parse($validated['since']) : null,
             );
 
             return [
+                'counts' => $comments->statusCounts($project, $record),
                 'total' => $threads->count(),
                 'threads' => $threads->map(fn ($thread) => $comments->threadToArray($thread))->all(),
             ];
@@ -68,7 +69,7 @@ class ListCommentsTool extends BAssistTool
             'project_id' => $schema->integer()->description('All threads of this project.'),
             'entity' => $schema->string()->description('With id: only threads on this record, for example Feature.'),
             'id' => $schema->integer()->description('Record id, with entity.'),
-            'state' => $schema->string()->enum(['open', 'resolved', 'all'])->description('Default open.'),
+            'state' => $schema->string()->enum(['active', 'open', 'answered', 'implemented', 'closed', 'all'])->description('active (default) is everything not closed. open = no answer yet; answered = a person has decided and it is not applied yet; implemented = applied, waiting for a person to close.'),
             'since' => $schema->string()->description('ISO date or date-time. Only threads created, replied to or resolved from then on.'),
         ];
     }

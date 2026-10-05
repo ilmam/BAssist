@@ -58,6 +58,8 @@ The rules from the API platform apply unchanged:
 | `app/Http/Middleware/MarkMcpChannel.php` | `mcp.channel` |
 | `app/Support/RequestChannel.php` | The channel of the current request |
 | `database/migrations/2026_10_04_140000_add_via_to_activity_log.php` | Adds `activity_log.via` |
+| `app/Support/CommentStatus.php` | The four thread statuses |
+| `database/migrations/2026_10_05_140000_add_status_to_comments.php` | Adds `comments.status`, `implemented_at`, `implemented_by` |
 | `tests/Feature/McpServerTest.php` | Tests |
 
 The package is `laravel/mcp` (Laravel's own). It implements the protocol: handshake, tool listing, message format, errors. Only `routes/ai.php` and `app/Mcp/` depend on it. Without the package installed the rest of the application runs normally and `/mcp` simply does not exist.
@@ -78,8 +80,9 @@ The package is `laravel/mcp` (Laravel's own). It implements the protocol: handsh
 | `create-record` | write | Create a record; `data` holds the fields |
 | `update-record` | write | Partial update: only the fields sent change |
 | `delete-record` | write, destructive | Delete a record |
-| `list-comments` | read | Comment threads of a project or one record; `state` (open, resolved, all), `since` |
+| `list-comments` | read | Comment threads of a project or one record, with status and counts; `state` (active, open, answered, implemented, closed, all), `since` |
 | `add-comment` | write | Comment on a record or reply to a thread. This is how an assistant raises a finding |
+| `mark-comment-implemented` | write | Report what was done for an answered thread and mark it implemented |
 
 Design choices worth knowing before changing them:
 
@@ -93,16 +96,38 @@ Design choices worth knowing before changing them:
 
 When an assistant finds that the requirements are silent, unclear or wrong, it does not guess and it does not keep its own list. It posts a comment on the record concerned (`add-comment`), or on the nearest parent, or on the Project for a project-wide matter. No new record type is involved: a finding is a note for people, in the same thread mechanism reviewers use.
 
-| Step | Who | Where |
+A thread has one of four statuses (`App\Support\CommentStatus`), and each says who has to act next:
+
+| Status | Meaning | Who acts next |
 |---|---|---|
-| Raise | Assistant (or anyone) | An open comment thread on the record |
-| Act | Analyst | The real work goes into existing entities: a business rule, a revised requirement, an assumption, a scope item, a change request |
-| Close | Analyst | Resolves the thread. There is no tool for an assistant to resolve one |
-| Pick up | Assistant | `list-comments` with `state: resolved` and `since` at the next session |
+| `open` | Raised, no answer from a person yet | Analyst: reply with the decision |
+| `answered` | A person replied; the decision is not applied yet | Assistant (or a person): apply it |
+| `implemented` | The decision was applied and reported on the thread | Analyst: verify, then close or reply |
+| `closed` | Signed off | Nobody |
 
-`add-comment` is safe to repeat: the same text on the same record returns the existing comment with `already_posted: true`, whether the thread is open or resolved.
+How a thread moves:
 
-While a thread is open it counts in readiness ("Open comment threads") and `get-lineage` reports `open_comments` for the record, which the build gate treats as not ready. Comments are never part of the specification; they print as margin notes in review copies and can be switched off.
+| Event | Result |
+|---|---|
+| New thread | `open` |
+| Reply from a person (web or API) | `answered`, whatever it was before. A reply on an implemented thread sends it back for rework; a reply on a closed thread reopens it |
+| Reply from an assistant (MCP) | Unchanged (a closed thread becomes `open`). An assistant asking a question does not count as an answer |
+| `mark-comment-implemented`, or "Mark implemented" in the panel | `implemented`; needs update permission on the record's entity |
+| Close in the panel | `closed`; needs the **approve** permission on the record's entity. There is no tool for an assistant to close a thread |
+| Reopen in the panel | `answered` if the thread has replies, otherwise `open` |
+
+`mark-comment-implemented` is deliberately narrow. It only works on an `answered` thread whose latest reply from a person was written by the signed-in user, so an assistant only ever acts on its own user's instructions and not on text another user typed into a comment. It posts the report as a reply, then sets the status. Calling it again on a thread that is already implemented returns `already_implemented: true` and changes nothing.
+
+`add-comment` is safe to repeat: the same text on the same record returns the existing comment with `already_posted: true`, whatever the thread's status.
+
+Where the statuses show:
+
+- **Readiness** (Governance folder) has one line per waiting party: `comments_awaiting_answer` (open, warning), `comments_awaiting_implementation` (answered, warning) and `comments_awaiting_verification` (implemented, info). Each links to the project's comments page filtered to that status.
+- **`get-lineage`** returns `open_comments` for the record, which counts `open` plus `answered` threads (`CommentStatus::BLOCKING`): the build gate treats anything above 0 as not ready. An implemented thread does not block. The `comments` key holds the count per status.
+- **`list-comments`** returns `counts` per status, and for every thread `status`, `waiting_for`, `implemented_at/by`, `closed_at/by`; every comment carries `author_is_you` and `via`.
+- **Print**: margin notes and the comments appendix show each thread's status.
+
+Comments are never part of the specification; they print as margin notes in review copies and can be switched off.
 
 ### What the assistant is told
 

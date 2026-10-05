@@ -10,7 +10,7 @@
                 @foreach (collect([$thread])->concat($thread->replies) as $comment)
                     <div class="print-comments__line {{ $comment->parent_id ? 'print-comments__line--reply' : '' }}">
                         <div class="print-comments__who">
-                            @unless ($comment->parent_id)<span class="print-comments__num">C{{ $printComments->numberOf($thread) }}</span>@endunless
+                            @unless ($comment->parent_id)<span class="print-comments__num">C{{ $printComments->numberOf($thread) }}</span><span class="print-comments__when">{{ __('ui.comments_status_'.$thread->currentStatus()) }}</span>@endunless
                             <strong>{{ $comment->author?->name ?? __('ui.comments_former_user') }}</strong>
                             <span class="print-comments__when">{{ $comment->created_at?->format('Y-m-d') }}</span>
                         </div>

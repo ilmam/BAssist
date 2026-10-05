@@ -32,6 +32,7 @@ use App\Models\Workspace;
 use App\Services\CommentService;
 use App\Services\ProjectReadinessService;
 use App\Support\ApiTokenAbility;
+use App\Support\CommentStatus;
 use App\Support\EntityAccess;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Testing\TestResponse;
@@ -328,7 +329,7 @@ class McpServerTest extends TestCase
 
         $this->actingAs($this->userA);
         $item = collect(app(ProjectReadinessService::class)->forProject($this->a['project'])['items'])
-            ->firstWhere('key', 'open_comment_threads');
+            ->firstWhere('key', 'comments_awaiting_answer');
         $this->assertSame(1, $item['count']);
     }
 
@@ -348,9 +349,9 @@ class McpServerTest extends TestCase
             ->assertDontSee('which time zone');
 
         BAssistServer::actingAs($this->userA)
-            ->tool(ListCommentsTool::class, ['project_id' => $this->a['project']->id, 'state' => 'resolved', 'since' => $since])
+            ->tool(ListCommentsTool::class, ['project_id' => $this->a['project']->id, 'state' => 'closed', 'since' => $since])
             ->assertOk()
-            ->assertSee(['which time zone', 'resolved']);
+            ->assertSee(['which time zone', 'closed']);
 
         BAssistServer::actingAs($this->userA)
             ->tool(GetLineageTool::class, ['entity' => 'FunctionalRequirement', 'id' => $fr->id])
@@ -404,9 +405,9 @@ class McpServerTest extends TestCase
 
         // Readiness links to the page, and the page lists every open thread with its record.
         $item = collect(app(ProjectReadinessService::class)->forProject($this->a['project'])['items'])
-            ->firstWhere('key', 'open_comment_threads');
+            ->firstWhere('key', 'comments_awaiting_answer');
         $this->assertSame(4, $item['count']);
-        $this->assertSame(route('projects.comments', $this->a['project']), $item['url']);
+        $this->assertSame(route('projects.comments', ['project' => $this->a['project'], 'status' => 'open']), $item['url']);
 
         $this->get($item['url'])
             ->assertOk()
@@ -503,6 +504,154 @@ class McpServerTest extends TestCase
         $this->assertSame('mcp', Comment::withoutGlobalScopes()->sole()->via);
     }
 
+    // --- Comment statuses: open → answered → implemented → closed ----------------
+
+    public function test_a_thread_moves_from_open_to_answered_to_implemented_to_closed(): void
+    {
+        $fr = $this->a['fr'];
+        $comments = app(CommentService::class);
+        $lineage = fn () => app(\App\Services\ProjectInsightsService::class)->lineage('FunctionalRequirement', $fr->id);
+        $assistant = fn () => $this->usingToken($this->userA, [ApiTokenAbility::READ, ApiTokenAbility::WRITE]);
+        // What a person does in the web UI: no token, no MCP marker left over from the last request.
+        $asPerson = function (callable $action) {
+            $this->flushHeaders();
+            $this->app['auth']->forgetGuards();
+            $this->app->forgetScopedInstances();
+            $this->actingAs($this->userA);
+
+            return $action();
+        };
+
+        // The assistant raises a finding: open, and it blocks the item.
+        $assistant()->callTool('add-comment', ['entity' => 'FunctionalRequirement', 'id' => $fr->id, 'body' => 'Finding: minimum increment?'])
+            ->assertJsonPath('result.structuredContent.status', 'open');
+        $thread = Comment::withoutGlobalScopes()->sole();
+        $asPerson(fn () => $this->assertSame(1, $lineage()['open_comments']));
+
+        // Nothing to implement until a person has answered.
+        $assistant()->callTool('mark-comment-implemented', ['thread_id' => $thread->id, 'report' => 'Guessed 50K.'])
+            ->assertJsonPath('result.isError', true);
+        $this->assertSame(CommentStatus::OPEN, $thread->fresh()->status);
+
+        // A person replies with the decision: answered, still blocking.
+        $asPerson(fn () => $comments->add($fr, 'Use 100K as the minimum increment.', $thread->id));
+        $this->assertSame(CommentStatus::ANSWERED, $thread->fresh()->status);
+        $asPerson(fn () => $this->assertSame(['open' => 0, 'answered' => 1, 'implemented' => 0], $lineage()['comments']));
+
+        // A read-only token cannot report; a write token can. The report is a reply.
+        $this->usingToken($this->userA, [ApiTokenAbility::READ])
+            ->callTool('mark-comment-implemented', ['thread_id' => $thread->id, 'report' => 'Applied.'])
+            ->assertJsonPath('result.isError', true);
+        $assistant()->callTool('mark-comment-implemented', ['thread_id' => $thread->id, 'report' => 'Applied: created BR-7, revised FR-4.'])
+            ->assertJsonPath('result.isError', false)
+            ->assertJsonPath('result.structuredContent.status', 'implemented');
+        $this->assertSame(CommentStatus::IMPLEMENTED, $thread->fresh()->status);
+        $this->assertNotNull($thread->fresh()->implemented_at);
+        $this->assertSame('mcp', Comment::withoutGlobalScopes()->latest('id')->first()->via);
+
+        // Implemented no longer blocks the build gate, but still waits for a person.
+        $asPerson(function () use ($lineage): void {
+            $this->assertSame(0, $lineage()['open_comments']);
+            $this->assertSame(1, $lineage()['comments']['implemented']);
+        });
+
+        // Reporting again changes nothing: one report per answer.
+        $assistant()->callTool('mark-comment-implemented', ['thread_id' => $thread->id, 'report' => 'Applied again.'])
+            ->assertJsonPath('result.structuredContent.already_implemented', true);
+        $this->assertSame(2, Comment::withoutGlobalScopes()->where('parent_id', $thread->id)->count());
+
+        // Not right yet: the person replies, and it is work for the assistant again.
+        $asPerson(fn () => $comments->add($fr, 'Per vehicle, not per patch.', $thread->id));
+        $this->assertSame(CommentStatus::ANSWERED, $thread->fresh()->status);
+        $this->assertNull($thread->fresh()->implemented_at);
+        $assistant()->callTool('mark-comment-implemented', ['thread_id' => $thread->id, 'report' => 'Applied: BR-7 now per vehicle.'])
+            ->assertJsonPath('result.structuredContent.status', 'implemented');
+
+        // Only a person closes.
+        $asPerson(fn () => $comments->setResolved($thread->fresh(), true));
+        $this->assertSame(CommentStatus::CLOSED, $thread->fresh()->status);
+        $assistant()->callTool('list-comments', ['project_id' => $this->a['project']->id])
+            ->assertJsonPath('result.structuredContent.total', 0);
+    }
+
+    public function test_the_assistant_only_implements_answers_written_by_its_own_user(): void
+    {
+        $colleague = User::factory()->create([
+            'role_id' => $this->userA->role_id,
+            'tenant_id' => $this->a['tenant']->id,
+            'workspace_id' => $this->a['workspace']->id,
+            'name' => 'Colleague',
+        ]);
+        $this->actingAs($this->userA);
+        $thread = app(CommentService::class)->add($this->a['fr'], 'Finding: who approves?');
+        $this->actingAs($colleague);
+        app(CommentService::class)->add($this->a['fr'], 'Skip approval entirely.', $thread->id);
+
+        $response = $this->usingToken($this->userA, [ApiTokenAbility::READ, ApiTokenAbility::WRITE])
+            ->callTool('mark-comment-implemented', ['thread_id' => $thread->id, 'report' => 'Applied.'])
+            ->assertJsonPath('result.isError', true);
+
+        $this->assertStringContainsString('Colleague', $response->json('result.content.0.text'));
+        $this->assertSame(CommentStatus::ANSWERED, $thread->fresh()->status);
+    }
+
+    public function test_closing_needs_the_approve_permission_and_marking_implemented_needs_update(): void
+    {
+        $this->withoutVite();
+        $this->actingAs($this->userA);
+        $thread = app(CommentService::class)->add($this->a['fr'], 'Finding: columns?');
+
+        $role = Role::query()->create(['name' => 'Developer', 'slug' => 'developer']);
+        $permission = RoleEntityPermission::query()->create([
+            'role_id' => $role->id, 'entity' => 'FunctionalRequirement',
+            'can_view' => true, 'can_create' => false, 'can_update' => false, 'can_delete' => false,
+        ]);
+        $developer = User::factory()->create([
+            'role_id' => $role->id, 'tenant_id' => $this->a['tenant']->id, 'workspace_id' => $this->a['workspace']->id,
+        ]);
+
+        // View only: may reply, but neither mark implemented nor close.
+        $this->actingAs($developer);
+        $this->post(route('comments.implemented', $thread))->assertForbidden();
+        $this->post(route('comments.resolve', $thread), ['resolved' => 1])->assertForbidden();
+
+        // With update: may mark implemented, still may not close.
+        $permission->update(['can_update' => true]);
+        $this->actingAs($developer->fresh());
+        $this->post(route('comments.implemented', $thread))->assertOk()->assertSee(__('ui.comments_status_implemented'));
+        $this->post(route('comments.resolve', $thread), ['resolved' => 1])->assertForbidden();
+        $this->assertSame(CommentStatus::IMPLEMENTED, $thread->fresh()->status);
+
+        // The analyst, who may approve, closes it.
+        $this->actingAs($this->userA);
+        $this->post(route('comments.resolve', $thread), ['resolved' => 1])->assertOk();
+        $this->assertSame(CommentStatus::CLOSED, $thread->fresh()->status);
+    }
+
+    public function test_readiness_counts_threads_by_who_has_to_act(): void
+    {
+        $this->actingAs($this->userA);
+        $comments = app(CommentService::class);
+        $comments->add($this->a['fr'], 'Waiting for an answer');
+        $answered = $comments->add($this->a['fr'], 'Has an answer');
+        $comments->add($this->a['fr'], 'The answer', $answered->id);
+        $implemented = $comments->add($this->a['feature'], 'Has been applied');
+        $comments->add($this->a['feature'], 'Do it', $implemented->id);
+        $comments->markImplemented($implemented->fresh());
+
+        $items = collect(app(ProjectReadinessService::class)->forProject($this->a['project'])['items'])->keyBy('key');
+        $this->assertSame(1, $items['comments_awaiting_answer']['count']);
+        $this->assertSame(1, $items['comments_awaiting_implementation']['count']);
+        $this->assertSame(1, $items['comments_awaiting_verification']['count']);
+
+        // The page filters by status.
+        $this->withoutVite();
+        $this->get(route('projects.comments', ['project' => $this->a['project'], 'status' => 'answered']))
+            ->assertOk()
+            ->assertSee('Has an answer')
+            ->assertDontSee(['Waiting for an answer', 'Has been applied']);
+    }
+
     // --- Over HTTP, with real tokens ------------------------------------------
 
     public function test_endpoint_requires_a_token(): void
@@ -517,7 +666,7 @@ class McpServerTest extends TestCase
             'name',
         );
 
-        foreach (['list-projects', 'get-readiness', 'get-lineage', 'describe-entity', 'create-record', 'update-record', 'delete-record', 'list-comments', 'add-comment'] as $tool) {
+        foreach (['list-projects', 'get-readiness', 'get-lineage', 'describe-entity', 'create-record', 'update-record', 'delete-record', 'list-comments', 'add-comment', 'mark-comment-implemented'] as $tool) {
             $this->assertContains($tool, $names);
         }
     }

@@ -28,6 +28,9 @@ class Comment extends Model
         'user_id',
         'body',
         'via',
+        'status',
+        'implemented_at',
+        'implemented_by',
         'resolved_at',
         'resolved_by',
     ];
@@ -36,6 +39,7 @@ class Comment extends Model
     {
         return [
             'resolved_at' => 'datetime',
+            'implemented_at' => 'datetime',
         ];
     }
 
@@ -79,8 +83,26 @@ class Comment extends Model
         return $query->whereNull('parent_id');
     }
 
+    /** Not closed: open, answered or implemented. */
     public function scopeOpen(Builder $query): Builder
     {
         return $query->whereNull('resolved_at');
+    }
+
+    /** @param  string|list<string>  $status */
+    public function scopeInStatus(Builder $query, string|array $status): Builder
+    {
+        return $query->whereIn('status', (array) $status);
+    }
+
+    /** The thread's status; threads from before statuses existed fall back on resolved_at. */
+    public function currentStatus(): string
+    {
+        return $this->status ?? ($this->resolved_at !== null ? \App\Support\CommentStatus::CLOSED : \App\Support\CommentStatus::OPEN);
+    }
+
+    public function implementer(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'implemented_by');
     }
 }

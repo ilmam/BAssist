@@ -6,6 +6,7 @@ use App\Models\Comment;
 use App\Models\Project;
 use App\Models\User;
 use App\Support\CrudEntityRegistry;
+use App\Support\CommentStatus;
 use App\Support\EntityAccess;
 use App\Support\RequestChannel;
 use DateTimeInterface;
@@ -90,12 +91,24 @@ class CommentService
             'parent_id' => $parent?->id,
             'user_id' => auth()->id(),
             'body' => $body,
-            'via' => app(RequestChannel::class)->current(),
+            'via' => $via = app(RequestChannel::class)->current(),
+            'status' => $parent === null ? CommentStatus::OPEN : null,
         ]);
 
         if ($parent !== null) {
             // A reply re-opens the discussion and bumps the thread to the top.
-            $parent->forceFill(['resolved_at' => null, 'resolved_by' => null])->touch();
+            // A person's reply is a decision or a correction: the thread becomes
+            // answered (again). An AI assistant's reply never changes the status,
+            // except that replying on a closed thread re-opens it for a person.
+            $status = $via === RequestChannel::MCP
+                ? ($parent->currentStatus() === CommentStatus::CLOSED ? CommentStatus::OPEN : $parent->currentStatus())
+                : CommentStatus::ANSWERED;
+
+            $parent->forceFill(['resolved_at' => null, 'resolved_by' => null, 'status' => $status]);
+            if ($status !== CommentStatus::IMPLEMENTED) {
+                $parent->forceFill(['implemented_at' => null, 'implemented_by' => null]);
+            }
+            $parent->touch();
         }
 
         $mentioned = $this->mentionedUsers($body);
@@ -119,12 +132,13 @@ class CommentService
 
     /**
      * Threads of a whole project or of one record, oldest first, for callers
-     * outside the web UI (API, MCP). $state is open, resolved or all; $since
-     * keeps threads touched (created, replied to or resolved) from that moment.
+     * outside the web UI (API, MCP). $state is active (everything not closed),
+     * one status (open, answered, implemented, closed) or all; $since keeps
+     * threads touched (created, replied to, implemented or closed) from that moment.
      *
      * @return Collection<int, Comment>
      */
-    public function listThreads(?Project $project, ?Model $record = null, string $state = 'open', ?DateTimeInterface $since = null): Collection
+    public function listThreads(?Project $project, ?Model $record = null, string $state = 'active', ?DateTimeInterface $since = null): Collection
     {
         return Comment::query()
             ->threads()
@@ -132,10 +146,16 @@ class CommentService
             ->when($record !== null, fn ($q) => $q
                 ->where('commentable_type', $record::class)
                 ->where('commentable_id', $record->getKey()))
-            ->when($state === 'open', fn ($q) => $q->open())
-            ->when($state === 'resolved', fn ($q) => $q->whereNotNull('resolved_at'))
+            ->when($state === 'active', fn ($q) => $q->open())
+            ->when(in_array($state, ['closed', 'resolved'], true), fn ($q) => $q->whereNotNull('resolved_at'))
+            ->when(in_array($state, CommentStatus::ACTIVE, true), fn ($q) => $q->open()->where(function ($w) use ($state): void {
+                $w->where('status', $state);
+                if ($state === CommentStatus::OPEN) {
+                    $w->orWhereNull('status'); // threads from before statuses existed
+                }
+            }))
             ->when($since !== null, fn ($q) => $q->where('updated_at', '>=', $since))
-            ->with(['author', 'resolver', 'replies.author', 'commentable'])
+            ->with(['author', 'resolver', 'implementer', 'replies.author', 'commentable'])
             ->oldest()
             ->get()
             ->filter(fn (Comment $thread) => $thread->commentable !== null)
@@ -151,18 +171,31 @@ class CommentService
     {
         $record = $thread->commentable;
         $model = class_basename($thread->commentable_type);
+        $me = auth()->id();
         $line = fn (Comment $comment): array => [
             'id' => (int) $comment->id,
             'author' => $comment->author?->name,
+            // Whether the signed-in user wrote it, and through which channel.
+            'author_is_you' => $me !== null && (int) $comment->user_id === (int) $me,
             'via' => $comment->via,
             'body' => $comment->body,
             'created_at' => $comment->created_at?->toIso8601String(),
         ];
 
+        $status = $thread->currentStatus();
+
         return $line($thread) + [
-            'state' => $thread->isOpen() ? 'open' : 'resolved',
-            'resolved_at' => $thread->resolved_at?->toIso8601String(),
-            'resolved_by' => $thread->resolver?->name,
+            'status' => $status,
+            'waiting_for' => match ($status) {
+                CommentStatus::OPEN => 'an answer from a person',
+                CommentStatus::ANSWERED => 'the decision to be implemented',
+                CommentStatus::IMPLEMENTED => 'a person to verify and close',
+                default => null,
+            },
+            'implemented_at' => $thread->implemented_at?->toIso8601String(),
+            'implemented_by' => $thread->implementer?->name,
+            'closed_at' => $thread->resolved_at?->toIso8601String(),
+            'closed_by' => $thread->resolver?->name,
             'on' => [
                 'entity' => $model,
                 'id' => (int) $thread->commentable_id,
@@ -179,12 +212,67 @@ class CommentService
     public function setResolved(Comment $thread, bool $resolved): Comment
     {
         abort_unless($thread->parent_id === null, 404);
+        // Closing is a sign-off, so it needs the approve permission on the record's entity.
+        if ($resolved) {
+            EntityAccess::authorize(auth()->user(), class_basename($thread->commentable_type), EntityAccess::APPROVE);
+        }
+
         $thread->forceFill([
             'resolved_at' => $resolved ? now() : null,
             'resolved_by' => $resolved ? auth()->id() : null,
+            // Re-opened by hand: back to where a person has to look at it.
+            'status' => $resolved
+                ? CommentStatus::CLOSED
+                : ($thread->replies()->exists() ? CommentStatus::ANSWERED : CommentStatus::OPEN),
         ])->save();
 
         return $thread;
+    }
+
+    /**
+     * Record that the decision on a thread has been applied. It still needs a
+     * person to verify and close it. Needs update permission on the record.
+     */
+    public function markImplemented(Comment $thread): Comment
+    {
+        abort_unless($thread->parent_id === null, 404);
+        EntityAccess::authorize(auth()->user(), class_basename($thread->commentable_type), EntityAccess::UPDATE);
+
+        if ($thread->currentStatus() === CommentStatus::CLOSED) {
+            throw ValidationException::withMessages(['status' => __('ui.comments_implement_closed')]);
+        }
+
+        $thread->forceFill([
+            'status' => CommentStatus::IMPLEMENTED,
+            'implemented_at' => now(),
+            'implemented_by' => auth()->id(),
+        ])->save();
+
+        return $thread;
+    }
+
+    /**
+     * Open-thread counts per status for a project or one record.
+     *
+     * @return array{open: int, answered: int, implemented: int}
+     */
+    public function statusCounts(?Project $project, ?Model $record = null): array
+    {
+        $counts = Comment::query()
+            ->threads()
+            ->open()
+            ->when($project !== null, fn ($q) => $q->where('project_id', $project->getKey()))
+            ->when($record !== null, fn ($q) => $q
+                ->where('commentable_type', $record::class)
+                ->where('commentable_id', $record->getKey()))
+            ->get(['id', 'status', 'resolved_at'])
+            ->countBy(fn (Comment $thread) => $thread->currentStatus());
+
+        return [
+            CommentStatus::OPEN => (int) ($counts[CommentStatus::OPEN] ?? 0),
+            CommentStatus::ANSWERED => (int) ($counts[CommentStatus::ANSWERED] ?? 0),
+            CommentStatus::IMPLEMENTED => (int) ($counts[CommentStatus::IMPLEMENTED] ?? 0),
+        ];
     }
 
     public function delete(Comment $comment): void

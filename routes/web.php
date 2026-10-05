@@ -37,6 +37,7 @@ Route::middleware('auth')->group(function (): void {
     Route::get('comments/{model}/{id}', [CommentController::class, 'index'])->whereNumber('id')->name('comments.index');
     Route::post('comments/{model}/{id}', [CommentController::class, 'store'])->whereNumber('id')->name('comments.store');
     Route::post('comments/{comment}/resolve', [CommentController::class, 'resolve'])->name('comments.resolve');
+    Route::post('comments/{comment}/implemented', [CommentController::class, 'implemented'])->name('comments.implemented');
     Route::delete('comments/{comment}', [CommentController::class, 'destroy'])->name('comments.destroy');
     Route::post('review/{model}/{id}/approve', [ReviewController::class, 'approve'])->whereNumber('id')->name('review.approve');
     Route::post('review/{model}/{id}/request-changes', [ReviewController::class, 'requestChanges'])->whereNumber('id')->name('review.changes');

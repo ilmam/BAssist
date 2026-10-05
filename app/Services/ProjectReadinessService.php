@@ -285,17 +285,21 @@ class ProjectReadinessService
         }
 
         // Unresolved discussion: review remarks and findings raised during delivery.
-        $items[] = $this->item(
-            key: 'open_comment_threads',
-            label: __('ui.readiness_open_comment_threads'),
-            count: \App\Models\Comment::query()
-                ->threads()
-                ->open()
-                ->where('project_id', $project->id)
-                ->count(),
-            severity: 'warn',
-            url: route('projects.comments', $project),
-        );
+        // One line per status, because each waits on someone different.
+        $threadCounts = app(CommentService::class)->statusCounts($project);
+        foreach ([
+            'comments_awaiting_answer' => [\App\Support\CommentStatus::OPEN, 'warn'],
+            'comments_awaiting_implementation' => [\App\Support\CommentStatus::ANSWERED, 'warn'],
+            'comments_awaiting_verification' => [\App\Support\CommentStatus::IMPLEMENTED, 'info'],
+        ] as $key => [$status, $severity]) {
+            $items[] = $this->item(
+                key: $key,
+                label: __('ui.readiness_'.$key),
+                count: $threadCounts[$status],
+                severity: $severity,
+                url: route('projects.comments', ['project' => $project, 'status' => $status]),
+            );
+        }
 
         if (entity_can('Risk', EntityAccess::VIEW)) {
             $risksUrl = model_route('Risk', 'index').'?'.http_build_query($scopeQuery);
@@ -485,7 +489,9 @@ class ProjectReadinessService
         'open_assumptions' => 'radd',
         'constraints_captured' => 'radd',
         'rules_captured' => 'radd',
-        'open_comment_threads' => 'governance',
+        'comments_awaiting_answer' => 'governance',
+        'comments_awaiting_implementation' => 'governance',
+        'comments_awaiting_verification' => 'governance',
         'unconfirmed_change_requests' => 'governance',
         'crs_without_stakeholder_need' => 'governance',
         'features_without_scenarios' => 'evaluation',

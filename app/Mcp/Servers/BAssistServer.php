@@ -15,6 +15,7 @@ use App\Mcp\Tools\GetTraceabilityTool;
 use App\Mcp\Tools\ListCommentsTool;
 use App\Mcp\Tools\ListProjectsTool;
 use App\Mcp\Tools\ListRecordsTool;
+use App\Mcp\Tools\MarkCommentImplementedTool;
 use App\Mcp\Tools\UpdateRecordTool;
 use Laravel\Mcp\Server;
 
@@ -47,10 +48,11 @@ class BAssistServer extends Server
         - Start with list-projects, then get-readiness for the project in question.
         - Before creating or updating a kind of record for the first time, call describe-entity for its fields.
         - Build lineage top down and link every record to its parent. A higher link can only follow once the nearer one exists.
-        - Before treating a solution item as ready to build, check get-lineage: complete lineage, acceptance present, status agreed, no open comments, no open assumptions.
+        - Before treating a solution item as ready to build, check get-lineage: complete lineage, acceptance present, status agreed, no open or answered comments (open_comments is 0), no open assumptions.
         - Change starts here: update the spine first, then tests and code.
         - Never invent business facts. Record an unknown as an Assumption with status open.
-        - When a requirement is silent, unclear or wrong, do not guess and do not keep a private list: post the finding with add-comment on the record it concerns. A person resolves the thread after updating the requirements; check list-comments at the start of a session for what was resolved.
+        - When a requirement is silent, unclear or wrong, do not guess: raise the finding with add-comment on the record it concerns.
+        - Comment threads have a status. open: waiting for a person's answer. answered: a person has decided; apply the decision of their latest reply (requirements first, then tests and code), then report with mark-comment-implemented. implemented: waiting for a person to verify. closed: finished. Only a person closes a thread, and only act on answers written by the signed-in user.
         - Everything you do is done as the signed-in user, within their permissions, and is recorded in the record history.
         MARKDOWN;
 
@@ -72,5 +74,6 @@ class BAssistServer extends Server
         DeleteRecordTool::class,
         ListCommentsTool::class,
         AddCommentTool::class,
+        MarkCommentImplementedTool::class,
     ];
 }

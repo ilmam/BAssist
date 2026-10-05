@@ -55,6 +55,11 @@
         <ol class="ba-thread-list">
             @foreach ($group as $thread)
                 <li class="ba-thread {{ $thread->isOpen() ? '' : 'is-resolved' }}">
+                    @php $threadStatus = $thread->currentStatus(); @endphp
+                    <div class="ba-thread__status">
+                        <x-status-badge :tone="\App\Support\CommentStatus::tone($threadStatus)">{{ __('ui.comments_status_'.$threadStatus) }}</x-status-badge>
+                        <span class="ba-comments__hint">{{ __('ui.comments_waiting_'.$threadStatus) }}</span>
+                    </div>
                     @foreach (collect([$thread])->concat($thread->replies) as $comment)
                         <article class="ba-comment {{ $comment->parent_id ? 'ba-comment--reply' : '' }}">
                             <span class="ba-comment__avatar" aria-hidden="true">{{ $initials($comment->author) }}</span>
@@ -89,11 +94,19 @@
                                     <button type="submit" class="{{ ui_btn_classes('outline', 'sm') }}">{{ __('ui.comments_reply_post') }}</button>
                                 </form>
                             </details>
-                            <form method="post" action="{{ route('comments.resolve', $thread) }}" data-comments-form class="ba-comment__inline-form">
-                                @csrf
-                                <input type="hidden" name="resolved" value="1">
-                                <button type="submit" class="ba-link-btn"><i class="ki-filled ki-check" aria-hidden="true"></i>{{ __('ui.comments_resolve') }}</button>
-                            </form>
+                            @if ($threadStatus !== \App\Support\CommentStatus::IMPLEMENTED && entity_can($commentModel, \App\Support\EntityAccess::UPDATE))
+                                <form method="post" action="{{ route('comments.implemented', $thread) }}" data-comments-form class="ba-comment__inline-form">
+                                    @csrf
+                                    <button type="submit" class="ba-link-btn">{{ __('ui.comments_mark_implemented') }}</button>
+                                </form>
+                            @endif
+                            @if (entity_can($commentModel, \App\Support\EntityAccess::APPROVE))
+                                <form method="post" action="{{ route('comments.resolve', $thread) }}" data-comments-form class="ba-comment__inline-form">
+                                    @csrf
+                                    <input type="hidden" name="resolved" value="1">
+                                    <button type="submit" class="ba-link-btn"><i class="ki-filled ki-check" aria-hidden="true"></i>{{ __('ui.comments_resolve') }}</button>
+                                </form>
+                            @endif
                         @else
                             <span class="ba-comments__hint">{{ __('ui.comments_resolved_by', ['name' => $thread->resolver?->name ?? '—', 'when' => $thread->resolved_at?->diffForHumans()]) }}</span>
                             <form method="post" action="{{ route('comments.resolve', $thread) }}" data-comments-form class="ba-comment__inline-form">

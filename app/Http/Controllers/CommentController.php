@@ -48,6 +48,15 @@ class CommentController extends Controller
         return $this->panel($model, $record);
     }
 
+    /** The decision on the thread has been applied; a person still verifies and closes. */
+    public function implemented(Comment $comment): Response
+    {
+        [$model, $record] = $this->owner($comment);
+        $this->comments->markImplemented($comment);
+
+        return $this->panel($model, $record);
+    }
+
     public function destroy(Comment $comment): Response
     {
         [$model, $record] = $this->owner($comment);
