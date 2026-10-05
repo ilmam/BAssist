@@ -284,6 +284,19 @@ class ProjectReadinessService
             );
         }
 
+        // Unresolved discussion: review remarks and findings raised during delivery.
+        $items[] = $this->item(
+            key: 'open_comment_threads',
+            label: __('ui.readiness_open_comment_threads'),
+            count: \App\Models\Comment::query()
+                ->threads()
+                ->open()
+                ->where('project_id', $project->id)
+                ->count(),
+            severity: 'warn',
+            url: route('projects.comments', $project),
+        );
+
         if (entity_can('Risk', EntityAccess::VIEW)) {
             $risksUrl = model_route('Risk', 'index').'?'.http_build_query($scopeQuery);
 
@@ -472,6 +485,7 @@ class ProjectReadinessService
         'open_assumptions' => 'radd',
         'constraints_captured' => 'radd',
         'rules_captured' => 'radd',
+        'open_comment_threads' => 'governance',
         'unconfirmed_change_requests' => 'governance',
         'crs_without_stakeholder_need' => 'governance',
         'features_without_scenarios' => 'evaluation',

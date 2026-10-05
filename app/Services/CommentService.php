@@ -7,6 +7,8 @@ use App\Models\Project;
 use App\Models\User;
 use App\Support\CrudEntityRegistry;
 use App\Support\EntityAccess;
+use App\Support\RequestChannel;
+use DateTimeInterface;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
@@ -82,12 +84,13 @@ class CommentService
         }
 
         $comment = Comment::query()->create([
-            'project_id' => (int) $record->getAttribute('project_id'),
+            'project_id' => $this->projectIdOf($record),
             'commentable_type' => $record::class,
             'commentable_id' => $record->getKey(),
             'parent_id' => $parent?->id,
             'user_id' => auth()->id(),
             'body' => $body,
+            'via' => app(RequestChannel::class)->current(),
         ]);
 
         if ($parent !== null) {
@@ -101,6 +104,76 @@ class CommentService
         }
 
         return $comment;
+    }
+
+    /**
+     * The project a record belongs to. A project is its own owner, so a
+     * comment on the project itself is a project-wide note.
+     */
+    public function projectIdOf(Model $record): int
+    {
+        return $record instanceof Project
+            ? (int) $record->getKey()
+            : (int) $record->getAttribute('project_id');
+    }
+
+    /**
+     * Threads of a whole project or of one record, oldest first, for callers
+     * outside the web UI (API, MCP). $state is open, resolved or all; $since
+     * keeps threads touched (created, replied to or resolved) from that moment.
+     *
+     * @return Collection<int, Comment>
+     */
+    public function listThreads(?Project $project, ?Model $record = null, string $state = 'open', ?DateTimeInterface $since = null): Collection
+    {
+        return Comment::query()
+            ->threads()
+            ->when($project !== null, fn ($q) => $q->where('project_id', $project->getKey()))
+            ->when($record !== null, fn ($q) => $q
+                ->where('commentable_type', $record::class)
+                ->where('commentable_id', $record->getKey()))
+            ->when($state === 'open', fn ($q) => $q->open())
+            ->when($state === 'resolved', fn ($q) => $q->whereNotNull('resolved_at'))
+            ->when($since !== null, fn ($q) => $q->where('updated_at', '>=', $since))
+            ->with(['author', 'resolver', 'replies.author', 'commentable'])
+            ->oldest()
+            ->get()
+            ->filter(fn (Comment $thread) => $thread->commentable !== null)
+            ->values();
+    }
+
+    /**
+     * A thread as plain data, with a link to the record it is on.
+     *
+     * @return array<string, mixed>
+     */
+    public function threadToArray(Comment $thread): array
+    {
+        $record = $thread->commentable;
+        $model = class_basename($thread->commentable_type);
+        $line = fn (Comment $comment): array => [
+            'id' => (int) $comment->id,
+            'author' => $comment->author?->name,
+            'via' => $comment->via,
+            'body' => $comment->body,
+            'created_at' => $comment->created_at?->toIso8601String(),
+        ];
+
+        return $line($thread) + [
+            'state' => $thread->isOpen() ? 'open' : 'resolved',
+            'resolved_at' => $thread->resolved_at?->toIso8601String(),
+            'resolved_by' => $thread->resolver?->name,
+            'on' => [
+                'entity' => $model,
+                'id' => (int) $thread->commentable_id,
+                'code' => $record?->getAttribute('code'),
+                'title' => $record?->getAttribute('title') ?? $record?->getAttribute('name'),
+                'url' => array_key_exists($model, CrudEntityRegistry::all())
+                    ? model_route($model, 'show', $thread->commentable_id)
+                    : null,
+            ],
+            'replies' => $thread->replies->map($line)->all(),
+        ];
     }
 
     public function setResolved(Comment $thread, bool $resolved): Comment

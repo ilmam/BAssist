@@ -27,6 +27,7 @@ class ProjectInsightsService
         protected AcceptancePlanBuilder $acceptance,
         protected GherkinFeatureAssembler $assembler,
         protected SpineCascadeService $cascade,
+        protected CommentService $comments,
         protected ProjectContext $projectContext,
     ) {
     }
@@ -155,7 +156,12 @@ class ProjectInsightsService
             throw new NotFoundHttpException('Lineage is not available for this entity.');
         }
 
-        return ['entity' => $model, 'id' => $id] + $result;
+        // Open comment threads on the record: unresolved questions block its build gate.
+        $openComments = CommentService::supports($model)
+            ? $this->comments->openCount(CrudEntityRegistry::repository($model)->findModel($id))
+            : 0;
+
+        return ['entity' => $model, 'id' => $id, 'open_comments' => $openComments] + $result;
     }
 
     /**

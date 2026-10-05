@@ -78,14 +78,31 @@ The package is `laravel/mcp` (Laravel's own). It implements the protocol: handsh
 | `create-record` | write | Create a record; `data` holds the fields |
 | `update-record` | write | Partial update: only the fields sent change |
 | `delete-record` | write, destructive | Delete a record |
+| `list-comments` | read | Comment threads of a project or one record; `state` (open, resolved, all), `since` |
+| `add-comment` | write | Comment on a record or reply to a thread. This is how an assistant raises a finding |
 
 Design choices worth knowing before changing them:
 
-- **Generic record tools instead of one tool per entity.** Twelve tools cover more than twenty entities, and a new entity needs no MCP work. `describe-entity` gives the assistant the field list and validation rules from the entity's edit DTO, so they never drift from the forms.
+- **Generic record tools instead of one tool per entity.** A handful of tools cover more than twenty entities, and a new entity needs no MCP work. `describe-entity` gives the assistant the field list and validation rules from the entity's edit DTO, so they never drift from the forms.
 - **`update-record` merges.** The JSON API replaces the whole record on `PUT`. An assistant that sent one field would blank the others, so `EntityRecordService::update()` loads the current edit data and overlays what was sent before validating.
 - **Lists are compact.** `list-records` returns scalar fields only, long text cut to 300 characters, 50 rows by default (200 maximum). `get-record` returns everything.
 - **Hidden entities.** `EntityRecordService::HIDDEN` (`Tenant`) is never offered, whatever the role.
 - **Annotations.** Read tools carry `readOnlyHint`; `delete-record` carries `destructiveHint`. Clients use these to decide when to ask the user for confirmation.
+
+### Findings are comments
+
+When an assistant finds that the requirements are silent, unclear or wrong, it does not guess and it does not keep its own list. It posts a comment on the record concerned (`add-comment`), or on the nearest parent, or on the Project for a project-wide matter. No new record type is involved: a finding is a note for people, in the same thread mechanism reviewers use.
+
+| Step | Who | Where |
+|---|---|---|
+| Raise | Assistant (or anyone) | An open comment thread on the record |
+| Act | Analyst | The real work goes into existing entities: a business rule, a revised requirement, an assumption, a scope item, a change request |
+| Close | Analyst | Resolves the thread. There is no tool for an assistant to resolve one |
+| Pick up | Assistant | `list-comments` with `state: resolved` and `since` at the next session |
+
+`add-comment` is safe to repeat: the same text on the same record returns the existing comment with `already_posted: true`, whether the thread is open or resolved.
+
+While a thread is open it counts in readiness ("Open comment threads") and `get-lineage` reports `open_comments` for the record, which the build gate treats as not ready. Comments are never part of the specification; they print as margin notes in review copies and can be switched off.
 
 ### What the assistant is told
 
@@ -145,5 +162,4 @@ Two styles are used. Tool behaviour is tested directly (`BAssistServer::actingAs
 |---|---|
 | OAuth sign-in | Needed before a public multi-tenant launch, so users can connect without pasting a token. `laravel/mcp` supports it through Laravel Passport (`Mcp::oauthRoutes()`); personal tokens keep working alongside |
 | Review tools (approve / request changes) | Not exposed; approvals stay a human action in the web UI |
-| Comments | Not exposed |
 | MCP resources and prompts | Tools only |

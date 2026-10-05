@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Project;
+use App\Services\CommentService;
 use App\Services\ProjectReadinessService;
 use App\Support\CrudEntityRegistry;
 use App\Support\EntityAccess;
@@ -243,6 +244,9 @@ class ProjectDashboardController extends Controller
             'counts' => $counts,
             'links' => $links,
             'readiness' => $this->readiness->forProject($project),
+            // Comments on the project itself, shown here because this is the page people open.
+            'commentThreads' => CommentService::supports('Project') ? app(CommentService::class)->threads($project) : null,
+            'mentionUsers' => app(CommentService::class)->tenantUsers(),
         ]);
     }
 

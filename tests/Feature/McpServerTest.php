@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Mcp\Servers\BAssistServer;
+use App\Mcp\Tools\AddCommentTool;
 use App\Mcp\Tools\CreateRecordTool;
 use App\Mcp\Tools\DeleteRecordTool;
 use App\Mcp\Tools\DescribeEntityTool;
@@ -10,12 +11,14 @@ use App\Mcp\Tools\GetGherkinTool;
 use App\Mcp\Tools\GetLineageTool;
 use App\Mcp\Tools\GetReadinessTool;
 use App\Mcp\Tools\GetRecordTool;
+use App\Mcp\Tools\ListCommentsTool;
 use App\Mcp\Tools\ListProjectsTool;
 use App\Mcp\Tools\ListRecordsTool;
 use App\Mcp\Tools\UpdateRecordTool;
 use App\Models\ActivityLog;
 use App\Models\BusinessNeed;
 use App\Models\BusinessObjective;
+use App\Models\Comment;
 use App\Models\Feature;
 use App\Models\FunctionalRequirement;
 use App\Models\Project;
@@ -26,6 +29,8 @@ use App\Models\StakeholderNeed;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Models\Workspace;
+use App\Services\CommentService;
+use App\Services\ProjectReadinessService;
 use App\Support\ApiTokenAbility;
 use App\Support\EntityAccess;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -290,6 +295,214 @@ class McpServerTest extends TestCase
         $this->assertSame('Alpha requirement', $this->a['fr']->fresh()->title);
     }
 
+    // --- Findings as comments ---------------------------------------------------
+
+    public function test_a_finding_is_a_comment_on_the_record_it_concerns(): void
+    {
+        $fr = $this->a['fr'];
+
+        BAssistServer::actingAs($this->userA)
+            ->tool(AddCommentTool::class, [
+                'entity' => 'FunctionalRequirement',
+                'id' => $fr->id,
+                'body' => 'Finding: no minimum bid increment is specified. Observed: any amount is accepted. Suggested: a setting. Evidence: verified.',
+            ])
+            ->assertOk()
+            ->assertSee(['no minimum bid increment', 'Alpha requirement']);
+
+        $thread = Comment::withoutGlobalScopes()->sole();
+        $this->assertSame(FunctionalRequirement::class, $thread->commentable_type);
+        $this->assertSame($this->a['project']->id, (int) $thread->project_id);
+        $this->assertSame($this->userA->id, (int) $thread->user_id);
+
+        // It shows on the project, on the record's lineage, and in readiness.
+        BAssistServer::actingAs($this->userA)
+            ->tool(ListCommentsTool::class, ['project_id' => $this->a['project']->id])
+            ->assertOk()
+            ->assertSee('no minimum bid increment');
+
+        BAssistServer::actingAs($this->userA)
+            ->tool(GetLineageTool::class, ['entity' => 'FunctionalRequirement', 'id' => $fr->id])
+            ->assertOk()
+            ->assertStructuredContent(fn ($json) => $json->where('open_comments', 1)->etc());
+
+        $this->actingAs($this->userA);
+        $item = collect(app(ProjectReadinessService::class)->forProject($this->a['project'])['items'])
+            ->firstWhere('key', 'open_comment_threads');
+        $this->assertSame(1, $item['count']);
+    }
+
+    public function test_resolving_is_done_by_a_person_and_then_the_finding_drops_out(): void
+    {
+        $fr = $this->a['fr'];
+        $this->actingAs($this->userA);
+        $comments = app(CommentService::class);
+        $thread = $comments->add($fr, 'Finding: which time zone?');
+
+        $since = now()->subMinute()->toIso8601String();
+        $comments->setResolved($thread, true);
+
+        BAssistServer::actingAs($this->userA)
+            ->tool(ListCommentsTool::class, ['project_id' => $this->a['project']->id])
+            ->assertOk()
+            ->assertDontSee('which time zone');
+
+        BAssistServer::actingAs($this->userA)
+            ->tool(ListCommentsTool::class, ['project_id' => $this->a['project']->id, 'state' => 'resolved', 'since' => $since])
+            ->assertOk()
+            ->assertSee(['which time zone', 'resolved']);
+
+        BAssistServer::actingAs($this->userA)
+            ->tool(GetLineageTool::class, ['entity' => 'FunctionalRequirement', 'id' => $fr->id])
+            ->assertStructuredContent(fn ($json) => $json->where('open_comments', 0)->etc());
+
+        // A reply re-opens the thread.
+        BAssistServer::actingAs($this->userA)
+            ->tool(AddCommentTool::class, [
+                'entity' => 'FunctionalRequirement',
+                'id' => $fr->id,
+                'body' => 'Dealers outside Iraq too?',
+                'reply_to' => $thread->id,
+            ])
+            ->assertOk();
+        $this->assertNull($thread->fresh()->resolved_at);
+    }
+
+    public function test_posting_the_same_finding_twice_does_not_duplicate_it(): void
+    {
+        $arguments = ['entity' => 'FunctionalRequirement', 'id' => $this->a['fr']->id, 'body' => 'Finding: G-04 bid limits are not specified.'];
+
+        BAssistServer::actingAs($this->userA)->tool(AddCommentTool::class, $arguments)->assertOk();
+        BAssistServer::actingAs($this->userA)
+            ->tool(AddCommentTool::class, $arguments)
+            ->assertOk()
+            ->assertStructuredContent(fn ($json) => $json->where('already_posted', true)->etc());
+
+        // Still one, even after a person has resolved it.
+        $this->actingAs($this->userA);
+        app(CommentService::class)->setResolved(Comment::query()->sole(), true);
+        BAssistServer::actingAs($this->userA)->tool(AddCommentTool::class, $arguments)->assertOk();
+
+        $this->assertSame(1, Comment::withoutGlobalScopes()->count());
+        $this->assertNotNull(Comment::withoutGlobalScopes()->sole()->resolved_at);
+    }
+
+    public function test_every_open_comment_is_listed_on_one_page_and_printed_with_its_item(): void
+    {
+        $this->withoutVite();
+        $this->actingAs($this->userA);
+        $comments = app(CommentService::class);
+        $comments->add($this->a['feature'], 'Feature note: bid limits unclear');
+        $comments->add($this->a['fr'], 'Requirement note: columns unclear');
+        $comments->add($this->a['project'], 'Project note: time zone');
+        // A record the export pack does not print with a comment margin.
+        $stakeholder = \App\Models\Stakeholder::query()->where('project_id', $this->a['project']->id)->first()
+            ?? \App\Models\Stakeholder::query()->create(['project_id' => $this->a['project']->id, 'name' => 'Dealer']);
+        $comments->add($stakeholder, 'Stakeholder note: who signs off');
+        $resolved = $comments->add($this->a['fr'], 'Already answered');
+        $comments->setResolved($resolved, true);
+
+        // Readiness links to the page, and the page lists every open thread with its record.
+        $item = collect(app(ProjectReadinessService::class)->forProject($this->a['project'])['items'])
+            ->firstWhere('key', 'open_comment_threads');
+        $this->assertSame(4, $item['count']);
+        $this->assertSame(route('projects.comments', $this->a['project']), $item['url']);
+
+        $this->get($item['url'])
+            ->assertOk()
+            ->assertSee(['Feature note: bid limits unclear', 'Requirement note: columns unclear', 'Project note: time zone'])
+            ->assertSee(['Alpha feature', 'Alpha requirement'])
+            ->assertDontSee('Already answered');
+
+        // Another tenant's project is not found.
+        $this->get(route('projects.comments', $this->b['project']->id))->assertNotFound();
+
+        // The export pack prints a feature's comments next to the feature.
+        $this->get(route('projects.export', $this->a['project']))
+            ->assertOk()
+            ->assertSee(['Feature note: bid limits unclear', 'Requirement note: columns unclear'])
+            // …and lists a comment on a record it does not print, so none is left out.
+            ->assertSee('Stakeholder note: who signs off')
+            ->assertDontSee('Already answered');
+
+        $this->get(route('projects.export', ['project' => $this->a['project'], 'comments' => 0]))
+            ->assertOk()
+            ->assertDontSee(['Feature note: bid limits unclear', 'Stakeholder note: who signs off']);
+    }
+
+    public function test_project_wide_findings_go_on_the_project(): void
+    {
+        BAssistServer::actingAs($this->userA)
+            ->tool(AddCommentTool::class, [
+                'entity' => 'Project',
+                'id' => $this->a['project']->id,
+                'body' => 'Finding: retention period for bids is not stated anywhere.',
+            ])
+            ->assertOk();
+
+        $thread = Comment::withoutGlobalScopes()->sole();
+        $this->assertSame(Project::class, $thread->commentable_type);
+        $this->assertSame($this->a['project']->id, (int) $thread->project_id);
+
+        BAssistServer::actingAs($this->userA)
+            ->tool(ListCommentsTool::class, ['entity' => 'Project', 'id' => $this->a['project']->id])
+            ->assertOk()
+            ->assertSee('retention period');
+
+        // They show on the project dashboard, the page people actually open.
+        $this->withoutVite();
+        $this->actingAs($this->userA)
+            ->get(route('projects.dashboard', $this->a['project']))
+            ->assertOk()
+            ->assertSee('retention period');
+
+        // And in the export pack, as a margin note beside the title and nowhere
+        // else in the document flow, unless comments are switched off for the final copy.
+        $export = $this->get(route('projects.export', $this->a['project']))->assertOk()->assertSee('retention period');
+        $beforeAppendix = \Illuminate\Support\Str::before($export->getContent(), 'class="print-appendix"');
+        $this->assertSame(1, substr_count($beforeAppendix, 'retention period'));
+        $this->assertStringNotContainsString('section-project-comments', $export->getContent());
+        $this->get(route('projects.export', ['project' => $this->a['project'], 'comments' => 0]))
+            ->assertOk()
+            ->assertDontSee('retention period');
+    }
+
+    public function test_comments_respect_tenant_and_supported_entities(): void
+    {
+        BAssistServer::actingAs($this->userA)
+            ->tool(AddCommentTool::class, ['entity' => 'FunctionalRequirement', 'id' => $this->b['fr']->id, 'body' => 'Planted'])
+            ->assertHasErrors();
+
+        BAssistServer::actingAs($this->userA)
+            ->tool(ListCommentsTool::class, ['project_id' => $this->b['project']->id])
+            ->assertHasErrors();
+
+        // Scenarios do not take comments; the finding belongs on their feature.
+        BAssistServer::actingAs($this->userA)
+            ->tool(AddCommentTool::class, ['entity' => 'Scenario', 'id' => 1, 'body' => 'Unclear step'])
+            ->assertHasErrors();
+
+        $this->assertSame(0, Comment::withoutGlobalScopes()->count());
+    }
+
+    public function test_comment_through_the_endpoint_needs_write_and_is_labelled(): void
+    {
+        $arguments = ['entity' => 'FunctionalRequirement', 'id' => $this->a['fr']->id, 'body' => 'Finding: unclear.'];
+
+        $this->usingToken($this->userA, [ApiTokenAbility::READ])
+            ->callTool('add-comment', $arguments)
+            ->assertOk()
+            ->assertJsonPath('result.isError', true);
+        $this->assertSame(0, Comment::withoutGlobalScopes()->count());
+
+        $this->usingToken($this->userA, [ApiTokenAbility::READ, ApiTokenAbility::WRITE])
+            ->callTool('add-comment', $arguments)
+            ->assertOk()
+            ->assertJsonPath('result.isError', false)
+            ->assertJsonPath('result.structuredContent.via', 'mcp');
+        $this->assertSame('mcp', Comment::withoutGlobalScopes()->sole()->via);
+    }
+
     // --- Over HTTP, with real tokens ------------------------------------------
 
     public function test_endpoint_requires_a_token(): void
@@ -304,7 +517,7 @@ class McpServerTest extends TestCase
             'name',
         );
 
-        foreach (['list-projects', 'get-readiness', 'get-lineage', 'describe-entity', 'create-record', 'update-record', 'delete-record'] as $tool) {
+        foreach (['list-projects', 'get-readiness', 'get-lineage', 'describe-entity', 'create-record', 'update-record', 'delete-record', 'list-comments', 'add-comment'] as $tool) {
             $this->assertContains($tool, $names);
         }
     }

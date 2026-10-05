@@ -61,6 +61,9 @@
                             <div class="ba-comment__main">
                                 <div class="ba-comment__meta">
                                     <strong>{{ $comment->author?->name ?? __('ui.comments_former_user') }}</strong>
+                                    @if ($comment->via)
+                                        <span>({{ __('ui.history_via_'.$comment->via) }})</span>
+                                    @endif
                                     <time datetime="{{ $comment->created_at?->toIso8601String() }}" title="{{ $comment->created_at?->format('Y-m-d H:i') }}">{{ $comment->created_at?->diffForHumans() }}</time>
                                     @if ((int) $comment->user_id === (int) $me || is_super_admin())
                                         <form method="post" action="{{ route('comments.destroy', $comment) }}" data-comments-form class="ba-comment__inline-form">

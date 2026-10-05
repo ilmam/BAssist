@@ -1119,4 +1119,18 @@ return [
     // History: channel a change came through (App\Support\RequestChannel)
     'history_via_api' => 'via API token',
     'history_via_mcp' => 'via AI assistant',
+
+    // Open comment threads as a readiness check
+    'readiness_open_comment_threads' => 'Open comment threads',
+
+    // Project-wide comments in the export pack
+    'comments_project_title' => 'Project-wide open questions',
+    'comments_project_intro' => 'Unresolved comments raised on the project as a whole, not on a single item.',
+
+    // All open comment threads of a project (linked from readiness)
+    'comments_project_page_title' => 'Open comments: :project',
+    'comments_project_page_intro' => '{0} No open comment threads.|{1} 1 open thread. Open the record to reply or resolve it.|[2,*] :count open threads across the project. Open a record to reply or resolve.',
+    'comments_project_page_empty' => 'Nothing is waiting for an answer.',
+    'comments_project_wide' => 'Whole project',
+    'comments_reply_count' => '{1} 1 reply|[2,*] :count replies',
 ];

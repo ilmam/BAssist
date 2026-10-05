@@ -234,6 +234,16 @@
             @endif
         </x-card>
 
+        {{-- Project-wide comments: remarks and findings that belong to no single record. --}}
+        @if ($commentThreads !== null)
+            @include('pages.partials.comments', [
+                'commentModel' => 'Project',
+                'commentRecordId' => (int) $project->id,
+                'threads' => $commentThreads,
+                'mentionUsers' => $mentionUsers,
+            ])
+        @endif
+
         @if ($counts !== [])
             <div>
                 <h3 class="text-sm font-medium text-foreground mb-3">{{ __('ui.project_dashboard_summary') }}</h3>

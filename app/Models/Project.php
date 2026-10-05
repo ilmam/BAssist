@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Attributes\Commentable;
 use App\Attributes\Relation;
 use App\Attributes\RoutableAttribute;
 use App\Models\Concerns\BelongsToTenant;
@@ -15,6 +16,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
 #[RoutableAttribute]
+#[Commentable]
 class Project extends BaseModel
 {
     use BelongsToTenant;

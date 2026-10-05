@@ -62,3 +62,13 @@ To add an entity: put its model name in the list(s). It must have `project_id`; 
 ## Tests
 
 `tests/Feature/CommentsTest.php`, `tests/Feature/ReviewAndHistoryTest.php`.
+
+## Comments from the API and from AI assistants
+
+Comments can also be posted and read through the MCP endpoint (`add-comment`, `list-comments`; see [mcp.md](mcp.md#findings-are-comments)). Three things support that:
+
+- **`comments.via`** records the channel a comment came through (null for the web UI, `api`, `mcp`), set from `RequestChannel` in `CommentService::add()`. The panel shows "(via AI assistant)" next to the author.
+- **`Project` is `#[Commentable]`**, so a project-wide remark has a home. `CommentService::projectIdOf()` returns the project's own id for it.
+- **Readiness** has an "Open comment threads" check (`open_comment_threads`, warning, Governance folder), and `ProjectInsightsService::lineage()` returns `open_comments` for the record.
+
+`CommentService::listThreads()` and `threadToArray()` are the read side for callers outside the web UI. Resolving a thread is only possible from the web UI.

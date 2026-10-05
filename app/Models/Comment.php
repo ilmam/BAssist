@@ -27,6 +27,7 @@ class Comment extends Model
         'parent_id',
         'user_id',
         'body',
+        'via',
         'resolved_at',
         'resolved_by',
     ];
