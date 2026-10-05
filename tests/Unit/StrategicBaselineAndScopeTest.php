@@ -8,10 +8,14 @@ use App\Models\StrategicBaseline;
 use App\Support\EntityFormBuilder;
 use App\Support\ScopeItemDirection;
 use App\Support\StrategicBaselineStatus;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class StrategicBaselineAndScopeTest extends TestCase
 {
+    // Building a form looks up dropdown options, so these tests need the schema.
+    use RefreshDatabase;
+
     public function test_strategic_baseline_status_defaults(): void
     {
         $this->assertSame('draft', StrategicBaselineStatus::default());

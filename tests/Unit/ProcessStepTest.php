@@ -7,10 +7,14 @@ use App\Data\FunctionalRequirementData;
 use App\Models\SwimlaneFlowStep;
 use App\Services\SwimlaneMermaidGenerator;
 use App\Support\EntityFormBuilder;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class ProcessStepTest extends TestCase
 {
+    // Building a form looks up dropdown options, so these tests need the schema.
+    use RefreshDatabase;
+
     public function test_entity_number_prefix_is_ps(): void
     {
         $method = new \ReflectionMethod(SwimlaneFlowStep::class, 'entityNumberPrefix');

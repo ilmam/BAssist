@@ -6,10 +6,14 @@ use App\Data\FunctionalRequirementData;
 use App\Models\FunctionalRequirement;
 use App\Support\CrudEntityRegistry;
 use App\Support\EntityFormBuilder;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class FunctionalRequirementTest extends TestCase
 {
+    // Building a form looks up dropdown options, so these tests need the schema.
+    use RefreshDatabase;
+
     public function test_entity_is_registered_for_crud(): void
     {
         $this->assertContains('FunctionalRequirement', array_keys(CrudEntityRegistry::all()));

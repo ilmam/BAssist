@@ -8,10 +8,14 @@ use App\Support\BusinessRuleStatus;
 use App\Support\ConstraintStatus;
 use App\Support\EntityFormBuilder;
 use App\Support\EntityPriority;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class Phase1xGuardrailsTest extends TestCase
 {
+    // Building a form looks up dropdown options, so these tests need the schema.
+    use RefreshDatabase;
+
     public function test_moscow_priority_codes(): void
     {
         $this->assertSame(['must', 'should', 'could', 'wont'], EntityPriority::values());

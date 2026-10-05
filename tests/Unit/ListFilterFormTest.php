@@ -4,10 +4,14 @@ namespace Tests\Unit;
 
 use App\Helpers\ListUi;
 use PHPUnit\Framework\Attributes\Test;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class ListFilterFormTest extends TestCase
 {
+    // Building a form looks up dropdown options, so these tests need the schema.
+    use RefreshDatabase;
+
     #[Test]
     public function filter_form_fields_include_catalog_filters_and_skip_idle_relation_drills(): void
     {
