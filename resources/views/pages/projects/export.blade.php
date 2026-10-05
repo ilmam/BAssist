@@ -66,6 +66,9 @@
             || $hasMatrix
             || $readinessItems !== [];
 
+        // Open comments on the project itself are margin notes beside the title.
+        $hasProjectComments = app(\App\Support\PrintComments::class)->for($project) !== [];
+
         $tocSections = array_values(array_filter([
             $hasStrategicBaseline ? ['id' => 'section-strategic-baseline', 'label' => __('ui.strategic_baseline')] : null,
             $hasScopeItems ? ['id' => 'section-scope-items', 'label' => __('ui.scope_items')] : null,
@@ -87,9 +90,12 @@
         ]));
     @endphp
 
-    <header class="cover">
+    {{-- With margin notes beside the title the cover may run past one page, so let it break. --}}
+    <header class="cover" @if ($hasProjectComments) style="break-inside: auto; page-break-inside: auto; break-after: auto; page-break-after: auto;" @endif>
         <p class="cover__eyebrow">{{ __('ui.project_export_pack') }}</p>
-        <h1>{{ $project->name }}</h1>
+        @include('pages.projects.partials.print-project-comments', ['project' => $project])
+        {{-- Highlighted like an item title that carries comments. --}}
+        <h1>@if ($hasProjectComments)<span style="background: #fff3c4; -webkit-print-color-adjust: exact; print-color-adjust: exact;">{{ $project->name }}</span>@else{{ $project->name }}@endif</h1>
         @if ($project->description)
             <p class="cover__description">{{ $project->description }}</p>
         @endif
@@ -623,7 +629,7 @@
                 $gherkinBody = trim($item['gherkin'] ?? '');
             @endphp
             <article class="artifact">
-                @include('pages.projects.partials.print-item-comments', ['item' => $item])
+                @include('pages.projects.partials.print-item-comments', ['item' => $feature])
                 <h3 class="item-title">
                     @if ($feature->code)
                         <span class="artifact__code">{{ $feature->code }}</span>
@@ -774,7 +780,7 @@
             </tbody>
         </table>
     @endif
-    @include('pages.projects.partials.print-comments-appendix')
+    @include('pages.projects.partials.print-comments-appendix', ['all' => true])
 @endsection
 
 @push('styles')

@@ -1,5 +1,15 @@
-{{-- "Open issues" appendix + top-of-document notice (#8). Lists only threads printed above. --}}
-@php $printed = app(\App\Support\PrintComments::class)->collected(); @endphp
+{{--
+    "Open issues" appendix + top-of-document notice (#8). Lists the threads printed
+    above. Pass 'all' => true from a document that covers the whole project to
+    also list open threads on records it does not print, so none is left out.
+--}}
+@php
+    $printCollector = app(\App\Support\PrintComments::class);
+    if (! empty($all)) {
+        $printCollector->collectRemaining();
+    }
+    $printed = $printCollector->collected();
+@endphp
 @if ($printed !== [])
     @push('print-notice')
         <p class="print-notice">

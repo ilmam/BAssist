@@ -85,6 +85,28 @@ class PrintComments
     }
 
     /**
+     * Add every open thread that no printed item has claimed yet, so a document
+     * covering the whole project lists all of them. A thread on a record the
+     * document does not print (a stakeholder, a change request…) would
+     * otherwise be left out. Call it after the items have been rendered.
+     */
+    public function collectRemaining(): void
+    {
+        if (! $this->enabled) {
+            return;
+        }
+
+        foreach ($this->threadsByItem as $threads) {
+            foreach ($threads as $thread) {
+                $item = $thread->commentable;
+                if ($item instanceof Model) {
+                    $this->collected[$thread->id] ??= ['thread' => $thread, 'item' => $item, 'number' => count($this->collected) + 1];
+                }
+            }
+        }
+    }
+
+    /**
      * @return list<array{thread: Comment, item: Model, number: int}>
      */
     public function collected(): array
