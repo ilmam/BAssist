@@ -48,6 +48,10 @@ return [
         'SwimlaneFlow' => 'row-horizontal',
         'DataDictionary' => 'tablet-text-down',
 
+        // Design
+        'Screen' => 'screen',
+        'ScreenElement' => 'element-8',
+
         // Governance
         'ChangeRequest' => 'arrow-mix',
     ],

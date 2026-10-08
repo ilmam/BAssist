@@ -812,6 +812,56 @@ class McpServerTest extends TestCase
     /**
      * @return array{tenant: Tenant, workspace: Workspace, project: Project, need: StakeholderNeed, fr: FunctionalRequirement, feature: Feature}
      */
+    // --- Design layer (docs/design-layer.md) ---------------------------------
+
+    public function test_a_screen_reads_back_with_its_upstream_link_and_assembled_salt(): void
+    {
+        $screen = \App\Models\Screen::query()->create([
+            'title' => 'Alpha screen',
+            'project_id' => $this->a['project']->id,
+        ]);
+        $screen->functionalRequirements()->attach($this->a['fr']->id);
+        foreach ([[10, 'label', 'Hello'], [20, 'button', 'Go']] as [$position, $kind, $label]) {
+            \App\Models\ScreenElement::query()->create([
+                'screen_id' => $screen->id,
+                'project_id' => $this->a['project']->id,
+                'position' => $position,
+                'kind' => $kind,
+                'label' => $label,
+            ]);
+        }
+
+        BAssistServer::actingAs($this->userA)
+            ->tool(GetRecordTool::class, ['entity' => 'Screen', 'id' => $screen->id])
+            ->assertOk()
+            ->assertSee(['@startsalt', '[Go]', $this->a['fr']->code]);
+
+        BAssistServer::actingAs($this->userA)
+            ->tool(ListRecordsTool::class, ['entity' => 'ScreenElement', 'filters' => ['screen_id' => $screen->id]])
+            ->assertOk()
+            ->assertSee(['Hello', 'Go']);
+
+        $this->actingAs($this->userA)
+            ->get(route('screens.mockup', $screen->id))
+            ->assertOk()
+            ->assertSee('@startsalt', false);
+
+        $this->actingAs($this->userA)
+            ->get(route('screens.show', $screen->id))
+            ->assertOk()
+            ->assertSee('@startsalt', false)
+            ->assertSee('Hello');
+
+        $this->actingAs($this->userA)
+            ->withHeaders(['X-Modal-Request' => '1'])
+            ->get(model_modal_path('ScreenElement', 'create').'?screen_id='.$screen->id)
+            ->assertOk();
+
+        $this->actingAs($this->userA)
+            ->get(route('projects.dashboard', $this->a['project']->id))
+            ->assertOk();
+    }
+
     protected function seedTenant(string $name): array
     {
         $tenant = Tenant::query()->create(['name' => $name, 'slug' => strtolower($name)]);

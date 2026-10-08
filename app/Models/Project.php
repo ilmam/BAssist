@@ -127,6 +127,12 @@ class Project extends BaseModel
     }
 
     #[Relation('HasMany')]
+    public function screens(): HasMany
+    {
+        return $this->hasMany(Screen::class);
+    }
+
+    #[Relation('HasMany')]
     public function assumptions(): HasMany
     {
         return $this->hasMany(Assumption::class);

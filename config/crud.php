@@ -5,6 +5,7 @@ use App\Http\Controllers\ChangeRequestController;
 use App\Http\Controllers\DataDictionaryController;
 use App\Http\Controllers\FeatureController;
 use App\Http\Controllers\ScenarioController;
+use App\Http\Controllers\ScreenController;
 use App\Http\Controllers\StrategicBaselineController;
 use App\Http\Controllers\SwimlaneFlowController;
 
@@ -241,6 +242,26 @@ return [
             'nav_label' => 'Scope Items',
             'nav_icon' => 'abstract-14',
             'nav_icon_v8' => 'abstract-14',
+        ],
+
+        // Design layer (docs/design-layer.md). Elements are edited from their screen's page.
+        'Screen' => [
+            'home' => false,
+            'nav' => false,
+            'nav_label' => 'UI Designs',
+            'nav_icon' => 'screen',
+            'nav_icon_v8' => 'screen',
+            'controller' => ScreenController::class,
+            // The details page is a full page (mockup + element rows); never open it in a modal.
+            'use_modals' => false,
+        ],
+
+        'ScreenElement' => [
+            'home' => false,
+            'nav' => false,
+            'nav_label' => 'Screen Elements',
+            'nav_icon' => 'element-8',
+            'nav_icon_v8' => 'element-8',
         ],
 
         // 'LegacyThing' => ['disabled' => true],

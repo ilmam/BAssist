@@ -1,0 +1,22 @@
+/* Low-fidelity wireframe look for public/js/salt-wireframe.js. Grey on white, on purpose. */
+.salt-frame { display: block; max-width: 100%; color: #333; font: 14px/1.4 system-ui, sans-serif; background: #fff; }
+.salt-block { padding: .25rem 0; }
+.salt-block.is-framed { border: 1.5px solid #555; padding: .6rem .8rem; margin: .25rem 0; background: #fff; }
+.salt-columns { display: flex; gap: 1rem; align-items: stretch; margin: .3rem 0; }
+.salt-column { flex: 1 1 0; min-width: 0; }
+.salt-column > .salt-block { height: 100%; box-sizing: border-box; }
+.salt-row { display: flex; gap: .75rem; align-items: center; margin: .3rem 0; }
+.salt-cell { flex: 1 1 0; min-width: 0; }
+.salt-bold { font-weight: 600; }
+.salt-rule { border: 0; border-top: 1px solid #999; margin: .5rem 0; }
+.salt-table { border-collapse: collapse; width: 100%; margin: .3rem 0; }
+.salt-table td { border: 1px solid #888; padding: .3rem .6rem; text-align: left; vertical-align: middle; }
+.salt-table tr:first-child td { background: #f1f1f1; }
+.salt-button { width: 100%; padding: .25rem .6rem; border: 1px solid #555; border-radius: 4px; background: #eee; color: #222; font: inherit; cursor: default; }
+.salt-input, .salt-select { display: block; min-height: 1.8rem; padding: .2rem .5rem; border: 1px solid #777; background: #fff; color: #888; white-space: pre; overflow: hidden; }
+.salt-select::after { content: ' ▾'; float: right; color: #333; }
+.salt-check { display: inline-flex; gap: .4rem; align-items: center; }
+.salt-checkbox, .salt-radio { display: inline-block; width: .9rem; height: .9rem; border: 1px solid #555; background: #fff; text-align: center; line-height: .8rem; font-size: .75rem; }
+.salt-radio { border-radius: 50%; }
+.salt-checkbox.is-checked::after { content: '✓'; }
+.salt-radio.is-checked::after { content: '●'; }

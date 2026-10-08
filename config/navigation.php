@@ -124,6 +124,20 @@ return [
                 ],
             ],
             [
+                'key' => 'design',
+                'label' => 'Design',
+                'short' => 'Design',
+                'babok' => 'KA 7 — Requirements Analysis & Design Definition (design options)',
+                'purpose' => 'How the solution is realized: designs that each realize functional requirements. Not requirements themselves.',
+                'icon' => 'screen',
+                'icon_v8' => 'screen',
+                'children' => [
+                    [
+                        'entity' => 'Screen',
+                    ],
+                ],
+            ],
+            [
                 'key' => 'governance',
                 'label' => 'Governance & Lifecycle',
                 'short' => 'Governance',

@@ -21,6 +21,7 @@ use App\Http\Controllers\QuickActionsController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\ProjectExportController;
 use App\Http\Controllers\QuickGuideController;
+use App\Http\Controllers\ScreenMockupController;
 use App\Http\Controllers\SolutionRequirementsController;
 use App\Http\Controllers\StrategicBaselineController;
 use App\Http\Controllers\StrategyController;
@@ -105,7 +106,12 @@ Route::middleware('auth')->group(function (): void {
             ->name('data_dictionaries.export-csharp');
         Route::get('data_dictionaries/{id}/export/php', [DataDictionaryController::class, 'exportPhp'])
             ->name('data_dictionaries.export-php');
-        Route::get('strategic_baselines/for-project/{project}', [StrategicBaselineController::class, 'forProject'])
+        Route::post('screens/preview', [ScreenMockupController::class, 'preview'])
+            ->name('screens.preview');
+        Route::get('screens/{id}/mockup',[ScreenMockupController::class, 'show'])
+            ->whereNumber('id')
+            ->name('screens.mockup');
+        Route::get('strategic_baselines/for-project/{project}',[StrategicBaselineController::class, 'forProject'])
             ->name('strategic_baselines.for-project');
         CrudRouteRegistrar::registerWebRoutes();
     });

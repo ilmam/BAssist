@@ -15,6 +15,7 @@ use App\Models\FunctionalRequirement;
 use App\Models\NonFunctionalRequirement;
 use App\Models\Project;
 use App\Models\Risk;
+use App\Models\Screen;
 use App\Models\Scenario;
 use App\Models\ScopeItem;
 use App\Models\Stakeholder;
@@ -42,6 +43,7 @@ use App\Support\RiskResponse;
 use App\Support\RiskStatus;
 use App\Support\ScopeItemDirection;
 use App\Support\StrategicBaselineStatus;
+use Database\Seeders\Concerns\SeedsScreenElements;
 use Illuminate\Database\Seeder;
 
 /**
@@ -51,6 +53,8 @@ use Illuminate\Database\Seeder;
  */
 class DemoProjectSeeder extends Seeder
 {
+    use SeedsScreenElements;
+
     public function run(): void
     {
         $provisioner = app(TenancyProvisioner::class);
@@ -90,6 +94,7 @@ class DemoProjectSeeder extends Seeder
         $this->seedArchitecture($project, $draftId);
         $this->seedDataDictionary($project, $draftId);
         $this->seedSolutionPackaging($project, $mustId, $shouldId, $couldId, $agreedId, $draftId, $steps);
+        $this->seedDesign($project, $draftId);
     }
 
     protected function seedStrategy(Project $project): void
@@ -626,6 +631,40 @@ TXT,
                 ],
             ],
         );
+    }
+
+    /**
+     * Design layer sample (docs/design-layer.md): the "My inquiries" screen,
+     * drawn only from what the status-listing FR states.
+     */
+    protected function seedDesign(Project $project, int $draftId): void
+    {
+        $fr = FunctionalRequirement::query()
+            ->where('project_id', $project->id)
+            ->where('title', 'Agent can list status of own inquiries')
+            ->orderBy('id')
+            ->firstOrFail();
+
+        $screen = Screen::query()->updateOrCreate(
+            ['project_id' => $project->id, 'title' => 'My inquiries'],
+            [
+                'description' => 'The field agent lists the inquiries they created and sees the status of each.',
+                'status_id' => $draftId,
+            ],
+        );
+        $screen->functionalRequirements()->syncWithoutDetaching([$fr->id]);
+        // [kind, label, row hint, children]; the FR only asks to list the inquiries with at least
+        // Draft and Submitted status, so the sample is one table of them.
+        $this->seedScreenElements($screen, [
+            ['panel', 'Inquiries', null, [
+                ['table', '', null, [
+                    ['tablerow', 'Inquiry | Status'],
+                    ['tablerow', 'Inquiry 1 | Draft'],
+                    ['tablerow', 'Inquiry 2 | Submitted'],
+                ]],
+            ]],
+            ['button', 'New inquiry'],
+        ]);
     }
 
     /**

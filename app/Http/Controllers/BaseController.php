@@ -502,6 +502,7 @@ class BaseController extends Controller
             'business_objective_id',
             'primary_business_need_id',
             'feature_id',
+            'screen_id',
             'change_request_id',
         ] as $key) {
             if (! array_key_exists($key, $payload)) {

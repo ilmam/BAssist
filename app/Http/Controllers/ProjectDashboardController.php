@@ -57,6 +57,11 @@ class ProjectDashboardController extends Controller
             'label' => 'data_dictionaries',
         ],
         [
+            'model' => 'Screen',
+            'count' => 'screens_count',
+            'label' => 'screens',
+        ],
+        [
             'model' => 'ChangeRequest',
             'count' => 'change_requests_count',
             'label' => 'change_requests',
@@ -130,6 +135,7 @@ class ProjectDashboardController extends Controller
             'stateFlows',
             'swimlaneFlows',
             'dataDictionaries',
+            'screens',
             'assumptions',
             'constraints',
             'businessRules',

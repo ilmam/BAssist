@@ -6,13 +6,13 @@ use Tests\TestCase;
 
 class NavProjectFoldersTest extends TestCase
 {
-    public function test_four_babok_folders_are_configured_in_journey_order(): void
+    public function test_five_babok_folders_are_configured_in_journey_order(): void
     {
         $folders = config('navigation.hierarchy.project_folders');
 
         $this->assertIsArray($folders);
         $this->assertSame(
-            ['strategy', 'radd', 'governance', 'evaluation'],
+            ['strategy', 'radd', 'design', 'governance', 'evaluation'],
             array_column($folders, 'key')
         );
     }
@@ -45,6 +45,7 @@ class NavProjectFoldersTest extends TestCase
             ['Assumption', 'Constraint', 'BusinessRule'],
             $guardrails['entities'] ?? []
         );
+        $this->assertSame(['Screen'], $this->childKeys($folders['design']['children']));
         $this->assertSame(
             ['change_requests.index', 'traceability.index'],
             $this->childKeys($folders['governance']['children'])

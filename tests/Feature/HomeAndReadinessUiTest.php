@@ -74,7 +74,7 @@ class HomeAndReadinessUiTest extends TestCase
         $readiness = app(ProjectReadinessService::class)->forProject($project);
 
         $folderKeys = array_column($readiness['folders'], 'key');
-        $this->assertSame(['strategy', 'radd', 'governance', 'evaluation'], $folderKeys);
+        $this->assertSame(['strategy', 'radd', 'design', 'governance', 'evaluation'], $folderKeys);
 
         $gap = collect($readiness['items'])->firstWhere('key', 'needs_without_objective');
         $this->assertSame('strategy', $gap['folder']);
