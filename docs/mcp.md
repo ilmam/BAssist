@@ -74,6 +74,7 @@ The package is `laravel/mcp` (Laravel's own). It implements the protocol: handsh
 | `get-traceability` | read | The traceability matrix; `orphans_only`, `gap` |
 | `get-acceptance-plan` | read | Scenarios and acceptance criteria as checks |
 | `get-gherkin` | read | `.feature` documents for a feature or a whole project |
+| `get-process-flow` | read | One BPD as Mermaid swimlane text with step-code node ids (`PS_2`), plus the need, FR and feature each step links to |
 | `describe-entity` | read | Entities the user may use; fields, rules and filters of one entity |
 | `list-records` | read | Records of an entity; `project_id`, `filters`, `search`, `limit` |
 | `get-record` | read | One full record |

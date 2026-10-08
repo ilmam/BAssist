@@ -105,13 +105,17 @@ class SwimlaneMermaidGenerator
 
     /**
      * @param  list<array<string, mixed>>  $elements
+     * @param  bool  $stepCodeIds  Name nodes after their step code (PS_2) instead of the label, so a reader
+     *                             can tie every node to a process step. Nodes still merge by label (joins).
      */
-    public function generate(?string $title, array $elements, string $direction = 'TB', string $colorMode = self::COLOR_MODE_BOTH): string
+    public function generate(?string $title, array $elements, string $direction = 'TB', string $colorMode = self::COLOR_MODE_BOTH, bool $stepCodeIds = false): string
     {
         // Title belongs in page UI; omit YAML frontmatter.
         unset($title);
 
         $rows = $this->normalizeElements($elements);
+        $codeIds = $stepCodeIds ? $this->stepCodeIds($rows) : [];
+        $nodeIdOf = fn (string $label): string => $codeIds[$this->toNodeId($label)] ?? $this->toNodeId($label);
         $direction = strtoupper(trim($direction)) === 'LR' ? 'LR' : 'TB';
         $colorMode = self::normalizeColorMode($colorMode);
         $styleLanes = in_array($colorMode, [self::COLOR_MODE_BOTH, self::COLOR_MODE_LANES], true);
@@ -139,12 +143,12 @@ class SwimlaneMermaidGenerator
             }
 
             foreach ($laneRows as $row) {
-                $nodeId = $this->toNodeId($row['label']);
+                $nodeId = $nodeIdOf($row['label']);
                 if (isset($declaredNodeIds[$nodeId])) {
                     continue;
                 }
                 $declaredNodeIds[$nodeId] = true;
-                $lines[] = '    '.$this->nodeDeclaration($row);
+                $lines[] = '    '.$this->nodeDeclaration($row, $nodeId);
             }
 
             $lines[] = '  end';
@@ -155,7 +159,7 @@ class SwimlaneMermaidGenerator
         }
 
         if ($injectDefaultStart && $defaultStartTarget !== null) {
-            $toId = $this->toNodeId($defaultStartTarget['label']);
+            $toId = $nodeIdOf($defaultStartTarget['label']);
             if ($toId !== self::DEFAULT_START_ID) {
                 $lines[] = '  '.self::DEFAULT_START_ID.' --> '.$toId;
             }
@@ -166,8 +170,8 @@ class SwimlaneMermaidGenerator
                 continue;
             }
 
-            $fromId = $this->toNodeId($row['from']);
-            $toId = $this->toNodeId($row['label']);
+            $fromId = $nodeIdOf($row['from']);
+            $toId = $nodeIdOf($row['label']);
 
             // Mermaid swimlane-beta crashes on self-loops (from === label).
             if ($fromId === $toId) {
@@ -193,7 +197,7 @@ class SwimlaneMermaidGenerator
         if ($styleElements) {
             $styledNodeIds = [];
             foreach ($rows as $row) {
-                $nodeId = $this->toNodeId($row['label']);
+                $nodeId = $nodeIdOf($row['label']);
                 if (isset($styledNodeIds[$nodeId])) {
                     continue;
                 }
@@ -311,6 +315,28 @@ class SwimlaneMermaidGenerator
     }
 
     /**
+     * Label-derived node id => step-code node id (PS-2 becomes PS_2); the first row with a label names the node.
+     *
+     * @param  list<array{label: string, code?: string|null}>  $rows
+     * @return array<string, string>
+     */
+    protected function stepCodeIds(array $rows): array
+    {
+        $ids = [];
+
+        foreach ($rows as $row) {
+            $labelId = $this->toNodeId($row['label']);
+            $code = (string) ($row['code'] ?? '');
+            if ($code === '' || isset($ids[$labelId])) {
+                continue;
+            }
+            $ids[$labelId] = preg_replace('/[^A-Za-z0-9_]/', '_', $code);
+        }
+
+        return $ids;
+    }
+
+    /**
      * @param  list<array{lane: string, lane_color?: string|null, element_color?: string|null, from: string|null, type: string, label: string, line_title: string|null, code?: string|null, stakeholder_need_id?: int|null}>  $rows
      * @return array<string, list<array{lane: string, lane_color?: string|null, element_color?: string|null, from: string|null, type: string, label: string, line_title: string|null, code?: string|null, stakeholder_need_id?: int|null}>>
      */
@@ -425,9 +451,9 @@ class SwimlaneMermaidGenerator
     /**
      * @param  array{lane: string, from: string|null, type: string, label: string, line_title: string|null}  $row
      */
-    protected function nodeDeclaration(array $row): string
+    protected function nodeDeclaration(array $row, ?string $id = null): string
     {
-        $id = $this->toNodeId($row['label']);
+        $id ??= $this->toNodeId($row['label']);
         $label = $this->quotedLabel($row['label']);
 
         return match ($row['type']) {

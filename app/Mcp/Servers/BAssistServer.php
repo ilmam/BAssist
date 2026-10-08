@@ -9,6 +9,7 @@ use App\Mcp\Tools\DescribeEntityTool;
 use App\Mcp\Tools\GetAcceptancePlanTool;
 use App\Mcp\Tools\GetGherkinTool;
 use App\Mcp\Tools\GetLineageTool;
+use App\Mcp\Tools\GetProcessFlowTool;
 use App\Mcp\Tools\GetReadinessTool;
 use App\Mcp\Tools\GetRecordTool;
 use App\Mcp\Tools\GetTraceabilityTool;
@@ -32,6 +33,9 @@ class BAssistServer extends Server
 
     protected string $version = '1.0.0';
 
+    /** tools/list returns every tool in one page; the package default of 15 would hide the rest from clients that do not follow the cursor. */
+    public int $defaultPaginationLength = 50;
+
     protected string $instructions = <<<'MARKDOWN'
         BAssist is a BABOK-aligned requirements tool. It holds each project's Need Spine: the lineage that justifies every piece of work.
 
@@ -49,6 +53,7 @@ class BAssistServer extends Server
         - Before creating or updating a kind of record for the first time, call describe-entity for its fields.
         - Build lineage top down and link every record to its parent. A higher link can only follow once the nearer one exists.
         - Before treating a solution item as ready to build, check get-lineage: complete lineage, acceptance present, status agreed, no open or answered comments (open_comments is 0), no open assumptions.
+        - To read a business process diagram (SwimlaneFlow), use get-process-flow rather than get-record: it returns compact Mermaid with step-code node ids and the requirements each step links to.
         - Change starts here: update the spine first, then tests and code.
         - Never invent business facts. Record an unknown as an Assumption with status open.
         - When a requirement is silent, unclear or wrong, do not guess: raise the finding with add-comment on the record it concerns.
@@ -66,6 +71,7 @@ class BAssistServer extends Server
         GetTraceabilityTool::class,
         GetAcceptancePlanTool::class,
         GetGherkinTool::class,
+        GetProcessFlowTool::class,
         DescribeEntityTool::class,
         ListRecordsTool::class,
         GetRecordTool::class,

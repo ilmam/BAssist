@@ -3,7 +3,10 @@
 namespace App\Services;
 
 use App\Models\Feature;
+use App\Models\FunctionalRequirement;
 use App\Models\Project;
+use App\Models\StakeholderNeed;
+use App\Models\SwimlaneFlow;
 use App\Support\CrudEntityRegistry;
 use App\Support\EntityAccess;
 use App\Support\ProjectContext;
@@ -28,6 +31,7 @@ class ProjectInsightsService
         protected GherkinFeatureAssembler $assembler,
         protected SpineCascadeService $cascade,
         protected CommentService $comments,
+        protected SwimlaneMermaidGenerator $swimlane,
         protected ProjectContext $projectContext,
     ) {
     }
@@ -169,6 +173,55 @@ class ProjectInsightsService
             'open_comments' => $comments['open'] + $comments['answered'],
             'comments' => $comments,
         ] + $result;
+    }
+
+    /**
+     * One BPD as Mermaid swimlane text whose node ids are the process-step codes
+     * (PS_2), plus what each step links to. The Mermaid is the same text the
+     * flow page offers for copy-paste.
+     *
+     * @return array{id: int, title: string, project_id: int, direction: string, mermaid: string, trace: list<string>}
+     */
+    public function processFlow(int $id): array
+    {
+        EntityAccess::authorize(auth()->user(), 'SwimlaneFlow', EntityAccess::VIEW);
+
+        /** @var SwimlaneFlow $flow */
+        $flow = CrudEntityRegistry::repository('SwimlaneFlow')->findModel($id);
+        $this->pin($flow->project);
+
+        $elements = $flow->normalizedElements();
+        $stepIds = array_values(array_filter(array_column($elements, 'id')));
+        $needs = StakeholderNeed::query()
+            ->whereIn('id', array_filter(array_column($elements, 'stakeholder_need_id')))
+            ->get()->keyBy('id');
+        $requirements = FunctionalRequirement::query()
+            ->whereIn('swimlane_flow_step_id', $stepIds)->get()->groupBy('swimlane_flow_step_id');
+        $features = Feature::query()
+            ->whereIn('swimlane_flow_step_id', $stepIds)->get()->groupBy('swimlane_flow_step_id');
+
+        $trace = [];
+        foreach ($elements as $row) {
+            if (! in_array($row['type'], SwimlaneMermaidGenerator::SATISFIABLE_TYPES, true)) {
+                continue;
+            }
+
+            $codes = array_filter([
+                $needs->get($row['stakeholder_need_id'])?->code,
+                ...($requirements->get($row['id']) ?? collect())->map->code->all(),
+                ...($features->get($row['id']) ?? collect())->map->code->all(),
+            ]);
+            $trace[] = $row['code'].' '.($codes === [] ? 'none' : implode(', ', $codes));
+        }
+
+        return [
+            'id' => (int) $flow->id,
+            'title' => (string) $flow->title,
+            'project_id' => (int) $flow->project_id,
+            'direction' => (string) $flow->direction,
+            'mermaid' => $this->swimlane->generate($flow->title, $elements, (string) $flow->direction, $flow->color_mode, stepCodeIds: true),
+            'trace' => $trace,
+        ];
     }
 
     /**

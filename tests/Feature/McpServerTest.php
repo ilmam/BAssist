@@ -9,6 +9,7 @@ use App\Mcp\Tools\DeleteRecordTool;
 use App\Mcp\Tools\DescribeEntityTool;
 use App\Mcp\Tools\GetGherkinTool;
 use App\Mcp\Tools\GetLineageTool;
+use App\Mcp\Tools\GetProcessFlowTool;
 use App\Mcp\Tools\GetReadinessTool;
 use App\Mcp\Tools\GetRecordTool;
 use App\Mcp\Tools\ListCommentsTool;
@@ -26,6 +27,8 @@ use App\Models\Role;
 use App\Models\RoleEntityPermission;
 use App\Models\Scenario;
 use App\Models\StakeholderNeed;
+use App\Models\SwimlaneFlow;
+use App\Models\SwimlaneFlowStep;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Models\Workspace;
@@ -116,6 +119,37 @@ class McpServerTest extends TestCase
 
         BAssistServer::actingAs($this->userA)
             ->tool(GetGherkinTool::class, [])
+            ->assertHasErrors();
+    }
+
+    public function test_process_flow_is_mermaid_with_step_code_ids_and_a_trace(): void
+    {
+        $flow = SwimlaneFlow::query()->create(['project_id' => $this->a['project']->id, 'title' => 'Place bid']);
+        $rows = [
+            ['lane' => 'Bidder', 'type' => 'start', 'label' => 'Open auction', 'from_label' => null, 'line_title' => null],
+            ['lane' => 'Bidder', 'type' => 'process', 'label' => 'Enter bid', 'from_label' => 'Open auction', 'line_title' => null],
+            ['lane' => 'System', 'type' => 'decision', 'label' => 'Bid high enough?', 'from_label' => 'Enter bid', 'line_title' => null],
+            ['lane' => 'System', 'type' => 'process', 'label' => 'Record bid', 'from_label' => 'Bid high enough?', 'line_title' => 'yes'],
+        ];
+        $steps = [];
+        foreach ($rows as $position => $row) {
+            $steps[] = SwimlaneFlowStep::query()->create($row + [
+                'swimlane_flow_id' => $flow->id,
+                'project_id' => $this->a['project']->id,
+                'position' => $position,
+                'stakeholder_need_id' => in_array($row['type'], ['process', 'decision'], true) ? $this->a['need']->id : null,
+            ]);
+        }
+        $this->a['fr']->update(['swimlane_flow_step_id' => $steps[3]->id]);
+
+        BAssistServer::actingAs($this->userA)
+            ->tool(GetProcessFlowTool::class, ['id' => $flow->id])
+            ->assertOk()
+            ->assertSee(['swimlane-beta', 'PS_2', 'PS_3 -->|yes| PS_4', $steps[3]->code.' '.$this->a['need']->code.', '.$this->a['fr']->code])
+            ->assertDontSee('style ');
+
+        BAssistServer::actingAs($this->userA)
+            ->tool(GetProcessFlowTool::class, ['id' => 999999])
             ->assertHasErrors();
     }
 
@@ -666,7 +700,7 @@ class McpServerTest extends TestCase
             'name',
         );
 
-        foreach (['list-projects', 'get-readiness', 'get-lineage', 'describe-entity', 'create-record', 'update-record', 'delete-record', 'list-comments', 'add-comment', 'mark-comment-implemented'] as $tool) {
+        foreach (['list-projects', 'get-readiness', 'get-lineage', 'get-process-flow', 'describe-entity', 'create-record', 'update-record', 'delete-record', 'list-comments', 'add-comment', 'mark-comment-implemented'] as $tool) {
             $this->assertContains($tool, $names);
         }
     }
