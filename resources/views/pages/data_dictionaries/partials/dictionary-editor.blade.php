@@ -38,6 +38,68 @@
     }
 @endphp
 
+@once
+    <style>
+        /* Hard spacing and shading: do not rely on utility classes alone (they are not all compiled). */
+        [data-data-dictionary-editor] [data-entities] {
+            display: flex;
+            flex-direction: column;
+            gap: 1.75rem;
+        }
+
+        /* Each entity is its own shaded, outlined card with an accent edge; odd and even differ slightly. */
+        [data-data-dictionary-editor] [data-entity-card] {
+            --dd-tone: #64748b;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            padding: 1.1rem 1.25rem 1.25rem;
+            border: 1px solid color-mix(in srgb, var(--dd-tone) 28%, var(--border, #e5e7eb));
+            border-inline-start: 4px solid var(--dd-tone);
+            border-radius: 0.6rem;
+            background: color-mix(in srgb, var(--dd-tone) 6%, transparent);
+        }
+        [data-data-dictionary-editor] [data-entity-card]:nth-child(even) {
+            --dd-tone: #2563eb;
+        }
+
+        /* The field table stays white so the fields read clearly against the shaded card. */
+        [data-data-dictionary-editor] [data-entity-card] .overflow-x-auto {
+            border: 1px solid var(--border, #e5e7eb);
+            border-radius: 0.5rem;
+            background: var(--background, #fff);
+        }
+
+        /* Name and meaning side by side on wide screens (the 12-column utility classes are not compiled). */
+        [data-data-dictionary-editor] [data-entity-card] > .grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr);
+            gap: 0.75rem 1rem;
+        }
+        @media (min-width: 768px) {
+            [data-data-dictionary-editor] [data-entity-card] > .grid {
+                grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+            }
+        }
+        /* The children carry col-span-12 / md:col-span-4 / md:col-span-8 classes; let our two columns win. */
+        [data-data-dictionary-editor] [data-entity-card] > .grid > * {
+            grid-column: auto !important;
+        }
+        [data-data-dictionary-editor] [data-entity-card] > .grid label {
+            display: block;
+            margin-bottom: 0.25rem;
+        }
+
+        [data-data-dictionary-editor] [data-entity-card] > .flex {
+            padding-top: 0.25rem;
+        }
+
+        [data-data-dictionary-editor] [data-add-entity] {
+            margin-top: 1.25rem;
+        }
+    </style>
+@endonce
+
 <div
     data-data-dictionary-editor
     @if ($autoRender) data-auto-render="1" @endif
@@ -59,7 +121,7 @@
         </div>
 
         @if ($editable)
-            <button type="button" class="kt-btn kt-btn-sm kt-btn-secondary mt-3" data-add-entity>
+            <button type="button" class="kt-btn kt-btn-primary mt-3" data-add-entity>
                 {{ __('ui.add_entity') }}
             </button>
         @endif
