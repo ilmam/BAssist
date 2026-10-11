@@ -143,8 +143,8 @@ class ScreenDesignTest extends TestCase
         $this->actingAs($this->user)
             ->get(route('screens.edit', $screen->id))
             ->assertOk()
-            ->assertSee('data-screen-designer', false)
-            ->assertSee('name="elements[0][label]"', false)
+            ->assertSee('data-screen-builder', false)
+            ->assertSee('Hello there')
             ->assertSee('elements[_present]', false);
 
         $this->actingAs($this->user)
@@ -152,8 +152,7 @@ class ScreenDesignTest extends TestCase
             ->assertOk()
             ->assertSee('Hello there')
             ->assertSee('data-element-list', false)
-            ->assertDontSee('name="elements[0][label]"', false)
-            ->assertDontSee('data-row-add', false);
+            ->assertDontSee('data-screen-builder', false);
     }
 
     public function test_nested_rows_are_saved_with_their_container_and_reload_with_keys(): void

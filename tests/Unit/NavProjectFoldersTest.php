@@ -31,7 +31,6 @@ class NavProjectFoldersTest extends TestCase
                 'StakeholderNeed',
                 'guardrails.index',
                 'solution_requirements.index',
-                'DataDictionary',
                 'diagrams.index',
             ],
             $this->childKeys($folders['radd']['children'])
@@ -45,7 +44,7 @@ class NavProjectFoldersTest extends TestCase
             ['Assumption', 'Constraint', 'BusinessRule'],
             $guardrails['entities'] ?? []
         );
-        $this->assertSame(['Screen'], $this->childKeys($folders['design']['children']));
+        $this->assertSame(['Screen', 'DataDictionary'], $this->childKeys($folders['design']['children']));
         $this->assertSame(
             ['change_requests.index', 'traceability.index'],
             $this->childKeys($folders['governance']['children'])

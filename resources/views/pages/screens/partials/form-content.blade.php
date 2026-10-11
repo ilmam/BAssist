@@ -24,6 +24,7 @@
         {{ Form::hidden('id', $dto->id) }}
     @endif
 
+    <x-section :title="__('ui.screen_meta')" icon="information-2" key="screen-meta">
     <div class="form-fields-grid grid grid-cols-12">
         @foreach ($formFields as $name => $field)
             @php
@@ -38,10 +39,13 @@
             </div>
         @endforeach
     </div>
+    </x-section>
 
-    @include('pages.screens.partials.elements-designer', [
-        'elements' => $elements,
-        'projectId' => (int) ($dto->project_id ?? 0),
-        'previewUrl' => route('screens.preview'),
-    ])
+    <x-section :title="__('ui.screen_elements_preview')" icon="element-11" key="screen-builder">
+        @include('pages.screens.partials.elements-designer', [
+            'elements' => $elements,
+            'projectId' => (int) ($dto->project_id ?? 0),
+            'previewUrl' => route('screens.preview'),
+        ])
+    </x-section>
 </x-record-form>

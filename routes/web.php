@@ -20,6 +20,7 @@ use App\Http\Controllers\ProjectDashboardController;
 use App\Http\Controllers\QuickActionsController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\ProjectExportController;
+use App\Http\Controllers\ProjectUiDesignController;
 use App\Http\Controllers\QuickGuideController;
 use App\Http\Controllers\ScreenMockupController;
 use App\Http\Controllers\SolutionRequirementsController;
@@ -79,6 +80,8 @@ Route::middleware('auth')->group(function (): void {
         ->name('swimlane_flows.stakeholder-need-options');
     Route::get('projects/{project}/dashboard', [ProjectDashboardController::class, 'show'])->name('projects.dashboard');
     Route::get('projects/{project}/export', [ProjectExportController::class, 'show'])->name('projects.export');
+    Route::get('projects/{project}/ui-designs', [ProjectUiDesignController::class, 'show'])->name('projects.ui-designs');
+    Route::get('projects/{project}/ui-designs/download', [ProjectUiDesignController::class, 'download'])->name('projects.ui-designs.download');
     Route::get('projects/{project}/comments', [ProjectCommentsController::class, 'index'])->name('projects.comments');
     Route::get('projects/{project}/babok', [BabokDocumentController::class, 'index'])->name('projects.babok.index');
     Route::get('projects/{project}/babok/{document}', [BabokDocumentController::class, 'show'])->name('projects.babok.show');

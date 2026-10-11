@@ -1,13 +1,12 @@
 {{--
-    The element rows as a list: a filter bar and a table. Read-only on the details page;
-    editable inside the screen form (pages/screens/partials/elements-designer).
+    The element rows as a list: a filter bar and a table. Read-only, for the details page;
+    editing happens in the screen form (pages/screens/partials/elements-designer).
 
-    In: $elements (rows), $editable (bool), $requirements (id => "FR-1 — title").
+    In: $elements (rows), $requirements (id => "FR-1 — title").
 --}}
 @php
     use App\Support\ScreenElementKind;
 
-    $editable = (bool) ($editable ?? false);
     $rows = is_array($elements ?? null) ? array_values($elements) : [];
     $requirements = is_array($requirements ?? null) ? $requirements : [];
     $kinds = ScreenElementKind::selectOptions();
@@ -31,12 +30,12 @@
     {{-- Filter bar: narrows the table only; hidden rows are still saved. No name= so none of it is submitted. --}}
     <div class="flex flex-wrap items-end gap-3">
         <div class="grow max-w-xs">
-            <label class="kt-form-label mb-1.5" for="element-filter-text-{{ $editable ? 'edit' : 'view' }}">{{ __('ui.search') }}</label>
-            <input type="search" id="element-filter-text-{{ $editable ? 'edit' : 'view' }}" class="kt-input" data-filter-text placeholder="{{ __('ui.screen_filter_label') }}" autocomplete="off">
+            <label class="kt-form-label mb-1.5" for="element-filter-text-view">{{ __('ui.search') }}</label>
+            <input type="search" id="element-filter-text-view" class="kt-input" data-filter-text placeholder="{{ __('ui.screen_filter_label') }}" autocomplete="off">
         </div>
         <div class="max-w-xs">
-            <label class="kt-form-label mb-1.5" for="element-filter-kind-{{ $editable ? 'edit' : 'view' }}">{{ __('ui.screen_element_kind') }}</label>
-            <select id="element-filter-kind-{{ $editable ? 'edit' : 'view' }}" class="kt-select" data-filter-kind>
+            <label class="kt-form-label mb-1.5" for="element-filter-kind-view">{{ __('ui.screen_element_kind') }}</label>
+            <select id="element-filter-kind-view" class="kt-select" data-filter-kind>
                 <option value="">{{ __('ui.all') }}</option>
                 @foreach ($kinds as $value => $label)
                     <option value="{{ $value }}">{{ $label }}</option>
@@ -54,14 +53,8 @@
                     <th class="w-12">#</th>
                     <th class="w-20">{{ __('ui.screen_element_row') }}</th>
                     <th class="min-w-32">{{ __('ui.screen_element_kind') }}</th>
-                    @if ($editable)
-                        <th class="min-w-40">{{ __('ui.screen_element_inside') }}</th>
-                    @endif
                     <th class="min-w-56">{{ __('ui.screen_element_label') }}</th>
                     <th class="min-w-48">{{ __('ui.screen_element_requirement') }}</th>
-                    @if ($editable)
-                        <th class="w-32">{{ __('ui.actions') }}</th>
-                    @endif
                 </tr>
             </thead>
             <tbody data-elements-body>
@@ -70,7 +63,6 @@
                         'index' => $index,
                         'depth' => $depthOf((string) ($row['key'] ?? '')),
                         'row' => $row,
-                        'editable' => $editable,
                         'kinds' => $kinds,
                         'requirements' => $requirements,
                     ])
@@ -79,7 +71,7 @@
         </table>
     </div>
 
-    @if (! $editable && $rows === [])
+    @if ($rows === [])
         <p class="text-sm text-muted-foreground">{{ __('ui.screen_no_elements_yet') }}</p>
     @endif
 </div>

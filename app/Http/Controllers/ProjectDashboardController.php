@@ -245,6 +245,15 @@ class ProjectDashboardController extends Controller
             'external' => true,
         ];
 
+        if (entity_can('Screen', EntityAccess::VIEW)) {
+            $links[] = [
+                'label' => __('ui.ui_designs_pack'),
+                'url' => route('projects.ui-designs', $project),
+                'icon' => entity_icon('Screen', 'screen'),
+                'external' => true,
+            ];
+        }
+
         return view('pages.projects.dashboard', [
             'project' => $project,
             'counts' => $counts,

@@ -31,6 +31,17 @@
                             'url' => route('projects.export', $project),
                             'target' => '_blank',
                         ];
+                        if (entity_can('Screen', 'view')) {
+                            $downloadMenuItems[] = [
+                                'label' => __('ui.ui_designs_pack'),
+                                'url' => route('projects.ui-designs', $project),
+                                'target' => '_blank',
+                            ];
+                            $downloadMenuItems[] = [
+                                'label' => __('ui.ui_designs_download'),
+                                'url' => route('projects.ui-designs.download', $project),
+                            ];
+                        }
                         $downloadMenuItems[] = [
                             'label' => __('ui.babok_documents'),
                             'url' => route('projects.babok.index', $project),

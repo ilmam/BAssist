@@ -5,8 +5,8 @@
 .salt-columns { display: flex; gap: 1rem; align-items: stretch; margin: .3rem 0; }
 .salt-column { flex: 1 1 0; min-width: 0; }
 .salt-column > .salt-block { height: 100%; box-sizing: border-box; }
-.salt-row { display: flex; gap: .75rem; align-items: center; margin: .3rem 0; }
-.salt-cell { flex: 1 1 0; min-width: 0; }
+.salt-row { display: flex; flex-wrap: wrap; gap: .5rem .75rem; align-items: center; margin: .3rem 0; }
+.salt-cell { flex: 1 1 5.5rem; min-width: 0; overflow-wrap: anywhere; }
 .salt-bold { font-weight: 600; }
 .salt-rule { border: 0; border-top: 1px solid #999; margin: .5rem 0; }
 .salt-table { border-collapse: collapse; width: 100%; margin: .3rem 0; }
@@ -20,3 +20,12 @@
 .salt-radio { border-radius: 50%; }
 .salt-checkbox.is-checked::after { content: '✓'; }
 .salt-radio.is-checked::after { content: '●'; }
+
+/* popup preview (inside the app's shared modal) */
+.salt-shell { display: flex; flex-direction: column; min-height: 0; height: 100%; }
+.salt-shell .salt-shell-body { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+.salt-shell-viewport { position: relative; flex: 1 1 0%; height: 0; min-height: max(14rem, 60vh); overflow: auto; border: 1px solid var(--border, #e5e7eb); border-radius: .5rem; background: #fff; cursor: grab; overscroll-behavior: contain; }
+.salt-shell-viewport.is-panning { cursor: grabbing; user-select: none; }
+.salt-shell-stage { position: absolute; top: 0; left: 0; display: flex; flex-direction: column; padding: .5rem; box-sizing: border-box; }
+.salt-shell-stage > .salt-frame { flex: 1 1 auto; display: flex; flex-direction: column; width: 100%; }
+.salt-shell-stage > .salt-frame > .salt-block { flex: 1 1 auto; }

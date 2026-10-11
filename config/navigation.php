@@ -86,7 +86,7 @@ return [
                 'label' => 'Requirements Modeling',
                 'short' => 'Modeling',
                 'babok' => 'KA 7 — Requirements Analysis & Design Definition',
-                'purpose' => 'Actors → elicitation → rules & assumptions → solution requirements → data dictionary → diagrams.',
+                'purpose' => 'Actors → elicitation → rules & assumptions → solution requirements → diagrams.',
                 'icon' => 'abstract-26',
                 'icon_v8' => 'abstract-26',
                 'children' => [
@@ -111,9 +111,6 @@ return [
                         'entities' => ['Feature', 'FunctionalRequirement', 'NonFunctionalRequirement'],
                     ],
                     [
-                        'entity' => 'DataDictionary',
-                    ],
-                    [
                         // Keep as one hub until diagrams get a better home.
                         'label' => 'Diagrams',
                         'route' => 'diagrams.index',
@@ -128,12 +125,15 @@ return [
                 'label' => 'Design',
                 'short' => 'Design',
                 'babok' => 'KA 7 — Requirements Analysis & Design Definition (design options)',
-                'purpose' => 'How the solution is realized: designs that each realize functional requirements. Not requirements themselves.',
+                'purpose' => 'How the solution is realized: UI designs and the data dictionary. Designs realize functional requirements; they are not requirements themselves.',
                 'icon' => 'screen',
                 'icon_v8' => 'screen',
                 'children' => [
                     [
                         'entity' => 'Screen',
+                    ],
+                    [
+                        'entity' => 'DataDictionary',
                     ],
                 ],
             ],

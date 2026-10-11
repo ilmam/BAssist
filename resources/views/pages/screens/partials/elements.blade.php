@@ -30,7 +30,6 @@
 
     @include('pages.screens.partials.elements-table', [
         'elements' => $rows,
-        'editable' => false,
         'requirements' => $requirements,
     ])
 </section>
@@ -44,7 +43,7 @@
         if (window.ScreenDesigner) { start(); return; }
 
         var tag = document.createElement('script');
-        tag.src = @json(asset('js/screen-designer.js'));
+        tag.src = @json(asset('js/screen-designer.js').'?v='.@filemtime(public_path('js/screen-designer.js')));
         tag.onload = start;
         document.head.appendChild(tag);
     })();
