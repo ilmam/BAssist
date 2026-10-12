@@ -2,7 +2,9 @@
 
 namespace App\Services;
 
+use App\Models\Attachment;
 use App\Repositories\BaseRepository;
+use App\Support\AttachableSupport;
 use App\Support\CrudEntityRegistry;
 use App\Support\DtoMetadata;
 use App\Support\EntityAccess;
@@ -143,7 +145,21 @@ class EntityRecordService
         $model = $this->resolve($entity);
         EntityAccess::authorize(auth()->user(), $model, EntityAccess::VIEW);
 
-        return ['entity' => $model] + $this->toArray(CrudEntityRegistry::repository($model)->getById($id));
+        $record = ['entity' => $model] + $this->toArray(CrudEntityRegistry::repository($model)->getById($id));
+
+        if (AttachableSupport::enabled($model)) {
+            $record['attachments'] = collect(app(AttachmentService::class)->list($model, $id))
+                ->map(fn (Attachment $a) => [
+                    'id' => (int) $a->id,
+                    'name' => $a->original_name,
+                    'mime' => $a->mime,
+                    'size' => (int) $a->size,
+                ])
+                ->values()
+                ->all();
+        }
+
+        return $record;
     }
 
     /**

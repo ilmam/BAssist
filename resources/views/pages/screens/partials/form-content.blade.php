@@ -34,12 +34,25 @@
                 $list = $field['list'] ?? null;
                 $isWide = in_array($type, ['textarea', 'code', 'dropzone'], true);
             @endphp
+            @continue($type === 'attachments')
             <div data-ui-span="12" data-ui-span-md="{{ $isWide ? 12 : 6 }}" data-ui-span-lg="{{ $isWide ? 12 : 6 }}">
                 {{ Form::field($type, $fieldName, $fieldValue, $list, null) }}
             </div>
         @endforeach
     </div>
     </x-section>
+
+    @if (array_key_exists('attachments', $formFields))
+        <x-section :title="__('ui.attachments')" icon="paper-clip" key="screen-attachments">
+            <div class="form-fields-grid grid grid-cols-12">
+                @include('pages.partials.form-field-cells', [
+                    'fields' => ['attachments' => $formFields['attachments']],
+                    'dto' => $dto,
+                    'entityModel' => $modelName,
+                ])
+            </div>
+        </x-section>
+    @endif
 
     <x-section :title="__('ui.screen_elements_preview')" icon="element-11" key="screen-builder">
         @include('pages.screens.partials.elements-designer', [

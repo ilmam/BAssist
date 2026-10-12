@@ -104,6 +104,19 @@ Proper layout metadata (grids, groups, tabs, trees) comes later.
 - **Details page** (`ScreenController@show`, `pages/screens/details`) is view-only: metadata, the mockup, and the element rows in the same filter bar + table, read-only. Edit goes through the usual Edit action.
 - `ScreenElement` is a registered entity (so Claude can list and read rows with the MCP tools) but is not in the menu; people edit rows through the screen's form. `use_modals` is off for `Screen`: its pages are full pages.
 
+## Reference attachment and conversion to Salt
+
+A screen takes **attachments** (the edit form's *Attachments* panel, the same upload as other entities; `png`, `jpg`, `pdf`, `puml`, `salt`, `txt` and more, see `config/attachments.php`). They are a **reference for the whole screen**, usually a screenshot of a wireframe, or an HTML export of it (the best source for exact labels and field types); elements carry no attachments.
+
+The point is that Claude reads the Salt, not the image, every time it works on a design. So the image is converted once:
+
+1. Run the MCP command `/mcp__bassist__screen-from-attachment` (arguments: project, optional screen title), or ask Claude in plain words. A PDF is read as images of its first 4 pages when the server has Imagick, `pdftoppm` or Ghostscript; otherwise only its text layer, so attach a screenshot for a faithful conversion.
+2. Claude calls `get-record` (Entity `Screen`; the result lists `attachments`), then `get-attachment` to see the image.
+3. Claude writes the screen's elements with `update-record` (`data.elements`, nesting and kinds as in the tables above); rows that keep their id keep their history.
+4. Claude reads the screen again and checks that the `salt` matches the screenshot.
+
+After that the Salt is the design and the image stays only as a reference. BAssist does no image recognition itself; the conversion is Claude's, and what it saves is ordinary element rows.
+
 ## UI designs pack
 
 A project's **Downloads** menu (project dashboard) has two entries for the design layer, the same way the full export pack is offered:

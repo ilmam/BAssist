@@ -2,11 +2,13 @@
 
 namespace App\Models;
 
+use App\Attributes\Attachable;
 use App\Attributes\Commentable;
 use App\Attributes\Relation;
 use App\Attributes\RoutableAttribute;
 use App\Attributes\Tracked;
 use App\Models\Concerns\BelongsToTenant;
+use App\Models\Concerns\HasAttachments;
 use App\Models\Concerns\HasEntityStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -19,10 +21,12 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 #[RoutableAttribute]
 #[Commentable]
+#[Attachable]
 #[Tracked]
 class Screen extends BaseModel
 {
     use BelongsToTenant;
+    use HasAttachments;
     use HasEntityStatus;
     use HasFactory;
 

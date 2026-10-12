@@ -77,7 +77,16 @@ The package is `laravel/mcp` (Laravel's own). It implements the protocol: handsh
 | `get-process-flow` | read | One BPD as Mermaid swimlane text with step-code node ids (`PS_2`), plus the need, FR and feature each step links to |
 | `describe-entity` | read | Entities the user may use; fields, rules and filters of one entity |
 | `list-records` | read | Records of an entity; `project_id`, `filters`, `search`, `limit` |
-| `get-record` | read | One full record |
+| `get-record` | read | One full record; for an attachable entity (Screen, Feature, ...) also its `attachments` (id, name, mime, size) |
+| `get-attachment` | read | One attached file: images come back as an image, a PDF as images of its first 4 pages, an HTML file as cleaned markup (scripts, style blocks, inline styles, comments and embedded images removed; cut at 150,000 characters), text files (`txt`, `md`, `csv`, `puml`, `salt`, `feature`) as text. Used to convert a Screen's reference screenshot into its elements. PDF pages need Imagick, `pdftoppm` or Ghostscript on the server; without one the reply is the PDF's text layer (needs `pdftotext`) or a message asking for a screenshot |
+
+### Prompts (commands)
+
+A client lists prompts as commands. Claude Code shows them as `/mcp__bassist__<name>`.
+
+| Prompt | Arguments | What it does |
+|---|---|---|
+| `screen-from-attachment` | `project` (name or code), `screen` (optional title) | Hands the assistant the steps to convert a Screen's reference attachment into its Salt elements: find the screen, read the attachment, write the elements, read the salt back and compare |
 | `create-record` | write | Create a record; `data` holds the fields |
 | `update-record` | write | Partial update: only the fields sent change |
 | `delete-record` | write, destructive | Delete a record |

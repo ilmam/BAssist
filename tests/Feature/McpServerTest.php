@@ -7,6 +7,7 @@ use App\Mcp\Tools\AddCommentTool;
 use App\Mcp\Tools\CreateRecordTool;
 use App\Mcp\Tools\DeleteRecordTool;
 use App\Mcp\Tools\DescribeEntityTool;
+use App\Mcp\Tools\GetAttachmentTool;
 use App\Mcp\Tools\GetGherkinTool;
 use App\Mcp\Tools\GetLineageTool;
 use App\Mcp\Tools\GetProcessFlowTool;
@@ -151,6 +152,109 @@ class McpServerTest extends TestCase
         BAssistServer::actingAs($this->userA)
             ->tool(GetProcessFlowTool::class, ['id' => 999999])
             ->assertHasErrors();
+    }
+
+    public function test_screen_attachments_are_listed_and_readable_through_get_attachment(): void
+    {
+        \Illuminate\Support\Facades\Storage::fake('local');
+
+        $screen = \App\Models\Screen::query()->create(['title' => 'Alpha screen', 'project_id' => $this->a['project']->id]);
+        $this->actingAs($this->userA);
+        $service = app(\App\Services\AttachmentService::class);
+
+        $png = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==');
+        $image = $service->store('Screen', $screen->id, \Illuminate\Http\UploadedFile::fake()->createWithContent('wireframe.png', $png));
+        $text = $service->store('Screen', $screen->id, \Illuminate\Http\UploadedFile::fake()->createWithContent('login.puml', "@startsalt\n{+ <b>Login\n[OK]\n}\n@endsalt"));
+
+        BAssistServer::actingAs($this->userA)
+            ->tool(GetRecordTool::class, ['entity' => 'Screen', 'id' => $screen->id])
+            ->assertOk()
+            ->assertSee(['attachments', 'wireframe.png', 'login.puml']);
+
+        BAssistServer::actingAs($this->userA)
+            ->tool(GetAttachmentTool::class, ['entity' => 'Screen', 'id' => $screen->id, 'attachment_id' => $image->id])
+            ->assertOk()
+            ->assertSee('wireframe.png');
+
+        BAssistServer::actingAs($this->userA)
+            ->tool(GetAttachmentTool::class, ['entity' => 'Screen', 'id' => $screen->id, 'attachment_id' => $text->id])
+            ->assertOk()
+            ->assertSee('@startsalt');
+
+        // An attachment id that belongs to nothing here is not found.
+        BAssistServer::actingAs($this->userA)
+            ->tool(GetAttachmentTool::class, ['entity' => 'Screen', 'id' => $screen->id, 'attachment_id' => 999999])
+            ->assertHasErrors();
+    }
+
+    public function test_an_html_attachment_is_returned_as_cleaned_markup(): void
+    {
+        \Illuminate\Support\Facades\Storage::fake('local');
+
+        $screen = \App\Models\Screen::query()->create(['title' => 'Alpha screen', 'project_id' => $this->a['project']->id]);
+        $this->actingAs($this->userA);
+        $html = '<html><head><style>.a{color:red}</style><script>alert(1)</script></head>'
+            .'<body><!-- note --><form><label>Part number</label>'
+            .'<input type="text" placeholder="Enter part number" style="width:10px"><button>Submit request</button></form></body></html>';
+        $file = app(\App\Services\AttachmentService::class)->store(
+            'Screen',
+            $screen->id,
+            \Illuminate\Http\UploadedFile::fake()->createWithContent('intake.html', $html),
+        );
+
+        BAssistServer::actingAs($this->userA)
+            ->tool(GetAttachmentTool::class, ['entity' => 'Screen', 'id' => $screen->id, 'attachment_id' => $file->id])
+            ->assertOk()
+            ->assertSee(['Part number', 'Enter part number', 'Submit request', 'type="text"'])
+            ->assertDontSee(['alert(1)', 'color:red', 'note -->', 'width:10px']);
+    }
+
+    public function test_a_pdf_attachment_is_read_or_refused_with_a_clear_message(): void
+    {
+        \Illuminate\Support\Facades\Storage::fake('local');
+
+        $screen = \App\Models\Screen::query()->create(['title' => 'Alpha screen', 'project_id' => $this->a['project']->id]);
+        $this->actingAs($this->userA);
+        $pdf = app(\App\Services\AttachmentService::class)->store(
+            'Screen',
+            $screen->id,
+            \Illuminate\Http\UploadedFile::fake()->createWithContent('wireframe.pdf', "%PDF-1.4\n1 0 obj<</Type/Page>>endobj\n%%EOF"),
+        );
+
+        // Whatever renderer this machine has, the tool answers with pages, text, or a message that says what to do instead.
+        BAssistServer::actingAs($this->userA)
+            ->tool(GetAttachmentTool::class, ['entity' => 'Screen', 'id' => $screen->id, 'attachment_id' => $pdf->id])
+            ->assertSee('wireframe.pdf');
+    }
+
+    public function test_the_screen_from_attachment_prompt_names_the_project_and_the_tools(): void
+    {
+        BAssistServer::actingAs($this->userA)
+            ->prompt(\App\Mcp\Prompts\ScreenFromAttachmentPrompt::class, ['project' => 'Demo Parts Digital Intake', 'screen' => 'Request form'])
+            ->assertOk()
+            ->assertSee(['Demo Parts Digital Intake', 'Request form', 'get-attachment', 'update-record']);
+    }
+
+    public function test_get_attachment_does_not_cross_tenants(): void
+    {
+        \Illuminate\Support\Facades\Storage::fake('local');
+
+        $foreign = \App\Models\Screen::query()->create(['title' => 'Bravo screen', 'project_id' => $this->b['project']->id]);
+        $file = \App\Models\Attachment::query()->create([
+            'attachable_type' => $foreign->getMorphClass(),
+            'attachable_id' => $foreign->id,
+            'original_name' => 'secret.txt',
+            'disk' => 'local',
+            'path' => 'attachments/screen/'.$foreign->id.'/secret.txt',
+            'mime' => 'text/plain',
+            'size' => 6,
+        ]);
+        \Illuminate\Support\Facades\Storage::disk('local')->put($file->path, 'secret');
+
+        BAssistServer::actingAs($this->userA)
+            ->tool(GetAttachmentTool::class, ['entity' => 'Screen', 'id' => $foreign->id, 'attachment_id' => $file->id])
+            ->assertHasErrors()
+            ->assertDontSee('secret');
     }
 
     public function test_describe_entity_lists_entities_and_fields(): void
@@ -700,7 +804,7 @@ class McpServerTest extends TestCase
             'name',
         );
 
-        foreach (['list-projects', 'get-readiness', 'get-lineage', 'get-process-flow', 'describe-entity', 'create-record', 'update-record', 'delete-record', 'list-comments', 'add-comment', 'mark-comment-implemented'] as $tool) {
+        foreach (['list-projects', 'get-readiness', 'get-lineage', 'get-process-flow', 'get-attachment', 'describe-entity', 'create-record', 'update-record', 'delete-record', 'list-comments', 'add-comment', 'mark-comment-implemented'] as $tool) {
             $this->assertContains($tool, $names);
         }
     }

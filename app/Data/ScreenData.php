@@ -29,6 +29,9 @@ class ScreenData extends BaseData
         #[ListForm('select', 'Status', hideQuick: true)]
         public ?int $status_id = null,
 
+        #[Form('attachments', help: 'Reference only, usually a screenshot of a wireframe. Ask Claude (MCP) to convert it into the elements below.', hideQuick: true)]
+        public mixed $attachments = null,
+
         /**
          * The element rows, in order. null leaves the stored rows alone; an array
          * (even empty) replaces them. See ScreenRepository::syncElements().

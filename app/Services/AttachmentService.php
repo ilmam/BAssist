@@ -104,6 +104,23 @@ class AttachmentService
         return Storage::disk($attachment->disk)->download($attachment->path, $attachment->original_name);
     }
 
+    /**
+     * The stored bytes of one attachment, for a reader that is not a browser (MCP).
+     *
+     * @return array{attachment: Attachment, contents: string}
+     */
+    public function content(string $model, int $id, int $attachmentId): array
+    {
+        $attachment = $this->owned($model, $id, $attachmentId);
+        $disk = Storage::disk($attachment->disk);
+
+        if (! $disk->exists($attachment->path)) {
+            abort(404, 'The file is missing from storage.');
+        }
+
+        return ['attachment' => $attachment, 'contents' => (string) $disk->get($attachment->path)];
+    }
+
     public function destroy(string $model, int $id, int $attachmentId): void
     {
         $this->owned($model, $id, $attachmentId)->delete();

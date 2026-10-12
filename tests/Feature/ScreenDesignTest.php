@@ -60,6 +60,46 @@ class ScreenDesignTest extends TestCase
         $this->assertSame('New title', $screen->fresh()->title);
     }
 
+    public function test_a_reference_screenshot_can_be_attached_and_removed_through_the_edit_form(): void
+    {
+        \Illuminate\Support\Facades\Storage::fake('local');
+        $screen = Screen::query()->create(['title' => 'S', 'project_id' => $this->project->id]);
+
+        $this->actingAs($this->user)
+            ->get(route('screens.edit', $screen->id))
+            ->assertOk()
+            ->assertSee('name="attachments[]"', false);
+
+        $this->actingAs($this->user)
+            ->put(route('screens.update', $screen->id), [
+                'id' => $screen->id,
+                'title' => 'S',
+                'project_id' => $this->project->id,
+                'attachments' => [\Illuminate\Http\UploadedFile::fake()->image('wireframe.png')],
+            ])
+            ->assertRedirect();
+
+        $attachment = $screen->attachments()->first();
+        $this->assertNotNull($attachment);
+        $this->assertSame('wireframe.png', $attachment->original_name);
+
+        $this->actingAs($this->user)
+            ->get(route('screens.show', $screen->id))
+            ->assertOk()
+            ->assertSee('wireframe.png');
+
+        $this->actingAs($this->user)
+            ->put(route('screens.update', $screen->id), [
+                'id' => $screen->id,
+                'title' => 'S',
+                'project_id' => $this->project->id,
+                'remove_attachments' => [$attachment->id],
+            ])
+            ->assertRedirect();
+
+        $this->assertSame(0, $screen->attachments()->count());
+    }
+
     public function test_saving_the_form_replaces_the_element_rows_in_order(): void
     {
         $screen = Screen::query()->create(['title' => 'S', 'project_id' => $this->project->id]);
