@@ -1904,3 +1904,13 @@ table.dataTable .ba-select-col { min-width: 40px; max-width: 40px; padding-inlin
 .ba-subheading { display: flex; align-items: center; gap: .5rem; margin: 0; font-size: .875rem; font-weight: 600; color: var(--foreground); }
 .ba-subheading > i { color: var(--muted-foreground, #78829d); }
 .ba-subheading > span { font-size: .75rem; font-weight: 400; color: var(--muted-foreground, #78829d); }
+
+
+/* Appearance choice in the user menu: Metronic's KTThemeSwitch (data-kt-theme-switch-set) sets the
+   mode on <html data-kt-theme-switch-mode="light|dark|system">; highlight the matching button. */
+html[data-kt-theme-switch-mode="light"] .theme-choice[data-kt-theme-switch-set="light"],
+html[data-kt-theme-switch-mode="dark"] .theme-choice[data-kt-theme-switch-set="dark"],
+html[data-kt-theme-switch-mode="system"] .theme-choice[data-kt-theme-switch-set="system"] {
+    background: var(--primary);
+    color: var(--primary-foreground, #fff);
+}

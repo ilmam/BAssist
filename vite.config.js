@@ -20,7 +20,6 @@ export default defineConfig({
                 'resources/js/list-power.js',
                 'resources/js/livewire-forms.js',
                 'resources/js/navigation.js',
-                'resources/js/theme-mode.js',
                 'resources/js/comments.js',
                 'resources/js/review.js',
             ],

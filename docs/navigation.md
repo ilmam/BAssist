@@ -48,7 +48,7 @@ Diagram editors and some pages bind their script once at load, so a swapped-in p
 
 ## Appearance (light / dark / system)
 
-The theme already supports dark mode. The user menu (top right) has an **Appearance** row with Light / Dark / System. The choice is kept in the browser (`localStorage` key `kt-theme`), applied before paint, and "System" follows the operating system. Code: `resources/js/theme-mode.js`, markup in `themes/metronic9/partials/topbar.blade.php`.
+The theme already supports dark mode, and Metronic's own switch (KTUI `KTThemeSwitch`) does the work: the user menu (top right) has an **Appearance** row of buttons with `data-kt-theme-switch-set="light|dark|system"`. The choice is kept in the browser (`localStorage` key `kt-theme`) and applied before paint by the layout; the active button is highlighted by a few lines of CSS on `html[data-kt-theme-switch-mode]` (`framework.css`). Markup: `themes/metronic9/partials/topbar.blade.php`. "System" is resolved when chosen (it does not follow later OS changes until the page is opened again).
 
 ## Tests
 
