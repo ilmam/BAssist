@@ -110,6 +110,12 @@ const openSectionsWithErrors = (root) => {
 document.addEventListener('invalid', (event) => {
     for (let el = event.target.closest?.('details'); el; el = el.parentElement?.closest('details')) { el.open = true; }
 }, true);
+// Buttons in a section header (summary) must not also fold the section.
+document.addEventListener('click', (event) => {
+    if (event.target instanceof Element && event.target.closest('.ba-section__actions a, .ba-section__actions button')) {
+        event.preventDefault();
+    }
+}, true);
 let sectionObserver = null;
 const startSections = () => {
     applySections(document);

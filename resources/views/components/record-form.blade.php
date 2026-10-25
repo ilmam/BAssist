@@ -56,14 +56,14 @@
                 {{ $slot }}
             </x-form-card-body>
 
-            <x-form-card-footer>
+            <x-form-card-footer class="record-form-footer">
                 <x-button type="link" href="{{ $cancelUrl }}" color="outline">{{ __('ui.cancel') }}</x-button>
                 <x-button type="submit" color="primary">{{ __('ui.save') }}</x-button>
             </x-form-card-footer>
         {{ \App\Facades\Form::close() }}
 
         @if ($hasAfter)
-            <x-form-card-body>{{ $after }}</x-form-card-body>
+            <x-form-card-body class="record-form-after">{{ $after }}</x-form-card-body>
         @endif
     </x-form-card>
 @endif

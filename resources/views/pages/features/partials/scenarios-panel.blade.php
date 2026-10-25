@@ -17,7 +17,7 @@
             @endunless
             <p class="{{ $helpClass }}">{{ __('ui.feature_scenarios_edit_help') }}</p>
         </div>
-        @if ($addScenarioModalUrl && entity_can('Scenario', 'create'))
+        @if ($addScenarioModalUrl && entity_can('Scenario', 'create') && ! ($embedded ?? false))
             <x-button
                 type="link"
                 href="{{ $addScenarioModalUrl }}"

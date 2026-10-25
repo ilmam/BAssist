@@ -457,3 +457,21 @@
   line-height: var(--text-xs--line-height);
 }
 
+
+
+/* Create / edit page (<x-record-form>): the Save row lines up with the form body above it and has
+   room below it; content that follows the form (e.g. scenarios) starts after a gap, not under a rule. */
+.kt-card .record-form-footer {
+    padding: 1.25rem 1.25rem 1.5rem;
+}
+
+@media (min-width: 1024px) {
+    .kt-card .record-form-footer {
+        padding: 1.5rem 1.875rem 1.75rem;
+    }
+}
+
+.kt-card .record-form-after {
+    border-top: 0;
+    padding-top: 0.5rem;
+}

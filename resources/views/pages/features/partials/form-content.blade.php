@@ -148,7 +148,16 @@
 
     <x-slot:after>
         @if (! $isCreate && ($dto->id ?? null))
+            @php
+                $addScenarioUrl = model_modal_path('Scenario', 'create').'?feature_id='.(int) $dto->id;
+            @endphp
             <x-section :title="__('ui.scenarios')" icon="category" key="feature-scenarios" :meta="trans_choice('ui.scenarios_count', ($scenarios ?? collect())->count(), ['count' => ($scenarios ?? collect())->count()])">
+                {{-- The action sits in the header, so it is there when the section is collapsed too. --}}
+                @if (entity_can('Scenario', 'create'))
+                    <x-slot:actions>
+                        <x-button type="link" href="{{ $addScenarioUrl }}" color="primary" size="sm" class="js-open-modal" data-modal-url="{{ $addScenarioUrl }}">{{ __('ui.add_scenario') }}</x-button>
+                    </x-slot:actions>
+                @endif
                 @include('pages.features.partials.scenarios-panel', [
                     'featureId' => $dto->id,
                     'scenarios' => $scenarios ?? collect(),
