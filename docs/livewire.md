@@ -1,6 +1,6 @@
-# Livewire forms
+# Livewire forms and pop-ups
 
-**When do I care?** When you change how create / edit forms behave (validation, saving, what happens after Save), or you add a field type that must work inside them.
+**When do I care?** When you change how create / edit forms, the delete confirmation or the view pop-up behave, or you add a field type that must work inside the forms.
 
 Create and edit forms (page and pop-up) run as the `App\Livewire\EntityForm` component. Everything the user sees is unchanged: the same `<x-form>` field controls, the same themes, the same layout. What changes is how the form talks to the server.
 
@@ -33,6 +33,15 @@ Field values are **not** bound with `wire:model`. The bridge sends the form's va
 - **Livewire re-renders morph the form.** Every validation round trip re-renders it. Widgets that keep state in their own DOM (KTSelect, the code editor, tree) are wrapped in `wire:ignore` by `form-field-cells` / the Metronic 8 form, otherwise they lose their content (the code editor went blank when this was missing). A new widget of that kind must be added to that list (`code`, `select`, `kt-select`, `tree`).
 - **Switch off:** `UI_LIVEWIRE_FORMS=false` (`config/ui.php` → `livewire_forms`) uses the classic form everywhere.
 
+## Delete confirmation and view pop-up
+
+| Component | What it adds |
+|---|---|
+| `App\Livewire\EntityDelete` (`livewire/entity-delete.blade.php`) | Delete through the repository without a fetch; a record someone else already deleted, or one other records still refer to, is explained in the pop-up instead of a browser alert. Dispatches `entity-saved` (the page closes the pop-up and reloads the list). |
+| `App\Livewire\EntityView` (`livewire/entity-view.blade.php`) | The details body of the view pop-up, kept current: it polls every 20 s and re-renders **only when the record's `updated_at` changed** (or after `entity-saved`), so sections the reader opened or closed are not reset. Says so when the record was deleted while open. |
+
+The table stays DataTables; only these two pop-ups and the forms are Livewire. Both pop-ups are used through `pages/modals/delete.blade.php` and `pages/modals/view.blade.php`, switched by `EntityDelete::supports()` / `EntityView::supports()`: `UI_LIVEWIRE_DIALOGS=false` (`ui.livewire_dialogs`) or an entity with its own controller keeps the classic pop-up. Texts are in `lang/en/livewire.php`.
+
 ## Tests
 
-`tests/Feature/EntityFormLivewireTest.php` (component actions, permissions, switch-off) and `tests/Feature/CrudScreensTest.php` (the screens render with the component). Selects and the code editor were checked by hand in the browser (Metronic 9): values survive validation round trips and save.
+`tests/Feature/EntityFormLivewireTest.php` and `EntityDialogsLivewireTest.php` (component actions, permissions, switch-off) and `tests/Feature/CrudScreensTest.php` (the screens render with the component). Selects and the code editor were checked by hand in the browser (Metronic 9): values survive validation round trips and save.

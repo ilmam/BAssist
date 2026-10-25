@@ -37,6 +37,13 @@ return [
     'livewire_forms' => env('UI_LIVEWIRE_FORMS', true),
 
     /*
+    | The delete confirmation and the view pop-up run as Livewire components
+    | (EntityDelete, EntityView). Entities with their own controller keep the
+    | classic pop-ups either way.
+    */
+    'livewire_dialogs' => env('UI_LIVEWIRE_DIALOGS', true),
+
+    /*
     | When true, detail view modals opened from a DataTable show Prev/Next
     | controls for the current filtered/sorted list (not only the visible page).
     | Cross-entity links should set data-modal-nav="off".
