@@ -21,6 +21,7 @@ Then only as needed:
 | Datatable JSON shape | [collection-flattener.md](collection-flattener.md) |
 | Who can see which records (tenants), adding a tenant-owned entity | [tenancy.md](tenancy.md) |
 | How saves are validated, declaring special validation rules | [validation.md](validation.md) |
+| Livewire forms and pop-ups: what they do, and **how to switch them off** (globally, per area, per entity) | [livewire.md](livewire.md) |
 
 ## Optional framework features (reusable)
 
@@ -34,6 +35,7 @@ Part of the framework: a new project gets them without writing code. Each is swi
 | Review (Approve / Request changes) | `#[Approvable]` on the model | [collaboration.md](collaboration.md) |
 | Same screen as page and pop-up, collapsible sections | `<x-record-view>`, `<x-record-form>`, `<x-section>` | [ux-features.md](ux-features.md#page-and-pop-up-are-the-same-screen) |
 | Pinned list columns, status badges, code chips, empty states, quick edit, Ctrl+K | automatic in the datatable / layout | [ux-features.md](ux-features.md) |
+| Livewire (optional): live validation, save in place, delete and view pop-ups | `UI_LIVEWIRE=false` turns it off; see [livewire.md](livewire.md) | [livewire.md](livewire.md) |
 
 **Not yet portable — read before copying to another project:** comments and review still carry two BAssist assumptions (a `projects` table, BABOK status names). See "What is framework and what is BAssist" in [collaboration.md](collaboration.md).
 

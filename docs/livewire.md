@@ -2,6 +2,18 @@
 
 **When do I care?** When you change how create / edit forms, the delete confirmation or the view pop-up behave, or you add a field type that must work inside the forms.
 
+## In short: Livewire is on by default and always optional
+
+| I want to… | Do this |
+|---|---|
+| Use the classic screens everywhere | `UI_LIVEWIRE=false` in `.env`, then `php artisan config:clear` |
+| Keep Livewire for forms but not the delete / view pop-ups (or the reverse) | `UI_LIVEWIRE_DIALOGS=false` or `UI_LIVEWIRE_FORMS=false` |
+| Keep one entity classic | `'Model' => ['livewire' => false]` in `config/crud.php` |
+| Know why a screen is classic | `App\Support\LivewireSwitch::reason('forms', 'Model')` |
+
+Always classic, whatever the settings: entities with their own controller (`'controller'` in `config/crud.php`) and forms with file, image, dropzone, attachment or tree fields. The table is DataTables in both modes. Details: [Turning Livewire on and off](#turning-livewire-on-and-off).
+
+
 Create and edit forms (page and pop-up) run as the `App\Livewire\EntityForm` component. Everything the user sees is unchanged: the same `<x-form>` field controls, the same themes, the same layout. What changes is how the form talks to the server.
 
 | | Classic form | Livewire form |
