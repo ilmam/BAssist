@@ -25,6 +25,14 @@
         );
     }
 
+    // Rendered by the EntityForm Livewire component: it submits through the
+    // component (livewire-forms.js), not the global modal fetch handler. The
+    // action stays as the plain-POST fallback.
+    if ($livewire ?? false) {
+        unset($formOpenOptions['attributes']['data-modal-form']);
+        $formOpenOptions['attributes']['data-livewire-form'] = 'true';
+    }
+
     // All forms (quick-create, modal, and full page) use a 12-col grid so
     // narrow fields default to half width; compact spacing (quick-create
     // only) is owned by .form-fields-grid under [data-form-density=compact]
@@ -87,6 +95,7 @@
                             'dto' => $dto,
                             'quickCreate' => $quickCreate,
                             'entityModel' => $model,
+                            'livewire' => $livewire,
                         ])
                     </div>
                 </section>
@@ -97,6 +106,7 @@
                         'dto' => $dto,
                         'quickCreate' => $quickCreate,
                         'entityModel' => $model,
+                            'livewire' => $livewire,
                     ])
                 </div>
             @endif

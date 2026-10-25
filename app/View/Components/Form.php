@@ -22,6 +22,7 @@ class Form extends Component
         public bool $inModal = false,
         public bool $quickCreate = false,
         public array $hiddenDefaults = [],
+        public bool $livewire = false,
     ) {
         $this->cancelRoute = strtolower(Str::plural(Str::snake(class_basename($this->model ?: 'item')))).'.index';
     }

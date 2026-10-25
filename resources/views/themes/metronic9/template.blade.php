@@ -11,6 +11,7 @@
     <link href="{{ ui_asset('css/ui-layout.css') }}?v={{ @filemtime(public_path(config('ui.themes.'.ui_theme().'.asset_prefix').'/css/ui-layout.css')) ?: time() }}" rel="stylesheet" />
     <link href="{{ ui_asset('css/bassist.css') }}?v={{ @filemtime(public_path(config('ui.themes.'.ui_theme().'.asset_prefix').'/css/bassist.css')) ?: time() }}" rel="stylesheet" />
     @stack('styles')
+    @livewireStyles
 </head>
 <body class="antialiased flex h-full text-base text-foreground bg-background demo1 kt-sidebar-fixed kt-header-fixed"
     data-unsaved-changes-leave="{{ __('ui.unsaved_changes_leave') }}"
@@ -96,7 +97,7 @@
             });
         })();
     </script>
-    @vite(['resources/js/form-safety.js', 'resources/js/state-flow-diagram.js', 'resources/js/swimlane-flow-diagram.js', 'resources/js/architecture-c4-diagram.js', 'resources/js/data-dictionary-diagram.js', 'resources/js/code-editor.js', 'resources/js/command-palette.js', 'resources/js/comments.js', 'resources/js/review.js'])
+    @vite(['resources/js/form-safety.js', 'resources/js/state-flow-diagram.js', 'resources/js/swimlane-flow-diagram.js', 'resources/js/architecture-c4-diagram.js', 'resources/js/data-dictionary-diagram.js', 'resources/js/code-editor.js', 'resources/js/livewire-forms.js', 'resources/js/command-palette.js', 'resources/js/comments.js', 'resources/js/review.js'])
     @stack('scripts')
     <script>
         let modalReturnUrl = null;
@@ -1303,6 +1304,21 @@
                 });
         });
 
+        // A Livewire entity form (pop-up) saved: same follow-up as the classic modal save.
+        document.addEventListener('livewire:init', function () {
+            window.Livewire.on('entity-saved', function () {
+                reloadDataTables();
+                closeModal({ force: true });
+
+                const hasLiveTable = typeof $ !== 'undefined'
+                    && $.fn.dataTable
+                    && $.fn.dataTable.tables({ visible: true }).length > 0;
+                if (!hasLiveTable) {
+                    window.location.reload();
+                }
+            });
+        });
+
         function helpDrawerElement() {
             return document.getElementById('helpDrawer');
         }
@@ -1502,5 +1518,6 @@
     </script>
     @include('partials.command-palette')
     @include('partials.auto-dismiss-alerts')
+    @livewireScripts
 </body>
 </html>

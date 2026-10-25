@@ -30,6 +30,13 @@ return [
     'modal_quick_create' => env('UI_MODAL_QUICK_CREATE', true),
 
     /*
+    | Create / edit forms run as the EntityForm Livewire component (live per-field
+    | validation, save without a page reload). Entities with file / attachment
+    | fields or their own controller keep the classic form either way. Set false to use the classic form everywhere.
+    */
+    'livewire_forms' => env('UI_LIVEWIRE_FORMS', true),
+
+    /*
     | When true, detail view modals opened from a DataTable show Prev/Next
     | controls for the current filtered/sorted list (not only the visible page).
     | Cross-entity links should set data-modal-nav="off".
