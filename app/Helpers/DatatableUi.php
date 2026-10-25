@@ -11,7 +11,7 @@ class DatatableUi
     public const SHORT_WIDTH = '8rem';
 
     /** Relation label columns (workspace, project, …). */
-    public const RELATION_WIDTH = '12rem';
+    public const RELATION_WIDTH = '10.5rem';
 
     /** Child-link / count columns: icon + number (header wraps at spaces). */
     public const COUNT_WIDTH = '8.5rem';
@@ -34,7 +34,7 @@ class DatatableUi
      * identity column its true share (and `.kt-table-wrapper`'s
      * `overflow: auto` scrolls horizontally instead of crushing the title).
      */
-    public const IDENTITY_MIN_WIDTH = '14rem';
+    public const IDENTITY_MIN_WIDTH = '12rem';
 
     /**
      * Preferred identity width when a list opts out of leftover absorption
