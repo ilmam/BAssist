@@ -30,18 +30,27 @@ return [
     'modal_quick_create' => env('UI_MODAL_QUICK_CREATE', true),
 
     /*
-    | Create / edit forms run as the EntityForm Livewire component (live per-field
-    | validation, save without a page reload). Entities with file / attachment
-    | fields or their own controller keep the classic form either way. Set false to use the classic form everywhere.
+    |--------------------------------------------------------------------------
+    | Livewire screens
+    |--------------------------------------------------------------------------
+    |
+    | Create / edit forms (EntityForm) and the delete / view pop-ups (EntityDelete,
+    | EntityView) run as Livewire components; the table stays DataTables.
+    |
+    |   enabled  master switch (UI_LIVEWIRE=false = classic screens everywhere)
+    |   forms    create / edit forms
+    |   dialogs  delete confirmation and view pop-up
+    |
+    | Per entity: 'Model' => ['livewire' => false] (or ['forms' => false]) in
+    | config/crud.php. Entities with their own controller are always classic.
+    | See App\Support\LivewireSwitch and docs/livewire.md.
+    |
     */
-    'livewire_forms' => env('UI_LIVEWIRE_FORMS', true),
-
-    /*
-    | The delete confirmation and the view pop-up run as Livewire components
-    | (EntityDelete, EntityView). Entities with their own controller keep the
-    | classic pop-ups either way.
-    */
-    'livewire_dialogs' => env('UI_LIVEWIRE_DIALOGS', true),
+    'livewire' => [
+        'enabled' => env('UI_LIVEWIRE', true),
+        'forms' => env('UI_LIVEWIRE_FORMS', true),
+        'dialogs' => env('UI_LIVEWIRE_DIALOGS', true),
+    ],
 
     /*
     | When true, detail view modals opened from a DataTable show Prev/Next

@@ -67,7 +67,7 @@ class EntityFormLivewireTest extends TestCase
 
     public function test_the_classic_form_is_used_when_livewire_forms_are_switched_off(): void
     {
-        config(['ui.livewire_forms' => false]);
+        config(['ui.livewire.forms' => false]);
 
         $this->assertFalse(EntityForm::supports(['title' => 'text'], 'Risk'));
     }

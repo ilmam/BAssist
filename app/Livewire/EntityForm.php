@@ -6,6 +6,7 @@ use App\Helpers\FormHelper;
 use App\Support\CrudEntityRegistry;
 use App\Support\EntityAccess;
 use App\Support\EntityFormBuilder;
+use App\Support\LivewireSwitch;
 use App\Support\ProjectContext;
 use App\Support\WorkspaceContext;
 use Illuminate\Contracts\View\View;
@@ -74,11 +75,7 @@ class EntityForm extends Component
      */
     public static function supports(array $fields, ?string $model = null): bool
     {
-        if (! config('ui.livewire_forms', true)) {
-            return false;
-        }
-
-        if ($model !== null && ! empty(CrudEntityRegistry::all()[$model]['controller'])) {
+        if (! LivewireSwitch::enabled(LivewireSwitch::FORMS, $model)) {
             return false;
         }
 

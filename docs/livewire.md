@@ -31,7 +31,7 @@ Field values are **not** bound with `wire:model`. The bridge sends the form's va
 - **Entities with their own controller stay classic.** The component saves through the repository, so it would skip a custom controller's `store()` / `update()`. `supports()` returns false when `config/crud.php` names a `controller` for the entity.
 - **Entities with file fields stay classic.** `EntityForm::supports()` returns false when a form has `file`, `image`, `dropzone`, `attachments` or `tree` fields (they need a multipart request).
 - **Livewire re-renders morph the form.** Every validation round trip re-renders it. Widgets that keep state in their own DOM (KTSelect, the code editor, tree) are wrapped in `wire:ignore` by `form-field-cells` / the Metronic 8 form, otherwise they lose their content (the code editor went blank when this was missing). A new widget of that kind must be added to that list (`code`, `select`, `kt-select`, `tree`).
-- **Switch off:** `UI_LIVEWIRE_FORMS=false` (`config/ui.php` → `livewire_forms`) uses the classic form everywhere.
+- **Switches:** see the next section.
 
 ## Delete confirmation and view pop-up
 
@@ -42,6 +42,21 @@ Field values are **not** bound with `wire:model`. The bridge sends the form's va
 
 The table stays DataTables; only these two pop-ups and the forms are Livewire. Both pop-ups are used through `pages/modals/delete.blade.php` and `pages/modals/view.blade.php`, switched by `EntityDelete::supports()` / `EntityView::supports()`: `UI_LIVEWIRE_DIALOGS=false` (`ui.livewire_dialogs`) or an entity with its own controller keeps the classic pop-up. Texts are in `lang/en/livewire.php`.
 
+## Turning Livewire on and off
+
+One class decides, `App\Support\LivewireSwitch`; the form and both pop-ups ask it. Any "off" wins:
+
+| Level | How | Effect |
+|---|---|---|
+| Master | `UI_LIVEWIRE=false` (`ui.livewire.enabled`) | classic screens everywhere |
+| Area | `UI_LIVEWIRE_FORMS=false` / `UI_LIVEWIRE_DIALOGS=false` | only forms, or only the delete / view pop-ups |
+| Entity | `'Model' => ['livewire' => false]` in `config/crud.php`, or `['livewire' => ['forms' => false]]` | that entity stays classic |
+| Own controller | automatic (`'controller'` in `config/crud.php`) | always classic: the components save through the repository and would skip that controller's overrides |
+
+`LivewireSwitch::reason('forms', 'Category')` returns why a screen is classic (or `null` when it is Livewire). Run `php artisan config:clear` after changing `.env`.
+
+Keep the classic path: it serves entities with file fields or their own controller, works without JavaScript, and is the safe fallback if a Livewire release misbehaves.
+
 ## Tests
 
-`tests/Feature/EntityFormLivewireTest.php` and `EntityDialogsLivewireTest.php` (component actions, permissions, switch-off) and `tests/Feature/CrudScreensTest.php` (the screens render with the component). Selects and the code editor were checked by hand in the browser (Metronic 9): values survive validation round trips and save.
+`tests/Unit/LivewireSwitchTest.php`, `tests/Feature/EntityFormLivewireTest.php` and `EntityDialogsLivewireTest.php` (component actions, permissions, switch-off) and `tests/Feature/CrudScreensTest.php` (the screens render with the component). Selects and the code editor were checked by hand in the browser (Metronic 9): values survive validation round trips and save.

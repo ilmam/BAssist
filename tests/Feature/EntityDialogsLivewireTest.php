@@ -100,7 +100,7 @@ class EntityDialogsLivewireTest extends TestCase
         $this->assertTrue(EntityDelete::supports('Risk'));
         $this->assertFalse(EntityDelete::supports('Feature'));
 
-        config(['ui.livewire_dialogs' => false]);
+        config(['ui.livewire.dialogs' => false]);
 
         $this->assertFalse(EntityView::supports('Risk'));
     }
