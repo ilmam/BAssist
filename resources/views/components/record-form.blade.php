@@ -35,14 +35,14 @@
                 {{ $slot }}
             </div>
 
-            <div class="flex justify-end gap-2.5 mt-5">
+            <div class="flex justify-end gap-2.5 record-form-modal-footer">
                 <x-button type="button" color="outline" data-kt-modal-dismiss="true">{{ __('ui.cancel') }}</x-button>
                 <x-button type="submit" color="primary">{{ __('ui.save') }}</x-button>
             </div>
         {{ \App\Facades\Form::close() }}
 
         @if ($hasAfter)
-            <div class="mt-6 border-t border-border pt-6">{{ $after }}</div>
+            <div class="record-form-modal-after">{{ $after }}</div>
         @endif
     </x-modal-content>
 @else

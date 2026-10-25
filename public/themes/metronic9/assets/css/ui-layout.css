@@ -475,3 +475,14 @@
     border-top: 0;
     padding-top: 0.5rem;
 }
+
+/* The same, in the pop-up: spacing is written here because the prebuilt Tailwind bundle lacks some
+   of the utilities (mt-6, pt-6) these two blocks used to rely on. */
+.record-form-modal-footer {
+    margin-top: 1.5rem;
+    padding-bottom: 1.5rem;
+}
+
+.record-form-modal-after {
+    padding-top: 0.5rem;
+}
