@@ -14,13 +14,22 @@
         <x-slot:toolbar>
             <x-button type="link" href="{{ $cancelRoute }}" icon="arrow-left" iconOnly="true" color="ghost" size="sm" activeColor="primary"></x-button>
         </x-slot>
-        <x-form
-            id="form1"
-            route="{{ $route }}"
-            verb="{{ $verb }}"
-            model="{{ $modelName }}"
-            :dto="$dto"
-            :fieldsArray="$formFields"
-        />
+        @if (\App\Livewire\EntityForm::supports($formFields, $modelName))
+            <livewire:entity-form
+                :model="$modelName"
+                :values="$dto->toArray()"
+                :record-id="$dto->id ?? null"
+                :key="'entity-form-'.$modelName.'-'.($dto->id ?? 'new')"
+            />
+        @else
+            <x-form
+                id="form1"
+                route="{{ $route }}"
+                verb="{{ $verb }}"
+                model="{{ $modelName }}"
+                :dto="$dto"
+                :fieldsArray="$formFields"
+            />
+        @endif
     </x-form-card>
 @endsection

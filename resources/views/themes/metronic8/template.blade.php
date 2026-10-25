@@ -12,6 +12,7 @@
     <link href="{{ ui_asset('css/style.bundle.css') }}" rel="stylesheet" type="text/css" />
     <link href="{{ ui_asset('css/ui-layout.css') }}" rel="stylesheet" type="text/css" />
     @stack('styles')
+    @livewireStyles
 </head>
 
 <body id="kt_body"
@@ -54,7 +55,7 @@
     <script src="{{ ui_asset('plugins/global/plugins.bundle.js') }}"></script>
     <script src="{{ ui_asset('js/scripts.bundle.js') }}"></script>
     <script src="{{ ui_asset('plugins/custom/datatables/datatables.bundle.js') }}"></script>
-    @vite(['resources/js/form-safety.js', 'resources/js/state-flow-diagram.js', 'resources/js/swimlane-flow-diagram.js', 'resources/js/architecture-c4-diagram.js', 'resources/js/data-dictionary-diagram.js', 'resources/js/code-editor.js'])
+    @vite(['resources/js/form-safety.js', 'resources/js/state-flow-diagram.js', 'resources/js/swimlane-flow-diagram.js', 'resources/js/architecture-c4-diagram.js', 'resources/js/data-dictionary-diagram.js', 'resources/js/code-editor.js', 'resources/js/livewire-forms.js'])
     @stack('scripts')
     <script>
         let modalReturnUrl = null;
@@ -712,6 +713,21 @@
             }
         });
 
+        // A Livewire entity form (pop-up) saved: same follow-up as the classic modal save.
+        document.addEventListener('livewire:init', function () {
+            window.Livewire.on('entity-saved', function () {
+                reloadDataTables();
+                closeModal({ force: true });
+
+                const hasLiveTable = typeof $ !== 'undefined'
+                    && $.fn.dataTable
+                    && $.fn.dataTable.tables({ visible: true }).length > 0;
+                if (!hasLiveTable) {
+                    window.location.reload();
+                }
+            });
+        });
+
         document.addEventListener('submit', function (event) {
             const form = event.target.closest('form[data-modal-form]');
             if (!form) {
@@ -790,5 +806,6 @@
         });
     </script>
     @include('partials.auto-dismiss-alerts')
+    @livewireScripts
 </body>
 </html>

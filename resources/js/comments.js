@@ -100,10 +100,15 @@ document.addEventListener('toggle', (event) => {
     saved[el.dataset.sectionKey] = el.open;
     try { localStorage.setItem(SECTION_STORE, JSON.stringify(saved)); } catch (e) { /* private mode */ }
 }, true);
+let sectionObserver = null;
 const startSections = () => {
     applySections(document);
-    new MutationObserver(() => applySections(document)).observe(document.body, { childList: true, subtree: true });
+    // After wire:navigate the body is a new element: observe that one.
+    sectionObserver?.disconnect();
+    sectionObserver = new MutationObserver(() => applySections(document));
+    sectionObserver.observe(document.body, { childList: true, subtree: true });
 };
+document.addEventListener('livewire:navigated', startSections);
 if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', startSections); } else { startSections(); }
 
 /**

@@ -19,6 +19,14 @@
         );
     }
 
+    // Rendered by the EntityForm Livewire component: it submits through the
+    // component (livewire-forms.js), not the global modal fetch handler. The
+    // action stays as the plain-POST fallback.
+    if ($livewire ?? false) {
+        unset($formOpenOptions['attributes']['data-modal-form']);
+        $formOpenOptions['attributes']['data-livewire-form'] = 'true';
+    }
+
     // All forms (quick-create, modal, and full page) use a 12-col Bootstrap
     // row so narrow fields default to half width.
     $fieldsWrapperClass = 'row g-3';
@@ -125,7 +133,11 @@
                     data-ui-span-md="{{ $span['md'] }}"
                     data-ui-span-lg="{{ $span['lg'] }}"
                 >
-                    {{ Form::field($type, $fieldName, $fieldValue, $list, $options ?: null) }}
+                    @if (($livewire ?? false) && in_array($type, ['code', 'select', 'kt-select', 'tree'], true))
+                        <div wire:ignore>{{ Form::field($type, $fieldName, $fieldValue, $list, $options ?: null) }}</div>
+                    @else
+                        {{ Form::field($type, $fieldName, $fieldValue, $list, $options ?: null) }}
+                    @endif
                     @include('pages.partials.form-field-error', ['fieldName' => $fieldName])
                 </div>
             @endforeach

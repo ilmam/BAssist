@@ -6,6 +6,7 @@
     $dto = $dto ?? null;
     $quickCreate = (bool) ($quickCreate ?? false);
     $entityModel = $entityModel ?? '';
+    $livewire = (bool) ($livewire ?? false);
 @endphp
 
 @foreach ($fields as $name => $field)
@@ -104,7 +105,12 @@
         data-ui-span-md="{{ $span['md'] }}"
         data-ui-span-lg="{{ $span['lg'] }}"
     >
-        {{ Form::field($type, $fieldName, $fieldValue, $list, $options ?: null) }}
+        {{-- Widgets that keep their own DOM (KTSelect, the code editor) must survive a Livewire re-render. --}}
+        @if ($livewire && in_array($type, ['code', 'select', 'kt-select', 'tree'], true))
+            <div wire:ignore>{{ Form::field($type, $fieldName, $fieldValue, $list, $options ?: null) }}</div>
+        @else
+            {{ Form::field($type, $fieldName, $fieldValue, $list, $options ?: null) }}
+        @endif
         @include('pages.partials.form-field-error', ['fieldName' => $fieldName])
     </div>
 @endforeach

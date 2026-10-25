@@ -15,6 +15,7 @@ use App\Http\Controllers\GuardrailsController;
 use App\Http\Controllers\HelpController;
 use App\Http\Controllers\HelpGuideController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\NavProjectController;
 use App\Http\Controllers\ProjectCommentsController;
 use App\Http\Controllers\ProjectDashboardController;
 use App\Http\Controllers\QuickActionsController;
@@ -79,6 +80,7 @@ Route::middleware('auth')->group(function (): void {
         ->middleware('entity.access')
         ->name('swimlane_flows.stakeholder-need-options');
     Route::get('projects/{project}/dashboard', [ProjectDashboardController::class, 'show'])->name('projects.dashboard');
+    Route::get('navigation/projects/{project}', [NavProjectController::class, 'show'])->name('nav.project');
     Route::get('projects/{project}/export', [ProjectExportController::class, 'show'])->name('projects.export');
     Route::get('projects/{project}/ui-designs', [ProjectUiDesignController::class, 'show'])->name('projects.ui-designs');
     Route::get('projects/{project}/ui-designs/download', [ProjectUiDesignController::class, 'download'])->name('projects.ui-designs.download');

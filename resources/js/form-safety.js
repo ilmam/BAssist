@@ -467,6 +467,10 @@ function adoptSavedRecord(form, record) {
  */
 async function saveFormInPlace(form) {
     const action = form.getAttribute('action');
+    // Livewire forms save through their component (livewire-forms.js).
+    if (form.hasAttribute('data-livewire-form')) {
+        return saveActiveForm();
+    }
     if (!action || typeof window.fetch !== 'function') {
         return saveActiveForm();
     }
@@ -725,6 +729,7 @@ function bindFormSafety() {
     // Mirrors isModalEditFormDirty(); lets the modal layer and tests ask
     // whether anything would block leaving the page.
     window.bassistAnyFormDirty = anyGuardedFormDirty;
+    window.bassistCaptureFormBaseline = captureFormBaseline;
 
     try {
         captureBaselines();

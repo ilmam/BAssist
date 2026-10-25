@@ -12,6 +12,7 @@
         "laravel/mcp": "^1.0",
         "laravel/sanctum": "^4.3",
         "laravel/tinker": "^2.10.1",
+        "livewire/livewire": "^3.6",
         "spatie/laravel-data": "^4.23",
         "yajra/laravel-datatables-oracle": "^12.7"
     },

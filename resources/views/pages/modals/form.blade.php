@@ -10,13 +10,23 @@
     <x-slot:actions>
         <x-open-as-page :href="record_form_page_url($modelName, $dto ?? null)" />
     </x-slot:actions>
-    <x-form
-        id="modalForm"
-        route="{{ $route }}"
-        verb="{{ $verb }}"
-        model="{{ $modelName }}"
-        :dto="$dto"
-        :fieldsArray="$formFields"
-        :inModal="true"
-    />
+    @if (\App\Livewire\EntityForm::supports($formFields, $modelName))
+        <livewire:entity-form
+            :model="$modelName"
+            :values="$dto->toArray()"
+            :record-id="$dto->id ?? null"
+            :in-modal="true"
+            :key="'entity-form-modal-'.$modelName.'-'.($dto->id ?? 'new')"
+        />
+    @else
+        <x-form
+            id="modalForm"
+            route="{{ $route }}"
+            verb="{{ $verb }}"
+            model="{{ $modelName }}"
+            :dto="$dto"
+            :fieldsArray="$formFields"
+            :inModal="true"
+        />
+    @endif
 </x-modal-content>
