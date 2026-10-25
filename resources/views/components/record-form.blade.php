@@ -31,7 +31,7 @@
             'method' => 'post',
             'attributes' => ['data-modal-form' => 'true'],
         ])) }}
-            <div class="space-y-6">
+            <div class="record-form-fields">
                 {{ $slot }}
             </div>
 
@@ -52,7 +52,7 @@
         </x-slot>
 
         {{ \App\Facades\Form::open(array_merge($formRoute, ['id' => 'form1', 'files' => true, 'method' => 'post'])) }}
-            <x-form-card-body class="space-y-8" data-ui-container>
+            <x-form-card-body class="record-form-body" data-ui-container>
                 {{ $slot }}
             </x-form-card-body>
 

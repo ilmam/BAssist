@@ -1923,3 +1923,30 @@ html[data-kt-theme-switch-mode="system"] .theme-choice[data-kt-theme-switch-set=
     background: var(--primary);
     color: var(--primary-foreground, #fff);
 }
+
+
+/* Sections and fields of a create / edit form (page and pop-up): an even gap between them. The old
+   `space-y-*` classes are not in the prebuilt Tailwind bundle, so stacked sections touched each other. */
+.record-form-body,
+.record-form-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+/* Row-action menu (the ⌄ next to a row's icons): an opaque, raised panel that stays above the pinned
+   action cells of the rows below it. Before, it had the page's own colour and the next rows' icons
+   showed through, because each pinned cell is its own stacking layer. */
+.kt-dropdown-menu {
+    background: color-mix(in srgb, var(--foreground) 7%, var(--background));
+    border: 1px solid var(--border);
+    box-shadow: 0 12px 32px -8px rgb(0 0 0 / 0.35);
+}
+
+table.dataTable tbody .ba-col-actions:has(.kt-dropdown-menu.open),
+table.dataTable tbody .ba-col-actions:has(.open) {
+    z-index: 40;
+}
+
+/* Native controls (scrollbars, date pickers) follow the dark theme instead of showing light ones. */
+.dark { color-scheme: dark; }
