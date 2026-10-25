@@ -1950,3 +1950,39 @@ table.dataTable tbody .ba-col-actions:has(.open) {
 
 /* Native controls (scrollbars, date pickers) follow the dark theme instead of showing light ones. */
 .dark { color-scheme: dark; }
+
+
+/* Sideways scrollbar of a list: thin and quiet, like the rest of the theme, instead of the bulky
+   system bar with arrow buttons. It only appears when the table really is wider than its card. */
+.kt-table-wrapper,
+.kt-table-wrapper > .dt-container > .dt-layout-table {
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in srgb, var(--foreground) 28%, transparent) transparent;
+}
+
+.kt-table-wrapper::-webkit-scrollbar,
+.kt-table-wrapper > .dt-container > .dt-layout-table::-webkit-scrollbar {
+    height: 8px;
+    width: 8px;
+}
+
+.kt-table-wrapper::-webkit-scrollbar-track,
+.kt-table-wrapper > .dt-container > .dt-layout-table::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.kt-table-wrapper::-webkit-scrollbar-thumb,
+.kt-table-wrapper > .dt-container > .dt-layout-table::-webkit-scrollbar-thumb {
+    background: color-mix(in srgb, var(--foreground) 28%, transparent);
+    border-radius: 999px;
+}
+
+.kt-table-wrapper::-webkit-scrollbar-thumb:hover,
+.kt-table-wrapper > .dt-container > .dt-layout-table::-webkit-scrollbar-thumb:hover {
+    background: color-mix(in srgb, var(--foreground) 45%, transparent);
+}
+
+.kt-table-wrapper::-webkit-scrollbar-button,
+.kt-table-wrapper > .dt-container > .dt-layout-table::-webkit-scrollbar-button {
+    display: none;
+}

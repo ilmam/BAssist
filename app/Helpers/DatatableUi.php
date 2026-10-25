@@ -10,6 +10,9 @@ class DatatableUi
 {
     public const SHORT_WIDTH = '8rem';
 
+    /** Timestamp columns (created_at, updated_at: "2026-09-06 11:27:34" needs about 9rem). */
+    public const DATE_WIDTH = '9.5rem';
+
     /** Relation label columns (workspace, project, …). */
     public const RELATION_WIDTH = '10.5rem';
 
@@ -102,6 +105,10 @@ class DatatableUi
         // Honor an explicit width from the column definition (still strip nowrap for headers).
         if ($style !== '' && preg_match('/(?:min-)?width\s*:/i', $style)) {
             return self::withoutNowrap($style);
+        }
+
+        if (str_ends_with($root, '_at')) {
+            return self::mergeStyle('width: '.self::DATE_WIDTH, self::withoutNowrap($style));
         }
 
         if (in_array($root, self::SHORT_ROOTS, true)) {
