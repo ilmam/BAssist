@@ -105,3 +105,26 @@ const startSections = () => {
     new MutationObserver(() => applySections(document)).observe(document.body, { childList: true, subtree: true });
 };
 if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', startSections); } else { startSections(); }
+
+/**
+ * A link like /records/12#comment-34 (from the project comments page) lands on that thread:
+ * open the Comments section and the closed-threads group around it, scroll, and flash it.
+ */
+const focusCommentFromHash = () => {
+    const match = /^#comment-(\d+)$/.exec(window.location.hash || '');
+    if (!match) { return; }
+    const target = document.getElementById('comment-' + match[1]);
+    if (!target) { return; }
+    for (let el = target.parentElement; el; el = el.parentElement) {
+        if (el.tagName === 'DETAILS') { el.open = true; }
+    }
+    target.scrollIntoView({ block: 'center' });
+    target.style.transition = 'outline-color .4s';
+    target.style.outline = '2px solid var(--color-primary, #1b84ff)';
+    target.style.outlineOffset = '4px';
+    setTimeout(() => { target.style.outline = ''; target.style.outlineOffset = ''; }, 3500);
+};
+// After applySections has restored the saved open/closed state.
+const startFocus = () => setTimeout(focusCommentFromHash, 50);
+if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', startFocus); } else { startFocus(); }
+window.addEventListener('hashchange', focusCommentFromHash);

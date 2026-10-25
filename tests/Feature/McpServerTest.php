@@ -235,6 +235,24 @@ class McpServerTest extends TestCase
             ->assertSee(['Demo Parts Digital Intake', 'Request form', 'get-attachment', 'update-record']);
     }
 
+    public function test_the_update_gherkin_prompt_names_the_project_scope_and_the_tools(): void
+    {
+        BAssistServer::actingAs($this->userA)
+            ->prompt(\App\Mcp\Prompts\UpdateGherkinPrompt::class, ['project' => 'Demo Parts Digital Intake', 'scope' => 'FR-004'])
+            ->assertOk()
+            ->assertSee(['Demo Parts Digital Intake', 'FR-004', 'get-gherkin', 'create-record', 'update-record', 'add-comment']);
+    }
+
+    public function test_feature_and_scenario_lists_show_when_they_were_created_and_updated(): void
+    {
+        foreach (['Feature', 'Scenario'] as $entity) {
+            BAssistServer::actingAs($this->userA)
+                ->tool(\App\Mcp\Tools\ListRecordsTool::class, ['entity' => $entity])
+                ->assertOk()
+                ->assertSee(['created_at', 'updated_at']);
+        }
+    }
+
     public function test_get_attachment_does_not_cross_tenants(): void
     {
         \Illuminate\Support\Facades\Storage::fake('local');

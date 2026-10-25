@@ -32,7 +32,8 @@
                     <table class="kt-table kt-table-border w-full">
                         <thead>
                             <tr>
-                                <th style="width: 28%">{{ __('ui.comments_appendix_item') }}</th>
+                                <th style="width: 7%">{{ __('ui.comments_appendix_number') }}</th>
+                                <th style="width: 25%">{{ __('ui.comments_appendix_item') }}</th>
                                 <th>{{ __('ui.comments_appendix_comment') }}</th>
                                 <th style="width: 13%">{{ __('ui.comments_appendix_status') }}</th>
                                 <th style="width: 13%">{{ __('ui.comments_appendix_by') }}</th>
@@ -43,7 +44,10 @@
                             @foreach ($groups as $group)
                                 @foreach ($group['threads'] as $thread)
                                     @php $days = (int) $thread->created_at?->diffInDays(now()); @endphp
-                                    <tr>
+                                    <tr id="thread-{{ $thread->id }}">
+                                        <td class="align-top whitespace-nowrap">
+                                            <a href="{{ $group['url'] }}#comment-{{ $thread->id }}" class="font-medium text-primary" title="{{ __('ui.comments_open_thread') }}">#{{ $thread->id }}</a>
+                                        </td>
                                         @if ($loop->first)
                                             <td rowspan="{{ $group['threads']->count() }}" class="align-top">
                                                 <div class="text-xs text-muted-foreground">

@@ -54,7 +54,7 @@
         @endif
         <ol class="ba-thread-list">
             @foreach ($group as $thread)
-                <li class="ba-thread {{ $thread->isOpen() ? '' : 'is-resolved' }}">
+                <li id="comment-{{ $thread->id }}" class="ba-thread {{ $thread->isOpen() ? '' : 'is-resolved' }}">
                     @php $threadStatus = $thread->currentStatus(); @endphp
                     <div class="ba-thread__status">
                         <x-status-badge :tone="\App\Support\CommentStatus::tone($threadStatus)">{{ __('ui.comments_status_'.$threadStatus) }}</x-status-badge>

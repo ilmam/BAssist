@@ -3,6 +3,7 @@
 namespace App\Mcp\Servers;
 
 use App\Mcp\Prompts\ScreenFromAttachmentPrompt;
+use App\Mcp\Prompts\UpdateGherkinPrompt;
 use App\Mcp\Tools\AddCommentTool;
 use App\Mcp\Tools\CreateRecordTool;
 use App\Mcp\Tools\DeleteRecordTool;
@@ -71,6 +72,7 @@ class BAssistServer extends Server
      */
     protected array $prompts = [
         ScreenFromAttachmentPrompt::class,
+        UpdateGherkinPrompt::class,
     ];
 
     /**

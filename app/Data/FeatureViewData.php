@@ -40,6 +40,10 @@ class FeatureViewData extends BaseData
         public ?StatusViewData $status = null,
         #[Hide]
         public ?int $scenarios_count = null,
+        #[InList]
+        public ?string $created_at = null,
+        #[InList]
+        public ?string $updated_at = null,
     ) {
     }
 }

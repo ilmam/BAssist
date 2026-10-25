@@ -87,6 +87,12 @@ A client lists prompts as commands. Claude Code shows them as `/mcp__bassist__<n
 | Prompt | Arguments | What it does |
 |---|---|---|
 | `screen-from-attachment` | `project` (name or code), `screen` (optional title) | Hands the assistant the steps to convert a Screen's reference attachment into its Salt elements: find the screen, read the attachment, write the elements, read the salt back and compare |
+| `update-gherkin` | `project` (name or code), `scope` (optional feature title or requirement code) | Hands the assistant the steps to bring Features and Scenarios in line with the functional requirements, business rules, screens and process flows: read the specification and the current Gherkin, skip records under discussion, add or correct scenarios, and raise a comment instead of guessing where the specification is silent |
+
+### Tools (write)
+
+| Tool | Kind | What it does |
+|---|---|---|
 | `create-record` | write | Create a record; `data` holds the fields |
 | `update-record` | write | Partial update: only the fields sent change |
 | `delete-record` | write, destructive | Delete a record |

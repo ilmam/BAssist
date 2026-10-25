@@ -288,6 +288,11 @@
                         {{ $link['label'] }}
                     </x-button>
                 @endforeach
+                @if (\App\Services\CommentService::supports('Project'))
+                    <x-button type="link" href="{{ route('projects.comments', $project) }}" icon="messages" color="light" activeColor="primary">
+                        {{ __('ui.comments_page_link') }}
+                    </x-button>
+                @endif
             </div>
         </x-card>
 

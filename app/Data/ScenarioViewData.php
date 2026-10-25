@@ -31,6 +31,10 @@ class ScenarioViewData extends BaseData
         public ?int $workspace_id = null,
         #[Hide]
         public ?int $tenant_id = null,
+        #[InList]
+        public ?string $created_at = null,
+        #[InList]
+        public ?string $updated_at = null,
     ) {
     }
 }
