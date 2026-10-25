@@ -145,6 +145,30 @@ if (! function_exists('nav_url')) {
     }
 }
 
+if (! function_exists('nav_item_swaps')) {
+    /**
+     * Whether a menu link swaps the page without a reload (wire:navigate) or keeps a
+     * full reload (config('navigation.full_reload'), by route-name prefix).
+     *
+     * @param  array<string, mixed>  $item
+     */
+    function nav_item_swaps(array $item): bool
+    {
+        $route = (string) ($item['route'] ?? '');
+        if ($route === '') {
+            return false;
+        }
+
+        foreach ((array) config('navigation.full_reload', []) as $prefix) {
+            if ($route === $prefix || str_starts_with($route, $prefix.'.')) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+}
+
 if (! function_exists('nav_item_is_visible')) {
     function nav_item_is_visible(array $item): bool
     {

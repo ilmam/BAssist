@@ -23,6 +23,9 @@ class AppServiceProvider extends ServiceProvider
     {
         Schema::defaultStringLength(191);
 
+        // wire:navigate swaps the page body: Vite scripts are modules and must not be re-run.
+        \Illuminate\Support\Facades\Vite::useScriptTagAttributes(['data-navigate-once' => true]);
+
         // History + approval reset: every model marked #[Tracked] or #[Approvable] is observed.
         $observed = array_unique(array_merge(
             \App\Support\EntityFeatures::models(\App\Attributes\Tracked::class),

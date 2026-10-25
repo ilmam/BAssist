@@ -21,6 +21,7 @@ Then only as needed:
 | Datatable JSON shape | [collection-flattener.md](collection-flattener.md) |
 | Who can see which records (tenants), adding a tenant-owned entity | [tenancy.md](tenancy.md) |
 | How saves are validated, declaring special validation rules | [validation.md](validation.md) |
+| Fast menu (cached tree, lazy projects), menu clicks without reloads, rules for page scripts, light / dark appearance | [navigation.md](navigation.md) |
 | Livewire forms and pop-ups: what they do, and **how to switch them off** (globally, per area, per entity) | [livewire.md](livewire.md) |
 
 ## Optional framework features (reusable)

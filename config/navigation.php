@@ -206,4 +206,28 @@ return [
         ],
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Menu links that reload the page
+    |--------------------------------------------------------------------------
+    |
+    | Menu links swap the page without a reload (wire:navigate, docs/navigation.md).
+    | Pages whose editor script binds once at load (diagram editors, the traceability
+    | graph, the export and design pages) are listed here by route-name prefix and
+    | keep the normal full reload.
+    |
+    */
+    'full_reload' => [
+        'architectures',
+        'data_dictionaries',
+        'state_flows',
+        'swimlane_flows',
+        'screens',
+        'traceability',
+        'diagrams',
+        'projects.export',
+        'projects.ui-designs',
+        'projects.babok',
+    ],
+
 ];

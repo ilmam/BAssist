@@ -6,7 +6,8 @@
     @php
         $isActive = nav_item_is_active($item);
         $isOpen = nav_item_is_open($item);
-        $hasChildren = ! empty($item['children']);
+        // A project whose folders are loaded when it is first opened (NavTreeBuilder lazy_url) still has children.
+        $hasChildren = ! empty($item['children']) || ! empty($item['lazy_url']);
         $isHeading = ($item['type'] ?? null) === 'heading';
         $isFolder = ($item['type'] ?? null) === 'folder';
         $isProject = ($item['type'] ?? null) === 'project';
@@ -38,7 +39,7 @@
                     </span>
                 @endif
                 @if (! empty($item['route']))
-                    <a href="{{ nav_url($item) }}"
+                    <a href="{{ nav_url($item) }}" @if (nav_item_swaps($item)) wire:navigate @endif
                         onclick="event.stopPropagation()"
                         class="kt-menu-title nav-phase-folder__title grow min-w-0 shrink"
                         @if (! empty($item['title'])) title="{{ $item['title'] }}" @endif>
@@ -66,7 +67,8 @@
     @elseif ($hasChildren)
         <div class="kt-menu-item kt-menu-item-accordion {{ $isOpen ? 'show' : '' }} {{ $isActive ? 'here' : '' }}"
             data-kt-menu-item-toggle="accordion"
-            data-kt-menu-item-trigger="click">
+            data-kt-menu-item-trigger="click"
+            @if (! empty($item['lazy_url'])) data-nav-lazy-url="{{ $item['lazy_url'] }}" @endif>
             @if ($level === 0)
                 <div class="kt-menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]" tabindex="0">
                     @if (! empty($item['icon']))
@@ -75,7 +77,7 @@
                         </span>
                     @endif
                     @if (! empty($item['route']))
-                        <a href="{{ nav_url($item) }}"
+                        <a href="{{ nav_url($item) }}" @if (nav_item_swaps($item)) wire:navigate @endif
                             onclick="event.stopPropagation()"
                             class="kt-menu-title text-sm font-medium text-foreground kt-menu-item-active:text-primary kt-menu-link-hover:!text-primary grow"
                             @if (! empty($item['title'])) title="{{ $item['title'] }}" @endif>
@@ -113,7 +115,7 @@
                         <span class="{{ $bullet }}"></span>
                     @endif
                     @if (! empty($item['route']))
-                        <a href="{{ nav_url($item) }}"
+                        <a href="{{ nav_url($item) }}" @if (nav_item_swaps($item)) wire:navigate @endif
                             onclick="event.stopPropagation()"
                             class="kt-menu-title text-2sm font-normal me-1 text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-medium kt-menu-link-hover:!text-primary grow min-w-0"
                             @if (! empty($item['title'])) title="{{ $item['title'] }}" @endif>
@@ -142,7 +144,7 @@
     @elseif ($level === 0)
         <div class="kt-menu-item {{ $isActive ? 'active' : '' }}">
             <a class="kt-menu-link flex items-center grow border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px] {{ $leafLinkActive }}"
-                href="{{ nav_url($item) }}"
+                href="{{ nav_url($item) }}" @if (nav_item_swaps($item)) wire:navigate @endif
                 tabindex="0">
                 @if (! empty($item['icon']))
                     <span class="kt-menu-icon items-start text-muted-foreground w-[20px]">
@@ -157,7 +159,7 @@
     @else
         <div class="kt-menu-item {{ $isActive ? 'active' : '' }}">
             <a class="kt-menu-link border border-transparent items-center grow {{ $leafLinkActive }} {{ $childGap }} ps-[10px] pe-[10px] py-[8px]"
-                href="{{ nav_url($item) }}"
+                href="{{ nav_url($item) }}" @if (nav_item_swaps($item)) wire:navigate @endif
                 tabindex="0">
                 <span class="{{ $bullet }}"></span>
                 <span class="kt-menu-title text-2sm font-normal text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-semibold kt-menu-link-hover:!text-primary">

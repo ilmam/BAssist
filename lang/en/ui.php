@@ -1222,4 +1222,8 @@ return [
     'comments_implement_not_yours' => 'The latest answer on this thread was written by :name, not by you. Ask the user to confirm it before implementing.',
     'comments_status_filter_all' => 'All not closed',
     'comments_appendix_status' => 'Status',
+    'theme_appearance' => 'Appearance',
+    'theme_light' => 'Light',
+    'theme_dark' => 'Dark',
+    'theme_system' => 'System',
 ];

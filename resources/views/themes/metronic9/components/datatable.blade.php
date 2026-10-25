@@ -93,7 +93,10 @@
 
 @push('scripts')
 <script>
-    document.addEventListener("DOMContentLoaded", function() {
+    (function (boot) {
+        // After wire:navigate the document is already loaded, so DOMContentLoaded never fires again.
+        if (document.readyState === 'loading') { document.addEventListener("DOMContentLoaded", boot); } else { boot(); }
+    })(function() {
         $(function() {
             var dtid = '#{{ $tableDomId }}';
             var ajaxUrl = {!! json_encode($options['ajaxUrl'] ?? route($options['dataRoute'], $options['dataRoutParameters'])) !!};

@@ -18,6 +18,8 @@
     data-save-shortcut="{{ __('ui.save_shortcut') }}"
     data-record-saved="{{ __('ui.record_saved') }}">
     <script>
+      (function () {
+        // IIFE: this script runs again on every wire:navigate, so no top-level declarations.
         const defaultThemeMode = 'light';
         let themeMode;
 
@@ -42,10 +44,19 @@
         if (localStorage.getItem('kt-sidebar-collapse') === 'on') {
             document.body.classList.add('kt-sidebar-collapse');
         }
+      })();
     </script>
 
     <div class="flex grow">
-        @include('themes.metronic9.partials.sidebar')
+        {{-- Kept across wire:navigate: the menu is not re-rendered or re-fetched per page (see docs/navigation.md). --}}
+        @persist('sidebar')
+            {{-- A wire:navigate request already has the sidebar in the browser: do not build it again. --}}
+            @if (request()->hasHeader('X-Livewire-Navigate'))
+                <div id="sidebar-placeholder" hidden></div>
+            @else
+                @include('themes.metronic9.partials.sidebar')
+            @endif
+        @endpersist
 
         <div class="kt-wrapper flex grow flex-col">
             @include('themes.metronic9.partials.header')
@@ -63,15 +74,17 @@
         </div>
     </div>
 
-    <x-modal id="mianModal" title=""></x-modal>
-    <x-help-drawer />
+    @persist('dialogs')
+        <x-modal id="mianModal" title=""></x-modal>
+        <x-help-drawer />
+    @endpersist
 
-    <script src="{{ ui_asset('js/core.bundle.js') }}"></script>
-    <script src="{{ ui_asset('vendors/ktui/ktui.min.js') }}"></script>
-    <script src="{{ ui_asset('vendors/jquery/jquery.min.js') }}"></script>
-    <script src="{{ ui_asset('vendors/datatables-net/dataTables.min.js') }}"></script>
-    <script src="{{ ui_asset('js/layouts/demo1.js') }}"></script>
-    <script>
+    <script src="{{ ui_asset('js/core.bundle.js') }}" data-navigate-once></script>
+    <script src="{{ ui_asset('vendors/ktui/ktui.min.js') }}" data-navigate-once></script>
+    <script src="{{ ui_asset('vendors/jquery/jquery.min.js') }}" data-navigate-once></script>
+    <script src="{{ ui_asset('vendors/datatables-net/dataTables.min.js') }}" data-navigate-once></script>
+    <script src="{{ ui_asset('js/layouts/demo1.js') }}" data-navigate-once></script>
+    <script data-navigate-once>
         (function () {
             const storageKey = 'kt-sidebar-collapse';
             const collapseClass = 'kt-sidebar-collapse';
@@ -97,9 +110,9 @@
             });
         })();
     </script>
-    @vite(['resources/js/form-safety.js', 'resources/js/state-flow-diagram.js', 'resources/js/swimlane-flow-diagram.js', 'resources/js/architecture-c4-diagram.js', 'resources/js/data-dictionary-diagram.js', 'resources/js/code-editor.js', 'resources/js/livewire-forms.js', 'resources/js/command-palette.js', 'resources/js/comments.js', 'resources/js/review.js'])
+    @vite(['resources/js/form-safety.js', 'resources/js/state-flow-diagram.js', 'resources/js/swimlane-flow-diagram.js', 'resources/js/architecture-c4-diagram.js', 'resources/js/data-dictionary-diagram.js', 'resources/js/code-editor.js', 'resources/js/livewire-forms.js', 'resources/js/navigation.js', 'resources/js/theme-mode.js', 'resources/js/command-palette.js', 'resources/js/comments.js', 'resources/js/review.js'])
     @stack('scripts')
-    <script>
+    <script data-navigate-once>
         let modalReturnUrl = null;
 
         const modalSizeStyles = {
@@ -1516,8 +1529,27 @@
             }
         });
     </script>
-    @include('partials.command-palette')
+    @persist('palette')
+        @include('partials.command-palette')
+    @endpersist
     @include('partials.auto-dismiss-alerts')
     @livewireScripts
+    <script data-navigate-once>
+        // wire:navigate swaps the page without a reload: re-initialise what the page needs.
+        document.addEventListener('livewire:navigated', function () {
+            // Arrived from a page without the sidebar (it was skipped for this request): load fully.
+            if (!document.getElementById('sidebar_menu')) {
+                window.location.reload();
+                return;
+            }
+            if (localStorage.getItem('kt-sidebar-collapse') === 'on') {
+                document.body.classList.add('kt-sidebar-collapse');
+            }
+            window.KTComponents?.init?.();
+            window.bassistSyncSidebar?.();
+            window.bassistCodeEditor?.init?.(document);
+            window.bassistCaptureFormBaseline && document.querySelectorAll('form#form1, form#modalForm').forEach(function (form) { window.bassistCaptureFormBaseline(form); });
+        });
+    </script>
 </body>
 </html>

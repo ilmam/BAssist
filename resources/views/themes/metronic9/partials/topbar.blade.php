@@ -39,6 +39,18 @@
                 <i class="ki-filled ki-down text-xs text-muted-foreground"></i>
             </button>
             <div class="kt-dropdown-menu min-w-[160px]" data-kt-dropdown-menu="true">
+                <div class="px-3 pt-2 pb-1.5" role="group" aria-label="{{ __('ui.theme_appearance') }}">
+                    <div class="text-xs font-medium text-muted-foreground mb-1.5">{{ __('ui.theme_appearance') }}</div>
+                    <div class="inline-flex w-full rounded-md border border-border overflow-hidden">
+                        @foreach (['light' => 'sun', 'dark' => 'moon', 'system' => 'screen'] as $mode => $icon)
+                            <button type="button" data-theme-choice="{{ $mode }}" aria-pressed="false"
+                                class="flex-1 inline-flex items-center justify-center gap-1 px-2 py-1.5 text-xs text-foreground hover:bg-accent [&.is-active]:bg-primary [&.is-active]:text-primary-foreground">
+                                <i class="ki-filled ki-{{ $icon }}" aria-hidden="true"></i>{{ __('ui.theme_'.$mode) }}
+                            </button>
+                        @endforeach
+                    </div>
+                </div>
+                <div class="border-t border-border my-1"></div>
                 <a href="{{ route('profile.api-tokens.index') }}" class="kt-dropdown-menu-link w-full text-start">
                     {{ __('ui.api_tokens') }}
                 </a>

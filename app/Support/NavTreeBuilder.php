@@ -3,12 +3,21 @@
 namespace App\Support;
 
 use App\Models\Project;
+use App\Models\RoleEntityPermission;
 use App\Models\Workspace;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 
 /**
  * Builds workspace → project → BABOK folder → artifact sidebar navigation.
+ *
+ * Built for speed (docs/navigation.md):
+ *  - the light tree (workspaces and projects) is cached per user and rebuilt when the
+ *    user's role permissions or any workspace / project change;
+ *  - only the active project's folders are in the page; every other project carries a
+ *    `lazy_url` and its folders are fetched when it is first opened (NavProjectController);
+ *  - a project's folders are cached the same way.
  */
 class NavTreeBuilder
 {
@@ -28,12 +37,105 @@ class NavTreeBuilder
     /**
      * @return list<array<string, mixed>>
      */
+    /** Seconds a cached tree lives at most; changes to permissions / projects invalidate it sooner. */
+    public const CACHE_TTL = 600;
+
     public function build(): array
     {
         $user = auth()->user();
         if ($user === null || $user->tenant_id === null) {
             return $this->managementFallback();
         }
+
+        $tree = Cache::remember($this->cacheKey($user, 'tree'), self::CACHE_TTL, fn () => $this->buildFresh());
+
+        return $this->withActiveContext($tree);
+    }
+
+    /**
+     * The folders and artifact links of one project, as menu items (cached per user and project).
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function projectItems(Project $project): array
+    {
+        $user = auth()->user();
+        if ($user === null) {
+            return [];
+        }
+
+        return Cache::remember($this->cacheKey($user, 'project.'.$project->id), self::CACHE_TTL, function () use ($project): array {
+            $query = [
+                'workspace_id' => (int) $project->workspace_id,
+                'project_id' => (int) $project->id,
+            ];
+
+            return $this->projectFolderItems($project, $this->folderTemplates(), $query);
+        });
+    }
+
+    /** Whether pages should leave non-active projects to be loaded on demand. */
+    protected function lazy(): bool
+    {
+        return ui_theme() === 'metronic9';
+    }
+
+    /**
+     * Cache key: the user, their role's permissions, and what changed in workspaces / projects.
+     */
+    protected function cacheKey(\App\Models\User $user, string $part): string
+    {
+        $permissions = (string) RoleEntityPermission::query()->where('role_id', $user->role_id)->max('updated_at');
+        $tree = Workspace::query()->count().'|'.(string) Workspace::query()->max('updated_at')
+            .'|'.Project::query()->count().'|'.(string) Project::query()->max('updated_at');
+
+        return 'nav:'.$user->id.':'.md5($user->role_id.'|'.$permissions.'|'.$tree.'|'.(int) $this->lazy()).':'.$part;
+    }
+
+    /**
+     * Applies what is not cacheable: which workspace is open, and the active project's folders.
+     *
+     * @param  list<array<string, mixed>>  $tree
+     * @return list<array<string, mixed>>
+     */
+    protected function withActiveContext(array $tree): array
+    {
+        $workspaceId = $this->workspaceContext->id();
+        $projectId = $this->projectContext->id();
+
+        $walk = function (array $items) use (&$walk, $workspaceId, $projectId): array {
+            foreach ($items as &$item) {
+                $context = $item['context'] ?? [];
+
+                if (($item['type'] ?? null) === 'project' && $projectId !== null && (int) ($context['project_id'] ?? 0) === (int) $projectId) {
+                    $project = Project::query()->find($projectId);
+                    if ($project !== null) {
+                        $item['children'] = $this->projectItems($project);
+                        unset($item['lazy_url']);
+                        $item['force_open'] = true;
+                    }
+                } elseif (! empty($item['children'])) {
+                    $item['children'] = $walk($item['children']);
+                }
+
+                if (! isset($item['type']) && $workspaceId !== null && (int) ($context['workspace_id'] ?? 0) === (int) $workspaceId && ! isset($context['project_id'])) {
+                    $item['force_open'] = true;
+                }
+            }
+            unset($item);
+
+            return $items;
+        };
+
+        return $walk($tree);
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    protected function buildFresh(): array
+    {
+        $user = auth()->user();
 
         $canViewWorkspace = EntityAccess::can($user, 'Workspace', EntityAccess::VIEW);
         $canViewProject = EntityAccess::can($user, 'Project', EntityAccess::VIEW);
@@ -49,8 +151,6 @@ class NavTreeBuilder
             ->orderBy('name')
             ->get(['id', 'name']);
 
-        $activeWorkspaceId = $this->workspaceContext->id();
-        $activeProjectId = $this->projectContext->id();
         $hierarchyConfig = config('navigation.hierarchy', []);
 
         $children = [];
@@ -59,7 +159,6 @@ class NavTreeBuilder
             $workspaceChildren = $this->workspaceChildren(
                 $workspace,
                 $folderTemplates,
-                $activeProjectId,
             );
 
             if ($workspaceChildren === [] && ! $canViewWorkspace && ! $canViewProject) {
@@ -74,7 +173,6 @@ class NavTreeBuilder
                 'icon_v8' => $hierarchyConfig['workspace_icon_v8'] ?? ($hierarchyConfig['workspace_icon'] ?? 'folder'),
                 'context' => ['workspace_id' => (int) $workspace->id],
                 'children' => $workspaceChildren,
-                'force_open' => $activeWorkspaceId !== null && (int) $activeWorkspaceId === (int) $workspace->id,
             ];
         }
 
@@ -105,7 +203,6 @@ class NavTreeBuilder
     protected function workspaceChildren(
         Workspace $workspace,
         array $folderTemplates,
-        ?int $activeProjectId,
     ): array {
         $children = [];
 
@@ -117,8 +214,6 @@ class NavTreeBuilder
                 'workspace_id' => $workspace->id,
                 'project_id' => $project->id,
             ];
-
-            $isActiveProject = $activeProjectId !== null && (int) $activeProjectId === (int) $project->id;
 
             $children[] = [
                 'type' => 'project',
@@ -133,8 +228,9 @@ class NavTreeBuilder
                     'workspace_id' => (int) $workspace->id,
                     'project_id' => (int) $project->id,
                 ],
-                'children' => $this->projectFolderItems($project, $folderTemplates, $projectQuery),
-                'force_open' => $isActiveProject,
+                // Folders come from withActiveContext() (active project) or lazy_url (the rest).
+                'children' => $this->lazy() ? [] : $this->projectFolderItems($project, $folderTemplates, $projectQuery),
+                'lazy_url' => $this->lazy() ? route('nav.project', $project) : null,
             ];
         }
 
