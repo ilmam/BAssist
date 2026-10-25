@@ -123,14 +123,56 @@ function syncSidebar() {
     menu.querySelectorAll('.kt-menu-item.active, .kt-menu-item.here').forEach((el) => el.classList.remove('active', 'here'));
 
     const item = best?.closest('.kt-menu-item');
-    if (!item) {
+    if (item) {
+        item.classList.add('active');
+        for (let el = item.parentElement?.closest('.kt-menu-item'); el; el = el.parentElement?.closest('.kt-menu-item')) {
+            el.classList.add('here', 'show');
+        }
+    }
+
+    followProject(menu, hereProject);
+}
+
+/** Open or close an accordion item the way Metronic leaves it. */
+function setOpen(item, open) {
+    item.classList.toggle('show', open);
+    const panel = item.querySelector(':scope > .kt-menu-accordion');
+    if (panel) {
+        panel.style.height = open ? '' : '0px';
+        panel.style.display = open ? 'flex' : '';
+    }
+}
+
+/**
+ * The project of the current page is the one that is open: its folders are loaded if they are not yet,
+ * and the project that was open before is closed. Without this, clicking a project's name only made it
+ * bold while the previous project stayed open (the menu is not rebuilt on navigation).
+ */
+function followProject(menu, projectId) {
+    if (!projectId) {
         return;
     }
 
-    item.classList.add('active');
-    for (let el = item.parentElement?.closest('.kt-menu-item'); el; el = el.parentElement?.closest('.kt-menu-item')) {
-        el.classList.add('here', 'show');
-    }
+    const projects = [...menu.querySelectorAll('.kt-menu-item-accordion')].filter((item) => {
+        const href = item.querySelector(':scope > .kt-menu-link a[href]')?.getAttribute('href') ?? '';
+
+        return /\/projects\/\d+\/dashboard/.test(href);
+    });
+
+    projects.forEach((item) => {
+        const href = item.querySelector(':scope > .kt-menu-link a[href]').getAttribute('href');
+        const match = /\/projects\/(\d+)\/dashboard/.exec(href);
+        const isCurrent = match !== null && match[1] === projectId;
+
+        if (isCurrent) {
+            setOpen(item, true);
+            if (item.hasAttribute('data-nav-lazy-url')) {
+                loadProject(item);
+            }
+        } else if (item.classList.contains('show')) {
+            setOpen(item, false);
+        }
+    });
 }
 
 /** Fetch the folders of a project into its (empty) accordion, once. */
