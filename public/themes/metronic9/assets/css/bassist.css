@@ -244,6 +244,14 @@ body.modal-sheet-push .kt-header {
 [data-help-drawer].kt-drawer {
   width: min(1100px, 65vw);
   max-width: min(1100px, 65vw);
+  /* Separate the panel from the page behind it: an edge, a shadow and a raised surface. */
+  background: color-mix(in srgb, var(--foreground) 4%, var(--background));
+  border-inline-start: 1px solid var(--border);
+  box-shadow: -12px 0 32px -8px rgb(0 0 0 / 0.25);
+}
+
+[data-help-drawer].kt-drawer .kt-drawer-header {
+  border-bottom: 1px solid var(--border);
 }
 
 /**
@@ -691,7 +699,8 @@ table.dataTable tbody td.dt-nowrap {
   margin-bottom: calc(var(--spacing) * 5);
   border: 1px solid var(--border);
   border-radius: var(--radius-md, 0.5rem);
-  background: #fafafa;
+  /* A faint tint of the text colour: a light grey in light mode, a lifted dark in dark mode. */
+  background: color-mix(in srgb, var(--foreground) 3%, var(--background));
 }
 
 .list-filter-panel__summary {
