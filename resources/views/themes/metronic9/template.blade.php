@@ -1536,7 +1536,13 @@
     @livewireScripts
     <script data-navigate-once>
         // wire:navigate swaps the page without a reload: re-initialise what the page needs.
+        // `livewire:navigated` also fires on the first page load, where everything is already set up.
+        let firstLoad = true;
         document.addEventListener('livewire:navigated', function () {
+            if (firstLoad) {
+                firstLoad = false;
+                return;
+            }
             // Arrived from a page without the sidebar (it was skipped for this request): load fully.
             if (!document.getElementById('sidebar_menu')) {
                 window.location.reload();
@@ -1545,7 +1551,7 @@
             if (localStorage.getItem('kt-sidebar-collapse') === 'on') {
                 document.body.classList.add('kt-sidebar-collapse');
             }
-            window.KTComponents?.init?.();
+            window.bassistInitComponents?.();
             window.bassistSyncSidebar?.();
             window.bassistCodeEditor?.init?.(document);
             window.bassistCaptureFormBaseline && document.querySelectorAll('form#form1, form#modalForm').forEach(function (form) { window.bassistCaptureFormBaseline(form); });

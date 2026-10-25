@@ -31,6 +31,55 @@ function projectOf(url) {
     return match ? match[1] : null;
 }
 
+/**
+ * Metronic's components register their global click / keyboard handlers in `initHandlers()`, and
+ * `KTMenu.init()` (and so `KTComponents.init()`) calls it every time with no guard. Anything that
+ * initialises the library a second time then makes one click run each handler twice: an accordion
+ * opens and closes at once, which is exactly "the project folders do not open". Make `initHandlers`
+ * run once. This module runs before the library's own DOM-ready start-up, so the first call still happens.
+ */
+['KTMenu', 'KTDropdown', 'KTDrawer', 'KTModal', 'KTToggle', 'KTTabs', 'KTAccordion', 'KTCollapse', 'KTTooltip'].forEach((name) => {
+    const component = window[name];
+    if (!component || typeof component.initHandlers !== 'function' || component.initHandlers.__once) {
+        return;
+    }
+
+    const original = component.initHandlers;
+    let done = false;
+    component.initHandlers = function (...args) {
+        if (done) {
+            return undefined;
+        }
+        done = true;
+
+        return original.apply(this, args);
+    };
+    component.initHandlers.__once = true;
+});
+
+/**
+ * Create Metronic component instances for markup that appeared after the first load (a page swapped in
+ * by wire:navigate, a project's folders loaded on demand).
+ *
+ * Deliberately NOT `KTComponents.init()`: that also registers the components' global click / keyboard
+ * handlers again, so every call made one menu click toggle an item several times (project folders
+ * would not open). `createInstances()` only wraps elements that have no instance yet.
+ */
+const COMPONENTS = ['KTMenu', 'KTDropdown', 'KTDrawer', 'KTModal', 'KTSelect', 'KTTabs', 'KTToggle', 'KTTooltip',
+    'KTAccordion', 'KTCollapse', 'KTScrollable', 'KTSticky', 'KTReparent', 'KTTogglePassword', 'KTImageInput'];
+
+function initComponents() {
+    COMPONENTS.forEach((name) => {
+        try {
+            window[name]?.createInstances?.();
+        } catch {
+            // A component that cannot wrap this markup must not stop the others.
+        }
+    });
+}
+
+window.bassistInitComponents = initComponents;
+
 function syncSidebar() {
     const menu = document.getElementById('sidebar_menu');
     if (!menu) {
@@ -101,9 +150,15 @@ async function loadProject(item) {
         const accordion = item.querySelector(':scope > .kt-menu-accordion');
         if (accordion) {
             accordion.innerHTML = await response.text();
+            // Metronic animated the (then empty) panel open to a height of 0 when the row was clicked;
+            // now that the folders are in, let an open panel size itself.
+            if (item.classList.contains('show')) {
+                accordion.style.height = '';
+                accordion.style.display = 'flex';
+            }
         }
         item.removeAttribute('data-nav-lazy-url');
-        window.KTComponents?.init?.();
+        initComponents();
         syncSidebar();
     } catch {
         // Leave it unloaded: the next click tries again.

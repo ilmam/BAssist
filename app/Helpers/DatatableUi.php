@@ -46,7 +46,7 @@ class DatatableUi
     public const IDENTITY_WIDTH = '16rem';
 
     /** Approximate width of one icon button (incl. gap). */
-    public const ACTION_SLOT_WIDTH = 2.1;
+    public const ACTION_SLOT_WIDTH = 2.25;
 
     /** Minimum actions column width when few/no buttons are known yet. */
     public const ACTIONS_MIN_WIDTH = 5.5;

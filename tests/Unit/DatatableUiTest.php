@@ -186,9 +186,9 @@ class DatatableUiTest extends TestCase
             ['action' => 'delete'],
         ]);
 
-        // 4 slots × 2.1rem = 8.4rem
-        $this->assertStringContainsString('width: 8.4rem', $style);
-        $this->assertStringContainsString('min-width: 8.4rem', $style);
+        // 4 slots × 2.25rem = 9rem
+        $this->assertStringContainsString('width: 9rem', $style);
+        $this->assertStringContainsString('min-width: 9rem', $style);
     }
 
     #[Test]
@@ -231,8 +231,8 @@ class DatatableUiTest extends TestCase
 
         $minWidth = DatatableUi::minTableWidth($columns);
 
-        // title (12) + status (8) + actions (3 slots × 2.1 = 6.3) = 26.3rem
-        $this->assertSame('min-width: 26.3rem', $minWidth);
+        // title (12) + status (8) + actions (3 slots × 2.25 = 6.75) = 26.75rem
+        $this->assertSame('min-width: 26.75rem', $minWidth);
     }
 
     #[Test]
@@ -249,8 +249,8 @@ class DatatableUiTest extends TestCase
         $minWidth = DatatableUi::minTableWidth($columns);
 
         // code(8) + title(min 12) + project(10.5) + category(8) + likelihood(8)
-        // + impact(8) + response(8) + owner(8) + status(8) + actions(6.3) = 84.8rem
-        $this->assertSame('min-width: 84.8rem', $minWidth);
+        // + impact(8) + response(8) + owner(8) + status(8) + actions(6.75) = 85.25rem
+        $this->assertSame('min-width: 85.25rem', $minWidth);
     }
 
     #[Test]
