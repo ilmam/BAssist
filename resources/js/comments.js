@@ -100,13 +100,24 @@ document.addEventListener('toggle', (event) => {
     saved[el.dataset.sectionKey] = el.open;
     try { localStorage.setItem(SECTION_STORE, JSON.stringify(saved)); } catch (e) { /* private mode */ }
 }, true);
+// A collapsed section must not hide a problem: open it when a field inside it has an error,
+// or when the browser refuses to submit because a required field inside it is empty.
+const openSectionsWithErrors = (root) => {
+    root.querySelectorAll('details.ba-section:not([open])').forEach((el) => {
+        if (el.querySelector('[data-field-error-for]:not([hidden]), [data-form-errors]:not([hidden])')) { el.open = true; }
+    });
+};
+document.addEventListener('invalid', (event) => {
+    for (let el = event.target.closest?.('details'); el; el = el.parentElement?.closest('details')) { el.open = true; }
+}, true);
 let sectionObserver = null;
 const startSections = () => {
     applySections(document);
+    openSectionsWithErrors(document);
     // After wire:navigate the body is a new element: observe that one.
     sectionObserver?.disconnect();
-    sectionObserver = new MutationObserver(() => applySections(document));
-    sectionObserver.observe(document.body, { childList: true, subtree: true });
+    sectionObserver = new MutationObserver(() => { applySections(document); openSectionsWithErrors(document); });
+    sectionObserver.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['hidden'] });
 };
 document.addEventListener('livewire:navigated', startSections);
 if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', startSections); } else { startSections(); }

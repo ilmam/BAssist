@@ -1229,4 +1229,6 @@ return [
     'theme_light' => 'Light',
     'theme_dark' => 'Dark',
     'theme_system' => 'System',
+    'feature_links_title' => 'Links and traceability',
+    'scenarios_count' => '{0} No scenarios yet|{1} 1 scenario|[2,*] :count scenarios',
 ];

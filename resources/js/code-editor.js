@@ -23,23 +23,24 @@ const TAGS_READY_ATTR = 'data-tags-ready';
 /**
  * Explicit token colors so Metronic / theme inheritance cannot wash out
  * StreamLanguage highlighting. Not a fallback — must win over default styles.
+ * The colors are CSS variables (--code-*, code-editor.css) so dark mode can use a lighter palette.
  */
 const codeHighlightStyle = HighlightStyle.define([
-    { tag: t.keyword, color: '#6d28d9', fontWeight: '700' },
-    { tag: t.tagName, color: '#047857', fontWeight: '700' },
-    { tag: t.comment, color: '#6b7280', fontStyle: 'italic' },
-    { tag: t.string, color: '#b45309' },
-    { tag: t.heading, color: '#1d4ed8', fontWeight: '600' },
-    { tag: t.variableName, color: '#be185d' },
-    { tag: t.bracket, color: '#4b5563' },
-    { tag: t.meta, color: '#047857', fontWeight: '600' },
-    { tag: t.atom, color: '#0e7490' },
-    { tag: t.propertyName, color: '#1d4ed8' },
-    { tag: t.typeName, color: '#6d28d9' },
-    { tag: t.number, color: '#b45309' },
-    { tag: t.bool, color: '#0e7490' },
-    { tag: t.null, color: '#0e7490' },
-    { tag: t.operator, color: '#4b5563' },
+    { tag: t.keyword, color: 'var(--code-keyword)', fontWeight: '700' },
+    { tag: t.tagName, color: 'var(--code-tag)', fontWeight: '700' },
+    { tag: t.comment, color: 'var(--code-comment)', fontStyle: 'italic' },
+    { tag: t.string, color: 'var(--code-string)' },
+    { tag: t.heading, color: 'var(--code-property)', fontWeight: '600' },
+    { tag: t.variableName, color: 'var(--code-variable)' },
+    { tag: t.bracket, color: 'var(--code-punct)' },
+    { tag: t.meta, color: 'var(--code-tag)', fontWeight: '600' },
+    { tag: t.atom, color: 'var(--code-atom)' },
+    { tag: t.propertyName, color: 'var(--code-property)' },
+    { tag: t.typeName, color: 'var(--code-keyword)' },
+    { tag: t.number, color: 'var(--code-string)' },
+    { tag: t.bool, color: 'var(--code-atom)' },
+    { tag: t.null, color: 'var(--code-atom)' },
+    { tag: t.operator, color: 'var(--code-punct)' },
 ]);
 
 /**
@@ -77,7 +78,7 @@ const editorTheme = EditorView.theme({
         padding: '0.75rem 0.85rem',
         caretColor: 'var(--foreground, #111827)',
         minHeight: '200px',
-        color: '#111827',
+        color: 'var(--foreground, #111827)',
     },
     '.cm-activeLine': {
         backgroundColor: 'color-mix(in srgb, var(--muted, #f3f4f6) 55%, transparent)',

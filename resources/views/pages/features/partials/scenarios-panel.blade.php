@@ -12,7 +12,9 @@
 <section class="space-y-6" data-feature-scenarios>
     <div class="flex flex-wrap items-start justify-between gap-3">
         <div class="form-section-intro space-y-1">
-            <h3 class="{{ $headingClass }}">{{ __('ui.scenarios') }}</h3>
+            @unless ($embedded ?? false)
+                <h3 class="{{ $headingClass }}">{{ __('ui.scenarios') }}</h3>
+            @endunless
             <p class="{{ $helpClass }}">{{ __('ui.feature_scenarios_edit_help') }}</p>
         </div>
         @if ($addScenarioModalUrl && entity_can('Scenario', 'create'))

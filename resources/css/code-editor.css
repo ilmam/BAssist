@@ -1,3 +1,27 @@
+/* Syntax colors for the code editor and read-only code blocks: a darker palette on light
+   backgrounds, a lighter one in dark mode (the theme sets the `dark` class on <html>). */
+:root {
+    --code-keyword: #6d28d9;
+    --code-tag: #047857;
+    --code-comment: #6b7280;
+    --code-string: #b45309;
+    --code-property: #1d4ed8;
+    --code-variable: #be185d;
+    --code-punct: #4b5563;
+    --code-atom: #0e7490;
+}
+
+.dark {
+    --code-keyword: #c4b5fd;
+    --code-tag: #6ee7b7;
+    --code-comment: #94a3b8;
+    --code-string: #fcd34d;
+    --code-property: #93c5fd;
+    --code-variable: #f9a8d4;
+    --code-punct: #cbd5e1;
+    --code-atom: #67e8f9;
+}
+
 .feature-raw-dialog {
     margin: auto;
     width: min(960px, 94vw);
@@ -126,9 +150,9 @@
     font-size: 0.75rem;
     font-weight: 600;
     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
-    color: #047857;
-    background: color-mix(in srgb, #047857 12%, transparent);
-    border: 1px solid color-mix(in srgb, #047857 28%, transparent);
+    color: var(--code-tag);
+    background: color-mix(in srgb, var(--code-tag) 12%, transparent);
+    border: 1px solid color-mix(in srgb, var(--code-tag) 28%, transparent);
 }
 
 .gherkin-tags-hint,

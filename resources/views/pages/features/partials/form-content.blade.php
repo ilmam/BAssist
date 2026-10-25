@@ -31,11 +31,8 @@
 
             {{ Form::hidden('project_id', $dto->project_id ?? '') }}
 
-            <section class="space-y-4">
-                <div class="form-section-intro">
-                    <h3 class="text-base font-semibold text-foreground">{{ __('ui.metadata') }}</h3>
-                    <p class="text-sm text-muted-foreground">{{ __('ui.feature_traceability_help') }}</p>
-                </div>
+            <x-section :title="__('ui.metadata')" icon="information-2" key="feature-details">
+                <p class="text-sm text-muted-foreground mb-4">{{ __('ui.feature_traceability_help') }}</p>
                 <div class="form-fields-grid grid grid-cols-12">
                     @foreach (['code', 'title', 'priority_id', 'status_id'] as $fieldName)
                         @continue(! array_key_exists($fieldName, $formFields))
@@ -61,9 +58,10 @@
                         </div>
                     @endforeach
                 </div>
-            </section>
+            </x-section>
 
-            <section class="form-section-box form-section-box--traceability">
+            {{-- Links: which need, change request or process step this feature belongs to. --}}
+            <x-section :title="__('ui.feature_links_title')" icon="fasten" key="feature-links">
                 <div class="form-fields-grid grid grid-cols-12">
                 @if (array_key_exists('stakeholder_need_id', $formFields))
                     @php
@@ -112,13 +110,10 @@
                     </div>
                 @endif
                 </div>
-            </section>
+            </x-section>
 
-            <section class="space-y-4">
-                <div class="form-section-intro">
-                    <h3 class="text-base font-semibold text-foreground">{{ __('ui.feature_document') }}</h3>
-                    <p class="text-sm text-muted-foreground">{{ __('ui.feature_document_edit_help') }}</p>
-                </div>
+            <x-section :title="__('ui.feature_document')" icon="document" key="feature-document">
+                <p class="text-sm text-muted-foreground mb-4">{{ __('ui.feature_document_edit_help') }}</p>
                 <div class="form-fields">
                     @foreach ($documentFields as $fieldName)
                         @continue(! array_key_exists($fieldName, $formFields))
@@ -136,27 +131,32 @@
                     @endforeach
                 </div>
                 <pre class="field-help whitespace-pre-wrap text-xs font-mono bg-muted/40 border border-border rounded-md p-3">{{ __('ui.gherkin_feature_body_example') }}</pre>
-            </section>
+            </x-section>
 
             @if (array_key_exists('attachments', $formFields))
-                <div class="form-fields-grid grid grid-cols-12">
-                    @include('pages.partials.form-field-cells', [
-                        'fields' => ['attachments' => $formFields['attachments']],
-                        'dto' => $dto,
-                        'entityModel' => $modelName,
-                    ])
-                </div>
+                <x-section :title="__('ui.attachments')" icon="paper-clip" key="feature-attachments">
+                    <div class="form-fields-grid grid grid-cols-12">
+                        @include('pages.partials.form-field-cells', [
+                            'fields' => ['attachments' => $formFields['attachments']],
+                            'dto' => $dto,
+                            'entityModel' => $modelName,
+                        ])
+                    </div>
+                </x-section>
             @endif
 
 
     <x-slot:after>
         @if (! $isCreate && ($dto->id ?? null))
-            @include('pages.features.partials.scenarios-panel', [
-                'featureId' => $dto->id,
-                'scenarios' => $scenarios ?? collect(),
-                // Distinct editor ids: the pop-up can open on top of the page form.
-                'editorSuffix' => $inModal ? '_modal_edit' : '_edit',
-            ])
+            <x-section :title="__('ui.scenarios')" icon="category" key="feature-scenarios" :meta="trans_choice('ui.scenarios_count', ($scenarios ?? collect())->count(), ['count' => ($scenarios ?? collect())->count()])">
+                @include('pages.features.partials.scenarios-panel', [
+                    'featureId' => $dto->id,
+                    'scenarios' => $scenarios ?? collect(),
+                    // Distinct editor ids: the pop-up can open on top of the page form.
+                    'editorSuffix' => $inModal ? '_modal_edit' : '_edit',
+                    'embedded' => true,
+                ])
+            </x-section>
         @else
             <p class="text-sm text-muted-foreground">{{ __('ui.feature_scenarios_after_create_help') }}</p>
         @endif
