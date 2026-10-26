@@ -47,6 +47,11 @@
                             'url' => route('projects.babok.index', $project),
                         ];
                     @endphp
+                    @if (\App\Support\ProjectAccess::canManageMembers(auth()->user(), $project))
+                        <x-button type="link" href="{{ route('projects.members.index', $project) }}" icon="users" color="outline">
+                            {{ __('ui.members_link') }}
+                        </x-button>
+                    @endif
                     <div class="create-split-btn inline-flex items-stretch">
                         <x-button
                             type="link"
