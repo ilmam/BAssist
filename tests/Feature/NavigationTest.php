@@ -93,9 +93,12 @@ class NavigationTest extends TestCase
 
     public function test_a_project_of_another_tenant_is_not_available_through_the_endpoint(): void
     {
-        $tenant = Tenant::query()->create(['name' => 'Other', 'slug' => 'other']);
-        $workspace = Workspace::query()->create(['tenant_id' => $tenant->id, 'name' => 'Else', 'slug' => 'else']);
-        $foreign = Project::query()->withoutGlobalScopes()->create(['workspace_id' => $workspace->id, 'name' => 'Secret', 'code' => 'SEC']);
+        $foreign = \App\Support\Tenancy::bypass(function () {
+            $tenant = Tenant::query()->create(['name' => 'Other', 'slug' => 'other']);
+            $workspace = Workspace::query()->create(['tenant_id' => $tenant->id, 'name' => 'Else', 'slug' => 'else']);
+
+            return Project::query()->withoutGlobalScopes()->create(['workspace_id' => $workspace->id, 'name' => 'Secret', 'code' => 'SEC']);
+        });
 
         $this->get(route('nav.project', $foreign))->assertNotFound();
     }

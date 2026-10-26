@@ -67,10 +67,13 @@ class EntityDialogsLivewireTest extends TestCase
 
     public function test_a_record_of_another_tenant_is_not_shown(): void
     {
-        $other = Tenant::query()->create(['name' => 'Other', 'slug' => 'other']);
-        $workspace = Workspace::query()->create(['tenant_id' => $other->id, 'name' => 'Else', 'slug' => 'else']);
-        $project = Project::query()->create(['workspace_id' => $workspace->id, 'name' => 'Hidden', 'code' => 'HID']);
-        $foreign = Risk::query()->withoutGlobalScopes()->create(['project_id' => $project->id, 'title' => 'Secret risk']);
+        $foreign = \App\Support\Tenancy::bypass(function () {
+            $other = Tenant::query()->create(['name' => 'Other', 'slug' => 'other']);
+            $workspace = Workspace::query()->create(['tenant_id' => $other->id, 'name' => 'Else', 'slug' => 'else']);
+            $project = Project::query()->create(['workspace_id' => $workspace->id, 'name' => 'Hidden', 'code' => 'HID']);
+
+            return Risk::query()->withoutGlobalScopes()->create(['project_id' => $project->id, 'title' => 'Secret risk']);
+        });
 
         Livewire::test(EntityView::class, ['model' => 'Risk', 'recordId' => $foreign->id])
             ->assertDontSee('Secret risk')
