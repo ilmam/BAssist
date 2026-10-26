@@ -13,7 +13,7 @@
         article h2 { margin: 0 0 .25rem; font-size: 1.2rem; }
         .realizes { color: #5c5c5c; font-size: .85rem; margin: 0 0 .75rem; }
         .draw { margin: 1rem 0; }
-        .draw .salt-frame { max-width: 760px; margin: 0 auto; }
+        .draw .salt-frame { width: 100%; margin: 0; }
         details { margin-top: .5rem; }
         pre { background: #f7f7f7; border: 1px solid #e0e0e0; border-radius: 6px; padding: .75rem 1rem; overflow: auto; font: 12px/1.55 ui-monospace, Menlo, monospace; }
         {!! $css !!}
@@ -49,8 +49,15 @@
     document.querySelectorAll('article').forEach(function (article) {
         var draw = article.querySelector('[data-draw]');
         var source = article.querySelector('[data-source]');
-        if (draw && source) window.SaltWireframe.render(source.textContent, draw);
+        if (draw && source) {
+            window.SaltWireframe.render(source.textContent, draw);
+            window.SaltWireframe.fit(draw);
+        }
     });
+    function fitAll() { document.querySelectorAll('[data-draw]').forEach(function (d) { window.SaltWireframe.fit(d); }); }
+    window.addEventListener('resize', fitAll);
+    window.addEventListener('beforeprint', fitAll);
+    window.addEventListener('afterprint', fitAll);
 </script>
 </body>
 </html>

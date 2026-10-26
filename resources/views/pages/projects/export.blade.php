@@ -1045,7 +1045,7 @@
         <link rel="stylesheet" href="{{ asset('css/salt-wireframe.css').'?v='.@filemtime(public_path('css/salt-wireframe.css')) }}">
         <style>
             .ui-screen__draw { border: 1px solid var(--line); border-radius: 6px; padding: 1.25rem; background: #fff; margin: 1rem 0; break-inside: avoid; page-break-inside: avoid; }
-            .ui-screen__draw .salt-frame { width: 100%; max-width: 760px; margin: 0 auto; }
+            .ui-screen__draw .salt-frame { width: 100%; margin: 0; }
             .artifact--screen { break-inside: avoid; page-break-inside: avoid; }
         </style>
     @endpush
@@ -1061,10 +1061,16 @@
                 var source = article.querySelector('[data-salt-source]');
                 try {
                     window.SaltWireframe.render(source.textContent, draw);
+                    window.SaltWireframe.fit(draw);
                 } catch (e) {
                     draw.textContent = 'Could not draw this screen: ' + e.message;
                 }
             });
+            // A wide design is scaled to the page: fit again when the width changes or before printing.
+            function fitAll() { document.querySelectorAll('.artifact--screen [data-salt-draw]').forEach(function (d) { window.SaltWireframe.fit(d); }); }
+            window.addEventListener('resize', fitAll);
+            window.addEventListener('beforeprint', fitAll);
+            window.addEventListener('afterprint', fitAll);
         </script>
     @endif
 @endpush

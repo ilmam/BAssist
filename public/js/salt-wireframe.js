@@ -152,6 +152,27 @@
         return frame;
     }
 
+    /**
+     * Fit a drawn wireframe to its container (packs, print): the frame always takes the container's full
+     * width, and a design that is wider than that (a many-column table, a landscape screen) is scaled down
+     * with browser zoom instead of spilling out of its frame. Call again when the container's width can
+     * change (window resize, before printing).
+     */
+    function fit(target) {
+        var frame = target && target.querySelector('.salt-frame');
+        if (!frame) return;
+
+        frame.style.zoom = '';
+        frame.style.maxWidth = 'none';
+        frame.style.width = '100%';
+
+        var available = frame.clientWidth;
+        var needed = frame.scrollWidth;
+        if (available > 0 && needed > available + 1) {
+            frame.style.zoom = String(Math.max(0.35, available / needed));
+        }
+    }
+
     // ---- popup preview: the app's shared modal host (#mianModal), like the BPD diagram preview ----
 
     var MIN_ZOOM = 0.25;
@@ -339,5 +360,5 @@
         return current;
     }
 
-    root.SaltWireframe = { render: render, parse: parse, popup: popup };
+    root.SaltWireframe = { render: render, parse: parse, popup: popup, fit: fit };
 })(window);

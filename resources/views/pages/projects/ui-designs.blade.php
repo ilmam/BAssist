@@ -23,7 +23,7 @@
         .ui-screen__meta { color: var(--muted); font: 13px/1.5 system-ui, sans-serif; margin: .25rem 0 1rem; }
         .ui-screen__meta strong { color: var(--ink); }
         .ui-screen__draw { border: 1px solid var(--line); border-radius: 6px; padding: 1.25rem; background: #fff; margin: 1rem 0; break-inside: avoid; page-break-inside: avoid; }
-        .ui-screen__draw .salt-frame { width: 100%; max-width: 760px; margin: 0 auto; }
+        .ui-screen__draw .salt-frame { width: 100%; margin: 0; }
         .ui-screen__source { border: 1px solid var(--line); border-radius: 6px; background: var(--surface); padding: .75rem 1rem; font: 12px/1.55 ui-monospace, SFMono-Regular, Menlo, monospace; white-space: pre; overflow: auto; break-inside: avoid; page-break-inside: avoid; }
         .ui-screen__label { font: 600 12px/1 system-ui, sans-serif; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin: 1.25rem 0 .4rem; }
     </style>
@@ -83,10 +83,16 @@
                 var source = section.querySelector('[data-salt-source]');
                 try {
                     window.SaltWireframe.render(source.textContent, draw);
+                    window.SaltWireframe.fit(draw);
                 } catch (e) {
                     draw.textContent = 'Could not draw this screen: ' + e.message;
                 }
             });
+            // A wide design is scaled to the page: fit again when the width changes or before printing.
+            function fitAll() { document.querySelectorAll('[data-salt-draw]').forEach(function (d) { window.SaltWireframe.fit(d); }); }
+            window.addEventListener('resize', fitAll);
+            window.addEventListener('beforeprint', fitAll);
+            window.addEventListener('afterprint', fitAll);
         </script>
     @endif
 @endsection
