@@ -61,6 +61,19 @@ class ScreenDesignTest extends TestCase
             ->assertSee('js/salt-wireframe.js', false);
     }
 
+    public function test_a_designs_comments_print_below_it_inside_its_article(): void
+    {
+        $this->withoutVite();
+        $screen = Screen::query()->create(['title' => 'Dealer inquiry form', 'project_id' => $this->project->id]);
+        $this->actingAs($this->user);
+        app(\App\Services\CommentService::class)->add($screen, 'Widen the part number field');
+
+        $html = $this->get(route('projects.export', $this->project))->assertOk()->getContent();
+
+        $this->assertMatchesRegularExpression('/data-salt-draw.*print-comments.*Widen the part number field/s', $html);
+        $this->assertStringContainsString('.has-comment-margin .artifact--screen .print-comments { float: none;', $html);
+    }
+
     public function test_the_export_pack_without_screens_has_no_design_section(): void
     {
         $this->withoutVite();
