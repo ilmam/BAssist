@@ -33,6 +33,19 @@ class UserFactory extends Factory
     }
 
     /**
+     * A person invited to a project from outside any tenant: no tenant, no role.
+     */
+    public function guest(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'is_guest' => true,
+            'role_id' => null,
+            'tenant_id' => null,
+            'workspace_id' => null,
+        ]);
+    }
+
+    /**
      * Indicate that the model's email address should be unverified.
      */
     public function unverified(): static
