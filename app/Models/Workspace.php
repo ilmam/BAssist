@@ -6,6 +6,7 @@ use App\Attributes\Relation;
 use App\Attributes\RoutableAttribute;
 use App\Models\Concerns\BelongsToTenant;
 use App\Models\Concerns\HasEntityStatus;
+use App\Support\Tenancy;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -48,6 +49,9 @@ class Workspace extends BaseModel
 
     public function applyTenantConstraint(Builder $query, int $tenantId): void
     {
-        $query->where($this->qualifyColumn('tenant_id'), $tenantId);
+        $query->where(function (Builder $q) use ($tenantId): void {
+            $q->where($this->qualifyColumn('tenant_id'), $tenantId)
+                ->orWhereIn($this->qualifyColumn('id'), Tenancy::grantedWorkspaceIdsQuery());
+        });
     }
 }

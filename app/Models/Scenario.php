@@ -106,7 +106,7 @@ class Scenario extends BaseModel
             $this->qualifyColumn('feature_id'),
             DB::table('features')
                 ->select('features.id')
-                ->whereIn('features.project_id', Tenancy::projectIdsQuery($tenantId))
+                ->whereIn('features.project_id', Tenancy::visibleProjectIdsQuery($tenantId))
                 ->whereNull('features.deleted_at')
         );
     }

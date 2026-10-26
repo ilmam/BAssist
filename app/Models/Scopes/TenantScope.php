@@ -21,7 +21,7 @@ class TenantScope implements Scope
             return;
         }
 
-        $tenantId = Tenancy::currentTenantId();
+        $tenantId = Tenancy::scopeTenantId();
 
         if ($tenantId === null) {
             $builder->whereRaw('1 = 0');

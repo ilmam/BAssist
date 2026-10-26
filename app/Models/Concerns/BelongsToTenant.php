@@ -24,7 +24,7 @@ trait BelongsToTenant
     {
         $query->whereIn(
             $this->qualifyColumn('project_id'),
-            Tenancy::projectIdsQuery($tenantId)
+            Tenancy::visibleProjectIdsQuery($tenantId)
         );
     }
 }

@@ -43,7 +43,7 @@ class ActivityLog extends Model
     {
         // Project-less rows (should not happen for spine items) are only visible to their author.
         $query->where(function (Builder $q) use ($tenantId): void {
-            $q->whereIn($this->qualifyColumn('project_id'), \App\Support\Tenancy::projectIdsQuery($tenantId))
+            $q->whereIn($this->qualifyColumn('project_id'), \App\Support\Tenancy::visibleProjectIdsQuery($tenantId))
                 ->orWhere(function (Builder $q2): void {
                     $q2->whereNull($this->qualifyColumn('project_id'))->where($this->qualifyColumn('user_id'), auth()->id());
                 });

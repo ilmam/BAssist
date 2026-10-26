@@ -170,6 +170,9 @@ class Project extends BaseModel
 
     public function applyTenantConstraint(Builder $query, int $tenantId): void
     {
-        $query->whereIn($this->qualifyColumn('workspace_id'), Tenancy::workspaceIdsQuery($tenantId));
+        $query->where(function (Builder $q) use ($tenantId): void {
+            $q->whereIn($this->qualifyColumn('workspace_id'), Tenancy::workspaceIdsQuery($tenantId))
+                ->orWhereIn($this->qualifyColumn('id'), Tenancy::grantedProjectIdsQuery());
+        });
     }
 }

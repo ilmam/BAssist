@@ -24,7 +24,7 @@ class AssignDefaultTenant
     {
         $user = $event->user;
 
-        if (! $user instanceof User || ! config('tenancy.auto_assign', true)) {
+        if (! $user instanceof User || $user->is_guest || ! config('tenancy.auto_assign', true)) {
             return;
         }
 

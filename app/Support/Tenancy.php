@@ -86,6 +86,64 @@ class Tenancy
             ->whereNull('workspaces.deleted_at');
     }
 
+    /**
+     * Sub-select of project ids the current user may see: their tenant's
+     * projects plus every project they hold a grant on. Same shape as
+     * projectIdsQuery (soft-deleted projects excluded) so callers swap freely.
+     */
+    public static function visibleProjectIdsQuery(int $tenantId): QueryBuilder
+    {
+        return DB::table('projects')
+            ->select('projects.id')
+            ->whereNull('projects.deleted_at')
+            ->where(function (QueryBuilder $query) use ($tenantId): void {
+                $query->whereIn('projects.workspace_id', self::workspaceIdsQuery($tenantId))
+                    ->orWhereIn('projects.id', self::grantedProjectIdsQuery());
+            });
+    }
+
+    /**
+     * Sub-select of the authenticated user's granted project ids (empty when
+     * nobody is signed in).
+     */
+    public static function grantedProjectIdsQuery(): QueryBuilder
+    {
+        $user = Auth::user();
+
+        if ($user === null) {
+            return DB::table('project_user')->select('project_id')->whereRaw('1 = 0');
+        }
+
+        return ProjectAccess::grantedProjectIdsQuery($user);
+    }
+
+    /**
+     * Sub-select of workspace ids that contain a project the user was granted.
+     */
+    public static function grantedWorkspaceIdsQuery(): QueryBuilder
+    {
+        return DB::table('projects')
+            ->select('projects.workspace_id')
+            ->whereNull('projects.deleted_at')
+            ->whereIn('projects.id', self::grantedProjectIdsQuery());
+    }
+
+    /**
+     * The tenant id the scopes confine queries to: the user's tenant; 0 for a
+     * person with grants but no tenant (matches no workspace, so only grants
+     * contribute); null when there is nothing to show (fail closed).
+     */
+    public static function scopeTenantId(): ?int
+    {
+        $tenantId = self::currentTenantId();
+
+        if ($tenantId !== null) {
+            return $tenantId;
+        }
+
+        return ProjectAccess::hasAnyGrant(Auth::user()) ? 0 : null;
+    }
+
     public static function workspaceIdsQuery(int $tenantId): QueryBuilder
     {
         return DB::table('workspaces')
@@ -95,7 +153,7 @@ class Tenancy
     }
 
     /**
-     * Abort with 404 unless the project belongs to the current tenant.
+     * Abort with 404 unless the project is the current tenant's or was granted to the user.
      * Fail-closed: a user without a tenant never passes.
      */
     public static function assertProject(Project $project): void
@@ -104,10 +162,10 @@ class Tenancy
             return;
         }
 
-        $tenantId = self::currentTenantId();
+        $tenantId = self::scopeTenantId();
 
         $owned = $tenantId !== null
-            && self::projectIdsQuery($tenantId)->where('projects.id', $project->getKey())->exists();
+            && self::visibleProjectIdsQuery($tenantId)->where('projects.id', $project->getKey())->exists();
 
         if (! $owned) {
             abort(404);
