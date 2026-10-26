@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use App\Models\Concerns\BelongsToTenant;
+use App\Models\Concerns\EnforcesProjectAccess;
+use App\Support\ProjectAccessLevel;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -18,6 +20,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Comment extends Model
 {
     use BelongsToTenant;
+    use EnforcesProjectAccess;
     use SoftDeletes;
 
     protected $fillable = [
@@ -41,6 +44,11 @@ class Comment extends Model
             'resolved_at' => 'datetime',
             'implemented_at' => 'datetime',
         ];
+    }
+
+    public function requiredProjectLevel(): ProjectAccessLevel
+    {
+        return ProjectAccessLevel::Comment;
     }
 
     public function commentable(): MorphTo

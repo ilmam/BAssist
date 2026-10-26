@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\EnforcesProjectAccess;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
@@ -10,6 +11,7 @@ use Illuminate\Support\Facades\Storage;
 
 class Attachment extends Model
 {
+    use EnforcesProjectAccess;
     use SoftDeletes;
 
     protected $fillable = [
@@ -51,6 +53,20 @@ class Attachment extends Model
                 Storage::disk($attachment->disk)->delete($attachment->path);
             }
         });
+    }
+
+    /** @return list<int> */
+    public function owningProjectIds(): array
+    {
+        $type = $this->attachable_type;
+
+        if (! is_string($type) || ! class_exists($type)) {
+            return [];
+        }
+
+        $owner = $type::withoutGlobalScopes()->find($this->attachable_id);
+
+        return $owner !== null && method_exists($owner, 'owningProjectIds') ? $owner->owningProjectIds() : [];
     }
 
     public function attachable(): MorphTo

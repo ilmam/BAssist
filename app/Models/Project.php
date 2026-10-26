@@ -168,6 +168,12 @@ class Project extends BaseModel
         return $this->hasMany(ScopeItem::class);
     }
 
+    /** @return list<int> */
+    public function owningProjectIds(): array
+    {
+        return $this->exists ? [(int) $this->getKey()] : [];
+    }
+
     public function applyTenantConstraint(Builder $query, int $tenantId): void
     {
         $query->where(function (Builder $q) use ($tenantId): void {

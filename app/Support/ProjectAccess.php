@@ -4,6 +4,7 @@ namespace App\Support;
 
 use App\Models\Project;
 use App\Models\User;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Support\Facades\DB;
 
@@ -18,10 +19,10 @@ use Illuminate\Support\Facades\DB;
 class ProjectAccess
 {
     /** Entities a guest never gets, whatever the grant says. */
-    public const GUEST_BLOCKED_ENTITIES = ['Workspace'];
+    public const GUEST_BLOCKED_ENTITIES = ['Workspace', 'Tenant'];
 
     /** Entities a guest can read but never change. */
-    public const GUEST_READ_ONLY_ENTITIES = ['Project'];
+    public const GUEST_READ_ONLY_ENTITIES = ['Project', 'Priority', 'Status'];
 
     public static function levelFor(?User $user, int $projectId): ?ProjectAccessLevel
     {
@@ -83,6 +84,30 @@ class ProjectAccess
         }
 
         return self::levelFor($user, $projectId)?->atLeast($needed) ?? false;
+    }
+
+    /**
+     * Throws unless the signed-in person may act at this level on every one of
+     * these projects. Nobody signed in, or tenant isolation off (console,
+     * provisioning, platform operator): nothing to check.
+     *
+     * @param  list<int>  $projectIds
+     *
+     * @throws AuthorizationException
+     */
+    public static function assertCan(array $projectIds, ProjectAccessLevel $needed): void
+    {
+        $user = auth()->user();
+
+        if ($user === null || ! Tenancy::enforced()) {
+            return;
+        }
+
+        foreach ($projectIds as $projectId) {
+            if (! self::can($user, $projectId, $needed)) {
+                throw new AuthorizationException('This action is unauthorized.');
+            }
+        }
     }
 
     public static function canManageMembers(User $user, Project $project): bool

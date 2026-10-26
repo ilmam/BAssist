@@ -100,6 +100,17 @@ class Scenario extends BaseModel
         return app(GherkinDocumentParser::class)->bodyLooksLikeOutline($this->body);
     }
 
+    /** @return list<int> */
+    public function owningProjectIds(): array
+    {
+        $featureIds = array_values(array_unique(array_filter([
+            $this->getAttribute('feature_id'),
+            $this->getOriginal('feature_id'),
+        ])));
+
+        return DB::table('features')->whereIn('id', $featureIds)->pluck('project_id')->map(fn ($id) => (int) $id)->unique()->values()->all();
+    }
+
     public function applyTenantConstraint(Builder $query, int $tenantId): void
     {
         $query->whereIn(
