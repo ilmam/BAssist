@@ -64,14 +64,15 @@ trait SeedsProjectAccess
         return compact('project', 'need', 'fr');
     }
 
-    protected function analystIn(?Tenant $tenant, ?Workspace $workspace): User
+    protected function analystIn(?Tenant $tenant, ?Workspace $workspace, string $slug = 'analyst', bool $canUpdateProject = false): User
     {
-        $role = Role::query()->firstOrCreate(['slug' => 'analyst'], ['name' => 'Analyst']);
+        $role = Role::query()->firstOrCreate(['slug' => $slug], ['name' => ucfirst($slug)]);
 
         foreach (['FunctionalRequirement', 'Project', 'StakeholderNeed', 'StrategicBaseline', 'Architecture'] as $entity) {
+            $update = $entity === 'Project' ? $canUpdateProject : true;
             RoleEntityPermission::query()->firstOrCreate(
                 ['role_id' => $role->id, 'entity' => $entity],
-                ['can_view' => true, 'can_create' => true, 'can_update' => true, 'can_delete' => true],
+                ['can_view' => true, 'can_create' => true, 'can_update' => $update, 'can_delete' => true],
             );
         }
 
@@ -82,16 +83,10 @@ trait SeedsProjectAccess
         ]);
     }
 
-    /** An analyst whose role can also update projects, i.e. someone who may manage members. */
+    /** Someone whose role can update projects, i.e. who may manage members. */
     protected function manager(Tenant $tenant, Workspace $workspace): User
     {
-        $user = $this->analystIn($tenant, $workspace);
-        RoleEntityPermission::query()
-            ->where('role_id', $user->role_id)
-            ->where('entity', 'Project')
-            ->update(['can_update' => true]);
-
-        return $user;
+        return $this->analystIn($tenant, $workspace, 'manager', true);
     }
 
     protected function grant(User $user, Project $project, ProjectAccessLevel $level): ProjectMember
