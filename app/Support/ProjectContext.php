@@ -119,14 +119,13 @@ class ProjectContext
 
     protected function projectForCurrentTenant(int $projectId): ?Project
     {
-        $tenantId = auth()->user()?->tenant_id;
-        if ($tenantId === null) {
+        // TenantScope confines Project to the user's tenant plus granted projects.
+        if (Tenancy::scopeTenantId() === null) {
             return null;
         }
 
         return Project::query()
             ->whereKey($projectId)
-            ->whereHas('workspace', fn ($query) => $query->where('tenant_id', $tenantId))
             ->first(['id', 'workspace_id']);
     }
 }

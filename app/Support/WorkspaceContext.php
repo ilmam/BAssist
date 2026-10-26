@@ -78,14 +78,13 @@ class WorkspaceContext
 
     protected function belongsToCurrentTenant(int $workspaceId): bool
     {
-        $tenantId = auth()->user()?->tenant_id;
-        if ($tenantId === null) {
+        // TenantScope confines Workspace to the user's tenant plus workspaces of granted projects.
+        if (Tenancy::scopeTenantId() === null) {
             return false;
         }
 
         return Workspace::query()
             ->whereKey($workspaceId)
-            ->where('tenant_id', $tenantId)
             ->exists();
     }
 }
