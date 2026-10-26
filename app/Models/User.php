@@ -16,6 +16,9 @@ class User extends Authenticatable
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasApiTokens, HasFactory, Notifiable, TwoFactorAuthenticatable;
 
+    /** @var array<string, mixed> */
+    protected $attributes = ['is_guest' => false];
+
     /**
      * The attributes that are mass assignable.
      *
