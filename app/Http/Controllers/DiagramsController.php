@@ -24,16 +24,11 @@ class DiagramsController extends Controller
     {
         $this->authorizeView();
 
-        $tenantId = auth()->user()?->tenant_id;
         $projectId = $this->resolveProjectId($request);
         $workspaceId = $this->resolveWorkspaceId($request);
 
         $projects = Project::query()
             ->with('workspace')
-            ->when($tenantId !== null, fn ($q) => $q->whereHas(
-                'workspace',
-                fn ($w) => $w->where('tenant_id', $tenantId)
-            ))
             ->when($workspaceId !== null, fn ($q) => $q->where('workspace_id', $workspaceId))
             ->orderBy('name')
             ->get(['id', 'name', 'code', 'workspace_id']);
@@ -41,7 +36,7 @@ class DiagramsController extends Controller
         $sections = [];
 
         if (entity_can('Architecture', EntityAccess::VIEW)) {
-            $sections[] = $this->architectureSection($projectId, $workspaceId, $tenantId, $projects);
+            $sections[] = $this->architectureSection($projectId, $workspaceId, $projects);
         }
 
         if (entity_can('StateFlow', EntityAccess::VIEW)) {
@@ -52,7 +47,6 @@ class DiagramsController extends Controller
                 icon: entity_icon('StateFlow'),
                 projectId: $projectId,
                 workspaceId: $workspaceId,
-                tenantId: $tenantId,
             );
         }
 
@@ -64,7 +58,6 @@ class DiagramsController extends Controller
                 icon: entity_icon('SwimlaneFlow'),
                 projectId: $projectId,
                 workspaceId: $workspaceId,
-                tenantId: $tenantId,
             );
         }
 
@@ -82,13 +75,9 @@ class DiagramsController extends Controller
      * @param  Collection<int, Project>  $projects
      * @return array<string, mixed>
      */
-    protected function architectureSection(?int $projectId, ?int $workspaceId, mixed $tenantId, Collection $projects): array
+    protected function architectureSection(?int $projectId, ?int $workspaceId, Collection $projects): array
     {
         $query = Architecture::query()->with(['project', 'status'])
-            ->when($tenantId !== null, fn ($q) => $q->whereHas(
-                'project.workspace',
-                fn ($w) => $w->where('tenant_id', $tenantId)
-            ))
             ->when($workspaceId !== null, fn ($q) => $q->whereHas(
                 'project',
                 fn ($p) => $p->where('workspace_id', $workspaceId)
@@ -140,7 +129,6 @@ class DiagramsController extends Controller
         string $icon,
         ?int $projectId,
         ?int $workspaceId,
-        mixed $tenantId,
     ): array {
         $query = match ($model) {
             'StateFlow' => StateFlow::query()->with(['project', 'status']),
@@ -148,10 +136,6 @@ class DiagramsController extends Controller
         };
 
         $query
-            ->when($tenantId !== null, fn ($q) => $q->whereHas(
-                'project.workspace',
-                fn ($w) => $w->where('tenant_id', $tenantId)
-            ))
             ->when($workspaceId !== null, fn ($q) => $q->whereHas(
                 'project',
                 fn ($p) => $p->where('workspace_id', $workspaceId)

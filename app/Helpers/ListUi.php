@@ -371,21 +371,14 @@ class ListUi
      */
     protected static function optionsForFilterParam(string $param, array $current): array
     {
-        $tenantId = auth()->user()?->tenant_id;
-
         return match ($param) {
             'workspace_id' => self::mapOptions(
                 \App\Models\Workspace::query()
-                    ->when($tenantId !== null, fn ($q) => $q->where('tenant_id', $tenantId))
                     ->orderBy('name')
                     ->get(['id', 'name'])
             ),
             'project_id' => self::mapOptions(
                 \App\Models\Project::query()
-                    ->when(
-                        $tenantId !== null,
-                        fn ($q) => $q->whereHas('workspace', fn ($w) => $w->where('tenant_id', $tenantId))
-                    )
                     ->when(
                         filled($current['workspace_id'] ?? null),
                         fn ($q) => $q->where('workspace_id', (int) $current['workspace_id'])

@@ -26,7 +26,6 @@ class GuardrailsController extends Controller
     {
         $this->authorizeView();
 
-        $tenantId = auth()->user()?->tenant_id;
         $projectId = $this->resolveProjectId($request);
         $workspaceId = $this->resolveWorkspaceId($request);
 
@@ -40,7 +39,6 @@ class GuardrailsController extends Controller
                 icon: entity_icon('Assumption'),
                 projectId: $projectId,
                 workspaceId: $workspaceId,
-                tenantId: $tenantId,
             );
         }
 
@@ -52,7 +50,6 @@ class GuardrailsController extends Controller
                 icon: entity_icon('Constraint'),
                 projectId: $projectId,
                 workspaceId: $workspaceId,
-                tenantId: $tenantId,
             );
         }
 
@@ -64,7 +61,6 @@ class GuardrailsController extends Controller
                 icon: entity_icon('BusinessRule'),
                 projectId: $projectId,
                 workspaceId: $workspaceId,
-                tenantId: $tenantId,
             );
         }
 
@@ -100,9 +96,8 @@ class GuardrailsController extends Controller
         string $icon,
         ?int $projectId,
         ?int $workspaceId,
-        mixed $tenantId,
     ): array {
-        $count = $this->baseQuery($model, $projectId, $workspaceId, $tenantId)->count();
+        $count = $this->baseQuery($model, $projectId, $workspaceId)->count();
 
         $scopeQuery = array_filter([
             'workspace_id' => $workspaceId,
@@ -145,7 +140,7 @@ class GuardrailsController extends Controller
         ];
     }
 
-    protected function baseQuery(string $model, ?int $projectId, ?int $workspaceId, mixed $tenantId): Builder
+    protected function baseQuery(string $model, ?int $projectId, ?int $workspaceId): Builder
     {
         $query = match ($model) {
             'Assumption' => Assumption::query(),
@@ -155,10 +150,6 @@ class GuardrailsController extends Controller
         };
 
         return $query
-            ->when($tenantId !== null, fn ($q) => $q->whereHas(
-                'project.workspace',
-                fn ($w) => $w->where('tenant_id', $tenantId)
-            ))
             ->when($workspaceId !== null, fn ($q) => $q->whereHas(
                 'project',
                 fn ($p) => $p->where('workspace_id', $workspaceId)

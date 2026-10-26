@@ -34,6 +34,10 @@ class EntityAccess
             return true;
         }
 
+        if ($user->is_guest) {
+            return ProjectAccess::guestAllows($user, $entity, $ability);
+        }
+
         $permission = $user->role?->entityPermissions
             ->firstWhere('entity', $entity);
 
@@ -80,6 +84,14 @@ class EntityAccess
 
         if (self::isSuperAdmin($user)) {
             return array_keys(CrudEntityRegistry::all());
+        }
+
+        if ($user->is_guest) {
+            return collect(array_keys(CrudEntityRegistry::all()))
+                ->filter(fn (string $entity) => self::can($user, $entity, $ability ?? self::VIEW))
+                ->sort()
+                ->values()
+                ->all();
         }
 
         $entities = [];

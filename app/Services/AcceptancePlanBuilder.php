@@ -526,14 +526,6 @@ class AcceptancePlanBuilder
      */
     protected function applyProjectScope(Builder $query, ?int $projectId, ?int $workspaceId): Builder
     {
-        $tenantId = auth()->user()?->tenant_id;
-
-        if ($tenantId !== null) {
-            $query->whereHas('project.workspace', function (Builder $workspaceQuery) use ($tenantId): void {
-                $workspaceQuery->where('tenant_id', $tenantId);
-            });
-        }
-
         if ($workspaceId !== null) {
             $query->whereHas('project', function (Builder $projectQuery) use ($workspaceId): void {
                 $projectQuery->where('workspace_id', $workspaceId);
@@ -553,14 +545,6 @@ class AcceptancePlanBuilder
     protected function projectsForFilter(?int $workspaceId): Collection
     {
         $query = Project::query()->orderBy('name');
-        $tenantId = auth()->user()?->tenant_id;
-
-        if ($tenantId !== null) {
-            $query->whereHas('workspace', function (Builder $workspaceQuery) use ($tenantId): void {
-                $workspaceQuery->where('tenant_id', $tenantId);
-            });
-        }
-
         if ($workspaceId !== null) {
             $query->where('workspace_id', $workspaceId);
         }

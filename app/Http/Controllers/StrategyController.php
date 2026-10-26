@@ -24,16 +24,11 @@ class StrategyController extends Controller
     {
         $this->authorizeView();
 
-        $tenantId = auth()->user()?->tenant_id;
         $projectId = $this->resolveProjectId($request);
         $workspaceId = $this->resolveWorkspaceId($request);
 
         $projects = Project::query()
             ->with('workspace')
-            ->when($tenantId !== null, fn ($q) => $q->whereHas(
-                'workspace',
-                fn ($w) => $w->where('tenant_id', $tenantId)
-            ))
             ->when($workspaceId !== null, fn ($q) => $q->where('workspace_id', $workspaceId))
             ->orderBy('name')
             ->get(['id', 'name', 'code', 'workspace_id']);
@@ -41,11 +36,11 @@ class StrategyController extends Controller
         $sections = [];
 
         if (entity_can('StrategicBaseline', EntityAccess::VIEW)) {
-            $sections[] = $this->baselineSection($projectId, $workspaceId, $tenantId);
+            $sections[] = $this->baselineSection($projectId, $workspaceId);
         }
 
         if (entity_can('ScopeItem', EntityAccess::VIEW)) {
-            $sections[] = $this->scopeSection($projectId, $workspaceId, $tenantId);
+            $sections[] = $this->scopeSection($projectId, $workspaceId);
         }
 
         return view('pages.strategy.index', [
@@ -61,13 +56,9 @@ class StrategyController extends Controller
     /**
      * @return array<string, mixed>
      */
-    protected function baselineSection(?int $projectId, ?int $workspaceId, mixed $tenantId): array
+    protected function baselineSection(?int $projectId, ?int $workspaceId): array
     {
         $query = StrategicBaseline::query()->with('project')
-            ->when($tenantId !== null, fn ($q) => $q->whereHas(
-                'project.workspace',
-                fn ($w) => $w->where('tenant_id', $tenantId)
-            ))
             ->when($workspaceId !== null, fn ($q) => $q->whereHas(
                 'project',
                 fn ($p) => $p->where('workspace_id', $workspaceId)
@@ -109,13 +100,9 @@ class StrategyController extends Controller
     /**
      * @return array<string, mixed>
      */
-    protected function scopeSection(?int $projectId, ?int $workspaceId, mixed $tenantId): array
+    protected function scopeSection(?int $projectId, ?int $workspaceId): array
     {
         $query = ScopeItem::query()->with('project')
-            ->when($tenantId !== null, fn ($q) => $q->whereHas(
-                'project.workspace',
-                fn ($w) => $w->where('tenant_id', $tenantId)
-            ))
             ->when($workspaceId !== null, fn ($q) => $q->whereHas(
                 'project',
                 fn ($p) => $p->where('workspace_id', $workspaceId)

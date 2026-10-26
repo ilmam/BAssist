@@ -43,7 +43,7 @@ class NavTreeBuilder
     public function build(): array
     {
         $user = auth()->user();
-        if ($user === null || $user->tenant_id === null) {
+        if ($user === null || Tenancy::scopeTenantId() === null) {
             return $this->managementFallback();
         }
 
@@ -146,7 +146,6 @@ class NavTreeBuilder
         }
 
         $workspaces = Workspace::query()
-            ->where('tenant_id', $user->tenant_id)
             ->with(['projects' => fn ($query) => $query->orderBy('name')])
             ->orderBy('name')
             ->get(['id', 'name']);

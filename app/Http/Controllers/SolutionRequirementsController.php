@@ -27,7 +27,6 @@ class SolutionRequirementsController extends Controller
     {
         $this->authorizeView();
 
-        $tenantId = auth()->user()?->tenant_id;
         $projectId = $this->resolveProjectId($request);
         $workspaceId = $this->resolveWorkspaceId($request);
 
@@ -41,8 +40,7 @@ class SolutionRequirementsController extends Controller
                 icon: entity_icon('Feature'),
                 projectId: $projectId,
                 workspaceId: $workspaceId,
-                tenantId: $tenantId,
-                query: $this->baseQuery(Feature::query(), $projectId, $workspaceId, $tenantId),
+                query: $this->baseQuery(Feature::query(), $projectId, $workspaceId),
             );
         }
 
@@ -54,8 +52,7 @@ class SolutionRequirementsController extends Controller
                 icon: entity_icon('FunctionalRequirement'),
                 projectId: $projectId,
                 workspaceId: $workspaceId,
-                tenantId: $tenantId,
-                query: $this->baseQuery(FunctionalRequirement::query(), $projectId, $workspaceId, $tenantId),
+                query: $this->baseQuery(FunctionalRequirement::query(), $projectId, $workspaceId),
             );
         }
 
@@ -67,8 +64,7 @@ class SolutionRequirementsController extends Controller
                 icon: entity_icon('NonFunctionalRequirement'),
                 projectId: $projectId,
                 workspaceId: $workspaceId,
-                tenantId: $tenantId,
-                query: $this->baseQuery(NonFunctionalRequirement::query(), $projectId, $workspaceId, $tenantId),
+                query: $this->baseQuery(NonFunctionalRequirement::query(), $projectId, $workspaceId),
             );
         }
 
@@ -105,7 +101,6 @@ class SolutionRequirementsController extends Controller
         string $icon,
         ?int $projectId,
         ?int $workspaceId,
-        mixed $tenantId,
         Builder $query,
     ): array {
         $count = (clone $query)->count();
@@ -159,13 +154,9 @@ class SolutionRequirementsController extends Controller
      * @param  Builder<TModel>  $query
      * @return Builder<TModel>
      */
-    protected function baseQuery(Builder $query, ?int $projectId, ?int $workspaceId, mixed $tenantId): Builder
+    protected function baseQuery(Builder $query, ?int $projectId, ?int $workspaceId): Builder
     {
         return $query
-            ->when($tenantId !== null, fn ($q) => $q->whereHas(
-                'project.workspace',
-                fn ($w) => $w->where('tenant_id', $tenantId)
-            ))
             ->when($workspaceId !== null, fn ($q) => $q->whereHas(
                 'project',
                 fn ($p) => $p->where('workspace_id', $workspaceId)
