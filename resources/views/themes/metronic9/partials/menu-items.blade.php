@@ -65,9 +65,14 @@
             </div>
         </div>
     @elseif ($hasChildren)
+        {{-- Project rows are opened by navigation.js (folders load on demand), not by Metronic's menu. --}}
         <div class="kt-menu-item kt-menu-item-accordion {{ $isOpen ? 'show' : '' }} {{ $isActive ? 'here' : '' }}"
-            data-kt-menu-item-toggle="accordion"
-            data-kt-menu-item-trigger="click"
+            @if ($isProject)
+                data-nav-project
+            @else
+                data-kt-menu-item-toggle="accordion"
+                data-kt-menu-item-trigger="click"
+            @endif
             @if (! empty($item['lazy_url'])) data-nav-lazy-url="{{ $item['lazy_url'] }}" @endif>
             @if ($level === 0)
                 <div class="kt-menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]" tabindex="0">
