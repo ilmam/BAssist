@@ -46,9 +46,9 @@ Route::middleware('auth')->group(function (): void {
     Route::post('review/{model}/{id}/request-changes', [ReviewController::class, 'requestChanges'])->whereNumber('id')->name('review.changes');
 
     // Personal API tokens (see docs/api-platform.md).
-    Route::get('profile/api-tokens', [ApiTokenController::class, 'index'])->name('profile.api-tokens.index');
-    Route::post('profile/api-tokens', [ApiTokenController::class, 'store'])->name('profile.api-tokens.store');
-    Route::delete('profile/api-tokens/{token}', [ApiTokenController::class, 'destroy'])->whereNumber('token')->name('profile.api-tokens.destroy');
+    Route::get('profile/api-tokens', [ApiTokenController::class, 'index'])->middleware('not.guest')->name('profile.api-tokens.index');
+    Route::post('profile/api-tokens', [ApiTokenController::class, 'store'])->middleware('not.guest')->name('profile.api-tokens.store');
+    Route::delete('profile/api-tokens/{token}', [ApiTokenController::class, 'destroy'])->middleware('not.guest')->whereNumber('token')->name('profile.api-tokens.destroy');
 
     Route::get('help/guide', [HelpGuideController::class, 'index'])->name('help.guide');
     Route::get('help/guide/{key}', [HelpGuideController::class, 'show'])->name('help.guide.show');

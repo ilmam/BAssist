@@ -7,4 +7,4 @@ use Laravel\Mcp\Facades\Mcp;
 // API token; each tool checks role permissions, and write tools also require
 // the token's "write" ability. mcp.channel labels resulting history entries.
 Mcp::web('/mcp', BAssistServer::class)
-    ->middleware(['auth:sanctum', 'mcp.channel', 'throttle:120,1']);
+    ->middleware(['auth:sanctum', 'not.guest', 'mcp.channel', 'throttle:120,1']);

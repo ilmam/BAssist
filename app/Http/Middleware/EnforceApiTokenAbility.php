@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use App\Support\ApiTokenAbility;
 use Closure;
 use Illuminate\Http\Request;
+use Laravel\Sanctum\PersonalAccessToken;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
@@ -19,6 +20,11 @@ class EnforceApiTokenAbility
     public function handle(Request $request, Closure $next): Response
     {
         $user = $request->user();
+
+        // A browser session also carries a (transient) token object; only a real personal token counts.
+        if ($user?->is_guest && method_exists($user, 'currentAccessToken') && $user->currentAccessToken() instanceof PersonalAccessToken) {
+            abort(403, 'Guests cannot use API tokens.');
+        }
 
         if ($user !== null
             && method_exists($user, 'currentAccessToken')
