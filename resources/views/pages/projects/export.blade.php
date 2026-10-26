@@ -1049,13 +1049,11 @@
             .ui-screen__draw { border: 1px solid var(--line); border-radius: 6px; padding: 1.25rem; background: #fff; margin: 1rem 0; break-inside: avoid; page-break-inside: avoid; }
             .ui-screen__draw .salt-frame { width: 100%; margin: 0; }
             .artifact--screen { break-inside: avoid; page-break-inside: avoid; }
-            /* A design spans the full page, over the comment margin; its comments follow it underneath. */
+            /* A design spans the full page, over the comment margin; its comments sit in the margin just below it, never beside it. */
+            .artifact--screen { display: flow-root; }
             .has-comment-margin .artifact--screen .ui-screen__draw { margin-right: -290px; }
-            .has-comment-margin .artifact--screen .print-comments { float: none; width: auto; margin: 0 -290px .75rem 0; }
-            .has-comment-margin .artifact--screen .print-comments::before { display: none; }
             @media print {
                 .has-comment-margin .artifact--screen .ui-screen__draw { margin-right: -62mm; }
-                .has-comment-margin .artifact--screen .print-comments { margin-right: -62mm; width: auto; font-size: 8pt; }
             }
         </style>
     @endpush

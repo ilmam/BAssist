@@ -71,7 +71,7 @@ class ScreenDesignTest extends TestCase
         $html = $this->get(route('projects.export', $this->project))->assertOk()->getContent();
 
         $this->assertMatchesRegularExpression('/data-salt-draw.*print-comments.*Widen the part number field/s', $html);
-        $this->assertStringContainsString('.has-comment-margin .artifact--screen .print-comments { float: none;', $html);
+        $this->assertStringContainsString('.has-comment-margin .artifact--screen .ui-screen__draw { margin-right: -290px; }', $html);
     }
 
     public function test_the_export_pack_without_screens_has_no_design_section(): void
