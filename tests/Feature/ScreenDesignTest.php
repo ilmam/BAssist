@@ -44,6 +44,33 @@ class ScreenDesignTest extends TestCase
         ]);
     }
 
+    public function test_the_export_pack_has_a_design_section_with_each_screen_mockup(): void
+    {
+        $this->withoutVite();
+        $screen = Screen::query()->create(['title' => 'Dealer inquiry form', 'project_id' => $this->project->id, 'description' => 'Where a dealer asks about a part']);
+
+        $this->actingAs($this->user)
+            ->get(route('projects.export', $this->project))
+            ->assertOk()
+            ->assertSee('id="section-design"', false)
+            ->assertSee('href="#section-design"', false)
+            ->assertSee('Dealer inquiry form')
+            ->assertSee('Where a dealer asks about a part')
+            ->assertSee('data-salt-draw', false)
+            ->assertSee('data-salt-source', false)
+            ->assertSee('js/salt-wireframe.js', false);
+    }
+
+    public function test_the_export_pack_without_screens_has_no_design_section(): void
+    {
+        $this->withoutVite();
+
+        $this->actingAs($this->user)
+            ->get(route('projects.export', $this->project))
+            ->assertOk()
+            ->assertDontSee('id="section-design"', false);
+    }
+
     public function test_updating_a_screen_from_the_form_payload_saves(): void
     {
         $screen = Screen::query()->create(['title' => 'Old', 'project_id' => $this->project->id]);

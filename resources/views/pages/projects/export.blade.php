@@ -43,6 +43,9 @@
         $non_functional_requirements = $non_functional_requirements ?? collect();
         $hasNonFunctionalRequirements = $non_functional_requirements->isNotEmpty();
         $hasFeatures = $features !== [];
+        // UI designs are a section of their own ("Design"), shown to people who may view screens.
+        $screens = $screens ?? [];
+        $hasDesign = $screens !== [] && entity_can('Screen', 'view');
         $matrixRows = $matrix['rows'] ?? [];
         $hasMatrix = $matrixRows !== [];
         $readinessItems = $readiness['items'] ?? [];
@@ -63,6 +66,7 @@
             || $hasFunctionalRequirements
             || $hasNonFunctionalRequirements
             || $hasFeatures
+            || $hasDesign
             || $hasMatrix
             || $readinessItems !== [];
 
@@ -86,6 +90,7 @@
             $hasFunctionalRequirements ? ['id' => 'section-functional-requirements', 'label' => __('ui.functional_requirements')] : null,
             $hasNonFunctionalRequirements ? ['id' => 'section-non-functional-requirements', 'label' => __('ui.non_functional_requirements')] : null,
             $hasFeatures ? ['id' => 'section-features', 'label' => __('ui.features')] : null,
+            $hasDesign ? ['id' => 'section-design', 'label' => __('ui.design')] : null,
             $hasMatrix ? ['id' => 'section-traceability-matrix', 'label' => __('ui.traceability_matrix')] : null,
         ]));
     @endphp
@@ -662,6 +667,29 @@
         @endforeach
     @endif
 
+    @if ($hasDesign)
+        <h2 id="section-design" class="section-title section-title--break">{{ __('ui.design') }}</h2>
+        <p class="prose">{{ __('ui.export_design_intro') }}</p>
+        @foreach ($screens as $item)
+            @php $screen = $item['model']; @endphp
+            <article class="artifact artifact--screen">
+                <h3 class="item-title">{{ $item['number'] }}. {{ $screen->title }}</h3>
+                <div class="artifact__panel">
+                    <div class="artifact__meta">
+                        <span><strong>{{ __('ui.status') }}</strong>{{ $screen->status?->name ?: '—' }}</span>
+                        <span><strong>{{ __('ui.screen_realizes') }}</strong>{{ $item['requirements'] === [] ? __('ui.screen_realizes_none') : implode('; ', $item['requirements']) }}</span>
+                    </div>
+                </div>
+                @if (filled($screen->description))
+                    <p class="prose">{{ $screen->description }}</p>
+                @endif
+                {{-- Drawn in the browser from the Salt text, like the UI designs pack. --}}
+                <div class="ui-screen__draw" data-salt-draw></div>
+                <pre hidden data-salt-source>{{ $item['salt'] }}</pre>
+            </article>
+        @endforeach
+    @endif
+
     @if ($hasMatrix)
         <h2 id="section-traceability-matrix" class="section-title section-title--break">{{ __('ui.traceability_matrix') }}</h2>
         <div class="summary">
@@ -1012,6 +1040,31 @@
     </style>
 @endpush
 
+@if ($hasDesign ?? false)
+    @push('styles')
+        <link rel="stylesheet" href="{{ asset('css/salt-wireframe.css').'?v='.@filemtime(public_path('css/salt-wireframe.css')) }}">
+        <style>
+            .ui-screen__draw { border: 1px solid var(--line); border-radius: 6px; padding: 1.25rem; background: #fff; margin: 1rem 0; break-inside: avoid; page-break-inside: avoid; }
+            .ui-screen__draw .salt-frame { width: 100%; max-width: 760px; margin: 0 auto; }
+            .artifact--screen { break-inside: avoid; page-break-inside: avoid; }
+        </style>
+    @endpush
+@endif
+
 @push('scripts')
     @vite(['resources/js/project-export-print.js'])
+    @if ($hasDesign ?? false)
+        <script src="{{ asset('js/salt-wireframe.js').'?v='.@filemtime(public_path('js/salt-wireframe.js')) }}"></script>
+        <script>
+            document.querySelectorAll('.artifact--screen').forEach(function (article) {
+                var draw = article.querySelector('[data-salt-draw]');
+                var source = article.querySelector('[data-salt-source]');
+                try {
+                    window.SaltWireframe.render(source.textContent, draw);
+                } catch (e) {
+                    draw.textContent = 'Could not draw this screen: ' + e.message;
+                }
+            });
+        </script>
+    @endif
 @endpush

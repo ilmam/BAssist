@@ -18,6 +18,7 @@ class ProjectExportService
         protected C4MermaidGenerator $c4,
         protected ProjectReadinessService $readiness,
         protected GherkinFeatureAssembler $gherkin,
+        protected UiDesignPackService $uiDesigns,
     ) {
     }
 
@@ -40,6 +41,7 @@ class ProjectExportService
      *   business_rules: \Illuminate\Database\Eloquent\Collection,
      *   risks: \Illuminate\Database\Eloquent\Collection,
      *   features: list<array{model: \App\Models\Feature, gherkin: string}>,
+     *   screens: list<array{model: \App\Models\Screen, number: int, slug: string, file: string, salt: string, requirements: list<string>}>,
      *   functional_requirements: \Illuminate\Database\Eloquent\Collection,
      *   non_functional_requirements: \Illuminate\Database\Eloquent\Collection,
      *   matrix: array{rows: list<array<string, mixed>>, summary: array<string, int>}
@@ -137,6 +139,8 @@ class ProjectExportService
             'functional_requirements' => $project->functionalRequirements->sortBy('number')->values(),
             'non_functional_requirements' => $project->nonFunctionalRequirements->sortBy('number')->values(),
             // Features last among artifacts (before the matrix appendix).
+            // UI designs (docs/design-layer.md): every screen with the Salt text its mockup is drawn from.
+            'screens' => $this->uiDesigns->build($project)['screens'],
             'features' => $project->features
                 ->sortBy('number')
                 ->values()

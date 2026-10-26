@@ -1264,4 +1264,6 @@ return [
     'invite_gone_title' => 'This invitation is no longer valid',
     'invite_gone_body' => 'It may have expired, been withdrawn or already been used. Ask the person who invited you for a new one.',
     'scenarios_count' => '{0} No scenarios yet|{1} 1 scenario|[2,*] :count scenarios',
+    'design' => 'Design',
+    'export_design_intro' => 'UI designs: a low-fidelity mockup of each screen and the functional requirements it realizes. Designs realize requirements; they are not requirements themselves.',
 ];

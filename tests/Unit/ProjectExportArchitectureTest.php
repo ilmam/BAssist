@@ -123,6 +123,7 @@ class ProjectExportArchitectureTest extends TestCase
             new C4MermaidGenerator(),
             Mockery::mock(ProjectReadinessService::class),
             Mockery::mock(GherkinFeatureAssembler::class),
+            Mockery::mock(\App\Services\UiDesignPackService::class),
         );
     }
 }

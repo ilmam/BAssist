@@ -331,7 +331,10 @@ class CommentService
     }
 
     /**
-     * Open threads for every item in a project, keyed "Class:id" — one query per document.
+     * Threads that belong in a printed document for every item in a project, keyed "Class:id" — one query
+     * per document. Only what still needs a person: open (waiting for an answer) and answered (waiting for
+     * the decision to be applied). Implemented (waiting for verification) and closed threads are finished
+     * business as far as a reader of the document is concerned and are left out.
      *
      * @return array<string, list<Comment>>
      */
@@ -341,6 +344,8 @@ class CommentService
         Comment::query()
             ->threads()
             ->open()
+            // Threads from before statuses existed have no status and count as open.
+            ->where(fn ($q) => $q->whereNull('status')->orWhereIn('status', \App\Support\CommentStatus::BLOCKING))
             ->where('project_id', $project->id)
             ->with(['author', 'replies.author', 'commentable'])
             ->oldest()

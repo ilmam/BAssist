@@ -119,6 +119,8 @@ After that the Salt is the design and the image stays only as a reference. BAssi
 
 ## UI designs pack
 
+The **full export pack** (`projects.export`) also has a **Design** section after the features: each screen with its status, the functional requirements it realizes, its description and its mockup, drawn in the browser from the screen's Salt text by the same renderer (`public/js/salt-wireframe.js`). It is listed in the pack's table of contents and shown to people who may view screens; a project without screens has no Design section. The dedicated UI designs pack below remains the way to get the Salt text itself.
+
 A project's **Downloads** menu (project dashboard) has two entries for the design layer, the same way the full export pack is offered:
 
 - **UI designs pack** (`GET /projects/{project}/ui-designs`): a printable page (Print to PDF) with a cover, a table of contents, and one page per screen: its status, the functional requirements it realizes, its description, the wireframe drawn, and the Salt text.

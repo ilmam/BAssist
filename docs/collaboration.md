@@ -57,7 +57,7 @@ To add an entity: put its model name in the list(s). It must have `project_id`; 
   Status/priority changes (quick edits, bulk edits, CR taint) do not reset approvals.
 - Setting the status from inside `ApprovalService` saves only `status_id`, which is in `NON_CONTENT`, so it never loops.
 - History stores old → new per changed column (long text truncated to 240 chars); `updated_at`, `number` and similar bookkeeping columns are ignored. Wrap bulk maintenance in `app(ActivityRecorder::class)->pause(fn () => …)` to skip logging.
-- Printing: controllers register a `PrintComments` instance per request (open threads, current approvals, and the comments on/off flag from `?comments=0`). Item partials ask it per article; the appendix lists only what the document actually printed.
+- Printing: controllers register a `PrintComments` instance per request (threads still waiting on a person: **open** and **answered**; `implemented` and `closed` threads are left out of printed documents and the export pack, see `CommentService::openThreadsForProject()`; current approvals, and the comments on/off flag from `?comments=0`). Item partials ask it per article; the appendix lists only what the document actually printed.
 
 ## Tests
 

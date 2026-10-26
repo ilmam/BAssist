@@ -110,6 +110,12 @@ class CommentsTest extends TestCase
         $service->add($this->fr, 'Mandatory fields list is missing');
         $resolved = $service->add($this->fr, 'Old question');
         $service->setResolved($resolved, true);
+        // A decision that was applied and waits for verification is finished business for a reader too.
+        $implemented = $service->add($this->fr, 'Already applied remark');
+        $service->markImplemented($implemented);
+        // An answered thread (a decision not yet applied) still belongs in the document.
+        $answered = $service->add($this->fr, 'Decision pending remark');
+        $service->add($this->fr, 'Use two fields', $answered->id);
 
         $url = route('projects.babok.show', [$this->project, 'requirements-analysis-design-definition']);
         if (! array_key_exists('requirements-analysis-design-definition', config('babok_documents.documents'))) {
@@ -122,8 +128,10 @@ class CommentsTest extends TestCase
             ->assertSee('print-comments', false)
             ->assertSee('Mandatory fields list is missing')
             ->assertDontSee('Old question')
+            ->assertDontSee('Already applied remark')
+            ->assertSee('Decision pending remark')
             ->assertSee(__('ui.comments_appendix_title'))
-            ->assertSee('This document has 1 open comment');
+            ->assertSee('This document has 2 open comments');
 
         $this->get($url.'?comments=0')
             ->assertOk()
@@ -131,7 +139,10 @@ class CommentsTest extends TestCase
             ->assertDontSee(__('ui.comments_appendix_title'));
 
         $this->get(route('projects.export', $this->project))
-            ->assertOk()->assertSee('Mandatory fields list is missing');
+            ->assertOk()
+            ->assertSee('Mandatory fields list is missing')
+            ->assertDontSee('Old question')
+            ->assertDontSee('Already applied remark');
     }
 
     public function test_every_babok_document_renders_with_comments_on(): void
