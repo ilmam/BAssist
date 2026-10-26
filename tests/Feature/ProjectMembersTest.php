@@ -63,7 +63,9 @@ class ProjectMembersTest extends TestCase
             ->assertOk()
             ->assertSee('Gina Guest')
             ->assertSee('gina@example.com')
-            ->assertSee('pending@example.com');
+            ->assertSee('pending@example.com')
+            ->assertSee(route('projects.invitations.store', $this->a['project']))
+            ->assertSee(route('projects.invitations.revoke', [$this->a['project'], ProjectInvitation::query()->firstOrFail()]));
     }
 
     public function test_dashboard_links_to_members_only_for_managers(): void

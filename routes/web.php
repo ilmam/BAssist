@@ -20,7 +20,9 @@ use App\Http\Controllers\ProjectCommentsController;
 use App\Http\Controllers\ProjectDashboardController;
 use App\Http\Controllers\QuickActionsController;
 use App\Http\Controllers\ReviewController;
+use App\Http\Controllers\InvitationAcceptController;
 use App\Http\Controllers\ProjectExportController;
+use App\Http\Controllers\ProjectInvitationController;
 use App\Http\Controllers\ProjectMemberController;
 use App\Http\Controllers\ProjectUiDesignController;
 use App\Http\Controllers\QuickGuideController;
@@ -32,6 +34,10 @@ use App\Http\Controllers\SwimlaneFlowController;
 use App\Http\Controllers\TraceabilityController;
 use App\Support\CrudRouteRegistrar;
 use Illuminate\Support\Facades\Route;
+
+// Invitation links are opened before the person has an account or is signed in.
+Route::get('invitations/{token}', [InvitationAcceptController::class, 'show'])->middleware('throttle:10,1')->name('invitations.show');
+Route::post('invitations/{token}', [InvitationAcceptController::class, 'accept'])->middleware('throttle:10,1')->name('invitations.accept');
 
 Route::middleware('auth')->group(function (): void {
     Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -89,6 +95,10 @@ Route::middleware('auth')->group(function (): void {
     Route::get('projects/{project}/members', [ProjectMemberController::class, 'index'])->name('projects.members.index');
     Route::patch('projects/{project}/members/{member}', [ProjectMemberController::class, 'update'])->whereNumber('member')->name('projects.members.update');
     Route::delete('projects/{project}/members/{member}', [ProjectMemberController::class, 'destroy'])->whereNumber('member')->name('projects.members.destroy');
+    Route::post('projects/{project}/invitations', [ProjectInvitationController::class, 'store'])->name('projects.invitations.store');
+    Route::patch('projects/{project}/invitations/{invitation}', [ProjectInvitationController::class, 'update'])->whereNumber('invitation')->name('projects.invitations.update');
+    Route::post('projects/{project}/invitations/{invitation}/resend', [ProjectInvitationController::class, 'resend'])->whereNumber('invitation')->name('projects.invitations.resend');
+    Route::delete('projects/{project}/invitations/{invitation}', [ProjectInvitationController::class, 'revoke'])->whereNumber('invitation')->name('projects.invitations.revoke');
     Route::get('projects/{project}/babok', [BabokDocumentController::class, 'index'])->name('projects.babok.index');
     Route::get('projects/{project}/babok/{document}', [BabokDocumentController::class, 'show'])->name('projects.babok.show');
 

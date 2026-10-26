@@ -35,6 +35,20 @@ return [
         'workspace_name' => env('SHARED_WORKSPACE_NAME', 'Default Workspace'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Project invitations
+    |--------------------------------------------------------------------------
+    |
+    | How many days an emailed invitation link keeps working. Sending it again
+    | issues a new link and a new expiry.
+    |
+    */
+
+    'invitations' => [
+        'ttl_days' => (int) env('INVITATION_TTL_DAYS', 7),
+    ],
+
     'personal' => [
         'workspace_name' => 'Default Workspace',
         'workspace_slug' => 'default',

@@ -25,6 +25,23 @@
 
         <p class="text-sm text-muted-foreground mb-5">{{ __('ui.members_intro') }}</p>
 
+        <form method="POST" action="{{ route('projects.invitations.store', $project) }}" class="flex flex-wrap items-end gap-3 mb-8">
+            @csrf
+            <div class="kt-form-item grow">
+                <label class="kt-form-label" for="invite_email">{{ __('ui.invite_email') }}</label>
+                <input id="invite_email" type="email" name="email" value="{{ old('email') }}" required class="kt-input" />
+            </div>
+            <div class="kt-form-item">
+                <label class="kt-form-label" for="invite_access">{{ __('ui.members_access') }}</label>
+                <select id="invite_access" name="access" @foreach ($selectAttrs as $attr => $attrValue) {{ $attr }}="{{ $attrValue }}" @endforeach>
+                    @foreach ($levels as $level)
+                        <option value="{{ $level->value }}" @selected(old('access', 'view') === $level->value)>{{ $level->label() }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <x-button type="submit" color="primary">{{ __('ui.invite_send') }}</x-button>
+        </form>
+
         <div class="kt-card-table">
             <div class="kt-table-wrapper">
                 <table class="kt-table kt-table-border w-full">
@@ -86,14 +103,39 @@
                                 <th>{{ __('ui.email') }}</th>
                                 <th>{{ __('ui.members_access') }}</th>
                                 <th>{{ __('ui.members_expires') }}</th>
+                                <th class="text-end">{{ __('ui.actions') }}</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach ($invitations as $invitation)
                                 <tr>
                                     <td class="font-medium">{{ $invitation->email }}</td>
-                                    <td>{{ $invitation->access->label() }}</td>
+                                    <td>
+                                        <form method="POST" action="{{ route('projects.invitations.update', [$project, $invitation]) }}" class="flex items-center gap-2">
+                                            @csrf
+                                            @method('PATCH')
+                                            <select name="access" @foreach ($selectAttrs as $attr => $attrValue) {{ $attr }}="{{ $attrValue }}" @endforeach>
+                                                @foreach ($levels as $level)
+                                                    <option value="{{ $level->value }}" @selected($invitation->access === $level)>{{ $level->label() }}</option>
+                                                @endforeach
+                                            </select>
+                                            <x-button type="submit" color="outline" size="sm">{{ __('ui.save') }}</x-button>
+                                        </form>
+                                    </td>
                                     <td>{{ $invitation->expires_at->toFormattedDateString() }}</td>
+                                    <td>
+                                        <div class="flex justify-end gap-2">
+                                            <form method="POST" action="{{ route('projects.invitations.resend', [$project, $invitation]) }}">
+                                                @csrf
+                                                <x-button type="submit" color="outline" size="sm">{{ __('ui.invite_resend') }}</x-button>
+                                            </form>
+                                            <form method="POST" action="{{ route('projects.invitations.revoke', [$project, $invitation]) }}">
+                                                @csrf
+                                                @method('DELETE')
+                                                <x-button type="submit" color="outline" size="sm">{{ __('ui.invite_revoke') }}</x-button>
+                                            </form>
+                                        </div>
+                                    </td>
                                 </tr>
                             @endforeach
                         </tbody>
