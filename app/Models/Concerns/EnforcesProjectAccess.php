@@ -18,8 +18,25 @@ trait EnforcesProjectAccess
 {
     public static function bootEnforcesProjectAccess(): void
     {
-        static::saving(fn ($model) => ProjectAccess::assertCan($model->owningProjectIds(), $model->requiredProjectLevel()));
-        static::deleting(fn ($model) => ProjectAccess::assertCan($model->owningProjectIds(), $model->requiredProjectLevel()));
+        $guard = function ($model): void {
+            ProjectAccess::assertCan($model->owningProjectIds(), $model->requiredProjectLevel());
+            ProjectAccess::assertOwnTenant($model->owningTenantIds());
+        };
+
+        static::saving($guard);
+        static::deleting($guard);
+    }
+
+    /**
+     * Tenants this record belongs to directly (workspaces and projects only),
+     * now and before the change. Everything else belongs to a tenant through
+     * its project and returns nothing here.
+     *
+     * @return list<int>
+     */
+    public function owningTenantIds(): array
+    {
+        return [];
     }
 
     /**

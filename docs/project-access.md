@@ -24,6 +24,8 @@ A super-admin, or a user of the **project's own tenant** whose role can update `
 2. **Entity abilities** (`EntityAccess::can`). Guests (`users.is_guest`) have no role: `ProjectAccess::guestAllows` answers from their highest grant. `Workspace` and `Tenant` are blocked; `Project`, `Priority`, `Status` are read-only.
 3. **Per-record write guard** (`EnforcesProjectAccess` on `BaseModel`, `Comment`, `Approval`, `Attachment`). `EntityAccess` is global and cannot tell "edit project A, read project B", so on `saving`/`deleting` the record's project (current and original, so it cannot be moved) is checked with `ProjectAccess::assertCan`. It only bites on projects **outside the person's own tenant**; on their own tenant the role decides, as before. Models owned another way override `owningProjectIds()` (`Project`, `Scenario`, `Attachment`).
 
+Two more rules sit in the same guard, for **everyone**, grant or not, role or not: (a) a workspace or project of another tenant is never changed, moved or deleted, and no project is created in one (`owningTenantIds()` on `Workspace` and `Project`, `ProjectAccess::assertOwnTenant`); a grant only opens the records inside the granted project; (b) a record cannot be moved between projects of different tenants (checked in `ProjectAccess::assertCan`).
+
 ## Guests and tenants
 
 `users.is_guest` accounts are created from an invitation: no tenant, no role. `AssignDefaultTenant` skips them, otherwise they would be put into the shared tenant on first request. A guest can hold grants on projects of several tenants, and an existing tenant user can be granted a project of another tenant (their own tenant stays as it was).

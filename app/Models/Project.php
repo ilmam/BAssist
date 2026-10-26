@@ -168,6 +168,28 @@ class Project extends BaseModel
         return $this->hasMany(ScopeItem::class);
     }
 
+    /**
+     * The tenants of the workspace this project is in now and was in before,
+     * so it can be neither moved out of nor planted into another tenant.
+     *
+     * @return list<int>
+     */
+    public function owningTenantIds(): array
+    {
+        $workspaceIds = array_values(array_unique(array_filter([
+            $this->getAttribute('workspace_id'),
+            $this->getOriginal('workspace_id'),
+        ])));
+
+        return \Illuminate\Support\Facades\DB::table('workspaces')
+            ->whereIn('id', $workspaceIds)
+            ->pluck('tenant_id')
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->values()
+            ->all();
+    }
+
     /** @return list<int> */
     public function owningProjectIds(): array
     {

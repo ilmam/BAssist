@@ -47,6 +47,15 @@ class Workspace extends BaseModel
         return $this->hasMany(Project::class);
     }
 
+    /** @return list<int> */
+    public function owningTenantIds(): array
+    {
+        return array_values(array_unique(array_map('intval', array_filter([
+            $this->getAttribute('tenant_id'),
+            $this->getOriginal('tenant_id'),
+        ]))));
+    }
+
     public function applyTenantConstraint(Builder $query, int $tenantId): void
     {
         $query->where(function (Builder $q) use ($tenantId): void {

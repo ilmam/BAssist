@@ -108,6 +108,37 @@ class ProjectAccess
                 throw new AuthorizationException('This action is unauthorized.');
             }
         }
+
+        // A record never changes tenant by being moved between projects.
+        $tenants = array_unique(array_map(fn (int $id) => self::tenantIdOfProject($id), $projectIds), SORT_REGULAR);
+
+        if (count($tenants) > 1) {
+            throw new AuthorizationException('This action is unauthorized.');
+        }
+    }
+
+    /**
+     * Throws unless every one of these tenants is the signed-in person's own.
+     * Workspaces and projects belong to a tenant; a grant on one project of
+     * another tenant never lets anyone change, move or delete them.
+     *
+     * @param  list<int>  $tenantIds
+     *
+     * @throws AuthorizationException
+     */
+    public static function assertOwnTenant(array $tenantIds): void
+    {
+        $user = auth()->user();
+
+        if ($user === null || ! Tenancy::enforced()) {
+            return;
+        }
+
+        foreach ($tenantIds as $tenantId) {
+            if ($user->tenant_id === null || (int) $user->tenant_id !== $tenantId) {
+                throw new AuthorizationException('This action is unauthorized.');
+            }
+        }
     }
 
     public static function canManageMembers(User $user, Project $project): bool
