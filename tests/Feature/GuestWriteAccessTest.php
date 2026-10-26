@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Attachment;
 use App\Models\FunctionalRequirement;
 use App\Models\User;
+use App\Support\EntityStatus;
 use App\Support\ProjectAccessLevel;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -135,6 +136,23 @@ class GuestWriteAccessTest extends TestCase
             ['file' => UploadedFile::fake()->create('evidence.pdf', 80, 'application/pdf')],
         )->assertRedirect();
         $this->assertSame(1, Attachment::query()->count());
+    }
+
+    public function test_quick_edits_respect_the_project_of_each_record(): void
+    {
+        $this->seed(\Database\Seeders\StatusPrioritySeeder::class);
+        EntityStatus::forgetCache();
+        $guest = $this->guestWith(ProjectAccessLevel::Edit);
+        $this->grant($guest, $this->a2['project'], ProjectAccessLevel::View);
+        $this->actingAs($guest);
+        $agreed = EntityStatus::id(EntityStatus::AGREED);
+
+        $this->patchJson(route('quick.update', ['model' => 'FunctionalRequirement', 'id' => $this->a['fr']->id]), ['field' => 'status_id', 'value' => $agreed])->assertOk();
+        $this->patchJson(route('quick.update', ['model' => 'FunctionalRequirement', 'id' => $this->a2['fr']->id]), ['field' => 'status_id', 'value' => $agreed])->assertForbidden();
+        $this->postJson(route('quick.bulk', ['model' => 'FunctionalRequirement']), ['ids' => [$this->a2['fr']->id], 'field' => 'status_id', 'value' => $agreed])->assertForbidden();
+
+        $this->assertSame($agreed, (int) FunctionalRequirement::withoutGlobalScopes()->find($this->a['fr']->id)->status_id);
+        $this->assertNotSame($agreed, (int) FunctionalRequirement::withoutGlobalScopes()->find($this->a2['fr']->id)->status_id);
     }
 
     public function test_guest_cannot_approve_or_create_workspaces_or_edit_the_project(): void

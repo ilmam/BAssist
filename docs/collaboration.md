@@ -10,7 +10,7 @@
 | Review decisions | `ApprovalService`, `ReviewController`, `pages/partials/review-bar.blade.php`, `resources/js/review.js` | `approvals` |
 | History | `ActivityRecorder`, `Observers/TrackedEntityObserver` | `activity_log` |
 | Printing (BABOK docs, export pack) | `Support/PrintComments` + `pages/projects/partials/print-*.blade.php` | — |
-| Permission | `EntityAccess::APPROVE`, `role_entity_permissions.can_approve` | — |
+| Permission | `EntityAccess::APPROVE`, `role_entity_permissions.can_approve` (guests invited to one project: see `docs/project-access.md`) | — |
 
 All three tables carry `project_id` and use `BelongsToTenant`, so every query is tenant-scoped like the entities themselves. Panels render inside `<x-details-view>`, so every details page and view modal gets them without per-entity Blade.
 
