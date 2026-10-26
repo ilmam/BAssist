@@ -261,7 +261,7 @@ class ProjectDashboardController extends Controller
             'readiness' => $this->readiness->forProject($project),
             // Comments on the project itself, shown here because this is the page people open.
             'commentThreads' => CommentService::supports('Project') ? app(CommentService::class)->threads($project) : null,
-            'mentionUsers' => app(CommentService::class)->tenantUsers(),
+            'mentionUsers' => app(CommentService::class)->mentionableUsers((int) $project->getKey()),
         ]);
     }
 

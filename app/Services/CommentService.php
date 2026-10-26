@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Support\CrudEntityRegistry;
 use App\Support\CommentStatus;
 use App\Support\EntityAccess;
+use App\Support\ProjectAccess;
 use App\Support\RequestChannel;
 use DateTimeInterface;
 use Illuminate\Database\Eloquent\Collection;
@@ -111,7 +112,7 @@ class CommentService
             $parent->touch();
         }
 
-        $mentioned = $this->mentionedUsers($body);
+        $mentioned = $this->mentionedUsers($body, (int) $comment->project_id);
         if ($mentioned->isNotEmpty()) {
             $comment->mentionedUsers()->syncWithoutDetaching($mentioned->pluck('id')->all());
         }
@@ -282,11 +283,11 @@ class CommentService
     }
 
     /**
-     * Users in the same tenant named after "@": "@Ahmed" or "@Ahmed.Ali" / "@Ahmed_Ali" for full names.
+     * Users on the same project named after "@": "@Ahmed" or "@Ahmed.Ali" / "@Ahmed_Ali" for full names.
      *
      * @return \Illuminate\Support\Collection<int, User>
      */
-    public function mentionedUsers(string $body): \Illuminate\Support\Collection
+    public function mentionedUsers(string $body, int $projectId): \Illuminate\Support\Collection
     {
         preg_match_all('/(?<![\w@])@([\p{L}\p{N}][\p{L}\p{N}._-]{1,40})/u', $body, $matches);
         $tokens = collect($matches[1] ?? [])->map(fn (string $t) => Str::lower(str_replace(['.', '_'], ' ', rtrim($t, '.-_'))))->unique();
@@ -294,7 +295,7 @@ class CommentService
             return collect();
         }
 
-        $users = $this->tenantUsers();
+        $users = $this->mentionableUsers($projectId);
 
         return $tokens->map(function (string $token) use ($users) {
             $full = $users->filter(fn (User $u) => Str::lower((string) $u->name) === $token);
@@ -308,14 +309,23 @@ class CommentService
     }
 
     /**
+     * People who can be @mentioned on a project: its tenant's users and anyone
+     * granted the project, so a guest never sees unrelated people.
+     *
      * @return \Illuminate\Support\Collection<int, User>
      */
-    public function tenantUsers(): \Illuminate\Support\Collection
+    public function mentionableUsers(int $projectId): \Illuminate\Support\Collection
     {
-        $tenantId = auth()->user()?->tenant_id;
+        $tenantId = ProjectAccess::tenantIdOfProject($projectId);
 
         return User::query()
-            ->when($tenantId !== null, fn ($q) => $q->where('tenant_id', $tenantId))
+            ->where(function ($query) use ($tenantId, $projectId): void {
+                $query->whereIn('id', DB::table('project_user')->select('user_id')->where('project_id', $projectId));
+
+                if ($tenantId !== null) {
+                    $query->orWhere(fn ($q) => $q->where('tenant_id', $tenantId)->where('is_guest', false));
+                }
+            })
             ->orderBy('name')
             ->get(['id', 'name']);
     }

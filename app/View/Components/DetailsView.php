@@ -49,7 +49,7 @@ class DetailsView extends Component
         if (CommentService::supports($model)) {
             $comments = app(CommentService::class);
             $this->commentThreads = $comments->threads($resolve());
-            $this->mentionUsers = $comments->tenantUsers();
+            $this->mentionUsers = $comments->mentionableUsers($comments->projectIdOf($resolve()));
             if (auth()->user() !== null) {
                 $comments->markMentionsSeen($resolve(), auth()->user());
             }

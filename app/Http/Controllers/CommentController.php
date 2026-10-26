@@ -82,7 +82,7 @@ class CommentController extends Controller
             'commentModel' => $model,
             'commentRecordId' => (int) $record->getKey(),
             'threads' => $this->comments->threads($record),
-            'mentionUsers' => $this->comments->tenantUsers(),
+            'mentionUsers' => $this->comments->mentionableUsers($this->comments->projectIdOf($record)),
         ]);
     }
 }

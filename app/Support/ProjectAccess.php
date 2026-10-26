@@ -152,7 +152,7 @@ class ProjectAccess
         };
     }
 
-    protected static function tenantIdOfProject(int $projectId): ?int
+    public static function tenantIdOfProject(int $projectId): ?int
     {
         $tenantId = DB::table('projects')
             ->join('workspaces', 'workspaces.id', '=', 'projects.workspace_id')
