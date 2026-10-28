@@ -158,6 +158,49 @@ class GherkinDocumentParser
     }
 
     /**
+     * Tags BAssist writes into the exported Gherkin itself (scenario code, approval
+     * state, revision hash). They describe the stored record, never belong to its body.
+     */
+    public function isSystemTag(string $token): bool
+    {
+        return preg_match('/^@(SC-\d+|status:\S+|rev:[0-9a-f]+)$/i', $token) === 1;
+    }
+
+    /**
+     * Remove the system tags from the tag lines in front of the Scenario: line.
+     * Authored tags stay; a tag line left empty is dropped.
+     */
+    public function stripSystemTags(?string $body): string
+    {
+        $lines = explode("\n", str_replace(["\r\n", "\r"], "\n", (string) $body));
+        $kept = [];
+        $inHeader = true;
+
+        foreach ($lines as $line) {
+            $trimmed = trim($line);
+
+            if ($inHeader && preg_match('/^(Scenario(\s+Outline)?|Feature)\s*:/i', $trimmed) === 1) {
+                $inHeader = false;
+            }
+
+            if ($inHeader && str_starts_with($trimmed, '@')) {
+                $tokens = array_filter(
+                    preg_split('/\s+/', $trimmed) ?: [],
+                    fn (string $token): bool => ! $this->isSystemTag($token)
+                );
+                if ($tokens === []) {
+                    continue;
+                }
+                $line = implode(' ', $tokens);
+            }
+
+            $kept[] = $line;
+        }
+
+        return implode("\n", $kept);
+    }
+
+    /**
      * Leading @tags only (before first non-tag content line).
      *
      * @return list<string>

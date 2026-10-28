@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Feature;
 use App\Models\Scenario;
+use App\Support\EntityStatus;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
@@ -81,7 +82,7 @@ class GherkinFeatureAssembler
         /** @var Collection<int, Scenario> $scenarios */
         $scenarios = $feature->scenarios;
         foreach ($scenarios as $scenario) {
-            $scenarioBody = rtrim((string) ($scenario->body ?? ''));
+            $scenarioBody = rtrim($this->taggedScenarioBody($scenario));
             if ($scenarioBody !== '') {
                 $parts[] = $scenarioBody;
             }
@@ -92,6 +93,77 @@ class GherkinFeatureAssembler
         }
 
         return rtrim(implode("\n\n", $parts))."\n";
+    }
+
+    /**
+     * Approval state of a scenario: draft, agreed, need_revision or deprecated.
+     */
+    public function scenarioStatus(Scenario $scenario): string
+    {
+        return EntityStatus::code($scenario->status_id) ?? EntityStatus::DRAFT;
+    }
+
+    /**
+     * Revision hash of a scenario's content: 12 hex of sha256 over the body with the
+     * system tags removed, line endings normalised and trailing blanks trimmed.
+     * Approval state is deliberately not part of it, so approving never looks like an edit.
+     */
+    public function scenarioRevision(Scenario $scenario): string
+    {
+        $body = $this->parser->stripSystemTags($scenario->body);
+        $lines = array_map('rtrim', explode("\n", $body));
+
+        return $this->shortHash(trim(implode("\n", $lines)));
+    }
+
+    public function shortHash(string $content): string
+    {
+        return substr(hash('sha256', $content), 0, 12);
+    }
+
+    /**
+     * The scenario as exported: its stored body with `@SC-n @status:… @rev:…` on the
+     * line above the Scenario: header, ahead of any tags the author wrote.
+     */
+    public function taggedScenarioBody(Scenario $scenario): string
+    {
+        $body = $this->parser->stripSystemTags($scenario->body);
+        if (trim($body) === '') {
+            return '';
+        }
+
+        $system = array_filter([
+            $scenario->code !== null ? '@'.$scenario->code : null,
+            '@status:'.$this->scenarioStatus($scenario),
+            '@rev:'.$this->scenarioRevision($scenario),
+        ]);
+
+        $before = [];
+        $authored = [];
+        $rest = [];
+        $inHeader = true;
+
+        foreach (explode("\n", $body) as $line) {
+            if ($inHeader && preg_match('/^\s*Scenario(\s+Outline)?\s*:/i', $line) === 1) {
+                $inHeader = false;
+            }
+
+            if (! $inHeader) {
+                $rest[] = $line;
+            } elseif (str_starts_with(trim($line), '@')) {
+                $authored[] = trim($line);
+            } else {
+                $before[] = $line;
+            }
+        }
+
+        if ($rest === []) {
+            return $body;
+        }
+
+        $tagLine = implode(' ', array_merge($system, $authored));
+
+        return implode("\n", array_merge($before, [$tagLine], $rest));
     }
 
     /**

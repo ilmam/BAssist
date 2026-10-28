@@ -9,6 +9,7 @@ use App\Models\StakeholderNeed;
 use App\Models\SwimlaneFlow;
 use App\Support\CrudEntityRegistry;
 use App\Support\EntityAccess;
+use App\Support\EntityStatus;
 use App\Support\ProjectContext;
 use App\Support\Tenancy;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -270,14 +271,26 @@ class ProjectInsightsService
      */
     protected function featureDocument(Feature $feature): array
     {
+        $gherkin = $this->assembler->assembleFeature($feature);
+
         return [
             'id' => (int) $feature->id,
             'code' => $feature->getAttribute('code'),
             'title' => $feature->title,
+            'status' => EntityStatus::code($feature->status_id) ?? EntityStatus::DRAFT,
+            // Hash of the exported file, so a pulled copy can be compared in one step.
+            'rev' => $this->assembler->shortHash($gherkin),
             'stakeholder_need_id' => $feature->stakeholder_need_id !== null ? (int) $feature->stakeholder_need_id : null,
             'scenarios_count' => $feature->scenarios->count(),
+            'scenarios' => $feature->scenarios->map(fn ($scenario): array => [
+                'id' => (int) $scenario->id,
+                'code' => $scenario->code,
+                'title' => $scenario->title,
+                'status' => $this->assembler->scenarioStatus($scenario),
+                'rev' => $this->assembler->scenarioRevision($scenario),
+            ])->values()->all(),
             'filename' => $this->assembler->downloadFilename($feature),
-            'gherkin' => $this->assembler->assembleFeature($feature),
+            'gherkin' => $gherkin,
         ];
     }
 }

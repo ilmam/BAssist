@@ -9,6 +9,7 @@ use App\Models\Concerns\HasEntityStatus;
 use App\Services\GherkinDocumentParser;
 use App\Support\Tenancy;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\DB;
@@ -24,6 +25,7 @@ class Scenario extends BaseModel
 
     protected $fillable = [
         'title',
+        'number',
         'feature_id',
         'stakeholder_need_id',
         'is_outline',
@@ -35,7 +37,41 @@ class Scenario extends BaseModel
     {
         return array_merge(parent::casts(), [
             'is_outline' => 'boolean',
+            'number' => 'integer',
         ]);
+    }
+
+    protected static function booted(): void
+    {
+        parent::booted();
+
+        // SC-n, numbered per project through the owning feature. Never reused.
+        static::creating(function (self $scenario): void {
+            if (! blank($scenario->number) || blank($scenario->feature_id)) {
+                return;
+            }
+
+            $projectId = (int) DB::table('features')->where('id', $scenario->feature_id)->value('project_id');
+            if ($projectId < 1) {
+                return;
+            }
+
+            $scenario->number = (int) DB::transaction(function () use ($projectId) {
+                // Serialize numbering within a project when concurrent creates race.
+                DB::table('projects')->where('id', $projectId)->lockForUpdate()->first();
+
+                return (int) DB::table('scenarios')
+                    ->join('features', 'features.id', '=', 'scenarios.feature_id')
+                    ->where('features.project_id', $projectId)
+                    ->max('scenarios.number') + 1;
+            });
+        });
+    }
+
+    /** Stable display code: SC-n (null until numbered). */
+    protected function code(): Attribute
+    {
+        return Attribute::get(fn (): ?string => $this->number === null ? null : 'SC-'.$this->number);
     }
 
     #[Relation('BelongsTo')]
@@ -81,8 +117,9 @@ class Scenario extends BaseModel
         $this->is_outline = $parser->bodyLooksLikeOutline($this->body)
             || (bool) $this->is_outline;
 
+        // An exported file carries SC / status / rev tags; they are never stored.
         $this->body = $parser->ensureScenarioHeader(
-            $this->body,
+            $parser->stripSystemTags($this->body),
             $fallback,
             (bool) $this->is_outline
         );

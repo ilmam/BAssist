@@ -122,7 +122,7 @@ All paths are under `/api`.
 | `GET /projects/{project}/readiness` | `total_gaps`, `items` (each gap: `key`, `label`, `count`, `severity`, `url`), `severity` totals, `spine` progress, `score` | Project |
 | `GET /projects/{project}/traceability` | `summary`, `gap_counts`, `coverage`, `rows` (one per trace from business need to scenario/requirement, with `gaps`) | Any of BusinessNeed, BusinessObjective, StakeholderNeed, Feature, FunctionalRequirement |
 | `GET /projects/{project}/acceptance-plan` | `summary`, `rows` (test id, source, requirement, rule, check, type, status) | Any of Feature, Scenario, FunctionalRequirement |
-| `GET /projects/{project}/gherkin` | `features`: each with `id`, `code`, `title`, `filename`, `gherkin` | Feature |
+| `GET /projects/{project}/gherkin` | `features`: each with `id`, `code`, `title`, `status`, `rev`, `scenarios` (`id`, `code`, `title`, `status`, `rev`), `filename`, `gherkin`. See "Tamper-evident Gherkin" below | Feature |
 | `GET /features/{id}/gherkin` | The same document for one feature. `?format=text` returns the raw `.feature` text | Feature |
 | `GET /{resource}/{id}/lineage` | `parents`, `gaps`, `groups` (children) and `lineage` (`steps` for the five levels, `complete`, `total`, `next` suggested action) | The entity |
 
@@ -209,3 +209,22 @@ The MCP endpoint (`/mcp`) is a second door onto the same services, for AI assist
 | Rate limiting | None configured on the `api` group |
 | API versioning (`/api/v1`) | Not introduced; add before publishing the API to outside developers |
 | Derived views across several projects | One project per call |
+
+## Tamper-evident Gherkin
+
+The exported `.feature` text is the specification a code project builds and tests against, so a copy edited by hand must be detectable. Every scenario in the export carries one tag line above its `Scenario:` header:
+
+```
+@SC-12 @status:agreed @rev:a1b2c3d4e5f6 @smoke
+Scenario: Discount above 20% is rejected
+```
+
+| Tag | Meaning |
+|---|---|
+| `@SC-n` | Stable scenario code, numbered per project (`scenarios.number`), never reused after a delete |
+| `@status:` | Approval state of the scenario: `draft`, `agreed`, `need_revision`, `deprecated` |
+| `@rev:` | First 12 hex of sha256 over the scenario body: system tags removed, line endings normalised to `\n`, trailing blanks trimmed, whole text trimmed. The status is not part of it, so approving is not an edit |
+
+Tags the author wrote (`@smoke`) follow the system tags. The system tags are added on export and removed again whenever a scenario is saved or imported (`GherkinDocumentParser::stripSystemTags`), so a round trip never stores them.
+
+The JSON carries the same values structured: per scenario `code`, `status`, `rev`; per feature `status` and `rev` (the same hash over the whole exported file). A client compares a pulled file with a fresh export by `rev`, or recomputes the scenario hash locally from the algorithm above.
