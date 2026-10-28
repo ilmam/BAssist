@@ -9,12 +9,14 @@
         <p class="print-toolbar__hint">{{ __('ui.project_export_print_hint') }}</p>
         <div class="print-toolbar__actions">
             <a class="print-btn" href="{{ model_route('Project', 'index') }}">{{ __('ui.back_to_projects') }}</a>
-            <a class="print-btn {{ ($includeComments ?? true) ? 'print-btn--on' : '' }}"
-               href="{{ request()->fullUrlWithQuery(['comments' => ($includeComments ?? true) ? '0' : null]) }}"
-               aria-pressed="{{ ($includeComments ?? true) ? 'true' : 'false' }}"
-               title="{{ __('ui.comments_print_toggle_help') }}">
-                {{ ($includeComments ?? true) ? __('ui.comments_print_on') : __('ui.comments_print_off') }}
-            </a>
+            <span class="print-switch__label">{{ __('ui.comments_print_switch') }}:</span>
+            <div class="print-switch" role="group" aria-label="{{ __('ui.comments_print_switch') }}" title="{{ __('ui.comments_print_toggle_help') }}">
+                @foreach (['all' => [null, 'comments_print_shown'], 'replied' => ['replied', 'comments_print_no_replied'], 'none' => ['0', 'comments_print_hidden']] as $mode => [$query, $label])
+                    <a class="print-btn {{ ($commentsMode ?? 'all') === $mode ? 'print-btn--on' : '' }}"
+                       href="{{ request()->fullUrlWithQuery(['comments' => $query]) }}"
+                       aria-pressed="{{ ($commentsMode ?? 'all') === $mode ? 'true' : 'false' }}">{{ __('ui.'.$label) }}</a>
+                @endforeach
+            </div>
             <button type="button" class="print-btn print-btn--primary" data-print-pack>
                 {{ __('ui.print_to_pdf') }}
             </button>
@@ -815,6 +817,12 @@
 
 @push('styles')
     <style>
+        .print-switch { display: inline-flex; }
+        .print-switch__label { align-self: center; color: var(--muted); font: 600 13px/1.2 system-ui, sans-serif; }
+        .print-switch .print-btn { border-radius: 0; margin-left: -1px; }
+        .print-switch .print-btn:first-child { border-radius: 6px 0 0 6px; margin-left: 0; }
+        .print-switch .print-btn:last-child { border-radius: 0 6px 6px 0; }
+
         .export-toc {
             margin: 0 0 0.5rem;
         }

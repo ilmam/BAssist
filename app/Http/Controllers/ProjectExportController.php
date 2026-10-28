@@ -25,13 +25,27 @@ class ProjectExportController extends Controller
 
         $pack = $this->export->build($project);
 
-        $includeComments = request()->query('comments', '1') !== '0';
+        // ?comments=1 shown (default), ?comments=replied hides threads already answered, ?comments=0 hides all.
+        $commentsMode = match (request()->query('comments', '1')) {
+            '0' => 'none',
+            'replied' => 'replied',
+            default => 'all',
+        };
+        $includeComments = $commentsMode !== 'none';
+        $threads = $includeComments ? app(CommentService::class)->openThreadsForProject($project) : [];
+        if ($commentsMode === 'replied') {
+            $threads = array_filter(array_map(
+                fn (array $list) => array_values(array_filter($list, fn ($t) => $t->currentStatus() !== \App\Support\CommentStatus::ANSWERED)),
+                $threads,
+            ));
+        }
         app()->instance(PrintComments::class, new PrintComments(
             $includeComments,
-            $includeComments ? app(CommentService::class)->openThreadsForProject($project) : [],
+            $threads,
             app(\App\Services\ApprovalService::class)->currentForProject($project),
         ));
         $pack['includeComments'] = $includeComments;
+        $pack['commentsMode'] = $commentsMode;
 
         return view('pages.projects.export', $pack);
     }
