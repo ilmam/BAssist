@@ -6,7 +6,9 @@ use App\Services\TraceabilityGraphService;
 
 use App\Services\TraceabilityMatrixService;
 use App\Support\EntityAccess;
+use App\Support\DataVersion;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -20,7 +22,7 @@ class TraceabilityController extends Controller
     {
         $this->authorizeView();
 
-        $matrix = $this->matrix->build($request->only(['project_id', 'orphans_only', 'gap']));
+        $matrix = $this->cachedMatrix($request);
 
         $graphService = app(TraceabilityGraphService::class);
         $viewMode = $request->query('view') === 'graph' ? 'graph' : 'table';
@@ -41,7 +43,7 @@ class TraceabilityController extends Controller
     {
         $this->authorizeView();
 
-        $matrix = $this->matrix->build($request->only(['project_id', 'orphans_only', 'gap']));
+        $matrix = $this->cachedMatrix($request);
         $filename = 'traceability-matrix-'.now()->format('Y-m-d-His').'.csv';
 
         return response()->streamDownload(function () use ($matrix): void {
@@ -97,6 +99,21 @@ class TraceabilityController extends Controller
         }, $filename, [
             'Content-Type' => 'text/csv; charset=UTF-8',
         ]);
+    }
+
+    /**
+     * Building the matrix walks the whole spine, so a result is reused per user and filter set
+     * until a tracked record changes (DataVersion) or the TTL passes.
+     *
+     * @return array<string, mixed>
+     */
+    protected function cachedMatrix(Request $request): array
+    {
+        $filters = $request->only(['project_id', 'orphans_only', 'gap']);
+        ksort($filters);
+        $key = 'traceability.matrix.u'.(auth()->id() ?? 0).'.v'.DataVersion::current().'.'.md5(json_encode($filters));
+
+        return Cache::remember($key, 300, fn () => $this->matrix->build($filters));
     }
 
     protected function authorizeView(): void

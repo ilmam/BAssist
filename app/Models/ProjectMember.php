@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Services\ProjectReadinessService;
+use App\Support\DataVersion;
 use App\Support\ProjectAccessLevel;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -20,6 +22,18 @@ class ProjectMember extends Model
         'access',
         'invited_by',
     ];
+
+    /** A grant changes what a person may see, so cached read models must not outlive it. */
+    protected static function booted(): void
+    {
+        $forget = function (self $member): void {
+            DataVersion::bump();
+            ProjectReadinessService::forget((int) $member->project_id);
+        };
+
+        static::saved($forget);
+        static::deleted($forget);
+    }
 
     protected function casts(): array
     {

@@ -21,7 +21,9 @@ use App\Support\RiskImpact;
 use App\Support\RiskLikelihood;
 use App\Support\RiskStatus;
 use Illuminate\Database\Eloquent\Model;
+use App\Support\DataVersion;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 
@@ -34,6 +36,9 @@ class HomeController extends Controller
     protected const PROJECT_LIMIT = 6;
 
     protected const ACTIVITY_LIMIT = 10;
+
+    /** Seconds a cached panel set is kept (also covers changes the observer does not see). */
+    protected const PANEL_TTL = 300;
 
     /**
      * Spine entities surfaced in "Recent activity".
@@ -86,12 +91,27 @@ class HomeController extends Controller
             'user' => auth()->user(),
             'projects' => $projects,
             'projectTotal' => $projectTotal,
-            'kpis' => $this->kpis($projectTotal, $canProjects),
-            'awaiting' => $this->awaitingDecision(),
-            'activity' => $this->recentActivity(),
+            ...$this->cachedPanels($projectTotal, $canProjects),
             'reviews' => app(\App\Services\ApprovalService::class)->awaitingReview()
                 ->map(fn (Model $m) => $this->row(class_basename($m), $m)),
             'mentions' => auth()->user() ? app(\App\Services\CommentService::class)->mentionsFor(auth()->user()) : collect(),
+        ]);
+    }
+
+    /**
+     * KPIs, decisions and activity depend only on the data and what the user may see, so
+     * they are reused until a tracked record changes (DataVersion) or the TTL passes.
+     *
+     * @return array{kpis: array<int, array<string, mixed>>, awaiting: Collection, activity: Collection}
+     */
+    protected function cachedPanels(int $projectTotal, bool $canProjects): array
+    {
+        $key = 'home.panels.u'.(auth()->id() ?? 0).'.v'.DataVersion::current();
+
+        return Cache::remember($key, self::PANEL_TTL, fn () => [
+            'kpis' => $this->kpis($projectTotal, $canProjects),
+            'awaiting' => $this->awaitingDecision(),
+            'activity' => $this->recentActivity(),
         ]);
     }
 

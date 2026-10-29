@@ -27,12 +27,16 @@ use App\Support\RiskResponse;
 use App\Support\RiskStatus;
 use App\Support\StrategicBaselineStatus;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * Derived readiness / gap summary for a project (encourage, don't police).
  */
 class ProjectReadinessService
 {
+    /** Seconds a computed score is reused (also covers changes the observer does not see). */
+    protected const CACHE_TTL = 120;
+
     /**
      * @return array{
      *     total_gaps: int,
@@ -44,6 +48,28 @@ class ProjectReadinessService
      * }
      */
     public function forProject(Project $project): array
+    {
+        $user = auth()->id() ?? 0;
+        $key = 'readiness.'.$project->id.'.v'.self::version($project->id).'.u'.$user;
+
+        return Cache::remember($key, self::CACHE_TTL, fn () => $this->compute($project));
+    }
+
+    /** Bumped whenever a record in the project changes, so cached scores are never stale. */
+    public static function forget(int $projectId): void
+    {
+        Cache::forever('readiness.version.'.$projectId, self::version($projectId) + 1);
+    }
+
+    protected static function version(int $projectId): int
+    {
+        return (int) Cache::get('readiness.version.'.$projectId, 0);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    protected function compute(Project $project): array
     {
         $scopeQuery = [
             'workspace_id' => (int) $project->workspace_id,
