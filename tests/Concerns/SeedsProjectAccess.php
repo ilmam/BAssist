@@ -40,6 +40,7 @@ trait SeedsProjectAccess
             'stakeholder_need_id' => $need->id,
             'title' => $name.' requirement',
             'statement' => 'The system shall serve '.$name.'.',
+            'acceptance_criteria' => 'The system serves '.$name.'.',
         ]);
 
         return compact('tenant', 'workspace', 'project', 'need', 'fr');
@@ -59,6 +60,7 @@ trait SeedsProjectAccess
             'stakeholder_need_id' => $need->id,
             'title' => $name.' requirement',
             'statement' => 'The system shall serve '.$name.'.',
+            'acceptance_criteria' => 'The system serves '.$name.'.',
         ]);
 
         return compact('project', 'need', 'fr');
