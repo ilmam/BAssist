@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\Concerns\BelongsToTenant;
 use App\Models\Concerns\EnforcesProjectAccess;
+use App\Services\ProjectReadinessService;
 use App\Support\ProjectAccessLevel;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -34,9 +35,19 @@ class Comment extends Model
         'status',
         'implemented_at',
         'implemented_by',
+        'no_spec_change_reason',
         'resolved_at',
         'resolved_by',
     ];
+
+    /** Thread counts feed the cached readiness score, so any change to a comment must refresh it. */
+    protected static function booted(): void
+    {
+        $forget = fn (self $comment) => ProjectReadinessService::forget((int) $comment->project_id);
+
+        static::saved($forget);
+        static::deleted($forget);
+    }
 
     protected function casts(): array
     {

@@ -64,7 +64,7 @@ class MarkCommentImplementedTool extends BAssistTool
             $comments->assertSpecificationChanged($thread, $decision, $validated['no_spec_change_reason'] ?? null);
 
             $comments->add($record, $validated['report'], (int) $thread->id);
-            $comments->markImplemented($thread->fresh());
+            $comments->markImplemented($thread->fresh(), $validated['no_spec_change_reason'] ?? null);
 
             return $load();
         });

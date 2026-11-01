@@ -154,7 +154,7 @@ Log it in the project's gap log so it is filed exactly once.
 | C2 | Apply answered threads in the correct order and report each. | Exists (`spine-apply`) |
 | C3 | File each gap-log row as a comment exactly once. | Exists (`spine-feedback`) |
 | C4 | The server refuses "mark implemented" unless a record in the project changed after the latest answer, or an explicit `no_spec_change_reason` is given. | Exists (BAssist server, `mark-comment-implemented`) |
-| C5 | A thread marked implemented whose record is unchanged appears as a readiness gap. | Proposed (BAssist server) |
+| C5 | An implemented thread with no record change since the answer, and no stated reason, appears as a readiness gap (`comments_decision_not_in_spec`). | Exists (BAssist server) |
 | C6 | The build gate fails while open or answered comments exist on the item. | Exists (`get-lineage`, `open_comments`) |
 | C7 | A regular sweep: list answered and implemented threads older than a set age and chase them. | Manual |
 
@@ -325,7 +325,7 @@ requirement.
 - **Changes:** edit only the canonical source, raise the version, and let each project update its copy
   on its next sync. A project never edits its copy; local choices go in `CONVENTIONS.md` and the
   binding file.
-- **Build order for the Proposed controls:** C5 (comment gap in readiness; C4 is done), A4 (coverage check), then A5 and
+- **Build order for the Proposed controls:** A4 (C4 and C5, the comment gates, are done) (coverage check), then A5 and
   B2 (hooks and CI), then A3, then the `spine-init` installation.
 
 ---

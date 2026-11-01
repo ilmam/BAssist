@@ -258,7 +258,7 @@ class CommentService
      * Record that the decision on a thread has been applied. It still needs a
      * person to verify and close it. Needs update permission on the record.
      */
-    public function markImplemented(Comment $thread): Comment
+    public function markImplemented(Comment $thread, ?string $noSpecChangeReason = null): Comment
     {
         abort_unless($thread->parent_id === null, 404);
         EntityAccess::authorize(auth()->user(), class_basename($thread->commentable_type), EntityAccess::UPDATE);
@@ -271,9 +271,33 @@ class CommentService
             'status' => CommentStatus::IMPLEMENTED,
             'implemented_at' => now(),
             'implemented_by' => auth()->id(),
+            'no_spec_change_reason' => trim((string) $noSpecChangeReason) ?: null,
         ])->save();
 
         return $thread;
+    }
+
+    /**
+     * Implemented threads whose decision never reached the specification: no record in the
+     * project changed between the person's answer and the report, and no reason was given.
+     */
+    public function implementedWithoutSpecChange(Project $project): int
+    {
+        return Comment::query()
+            ->threads()
+            ->where('project_id', $project->getKey())
+            ->where('status', CommentStatus::IMPLEMENTED)
+            ->whereNull('resolved_at')
+            ->whereNull('no_spec_change_reason')
+            ->whereNotExists(function ($query): void {
+                $query->select(DB::raw(1))
+                    ->from('activity_log')
+                    ->whereColumn('activity_log.project_id', 'comments.project_id')
+                    ->whereIn('activity_log.event', ['created', 'updated', 'deleted'])
+                    ->whereColumn('activity_log.created_at', '<=', 'comments.implemented_at')
+                    ->whereRaw('activity_log.created_at >= (select max(r.created_at) from comments as r where r.parent_id = comments.id and r.deleted_at is null and (r.via is null or r.via <> ?))', [RequestChannel::MCP]);
+            })
+            ->count();
     }
 
     /**

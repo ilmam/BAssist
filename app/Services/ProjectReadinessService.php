@@ -327,6 +327,14 @@ class ProjectReadinessService
             );
         }
 
+        $items[] = $this->item(
+            key: 'comments_decision_not_in_spec',
+            label: __('ui.readiness_comments_decision_not_in_spec'),
+            count: app(CommentService::class)->implementedWithoutSpecChange($project),
+            severity: 'warn',
+            url: route('projects.comments', ['project' => $project, 'status' => \App\Support\CommentStatus::IMPLEMENTED]),
+        );
+
         if (entity_can('Risk', EntityAccess::VIEW)) {
             $risksUrl = model_route('Risk', 'index').'?'.http_build_query($scopeQuery);
 
@@ -518,6 +526,7 @@ class ProjectReadinessService
         'comments_awaiting_answer' => 'governance',
         'comments_awaiting_implementation' => 'governance',
         'comments_awaiting_verification' => 'governance',
+        'comments_decision_not_in_spec' => 'governance',
         'unconfirmed_change_requests' => 'governance',
         'crs_without_stakeholder_need' => 'governance',
         'features_without_scenarios' => 'evaluation',

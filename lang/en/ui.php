@@ -1201,6 +1201,7 @@ return [
     // Comment threads as readiness checks, one per status
     'readiness_comments_awaiting_answer' => 'Comments waiting for an answer',
     'readiness_comments_awaiting_implementation' => 'Answered comments not yet implemented',
+    'readiness_comments_decision_not_in_spec' => 'Implemented comments with no change to the specification',
     'readiness_comments_awaiting_verification' => 'Implemented comments to verify and close',
 
     // Project-wide comments in the export pack

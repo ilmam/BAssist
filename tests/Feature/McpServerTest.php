@@ -662,6 +662,28 @@ class McpServerTest extends TestCase
 
     // --- Comment statuses: open → answered → implemented → closed ----------------
 
+    public function test_readiness_flags_an_implemented_thread_whose_decision_never_reached_the_spec(): void
+    {
+        $fr = $this->a['fr'];
+        $comments = app(CommentService::class);
+        $gap = fn () => collect(app(ProjectReadinessService::class)->forProject($this->a['project'])['items'])
+            ->firstWhere('key', 'comments_decision_not_in_spec')['count'] ?? 0;
+
+        $this->actingAs($this->userA);
+        $thread = $comments->add($fr, 'Finding: minimum increment?');
+        $this->travel(1)->minute();
+        $comments->add($fr, 'Use 100K.', $thread->id);
+        $this->travel(1)->minute();
+
+        // Reported without touching the specification and without a reason: flagged.
+        $comments->markImplemented($thread->fresh());
+        $this->assertSame(1, $gap());
+
+        // The same thread with a stated reason is not.
+        $thread->fresh()->forceFill(['no_spec_change_reason' => 'Confirmed existing wording.'])->save();
+        $this->assertSame(0, $gap());
+    }
+
     public function test_a_thread_can_be_implemented_without_a_record_change_only_with_a_stated_reason(): void
     {
         $fr = $this->a['fr'];
@@ -715,6 +737,8 @@ class McpServerTest extends TestCase
         $this->assertSame(CommentStatus::OPEN, $thread->fresh()->status);
 
         // A person replies with the decision: answered, still blocking.
+        // The fixtures were saved this second; the answer comes later.
+        $this->travel(1)->minute();
         $asPerson(fn () => $comments->add($fr, 'Use 100K as the minimum increment.', $thread->id));
         $this->assertSame(CommentStatus::ANSWERED, $thread->fresh()->status);
         $asPerson(fn () => $this->assertSame(['open' => 0, 'answered' => 1, 'implemented' => 0], $lineage()['comments']));
