@@ -24,7 +24,7 @@ class MarkCommentImplementedTool extends BAssistTool
 
     protected string $title = 'Mark a comment thread implemented';
 
-    protected string $description = 'After applying the decision a person gave in their latest reply on an answered thread, report what was changed and mark the thread implemented. It then waits for a person to verify and close it; there is no tool to close a thread. Only works when the latest answer was written by the signed-in user, and only once per answer: calling it on a thread that is already implemented changes nothing. Do the work first (update the requirements, then tests and code), then call this with a short, specific report.';
+    protected string $description = 'After applying the decision a person gave in their latest reply on an answered thread, report what was changed and mark the thread implemented. It then waits for a person to verify and close it; there is no tool to close a thread. Only works when the latest answer was written by the signed-in user, and only once per answer: calling it on a thread that is already implemented changes nothing. Do the work first (update the requirements, then tests and code), then call this with a short, specific report. The call is refused unless a record in the project changed after the answer; if the answer genuinely needed no specification change, say why in no_spec_change_reason.';
 
     public function handle(Request $request, CommentService $comments): Response|ResponseFactory
     {
@@ -33,6 +33,7 @@ class MarkCommentImplementedTool extends BAssistTool
         $validated = $request->validate([
             'thread_id' => ['required', 'integer'],
             'report' => ['required', 'string', 'max:'.CommentService::MAX_LENGTH],
+            'no_spec_change_reason' => ['nullable', 'string', 'max:'.CommentService::MAX_LENGTH],
         ]);
 
         return $this->respond(function () use ($validated, $comments): array {
@@ -60,6 +61,8 @@ class MarkCommentImplementedTool extends BAssistTool
                 ]);
             }
 
+            $comments->assertSpecificationChanged($thread, $decision, $validated['no_spec_change_reason'] ?? null);
+
             $comments->add($record, $validated['report'], (int) $thread->id);
             $comments->markImplemented($thread->fresh());
 
@@ -72,6 +75,7 @@ class MarkCommentImplementedTool extends BAssistTool
         return [
             'thread_id' => $schema->integer()->description('The thread id from list-comments.')->required(),
             'report' => $schema->string()->description('What was changed, specifically: records created or revised (with their codes), and tests or code updated. Posted as a reply on the thread.')->required(),
+            'no_spec_change_reason' => $schema->string()->description('Only when the answer needed no change to the specification: why not. Otherwise update the concerned record first; the call is refused until a record has changed.'),
         ];
     }
 }

@@ -662,6 +662,31 @@ class McpServerTest extends TestCase
 
     // --- Comment statuses: open → answered → implemented → closed ----------------
 
+    public function test_a_thread_can_be_implemented_without_a_record_change_only_with_a_stated_reason(): void
+    {
+        $fr = $this->a['fr'];
+        $assistant = fn () => $this->usingToken($this->userA, [ApiTokenAbility::READ, ApiTokenAbility::WRITE]);
+
+        $assistant()->callTool('add-comment', ['entity' => 'FunctionalRequirement', 'id' => $fr->id, 'body' => 'Finding: is the label wording final?']);
+        $thread = Comment::withoutGlobalScopes()->sole();
+        $this->flushHeaders();
+        $this->app['auth']->forgetGuards();
+        $this->app->forgetScopedInstances();
+        $this->actingAs($this->userA);
+        // The fixtures were saved this second; the answer comes later.
+        $this->travel(1)->minute();
+        app(CommentService::class)->add($fr, 'Yes, keep it as written.', $thread->id);
+
+        $assistant()->callTool('mark-comment-implemented', ['thread_id' => $thread->id, 'report' => 'Confirmed, nothing to change.'])
+            ->assertJsonPath('result.isError', true);
+
+        $assistant()->callTool('mark-comment-implemented', [
+            'thread_id' => $thread->id,
+            'report' => 'Confirmed, nothing to change.',
+            'no_spec_change_reason' => 'The answer confirmed the existing wording.',
+        ])->assertJsonPath('result.structuredContent.status', 'implemented');
+    }
+
     public function test_a_thread_moves_from_open_to_answered_to_implemented_to_closed(): void
     {
         $fr = $this->a['fr'];
@@ -694,6 +719,12 @@ class McpServerTest extends TestCase
         $this->assertSame(CommentStatus::ANSWERED, $thread->fresh()->status);
         $asPerson(fn () => $this->assertSame(['open' => 0, 'answered' => 1, 'implemented' => 0], $lineage()['comments']));
 
+        // The decision has to reach the specification first: no record changed since the answer.
+        $assistant()->callTool('mark-comment-implemented', ['thread_id' => $thread->id, 'report' => 'Applied.'])
+            ->assertJsonPath('result.isError', true);
+        $this->assertSame(CommentStatus::ANSWERED, $thread->fresh()->status);
+        $asPerson(fn () => $fr->update(['title' => 'Minimum increment is 100K']));
+
         // A read-only token cannot report; a write token can. The report is a reply.
         $this->usingToken($this->userA, [ApiTokenAbility::READ])
             ->callTool('mark-comment-implemented', ['thread_id' => $thread->id, 'report' => 'Applied.'])
@@ -720,6 +751,7 @@ class McpServerTest extends TestCase
         $asPerson(fn () => $comments->add($fr, 'Per vehicle, not per patch.', $thread->id));
         $this->assertSame(CommentStatus::ANSWERED, $thread->fresh()->status);
         $this->assertNull($thread->fresh()->implemented_at);
+        $asPerson(fn () => $fr->update(['title' => 'Minimum increment is per vehicle']));
         $assistant()->callTool('mark-comment-implemented', ['thread_id' => $thread->id, 'report' => 'Applied: BR-7 now per vehicle.'])
             ->assertJsonPath('result.structuredContent.status', 'implemented');
 

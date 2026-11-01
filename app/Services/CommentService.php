@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\ActivityLog;
 use App\Models\Comment;
 use App\Models\Project;
 use App\Models\User;
@@ -228,6 +229,29 @@ class CommentService
         ])->save();
 
         return $thread;
+    }
+
+    /**
+     * A decision lives in the specification, not in the thread. Before an answered thread can be
+     * reported as implemented, a spine record in its project must have changed since the person
+     * answered (created, updated or deleted), unless the reporter states why no specification
+     * change was needed.
+     */
+    public function assertSpecificationChanged(Comment $thread, Comment $decision, ?string $noChangeReason): void
+    {
+        if (trim((string) $noChangeReason) !== '') {
+            return;
+        }
+
+        $changed = ActivityLog::query()
+            ->where('project_id', $this->projectIdOf($this->record(class_basename($thread->commentable_type), (int) $thread->commentable_id)))
+            ->whereIn('event', ['created', 'updated', 'deleted'])
+            ->where('created_at', '>=', $decision->created_at)
+            ->exists();
+
+        if (! $changed) {
+            throw ValidationException::withMessages(['thread_id' => __('ui.comments_implement_no_spec_change')]);
+        }
     }
 
     /**
