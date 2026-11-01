@@ -3,6 +3,7 @@
 namespace App\Models\Concerns;
 
 use App\Support\EntityStatus;
+use Illuminate\Validation\ValidationException;
 
 /**
  * Applies EntityStatus::defaultId() (draft) when status_id is blank on create,
@@ -26,6 +27,29 @@ trait HasEntityStatus
                 $model->status_id = $defaultStatusId;
             }
         });
+
+        static::saving(function (self $model): void {
+            if (! $model->exists || ! $model->isDirty('status_id') || ! $model->isAgreed()) {
+                return;
+            }
+
+            $blockers = $model->agreementBlockers();
+            if ($blockers !== []) {
+                throw ValidationException::withMessages(['status_id' => implode(' ', $blockers)]);
+            }
+        });
+    }
+
+    /**
+     * What this record still lacks before it may be agreed (messages, empty when nothing).
+     * A model that needs more than a status change overrides this; an existing record cannot
+     * become agreed while the list is not empty, whichever way the status is set.
+     *
+     * @return list<string>
+     */
+    public function agreementBlockers(): array
+    {
+        return [];
     }
 
     public function isDraft(): bool

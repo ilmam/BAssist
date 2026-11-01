@@ -37,8 +37,8 @@ class QuickActionsTest extends TestCase
         $workspace = $provisioner->ensureSharedWorkspace($tenant);
         $this->project = Project::query()->create(['workspace_id' => $workspace->id, 'name' => 'Quick', 'code' => 'QCK']);
         $story = StakeholderNeed::query()->create(['project_id' => $this->project->id, 'title' => 'Dealer submits inquiry']);
-        $this->fr = FunctionalRequirement::query()->create(['project_id' => $this->project->id, 'stakeholder_need_id' => $story->id, 'title' => 'Create ticket', 'statement' => 'x']);
-        $this->fr2 = FunctionalRequirement::query()->create(['project_id' => $this->project->id, 'stakeholder_need_id' => $story->id, 'title' => 'Attach files', 'statement' => 'y']);
+        $this->fr = FunctionalRequirement::query()->create(['project_id' => $this->project->id, 'stakeholder_need_id' => $story->id, 'title' => 'Create ticket', 'statement' => 'x', 'acceptance_criteria' => 'Accepted when a ticket exists.']);
+        $this->fr2 = FunctionalRequirement::query()->create(['project_id' => $this->project->id, 'stakeholder_need_id' => $story->id, 'title' => 'Attach files', 'statement' => 'y', 'acceptance_criteria' => 'Accepted when a file is attached.']);
     }
 
     protected function user(string $slug, array $perms = []): User

@@ -60,7 +60,7 @@ checks. Both silently drift as the code changes.
 |---|---|---|
 | A1 | Pull feature files from the spine with their scenario codes and revision hash; never write feature files by hand. | Exists (`spine-pull`) |
 | A2 | Trace every scenario to a test, apply the edge-case checklist, file gaps, build the review bundle. | Exists (`spine-verify`) |
-| A3 | A requirement with no scenario is a readiness gap and blocks the "agreed" status. | Proposed (BAssist server) |
+| A3 | Nothing is agreed without a way to accept it: an existing Feature needs a live (not deprecated) scenario, a functional or non-functional requirement needs acceptance criteria. Enforced on every route that sets the status, and approving is refused before a decision is recorded. The missing items already show as readiness gaps. | Exists (BAssist server). A record created directly as agreed (import, seeding) is not checked. |
 | A4 | CI check: fail if any scenario code has no test naming it, or a test names a scenario that does not exist. Run `python scripts/spine-coverage-check.py --features <folder> --tests <folder>` (details in section 9). | Exists (script; wiring into CI is per project). A requirement with no scenario is still caught only by A3. |
 | A5 | Pre-commit hook runs the quick checks (including A4) and blocks the commit on failure; CI runs the full tier (the whole test suite) on every pull request. | Exists (templates in `scripts/`; installing them is per project, section 9) |
 | A6 | Before saying "done", run the full test suite and show the result. | Manual, mandatory |
@@ -361,8 +361,9 @@ requirement.
 - **Changes:** edit only the canonical source, raise the version, and let each project update its copy
   on its next sync. A project never edits its copy; local choices go in `CONVENTIONS.md` and the
   binding file.
-- **Build order for the Proposed controls:** A4 (C4 and C5, the comment gates, are done) (coverage check), then A5 and
-  B2 (hooks and CI), then A3, then the `spine-init` installation.
+- **Build status of the controls:** the comment gates (C4, C5), the coverage check (A4), the runner,
+  hook and CI templates (A5, B2) and the agreement gate (A3) are built. What remains is installing all of
+  this into a new project automatically through `spine-init`.
 
 ---
 

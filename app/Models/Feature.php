@@ -14,6 +14,7 @@ use App\Models\Concerns\HasAttachments;
 use App\Models\Concerns\HasEntityNumber;
 use App\Models\Concerns\HasEntityStatus;
 use App\Services\GherkinDocumentParser;
+use App\Support\EntityStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -90,6 +91,18 @@ class Feature extends BaseModel
     public function scenarios(): HasMany
     {
         return $this->hasMany(Scenario::class);
+    }
+
+    /** A feature is only agreed once at least one live scenario describes how it is accepted. */
+    public function agreementBlockers(): array
+    {
+        $deprecatedId = EntityStatus::id(EntityStatus::DEPRECATED);
+
+        $live = $this->scenarios()
+            ->when($deprecatedId !== null, fn ($query) => $query->where(fn ($q) => $q->whereNull('status_id')->orWhere('status_id', '!=', $deprecatedId)))
+            ->exists();
+
+        return $live ? [] : [__('ui.agree_blocked_no_scenario')];
     }
 
     /**

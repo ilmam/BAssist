@@ -81,6 +81,12 @@ class FunctionalRequirement extends BaseModel
     }
 
     #[Relation('BelongsTo')]
+    /** A requirement is only agreed once it states how it is accepted. */
+    public function agreementBlockers(): array
+    {
+        return blank(trim((string) $this->acceptance_criteria)) ? [__('ui.agree_blocked_no_acceptance')] : [];
+    }
+
     public function status(): BelongsTo
     {
         return $this->belongsTo(Status::class);

@@ -42,7 +42,7 @@ class ReviewAndHistoryTest extends TestCase
         $story = StakeholderNeed::query()->create(['project_id' => $this->project->id, 'title' => 'Dealer submits inquiry']);
         $this->fr = FunctionalRequirement::query()->create([
             'project_id' => $this->project->id, 'stakeholder_need_id' => $story->id,
-            'title' => 'Create ticket', 'statement' => 'The system shall create a ticket.',
+            'title' => 'Create ticket', 'statement' => 'The system shall create a ticket.', 'acceptance_criteria' => 'A ticket exists after submit.',
         ]);
     }
 

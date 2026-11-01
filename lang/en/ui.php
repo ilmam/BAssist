@@ -1227,6 +1227,8 @@ return [
     'comments_mark_implemented' => 'Mark implemented',
     'comments_implement_closed' => 'This thread is closed. Reply to reopen it first.',
     'comments_implement_no_spec_change' => 'No record in this project has changed since the answer. Write the decision into the requirement, scenario, assumption or rule it concerns first; if no specification change was needed, say why in no_spec_change_reason.',
+    'agree_blocked_no_scenario' => 'This feature has no scenario yet. Add at least one acceptance scenario before it can be agreed.',
+    'agree_blocked_no_acceptance' => 'This requirement has no acceptance criteria yet. State how it is accepted before it can be agreed.',
     'comments_implement_no_decision' => 'No person has answered this thread yet, so there is no decision to implement.',
     'comments_implement_not_yours' => 'The latest answer on this thread was written by :name, not by you. Ask the user to confirm it before implementing.',
     'comments_status_filter_all' => 'All not closed',

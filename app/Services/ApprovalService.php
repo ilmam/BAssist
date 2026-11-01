@@ -76,6 +76,13 @@ class ApprovalService
     public function approve(Model $record, ?string $note = null): Approval
     {
         $this->authorizeApprove($record);
+
+        // Refuse before recording a decision the status change would then reject.
+        $blockers = method_exists($record, 'agreementBlockers') ? $record->agreementBlockers() : [];
+        if ($blockers !== []) {
+            throw ValidationException::withMessages(['note' => implode(' ', $blockers)]);
+        }
+
         $approval = $this->decide($record, Approval::APPROVED, $note);
         $this->setStatus($record, EntityStatus::AGREED);
         app(ActivityRecorder::class)->log($record, 'approved', null, $note);
