@@ -129,6 +129,37 @@ class SpineCoverageCheckTest extends TestCase
         $this->assertStringContainsString('no scenarios found', $output);
     }
 
+    public function test_a_baseline_freezes_known_errors_so_only_new_ones_fail(): void
+    {
+        $this->feature("@SC-1 @status:agreed @rev:aaaaaaaaaaaa\nScenario: Old\n  Given a\n");
+
+        [$status] = $this->check('--baseline', 'baseline.txt', '--write-baseline');
+        $this->assertSame(0, $status);
+        $this->assertFileExists($this->root.'/baseline.txt');
+
+        [$status, $output] = $this->check('--baseline', 'baseline.txt');
+        $this->assertSame(0, $status, $output);
+        $this->assertStringContainsString('known:', $output);
+
+        $this->feature("@SC-1 @status:agreed @rev:aaaaaaaaaaaa\nScenario: Old\n  Given a\n\n@SC-2 @status:agreed @rev:bbbbbbbbbbbb\nScenario: New\n  Given b\n");
+
+        [$status, $output] = $this->check('--baseline', 'baseline.txt');
+        $this->assertSame(1, $status);
+        $this->assertStringContainsString('SC-2', $output);
+    }
+
+    public function test_a_baseline_entry_that_is_fixed_is_reported_so_the_list_only_shrinks(): void
+    {
+        $this->feature("@SC-1 @status:agreed @rev:aaaaaaaaaaaa\nScenario: Old\n  Given a\n");
+        $this->check('--baseline', 'baseline.txt', '--write-baseline');
+
+        $this->test("// covers SC-1\n");
+
+        [$status, $output] = $this->check('--baseline', 'baseline.txt');
+        $this->assertSame(0, $status, $output);
+        $this->assertStringContainsString('baseline entry no longer applies', $output);
+    }
+
     /** @return array{0: int, 1: string} */
     private function check(string ...$extra): array
     {

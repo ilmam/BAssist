@@ -19,6 +19,12 @@ A test covers a scenario when its file mentions the SC code anywhere (a tag, an 
 comment, a test name). Exit status is 1 when there is any error, otherwise 0.
 
     python scripts/spine-coverage-check.py --features features --tests tests
+
+A project that adopts the check in the middle of its life can freeze today's errors as a baseline,
+so only new ones fail and the list can only shrink:
+
+    python scripts/spine-coverage-check.py --baseline .spine-coverage-baseline --write-baseline
+    python scripts/spine-coverage-check.py --baseline .spine-coverage-baseline
 """
 
 import argparse
@@ -27,7 +33,7 @@ import re
 import sys
 from collections import defaultdict
 
-SKIP_DIRS = {'.git', 'vendor', 'node_modules', '__pycache__', '.venv', 'storage', 'bootstrap'}
+SKIP_DIRS = {'.git', 'vendor', 'node_modules', '__pycache__', '.venv', 'storage', 'bootstrap', 'bin', 'obj', 'dist', 'build'}
 CODE = re.compile(r'\bSC-\d+\b')
 SCENARIO = re.compile(r'^\s*Scenario(?:\s+Outline)?\s*:\s*(.*)$', re.IGNORECASE)
 FEATURE = re.compile(r'^\s*Feature\s*:\s*(.*)$', re.IGNORECASE)
@@ -152,11 +158,24 @@ def check(features, tests, strict):
     return errors, warnings, len(scenarios), covered
 
 
+def baseline_key(message):
+    """A message without its line number or path separators, so the key survives edits above it."""
+    return re.sub(r':\d+:', ':', message.replace(os.sep, '/'), count=1)
+
+
+def read_baseline(path):
+    if not os.path.isfile(path):
+        return set()
+    return {line.strip() for line in read(path).splitlines() if line.strip() and not line.startswith('#')}
+
+
 def main():
     parser = argparse.ArgumentParser(description='Check that every spine scenario has a test and every test names a real scenario.')
     parser.add_argument('--features', default='features', help='folder holding the pulled .feature files')
     parser.add_argument('--tests', action='append', help='test folder (repeatable; default: tests)')
     parser.add_argument('--strict', action='store_true', help='treat draft scenarios without a test as errors')
+    parser.add_argument('--baseline', help='file of known errors; those only warn, new ones fail')
+    parser.add_argument('--write-baseline', action='store_true', help='write the current errors to --baseline and exit 0')
     args = parser.parse_args()
 
     tests = args.tests or ['tests']
@@ -166,6 +185,24 @@ def main():
             return 2
 
     errors, warnings, total, covered = check(args.features, tests, args.strict)
+
+    if args.write_baseline:
+        if not args.baseline:
+            print('error: --write-baseline needs --baseline FILE', file=sys.stderr)
+            return 2
+        keys = sorted({baseline_key(message) for message in errors})
+        with open(args.baseline, 'w', encoding='utf-8', newline='\n') as handle:
+            handle.write('# Known coverage errors, frozen when the check was adopted. Fix them and re-run --write-baseline to shrink this list.\n')
+            handle.writelines(key + '\n' for key in keys)
+        print(f'baseline written: {len(keys)} known error(s) in {args.baseline}')
+        return 0
+
+    if args.baseline:
+        known = read_baseline(args.baseline)
+        current = {baseline_key(message) for message in errors}
+        warnings = [f'known: {m}' for m in errors if baseline_key(m) in known] + warnings
+        errors = [m for m in errors if baseline_key(m) not in known]
+        warnings += [f'baseline entry no longer applies, remove it: {k}' for k in sorted(known - current)]
 
     for message in warnings:
         print(f'warning: {message}')

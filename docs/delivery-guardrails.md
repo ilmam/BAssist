@@ -1,6 +1,6 @@
 # Delivery Guardrails
 
-Version 1.0 · portable: copy this file unchanged into any project that follows the Need Spine method.
+Version 1.1 · portable: copy this file unchanged into any project that follows the Need Spine method.
 
 This document defines three validation guardrails and how each is enforced. It is written so a person
 or an AI agent can follow it without any other context. Where a control does not exist yet, it is
@@ -239,36 +239,50 @@ finding.
 
 ---
 
-## 8. Setting up a new project
+## 8. Setting up a project (new or already under way)
 
-Do once, at the start. Nothing here depends on the language or framework.
+Run `/spine-guardrails` in the project. It works at any stage: the same command serves a project that
+starts today and one that has months of code. Nothing here depends on the language or framework.
 
-1. **Bind the project** to its spine project (`spine-init`). This writes the binding file.
-2. **Copy this document** to `docs/delivery-guardrails.md`, unchanged. Record its version in the
-   binding file.
-3. **Write the conventions** (`CONVENTIONS.md`): framework, layering, naming, where code lives, test
-   layout, and the commands to run the full checks.
-4. **Add the checks** from section 9: copy `scripts/`, write `.spine-checks` (scenario-coverage check,
-   static analysis, architecture tests, formatter), run `sh scripts/install-hooks.sh`, and add the CI job.
-5. **Create the gap log** (`docs/requirements-gaps.md`) with the standard columns (section 9).
-6. **Agree the status model** with the business analyst: who answers, who closes, how often threads are
+1. **Bind the project** to its spine project (`/spine-init`), if not done yet.
+2. **Install the guardrails** (`/spine-guardrails`). It shows what it would do and asks first. It copies
+   this document to `docs/delivery-guardrails.md`, the `scripts/`, a `.spine-checks` for the detected
+   stack, the gap log and a pull request template, and records the version in `.spine-guardrails`.
+3. **Pull the feature files** (`/spine-pull`) and run `/spine-guardrails` again: the scenario-coverage
+   check is switched on. In a project that is already under way, the gaps that exist today are frozen
+   in `.spine-coverage-baseline`: they warn, only new gaps block, and the list can only shrink.
+4. **Turn the hook on** (`sh scripts/install-hooks.sh`) and add the CI job from `scripts/ci/`.
+5. **Write the conventions** (`CONVENTIONS.md`): framework, layering, naming, where code lives, test
+   layout.
+6. **Turn on formatter and static analysis** in `.spine-checks` once the codebase passes them. Until
+   then they stay commented out so the first commit is not blocked by old code.
+7. **Agree the status model** with the business analyst: who answers, who closes, how often threads are
    swept.
-7. **Run the first sweep** to prove the chain works: pull, ready-check, verify, one dummy finding
+8. **Run the first sweep** to prove the chain works: pull, ready-check, verify, one dummy finding
    filed and resolved.
+
+Re-run `/spine-guardrails` after a plugin update: files you have not changed are brought up to date,
+files you changed are listed and left alone.
 
 ---
 
 ## 9. Templates
 
 ### Gap log row
+Layout read by `/spine-feedback`:
+
+`| # | Area | Gap / question | What the app does today | Suggested default | Decision | Status | Filed |`
+
 | Column | Content |
 |---|---|
-| ID | GAP-n |
-| Record | Spine record code the finding concerns |
-| Finding | What the specification says, what is missing or wrong |
-| Options | Possible answers and the effect of each |
-| Filed | Date and thread reference once posted; empty means not filed |
-| Resolution | Record revision that carries the decision |
+| # | G-01, G-02 ...: stable reference, never reused or renumbered |
+| Area | Spine record code the finding concerns (for example FR-012) |
+| Gap / question | What the specification says, what is missing or wrong |
+| What the app does today | The behaviour in the code right now |
+| Suggested default | A proposal for the analyst, never a decision |
+| Decision | Filled in when the answer comes back |
+| Status | open or decided |
+| Filed | Record and thread once posted (for example `FR-012 #48`); empty means not filed |
 
 ### Thread report (posted when marking implemented)
 ```
@@ -354,16 +368,16 @@ requirement.
 ## 11. Where this lives and how it stays current
 
 - **Canonical source:** the Need Spine plugin, so it travels with the method and is versioned once.
-- **In each project:** a copy at `docs/delivery-guardrails.md`, installed by `spine-init`, with the
-  version number recorded in the binding file.
+- **In each project:** a copy at `docs/delivery-guardrails.md`, installed by `/spine-guardrails`, with the
+  version number and file checksums recorded in `.spine-guardrails`.
 - **In BAssist:** a read-only help page that shows the same text, so analysts and developers read one
   document. BAssist does not own it.
 - **Changes:** edit only the canonical source, raise the version, and let each project update its copy
   on its next sync. A project never edits its copy; local choices go in `CONVENTIONS.md` and the
   binding file.
 - **Build status of the controls:** the comment gates (C4, C5), the coverage check (A4), the runner,
-  hook and CI templates (A5, B2) and the agreement gate (A3) are built. What remains is installing all of
-  this into a new project automatically through `spine-init`.
+  hook and CI templates (A5, B2), the agreement gate (A3) and the installer (`/spine-guardrails`, for new
+  and existing projects) are built.
 
 ---
 

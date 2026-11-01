@@ -1,6 +1,19 @@
 # Plan: `spine-init` installs the delivery guardrails
 
-Status: plan, nothing built. Version 0.1 · for review.
+Status: built in the need-spine plugin 0.4.0 (`templates/guardrails/`, skill `/spine-guardrails`, session
+reminder, 32 scratch-project checks in `test-install.sh`). Changes from this plan:
+
+- It is a separate skill, `/spine-guardrails`, that `/spine-init` offers as its last step. It can be run at
+  any stage; a project already under way gets a frozen baseline (`.spine-coverage-baseline`), so only new
+  gaps block.
+- The plugin is the canonical source of every installed file. The copies in this repository are installed
+  copies; do not edit them here.
+- The record of version and checksums is `.spine-guardrails`, not a field in the binding file.
+- No stop hook; the session reminder says whether the guardrails are missing or out of date.
+- Not done: the plugin was edited where this machine keeps it (the app-managed folder), so the changes must
+  be copied to wherever the plugin is published from, or they are lost on the next sync.
+
+Original plan follows. Version 0.1.
 
 ## 1. Goal
 
