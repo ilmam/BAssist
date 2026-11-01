@@ -61,7 +61,7 @@ checks. Both silently drift as the code changes.
 | A1 | Pull feature files from the spine with their scenario codes and revision hash; never write feature files by hand. | Exists (`spine-pull`) |
 | A2 | Trace every scenario to a test, apply the edge-case checklist, file gaps, build the review bundle. | Exists (`spine-verify`) |
 | A3 | A requirement with no scenario is a readiness gap and blocks the "agreed" status. | Proposed (BAssist server) |
-| A4 | CI check: fail if any scenario code has no test tagged with it, or any requirement has no scenario. | Proposed (project CI) |
+| A4 | CI check: fail if any scenario code has no test naming it, or a test names a scenario that does not exist. Run `python scripts/spine-coverage-check.py --features <folder> --tests <folder>` (details in section 9). | Exists (script; wiring into CI is per project). A requirement with no scenario is still caught only by A3. |
 | A5 | Pre-commit hook runs A4 and the test suite; the commit is blocked on failure. | Proposed (plugin template) |
 | A6 | Before saying "done", run the full test suite and show the result. | Manual, mandatory |
 
@@ -279,15 +279,29 @@ Tests: <test names>
 Checks: <suite result, static analysis result>
 ```
 
-### Scenario-coverage check (outline)
+### Scenario-coverage check (`scripts/spine-coverage-check.py`)
+Python 3, standard library only. Copy it into the project's `scripts/` folder and run it in CI and in the
+pre-commit hook after pulling the feature files.
+
 ```
-for each requirement in the pulled spine:
-    fail if it has no scenario
-for each scenario code in the pulled feature files:
-    fail if no test is tagged with that code
-for each test tagged with a scenario code:
-    fail if that code no longer exists in the feature files
+python scripts/spine-coverage-check.py --features features --tests tests [--tests other] [--strict]
 ```
+
+| Finding | Result |
+|---|---|
+| Feature file with no scenario | error |
+| Scenario with no SC code (written by hand) | error |
+| Same SC code defined twice | error |
+| Agreed or need_revision scenario with no test | error |
+| Draft scenario with no test | warning (error with `--strict`) |
+| Test names an SC code that no feature file defines | error |
+| Test names a deprecated scenario | warning |
+| No scenarios found at all | error (an empty folder never passes) |
+
+A test covers a scenario when its file mentions the SC code anywhere: a tag, an annotation, a comment
+or the test name. Exit status is 1 on any error. The check proves that each scenario is claimed by a
+test; it does not prove the test is good (see section 12), and it cannot see requirements that have no
+scenario, because that lives in the spine (control A3).
 
 ### Pre-commit hook (outline)
 ```
