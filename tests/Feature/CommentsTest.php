@@ -103,6 +103,32 @@ class CommentsTest extends TestCase
         $this->assertSoftDeleted($comment);
     }
 
+    public function test_export_pack_open_only_mode_keeps_unanswered_threads_and_hides_answered_ones(): void
+    {
+        $this->actingAs($this->admin);
+        $service = app(CommentService::class);
+        $service->add($this->fr, 'Gap waiting for an answer');
+        $answered = $service->add($this->fr, 'Gap already answered');
+        $service->add($this->fr, 'Use two fields', $answered->id);
+        $implemented = $service->add($this->fr, 'Gap already applied');
+        $service->markImplemented($implemented);
+
+        $url = route('projects.export', $this->project);
+
+        $this->get($url.'?comments=replied')
+            ->assertOk()
+            ->assertSee('Gap waiting for an answer')
+            ->assertDontSee('Gap already answered')
+            ->assertDontSee('Gap already applied')
+            ->assertSee('This document has 1 open comment');
+
+        $this->get($url)
+            ->assertOk()
+            ->assertSee('Gap waiting for an answer')
+            ->assertSee('Gap already answered')
+            ->assertDontSee('Gap already applied');
+    }
+
     public function test_pdf_prints_open_threads_inline_and_in_appendix_with_toggle(): void
     {
         $this->actingAs($this->admin);
