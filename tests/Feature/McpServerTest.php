@@ -786,6 +786,47 @@ class McpServerTest extends TestCase
             ->assertJsonPath('result.structuredContent.total', 0);
     }
 
+    public function test_an_assistant_follow_up_on_an_answered_thread_asks_for_a_person_again(): void
+    {
+        $fr = $this->a['fr'];
+        $comments = app(CommentService::class);
+        $assistant = fn () => $this->usingToken($this->userA, [ApiTokenAbility::READ, ApiTokenAbility::WRITE]);
+        $asPerson = function (callable $action) {
+            $this->flushHeaders();
+            $this->app['auth']->forgetGuards();
+            $this->app->forgetScopedInstances();
+            $this->actingAs($this->userA);
+
+            return $action();
+        };
+
+        $assistant()->callTool('add-comment', ['entity' => 'FunctionalRequirement', 'id' => $fr->id, 'body' => 'Finding: minimum increment?']);
+        $thread = Comment::withoutGlobalScopes()->sole();
+
+        // The person answers with a question: answered, so the review pack hides it.
+        $asPerson(fn () => $comments->add($fr, 'Why do you need it?', $thread->id));
+        $this->assertSame(CommentStatus::ANSWERED, $thread->fresh()->status);
+
+        // The assistant's clarification (a plain reply) hands the thread back to the person.
+        $assistant()->callTool('add-comment', ['entity' => 'FunctionalRequirement', 'id' => $fr->id, 'body' => 'Because billing rounds up.', 'reply_to' => $thread->id]);
+        $this->assertSame(CommentStatus::OPEN, $thread->fresh()->status);
+        $this->assertContains($thread->id, collect($comments->openThreadsForProject($this->a['project']))->flatten()->pluck('id')->all());
+
+        // Nothing to implement until the person answers again.
+        $assistant()->callTool('mark-comment-implemented', ['thread_id' => $thread->id, 'report' => 'Applied.'])
+            ->assertJsonPath('result.isError', true);
+
+        $asPerson(fn () => $comments->add($fr, 'Use 100K.', $thread->id));
+        $this->assertSame(CommentStatus::ANSWERED, $thread->fresh()->status);
+        $asPerson(fn () => $fr->update(['title' => 'Minimum increment is 100K']));
+        $assistant()->callTool('mark-comment-implemented', ['thread_id' => $thread->id, 'report' => 'Applied: BR-7.'])
+            ->assertJsonPath('result.structuredContent.status', 'implemented');
+
+        // A reply on an implemented thread does not undo it.
+        $assistant()->callTool('add-comment', ['entity' => 'FunctionalRequirement', 'id' => $fr->id, 'body' => 'FYI: also revised FR-4.', 'reply_to' => $thread->id]);
+        $this->assertSame(CommentStatus::IMPLEMENTED, $thread->fresh()->status);
+    }
+
     public function test_the_assistant_only_implements_answers_written_by_its_own_user(): void
     {
         $colleague = User::factory()->create([

@@ -61,7 +61,7 @@ class BAssistServer extends Server
         - Change starts here: update the spine first, then tests and code.
         - Never invent business facts. Record an unknown as an Assumption with status open.
         - When a requirement is silent, unclear or wrong, do not guess: raise the finding with add-comment on the record it concerns.
-        - Comment threads have a status. open: waiting for a person's answer. answered: a person has decided; apply the decision of their latest reply (requirements first, then tests and code), then report with mark-comment-implemented. implemented: waiting for a person to verify. closed: finished. Only a person closes a thread, and only act on answers written by the signed-in user.
+        - Comment threads have a status. open: waiting for a person's answer. answered: a person has decided; apply the decision of their latest reply (requirements first, then tests and code), then report with mark-comment-implemented. implemented: waiting for a person to verify. closed: finished. A follow-up question or clarification is a plain reply (add-comment with reply_to): it puts an answered thread back to open so the person sees it again, and the thread can only be implemented after they answer. Call mark-comment-implemented only when the work is done, never to post a clarification. Only a person closes a thread, and only act on answers written by the signed-in user.
         - Everything you do is done as the signed-in user, within their permissions, and is recorded in the record history.
         MARKDOWN;
 

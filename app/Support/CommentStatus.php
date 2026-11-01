@@ -11,7 +11,11 @@ namespace App\Support;
  *   closed       verified and finished (a person only)
  *
  * A person's reply on an implemented or closed thread sends it back to
- * answered. `comments.resolved_at` is still set exactly when a thread is
+ * answered. An assistant's reply on an answered or closed thread (a follow-up
+ * question, a clarification) sends it back to open, so it shows again in the
+ * review pack ("Replied hidden" hides only answered threads) until a person
+ * answers. Implemented threads hide too; the implementation report itself is
+ * posted before the thread is marked implemented, so it never reopens it. `comments.resolved_at` is still set exactly when a thread is
  * closed, so "not closed" keeps meaning what "open" meant before statuses.
  */
 class CommentStatus

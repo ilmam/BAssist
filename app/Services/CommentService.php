@@ -100,10 +100,13 @@ class CommentService
         if ($parent !== null) {
             // A reply re-opens the discussion and bumps the thread to the top.
             // A person's reply is a decision or a correction: the thread becomes
-            // answered (again). An AI assistant's reply never changes the status,
-            // except that replying on a closed thread re-opens it for a person.
+            // answered (again). An AI assistant's reply (a follow-up question or a
+            // clarification) hands an answered or closed thread back to a person:
+            // it is open again, so it shows in reviews until they answer. On an
+            // open or implemented thread it changes nothing; the implementation
+            // report is posted just before the thread is marked implemented.
             $status = $via === RequestChannel::MCP
-                ? ($parent->currentStatus() === CommentStatus::CLOSED ? CommentStatus::OPEN : $parent->currentStatus())
+                ? (in_array($parent->currentStatus(), [CommentStatus::ANSWERED, CommentStatus::CLOSED], true) ? CommentStatus::OPEN : $parent->currentStatus())
                 : CommentStatus::ANSWERED;
 
             $parent->forceFill(['resolved_at' => null, 'resolved_by' => null, 'status' => $status]);
