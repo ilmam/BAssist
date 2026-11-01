@@ -1,0 +1,15 @@
+# Delivery checks for this project (see docs/delivery-guardrails.md, guardrails A and B).
+#   fast: runs before every commit (git hook) and in CI
+#   full: runs in CI only
+# Run by hand: sh scripts/spine-checks.sh fast   |   sh scripts/spine-checks.sh full
+
+# Every staged PHP file must at least parse.
+fast: git diff --cached --name-only --diff-filter=ACM -- '*.php' | xargs -r -n1 php -l
+
+# Add when the project has pulled feature files (guardrail A4):
+# fast: python scripts/spine-coverage-check.py --features features --tests tests
+
+# Add when the formatter / static analysis are clean for the whole codebase (guardrail B2):
+# fast: vendor/bin/pint --dirty --test
+
+full: php artisan test

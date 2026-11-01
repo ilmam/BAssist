@@ -1,0 +1,19 @@
+# Template: copy to .github/workflows/delivery-checks.yml and add your stack's setup steps.
+name: Delivery checks
+
+on:
+  pull_request:
+  push:
+    branches: [master, main]
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Install the project's runtime and dependencies here (PHP, Node, .NET, ...),
+      # and pull the feature files from the spine if the checks need them.
+
+      - name: Delivery checks (full tier)
+        run: sh scripts/spine-checks.sh full

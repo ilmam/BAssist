@@ -1,0 +1,6 @@
+#!/bin/sh
+# Git pre-commit hook: blocks the commit when a quick delivery check fails.
+# Install once per clone with: sh scripts/install-hooks.sh
+# Skipping it with `git commit --no-verify` is possible, which is why CI runs the full tier.
+
+exec sh "$(git rev-parse --show-toplevel)/scripts/spine-checks.sh" fast

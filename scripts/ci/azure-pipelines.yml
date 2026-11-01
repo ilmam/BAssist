@@ -1,0 +1,20 @@
+# Template: copy to azure-pipelines.yml and add your stack's setup steps.
+trigger:
+  branches:
+    include: [master, main]
+
+pr:
+  branches:
+    include: ['*']
+
+pool:
+  vmImage: ubuntu-latest
+
+steps:
+  - checkout: self
+
+  # Install the project's runtime and dependencies here (PHP, Node, .NET, ...),
+  # and pull the feature files from the spine if the checks need them.
+
+  - script: sh scripts/spine-checks.sh full
+    displayName: Delivery checks (full tier)

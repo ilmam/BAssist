@@ -62,7 +62,7 @@ checks. Both silently drift as the code changes.
 | A2 | Trace every scenario to a test, apply the edge-case checklist, file gaps, build the review bundle. | Exists (`spine-verify`) |
 | A3 | A requirement with no scenario is a readiness gap and blocks the "agreed" status. | Proposed (BAssist server) |
 | A4 | CI check: fail if any scenario code has no test naming it, or a test names a scenario that does not exist. Run `python scripts/spine-coverage-check.py --features <folder> --tests <folder>` (details in section 9). | Exists (script; wiring into CI is per project). A requirement with no scenario is still caught only by A3. |
-| A5 | Pre-commit hook runs A4 and the test suite; the commit is blocked on failure. | Proposed (plugin template) |
+| A5 | Pre-commit hook runs the quick checks (including A4) and blocks the commit on failure; CI runs the full tier (the whole test suite) on every pull request. | Exists (templates in `scripts/`; installing them is per project, section 9) |
 | A6 | Before saying "done", run the full test suite and show the result. | Manual, mandatory |
 
 ### Evidence to keep
@@ -99,7 +99,7 @@ to untangle later. Inconsistent refactoring is the same problem in time: half th
 | # | Control | Status |
 |---|---|---|
 | B1 | Write the framework's conventions down in the project (a short `CONVENTIONS.md`, or the framework skill the team already uses) and list it in the binding file. | Per project |
-| B2 | Formatter, linter, static analysis and architecture tests run in CI and in the pre-commit hook. | Proposed (plugin template) |
+| B2 | Formatter, linter, static analysis and architecture tests run in CI and in the pre-commit hook. | Runner exists (A5); the project lists its own tools in `.spine-checks`. |
 | B3 | Run the review skill on the diff before committing; fix or consciously accept each finding. | Exists (`code-review`) |
 | B4 | After any refactor, search the whole codebase for the old pattern and list what remains. | Manual, mandatory |
 | B5 | Record accepted deviations as a Constraint or Assumption in the spine, with the reason. | Manual, mandatory |
@@ -248,8 +248,8 @@ Do once, at the start. Nothing here depends on the language or framework.
    binding file.
 3. **Write the conventions** (`CONVENTIONS.md`): framework, layering, naming, where code lives, test
    layout, and the commands to run the full checks.
-4. **Add the checks** from the plugin templates: scenario-coverage check, static analysis, architecture
-   tests, formatter, pre-commit hook, CI job.
+4. **Add the checks** from section 9: copy `scripts/`, write `.spine-checks` (scenario-coverage check,
+   static analysis, architecture tests, formatter), run `sh scripts/install-hooks.sh`, and add the CI job.
 5. **Create the gap log** (`docs/requirements-gaps.md`) with the standard columns (section 9).
 6. **Agree the status model** with the business analyst: who answers, who closes, how often threads are
    swept.
@@ -303,15 +303,37 @@ or the test name. Exit status is 1 on any error. The check proves that each scen
 test; it does not prove the test is good (see section 12), and it cannot see requirements that have no
 scenario, because that lives in the spine (control A3).
 
-### Pre-commit hook (outline)
+### Delivery checks: runner, hook and CI (`scripts/`)
+POSIX sh only, so it behaves the same in a git hook and in any CI system. Files to copy into a project:
+
+| File | Purpose |
+|---|---|
+| `scripts/spine-checks.sh` | Runs the checks for a tier (`fast` or `full`) from `.spine-checks`. |
+| `scripts/hooks/pre-commit` | The git hook; runs the `fast` tier. |
+| `scripts/install-hooks.sh` | Points git at `scripts/hooks` (`git config core.hooksPath`). Run once per clone. |
+| `scripts/ci/github-actions.yml`, `scripts/ci/azure-pipelines.yml` | CI templates; each runs the `full` tier. Add the stack's setup steps. |
+| `.spine-checks` | The project's own list of checks. |
+
+`.spine-checks` has one check per line:
+
 ```
-run formatter check
-run static analysis
-run architecture tests
-run scenario-coverage check
-run the test suite
-block the commit if any step fails
+fast: <command>     runs before every commit and in CI
+full: <command>     runs in CI only (slow checks such as the whole test suite)
+# comment
 ```
+
+- **Pick what goes in `fast`:** anything that finishes in a few seconds and catches real mistakes: the
+  scenario-coverage check, formatter, linter, static analysis, architecture tests. Put the whole test
+  suite in `full`.
+- **Every check runs** even if an earlier one failed, so one run lists everything that is wrong. Exit
+  status is 0 when all pass, 1 when a check failed, and 2 for a setup error (no file, no checks in that
+  tier). A setup error never counts as a pass.
+- **The hook can be skipped** with `git commit --no-verify`. That is why CI runs the full tier and a
+  failed CI run blocks the merge.
+- **Line endings:** shell scripts must stay LF. Add `*.sh text eol=lf` and `scripts/hooks/* text eol=lf`
+  to `.gitattributes` unless it already forces LF everywhere.
+- **Opting in:** installing the hook changes how commits behave, so it is a deliberate step per clone,
+  not something a template does silently.
 
 ---
 
