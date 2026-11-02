@@ -1,0 +1,12 @@
+﻿@page "/OrderList"
+
+<ShiftList EntitySet="Order"
+           T="OrderListDTO"
+           ComponentType="typeof(OrderForm)"
+           TypeAuthAction="OrdersActions.OrdersRead">
+    <ToolbarStartTemplate>
+        <ActionButton T="OrderListDTO"
+                      Endpoint="api/Order/cancel"
+                      Confirm="true" />
+    </ToolbarStartTemplate>
+</ShiftList>
