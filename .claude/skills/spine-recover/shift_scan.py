@@ -224,3 +224,77 @@ def scan(root) -> dict:
     out["roles"].sort()
     out["items"].sort(key=lambda i: (i["kind"], i["symbol"]))
     return out
+
+
+MONEY_WORDS = re.compile(r"price|discount|tax|amount|fee|cost|rate|total|balance", re.I)
+DESTRUCTIVE_WORDS = re.compile(r"cancel|delete|remove|purge|archive|void|reverse|terminate", re.I)
+
+
+def _question(symbol, reason, text, signals, refs, dependents=0):
+    return {"symbol": symbol, "reason": reason, "text": text, "signals": sorted(set(signals)),
+            "dependents": dependents, "refs": refs}
+
+
+def detect_questions(scan_result: dict) -> list:
+    """Things the code does that a person should confirm (see the design's scoring signals).
+
+    Cross-layer mismatch: the UI guards an endpoint with a different action than the API requires.
+    It carries `security` when the UI is unguarded or only uses the controller's default action
+    while the API route demands a specific one (the API is stricter than the UI).
+    """
+    out = []
+    api, ui = scan_result.get("api_actions", {}), scan_result.get("ui_actions", {})
+    scenarios = [i for i in scan_result.get("items", []) if i["kind"] == "scenario"]
+
+    for key, u in sorted(ui.items()):
+        a = api.get(key)
+        if not a or u["auth"] == a["auth"]:
+            continue
+        default = api.get(key.split("/")[0] + "/*", {}).get("auth")
+        signals = ["cross_layer"]
+        if u["auth"] is None or u["auth"] == default:
+            signals.append("security")
+        text = (f"The page '{u['page_symbol']}' guards '{key}' with {u['auth'] or 'no action'} "
+                f"({u['file']}:{u['line']}), but the API requires {a['auth']} "
+                f"({a['file']}:{a['line']}). Which one is intended?")
+        out.append(_question(u["page_symbol"], f"ui-api-mismatch:{key}", text, signals,
+                             [{"file": u["file"], "line": u["line"]},
+                              {"file": a["file"], "line": a["line"]}]))
+
+    for key, a in sorted(api.items()):
+        segment = key.split("/", 1)[1]
+        if segment != "*" and DESTRUCTIVE_WORDS.search(segment):
+            u = ui.get(key)
+            symbol = u["page_symbol"] if u else key
+            out.append(_question(
+                symbol, f"destructive-action:{key}",
+                f"The API exposes '{key}' ({a['file']}:{a['line']}), which looks destructive or hard "
+                f"to undo. Is it reversible, and who may use it?",
+                ["irreversible"], [{"file": a["file"], "line": a["line"]}]))
+
+    for ref, hits in sorted(scan_result.get("action_refs", {}).items()):
+        if not hits["razor"]:
+            tree, node = ref.split(".", 1)
+            role = next((i for i in scan_result.get("items", [])
+                         if i["kind"] == "role" and i["symbol"] == tree), None)
+            out.append(_question(
+                tree, f"unused-action:{node}",
+                f"The action {ref} is never referenced by any page. Is it only enforced in the API, "
+                f"or is a screen missing?",
+                ["security"], role["refs"] if role else []))
+
+    for item in scan_result.get("items", []):
+        if item["kind"] == "rule" and item.get("documented") is False:
+            member = item["symbol"].rsplit(".", 1)[-1]
+            signals = ["hardcoded"]
+            if MONEY_WORDS.search(item["symbol"]) or MONEY_WORDS.search(item["behaviour"]):
+                signals.append("money")
+            dependents = sum(1 for s in scenarios if member in s["behaviour"] or member in s["title"])
+            out.append(_question(
+                item["symbol"], "hardcoded-value",
+                f"{item['behaviour']} is hard-coded with no explanation nearby "
+                f"({item['refs'][0]['file']}:{item['refs'][0]['line']}). Is it intended policy?",
+                signals, item["refs"], dependents))
+
+    out.sort(key=lambda q: (q["symbol"], q["reason"]))
+    return out
