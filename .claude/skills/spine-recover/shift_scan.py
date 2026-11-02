@@ -2,39 +2,53 @@
 """Read a Shift Framework solution and list what it contains (no .NET parsing, line scanning only).
 
 Output (all JSON-serialisable):
-  items         [{kind, symbol, title, behaviour, parent_symbol, refs:[{file,line}], documented?}]
-  roles         names of the action trees found
-  api_actions   {"Controller/segment": {auth, file, line}}   what the API requires
+  items         [{kind, symbol, title, behaviour, parent_symbol, refs:[{file,line}], origin, documented?}]
+  roles         names of the action trees defined or used in the solution
+  api_actions   {"Controller/segment": {auth, file, line}}   what the API requires ("Controller/*" = default)
   ui_actions    {"Controller/segment": {auth, file, line, page_symbol}}   what the UI guards it with
-  action_refs   {"Tree.Node": {"razor": [files], "cs": [files]}}   where each action is referenced
+  action_refs   {"Tree.Node": {"razor": [files], "cs": [files]}}   where each defined action is referenced
+  warnings      files read with a fallback encoding
+  files_scanned number of .cs, .razor and .feature files read
 
 Items by kind: feature (pages, timers/queue functions), role (action trees), fr (DTO constraints),
 rule (constants, refusals, data-level access, attention), scenario (existing .feature files).
-Files are read as UTF-8 (BOM tolerated) with universal newlines, so CRLF and LF scan the same.
+Symbols are namespace-qualified for C# members and never contain line numbers; when two things still
+share a symbol the later one gets a `~2` (`~3`, ...) suffix so ids stay unique.
+Files are read as UTF-8 (BOM tolerated), UTF-16 (BOM) or Windows-1256, with universal newlines.
 """
 import re
+from collections import Counter
 from pathlib import Path
 
 IGNORED_DIRS = {"bin", "obj", "node_modules", ".git", ".vs", "packages", "__pycache__"}
 DATA_LEVEL = {"Company", "CompanyBranch", "Brand", "Region", "City", "Country", "Team"}
+NOT_A_DECLARATION = {"if", "for", "foreach", "while", "switch", "return", "using", "lock", "catch",
+                     "else", "new", "await", "throw", "var", "do", "try", "fixed"}
 
-CLASS = re.compile(r"\bclass\s+(\w+)")
-TREE = re.compile(r"\bclass\s+(\w+)\s*:\s*ActionTree\b")
-TREE_ACTION = re.compile(r"static\s+readonly\s+ActionTreeAction\s+(\w+)")
+NAMESPACE = re.compile(r"^\s*namespace\s+([\w.]+)")
+CLASS = re.compile(r"^\s*(?:\[[^\]]*\]\s*)*(?:(?:public|internal|private|protected|static|sealed|abstract|"
+                   r"partial|unsafe|readonly)\s+)*(?:class|record|struct)\s+(\w+)")
+TREE_LEGACY = re.compile(r"\bclass\s+\w+\s*:\s*ActionTree\b")
+TREE_ACTION = re.compile(r"\bstatic\s+(?:readonly\s+)?\w*Action\s+(\w+)")
 CONST = re.compile(r"\bconst\s+(?:decimal|int|long|double|float|TimeSpan)\s+(\w+)\s*=\s*([^;]+);")
-METHOD = re.compile(r"^\s*(?:public|private|protected|internal)\b[^=;]*?\b(\w+)\s*\(")
+DECL = re.compile(r"^\s*(?:\[[^\]]*\]\s*)*(?:(?:public|private|protected|internal|static|override|virtual|"
+                  r"async|sealed|abstract|new|partial|extern|unsafe)\s+)*[\w<>\[\],.?]+\s+(\w+)\s*\(")
 THROW = re.compile(r'throw\s+new\s+ShiftEntityException\(\s*new\s+Message\(\s*"([^"]*)"\s*,\s*"([^"]*)"')
+SAME_LINE_IF = re.compile(r"^\s*(?:else\s+)?(if\s*\(.*\))\s*throw\b")
 DATA_ACCESS = re.compile(r"\bIEntityHas(\w+)<")
 HTTP = re.compile(r'\[Http(?:Get|Post|Put|Delete|Patch)(?:\("([^"]*)"\))?\]')
-NAMEOF = re.compile(r"nameof\(\s*\w+\.(\w+)\s*\)")
-BASE_CALL = re.compile(r"base\(\s*(?:\w+\.)*(\w+)\s*\)")
-RAZOR_TAG = re.compile(r"<(ShiftList|ShiftEntityForm|ActionButton)\b(.*?)>", re.S)
+NAMEOF = re.compile(r"nameof\(\s*(\w+)\.(\w+)\s*\)")
+BASE_PATH = re.compile(r"base\(\s*((?:\w+\.)+\w+)\s*\)")
+ENDPOINT_ATTR = re.compile(
+    r'ShiftEntity(Secure)?Endpoint(?:WithMapper)?<[^"]*?>\(\s*"([^"]+)"(?:\s*,\s*nameof\(\s*(\w+)\.(\w+)\s*\))?')
+RAZOR_TAG = re.compile(r"""<(ShiftList|ShiftEntityForm|ActionButton)\b((?:"[^"]*"|'[^']*'|[^>"'])*)>""", re.S)
 ATTR = re.compile(r'([\w:@-]+)="([^"]*)"')
 FUNCTION = re.compile(
     r'\[Function\("([^"]+)"\)\][^{]*?(TimerTrigger|ServiceBusTrigger|QueueTrigger)\("([^"]+)"', re.S)
 DTO_ATTR = re.compile(r"^\s*\[(Required|StringLength|Range)\b(.*)\]\s*$")
 PROPERTY = re.compile(r"\bpublic\s+[\w<>?,\[\]]+\s+(\w+)\s*\{")
 STEP = re.compile(r"^\s*(Given|When|Then|And|But)\b")
+STRING = re.compile(r'"(?:[^"\\]|\\.)*"')
 
 
 def _files(root: Path):
@@ -43,8 +57,20 @@ def _files(root: Path):
             yield f
 
 
-def _read(path: Path) -> str:
-    return path.read_text(encoding="utf-8-sig")
+def _read(path: Path, warnings: list, rel: str) -> str:
+    raw = path.read_bytes()
+    if raw[:2] in (b"\xff\xfe", b"\xfe\xff"):
+        text = raw.decode("utf-16")
+    else:
+        try:
+            text = raw.decode("utf-8-sig")
+        except UnicodeDecodeError:
+            warnings.append(rel)
+            try:
+                text = raw.decode("cp1256")
+            except UnicodeDecodeError:
+                text = raw.decode("utf-8", errors="replace")
+    return text.replace("\r\n", "\n").replace("\r", "\n")
 
 
 def _rel(path: Path, root: Path) -> str:
@@ -57,60 +83,122 @@ def _line_of(text: str, index: int) -> int:
 
 def _item(kind, symbol, title, behaviour, file, line, **extra):
     item = {"kind": kind, "symbol": symbol, "title": title, "behaviour": behaviour,
-            "parent_symbol": None, "refs": [{"file": file, "line": line}]}
+            "parent_symbol": None, "refs": [{"file": file, "line": line}], "origin": "scan"}
     item.update(extra)
     return item
 
 
+def _ref(path_text: str):
+    """'Tree.Node' or 'Pkg.ActionTrees.Tree.Node' -> (tree, node)."""
+    parts = path_text.split(".")
+    return (parts[-2], parts[-1]) if len(parts) >= 2 else (None, parts[-1])
+
+
+def _use(out, tree, node, file, line):
+    if tree:
+        u = out["_used"].setdefault(tree, {"nodes": set(), "file": file, "line": line})
+        u["nodes"].add(node)
+
+
+def _code(line: str) -> str:
+    return STRING.sub('""', line).split("//")[0]
+
+
 def _scan_cs(text, rel, out):
-    cls, method, prev_comment = None, None, False
     lines = text.split("\n")
+    ns, depth, stack, pending_class = None, 0, [], None
+    pending_tree, method, prev_comment, pending_attrs = False, None, False, []
+
+    def qual(cls, member):
+        return f"{ns}.{cls}.{member}" if ns else f"{cls}.{member}"
+
     for n, line in enumerate(lines, 1):
         stripped = line.strip()
-        if "class " in line and (m := CLASS.search(line)):
-            cls = m.group(1)
-            for d in DATA_ACCESS.finditer(line):
-                if d.group(1) in DATA_LEVEL:
-                    sym = f"{cls}.DataLevelAccess.{d.group(1)}"
-                    out["items"].append(_item(
-                        "rule", sym, sym, f"Rows are filtered by the user's {d.group(1).lower()} grants",
-                        rel, n))
-            if re.search(r"\bIHasAttention\b", line):
-                out["items"].append(_item(
-                    "rule", f"{cls}.Attention", f"{cls}.Attention",
-                    "Records can carry an attention flag", rel, n))
-        elif (m := METHOD.match(line)) and "throw" not in line:
-            method = m.group(1)
-        if cls and (m := CONST.search(line)):
-            out["items"].append(_item(
-                "rule", f"{cls}.{m.group(1)}", f"{cls}.{m.group(1)}",
-                f"{m.group(1)} = {m.group(2).strip()}", rel, n, documented=prev_comment))
-        if (m := THROW.search(line)):
-            cond = next((lines[i].strip() for i in range(n - 2, max(n - 5, -1), -1)
-                         if lines[i].strip().startswith("if")), "")
-            sym = f"{cls}.{method}#{m.group(1)}"
-            out["items"].append(_item(
-                "rule", sym, sym, f"{cond} -> refuses: {m.group(2)}".strip(), rel, n))
+        is_comment = stripped.startswith(("//", "/*", "*"))
+        code = _code(line)
+        if not is_comment:
+            if (m := NAMESPACE.match(line)):
+                ns = m.group(1)
+            if "[ActionTree" in line:
+                pending_tree = True
+            if (m := CLASS.match(line)):
+                pending_class, cls_name = m.group(1), m.group(1)
+                method = None
+                if pending_tree or TREE_LEGACY.search(line):
+                    out["_trees"][cls_name] = {"file": rel, "line": n, "nodes": []}
+                pending_tree = False
+                for d in DATA_ACCESS.finditer(line):
+                    if d.group(1) in DATA_LEVEL:
+                        sym = qual(cls_name, f"DataLevelAccess.{d.group(1)}")
+                        out["items"].append(_item("rule", sym, sym,
+                                                  f"Rows are filtered by the user's {d.group(1).lower()} grants",
+                                                  rel, n))
+                if re.search(r"\bIHasAttention\b", line):
+                    out["items"].append(_item("rule", qual(cls_name, "Attention"), qual(cls_name, "Attention"),
+                                              "Records can carry an attention flag", rel, n))
+            cls = stack[-1][0] if stack else None
+            at_class_level = bool(stack) and depth == stack[-1][1]
+
+            if at_class_level and not pending_class and (m := DECL.match(line)) \
+                    and m.group(1) not in NOT_A_DECLARATION and "=" not in line.split("(")[0]:
+                method = m.group(1)
+            if cls and cls in out["_trees"] and at_class_level and (m := TREE_ACTION.search(line)):
+                out["_trees"][cls]["nodes"].append(m.group(1))
+            if cls and (m := CONST.search(line)):
+                out["items"].append(_item("rule", qual(cls, m.group(1)), qual(cls, m.group(1)),
+                                          f"{m.group(1)} = {m.group(2).strip()}", rel, n, documented=prev_comment))
+            if cls and (m := THROW.search(line)):
+                if (si := SAME_LINE_IF.match(line)):
+                    cond = si.group(1)
+                else:
+                    cond = ""
+                    for back in range(n - 2, max(n - 5, -1), -1):
+                        prior = lines[back].strip()
+                        if "throw" in prior:
+                            break
+                        if prior.startswith(("if", "else if", "case", "while")):
+                            cond = prior
+                            break
+                sym = f"{qual(cls, method or '(class)')}#{m.group(1)}"
+                out["items"].append(_item("rule", sym, sym, f"{cond} -> refuses: {m.group(2)}".strip(), rel, n))
+
+            if (m := DTO_ATTR.match(line)):
+                pending_attrs.append(m.group(1) + m.group(2))
+            elif pending_attrs:
+                if cls and (p := PROPERTY.search(line)):
+                    for attr in pending_attrs:
+                        what = f"{p.group(1)} is required" if attr == "Required" else f"{p.group(1)}: {attr}"
+                        out["items"].append(_item("fr", qual(cls, p.group(1)), qual(cls, p.group(1)),
+                                                  what, rel, n))
+                    pending_attrs = []
+                elif stripped and not stripped.startswith("["):
+                    pending_attrs = []
+
+        for ch in code:
+            if ch == "{":
+                depth += 1
+                if pending_class:
+                    stack.append((pending_class, depth))
+                    pending_class = None
+            elif ch == "}":
+                if stack and stack[-1][1] == depth:
+                    stack.pop()
+                    method = None
+                elif stack and depth == stack[-1][1] + 1:
+                    method = None
+                depth -= 1
         if stripped:
             prev_comment = stripped.startswith("//")
 
 
-def _scan_dto(text, rel, out):
-    cls, pending = None, []
-    for n, line in enumerate(text.split("\n"), 1):
-        if (m := CLASS.search(line)) and "class " in line:
-            cls = m.group(1)
-        if (m := DTO_ATTR.match(line)):
-            pending.append(m.group(1) + m.group(2))
-            continue
-        if pending and (m := PROPERTY.search(line)) and cls:
-            for attr in pending:
-                text_ = f"{m.group(1)} is required" if attr == "Required" else f"{m.group(1)}: {attr}"
-                out["items"].append(_item("fr", f"{cls}.{m.group(1)}", f"{cls}.{m.group(1)}",
-                                          text_, rel, n))
-            pending = []
-        elif line.strip() and not line.strip().startswith("["):
-            pending = []
+def _scan_endpoint_attributes(text, rel, out):
+    for m in ENDPOINT_ATTR.finditer(text):
+        ctrl = m.group(2).rstrip("/").split("/")[-1]
+        line = _line_of(text, m.start())
+        auth = m.group(4) if m.group(1) else None
+        out["api_actions"][f"{ctrl}/*"] = {"auth": auth, "file": rel, "line": line}
+        if m.group(1) and m.group(3):
+            _use(out, m.group(3), m.group(4), rel, line)
 
 
 def _scan_controller(text, rel, out):
@@ -119,15 +207,17 @@ def _scan_controller(text, rel, out):
         return
     ctrl, default_auth, route, auth = m.group(1), None, None, None
     for n, line in enumerate(text.split("\n"), 1):
-        if default_auth is None and ": base(" in line and (b := BASE_CALL.search(line)):
-            default_auth = b.group(1)
+        if default_auth is None and ": base(" in line and (b := BASE_PATH.search(line)):
+            tree, default_auth = _ref(b.group(1))
+            _use(out, tree, default_auth, rel, n)
             out["api_actions"][f"{ctrl}/*"] = {"auth": default_auth, "file": rel, "line": n}
         if (h := HTTP.search(line)):
             segs = [s for s in (h.group(1) or "").split("/") if s and not s.startswith("{")]
             route = segs[-1] if segs else None
         if "[TypeAuth" in line and (a := NAMEOF.search(line)):
-            auth = a.group(1)
-        if METHOD.match(line) and route:
+            auth = a.group(2)
+            _use(out, a.group(1), auth, rel, n)
+        if route and DECL.match(line):
             out["api_actions"][f"{ctrl}/{route}"] = {"auth": auth or default_auth, "file": rel, "line": n}
             route, auth = None, None
 
@@ -137,7 +227,11 @@ def _scan_razor(text, rel, symbol, out):
     for tag in RAZOR_TAG.finditer(text):
         name, attrs = tag.group(1), dict(ATTR.findall(tag.group(2)))
         line = _line_of(text, tag.start())
-        node = attrs.get("TypeAuthAction", "").rsplit(".", 1)[-1] or None
+        raw_action = attrs.get("TypeAuthAction", "")
+        node = raw_action.rsplit(".", 1)[-1] or None
+        if raw_action:
+            t, nd = _ref(raw_action)
+            _use(out, t, nd, rel, line)
         if name == "ActionButton":
             endpoint = attrs.get("Endpoint", "").lstrip("/")
             key = endpoint[4:] if endpoint.startswith("api/") else endpoint
@@ -181,48 +275,62 @@ def _scan_feature_file(text, rel, out):
     flush()
 
 
+def _unique_symbols(items):
+    seen = Counter()
+    for it in items:
+        key = (it["kind"], it["symbol"])
+        seen[key] += 1
+        if seen[key] > 1:
+            it["symbol"] = f"{it['symbol']}~{seen[key]}"
+            it["title"] = it["symbol"]
+
+
 def scan(root) -> dict:
     root = Path(root)
-    out = {"items": [], "roles": [], "api_actions": {}, "ui_actions": {}, "action_refs": {}}
+    out = {"items": [], "roles": [], "api_actions": {}, "ui_actions": {}, "action_refs": {},
+           "warnings": [], "files_scanned": 0, "_trees": {}, "_used": {}}
     texts = {}
-    trees = {}  # tree -> (defining rel path, [nodes])
     for f in _files(root):
-        if f.suffix not in {".cs", ".razor", ".feature"}:
-            continue
-        rel = _rel(f, root)
-        texts[rel] = _read(f)
-        if f.suffix == ".cs":
-            for i, line in enumerate(texts[rel].split("\n"), 1):
-                if (m := TREE.search(line)):
-                    nodes = TREE_ACTION.findall(texts[rel])
-                    trees[m.group(1)] = (rel, nodes)
-                    out["roles"].append(m.group(1))
-                    out["items"].append(_item("role", m.group(1), m.group(1),
-                                              "actions: " + ", ".join(nodes), rel, i))
+        if f.suffix in {".cs", ".razor", ".feature"}:
+            rel = _rel(f, root)
+            texts[rel] = _read(f, out["warnings"], rel)
+    out["files_scanned"] = len(texts)
 
     for rel, text in texts.items():
         suffix = Path(rel).suffix
         if suffix == ".cs":
             _scan_cs(text, rel, out)
             _scan_functions(text, rel, out)
-            if rel.endswith("DTO.cs") or "DTOs/" in rel:
-                _scan_dto(text, rel, out)
+            _scan_endpoint_attributes(text, rel, out)
             _scan_controller(text, rel, out)
         elif suffix == ".razor":
-            _scan_razor(text, rel, str(Path(rel).with_suffix("").as_posix()), out)
+            _scan_razor(text, rel, Path(rel).with_suffix("").as_posix(), out)
         else:
             _scan_feature_file(text, rel, out)
 
-    for tree, (defined_in, nodes) in sorted(trees.items()):
-        for node in nodes:
+    trees, used = out.pop("_trees"), out.pop("_used")
+    for name in sorted(set(trees) | set(used)):
+        if name in trees:
+            t = trees[name]
+            out["items"].append(_item("role", name, name, "actions: " + ", ".join(t["nodes"]),
+                                      t["file"], t["line"]))
+        else:
+            u = used[name]
+            out["items"].append(_item("role", name, name, "actions used: " + ", ".join(sorted(u["nodes"])),
+                                      u["file"], u["line"]))
+        out["roles"].append(name)
+
+    for tree, t in sorted(trees.items()):
+        for node in t["nodes"]:
             hits = {"razor": [], "cs": []}
             for rel, text in texts.items():
-                if rel != defined_in and re.search(rf"\b{tree}\.{node}\b", text):
+                if rel != t["file"] and re.search(rf"\b{tree}\.{node}\b", text):
                     hits["razor" if rel.endswith(".razor") else "cs"].append(rel)
             out["action_refs"][f"{tree}.{node}"] = hits
 
-    out["roles"].sort()
+    _unique_symbols(out["items"])
     out["items"].sort(key=lambda i: (i["kind"], i["symbol"]))
+    out["warnings"].sort()
     return out
 
 
@@ -287,7 +395,7 @@ def detect_questions(scan_result: dict) -> list:
         if item["kind"] == "rule" and item.get("documented") is False:
             member = item["symbol"].rsplit(".", 1)[-1]
             signals = ["hardcoded"]
-            if MONEY_WORDS.search(item["symbol"]) or MONEY_WORDS.search(item["behaviour"]):
+            if MONEY_WORDS.search(member) or MONEY_WORDS.search(item["behaviour"]):
                 signals.append("money")
             dependents = sum(1 for s in scenarios if member in s["behaviour"] or member in s["title"])
             out.append(_question(

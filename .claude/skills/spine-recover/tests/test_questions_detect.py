@@ -36,7 +36,7 @@ class DetectOnFixtureTests(unittest.TestCase):
 
     def test_undocumented_constant_is_a_money_hardcoded_value(self):
         found = by_reason(self.questions, "hardcoded-value")
-        self.assertEqual([q["symbol"] for q in found], ["Order.MaxDiscount"])
+        self.assertEqual([q["symbol"] for q in found], ["Fixture.Data.Entities.Order.MaxDiscount"])
         self.assertEqual(sorted(found[0]["signals"]), ["hardcoded", "money"])
 
     def test_unused_action_reported_only_for_actions_no_ui_references(self):

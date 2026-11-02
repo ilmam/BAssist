@@ -24,11 +24,11 @@ class ScanFixtureTests(unittest.TestCase):
             ("feature", "Web/Pages/Orders/OrderArchive"),
             ("feature", "Functions/OrderReminderTimer"),
             ("role", "OrdersActions"),
-            ("fr", "OrderDTO.CustomerName"),
-            ("rule", "Order.MaxDiscount"),
-            ("rule", "Order.CancelWindowDays"),
-            ("rule", "Order.DataLevelAccess.Company"),
-            ("rule", "OrderRepository.UpsertAsync#Discount"),
+            ("fr", "Fixture.Shared.DTOs.OrderDTO.CustomerName"),
+            ("rule", "Fixture.Data.Entities.Order.MaxDiscount"),
+            ("rule", "Fixture.Data.Entities.Order.CancelWindowDays"),
+            ("rule", "Fixture.Data.Entities.Order.DataLevelAccess.Company"),
+            ("rule", "Fixture.Data.Repositories.OrderRepository.UpsertAsync#Discount"),
             ("scenario", "Tests/Features/Orders.feature#Cancel an order"),
         })
 
@@ -46,11 +46,11 @@ class ScanFixtureTests(unittest.TestCase):
 
     def test_rule_behaviour_and_documented_flag(self):
         by = {i["symbol"]: i for i in self.result["items"]}
-        self.assertIn("0.20m", by["Order.MaxDiscount"]["behaviour"])
-        self.assertFalse(by["Order.MaxDiscount"]["documented"])
-        self.assertTrue(by["Order.CancelWindowDays"]["documented"])
+        self.assertIn("0.20m", by["Fixture.Data.Entities.Order.MaxDiscount"]["behaviour"])
+        self.assertFalse(by["Fixture.Data.Entities.Order.MaxDiscount"]["documented"])
+        self.assertTrue(by["Fixture.Data.Entities.Order.CancelWindowDays"]["documented"])
         self.assertIn("dto.Discount > Order.MaxDiscount",
-                      by["OrderRepository.UpsertAsync#Discount"]["behaviour"])
+                      by["Fixture.Data.Repositories.OrderRepository.UpsertAsync#Discount"]["behaviour"])
 
     def test_api_and_ui_actions_recorded(self):
         self.assertEqual(self.result["api_actions"]["Order/cancel"]["auth"], "OrdersCancel")
@@ -100,7 +100,7 @@ class ScanEdgeTests(unittest.TestCase):
         try:
             (tmp / "Ticket.cs").write_text(
                 "public class Ticket : ShiftEntity<Ticket>, IHasAttention\n{\n}\n", encoding="utf-8")
-            self.assertIn(("rule", "Ticket.Attention"), kinds_and_symbols(ss.scan(tmp)))
+            self.assertIn(("rule", "Ticket.Attention"), kinds_and_symbols(ss.scan(tmp)))  # no namespace in this file
         finally:
             shutil.rmtree(tmp, ignore_errors=True)
 

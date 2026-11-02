@@ -18,7 +18,7 @@ import sys
 from pathlib import Path
 
 from questions import parse_sensitivity, question_id, select
-from recover_core import behaviour_hash, build_marker, build_question_marker, item_id
+from recover_core import behaviour_hash, build_marker, build_question_marker, item_id, parse_markers
 from reconcile import reconcile
 from shift_scan import detect_questions, scan
 
@@ -32,8 +32,34 @@ def _read(path):
 
 
 def _annotate(item: dict) -> dict:
+    """Add the id, hash, marker and a ready description. The marker comes first in the description
+    because list-records cuts long text at 300 characters and the marker must survive that."""
     iid, h = item_id(item["kind"], item["symbol"]), behaviour_hash(item["behaviour"])
-    return {**item, "id": iid, "hash": h, "marker": build_marker(iid, h)}
+    marker = build_marker(iid, h)
+    refs = ", ".join(f"{r['file']}:{r['line']}" for r in item.get("refs", [])[:3])
+    description = f"{marker} Inferred from code: {item['behaviour']}" + (f". Code: {refs}" if refs else "")
+    return {**item, "id": iid, "hash": h, "marker": marker, "description": description}
+
+
+def _targets(question: dict, items: list, record_by_item: dict) -> dict:
+    """Which item (and existing BAssist record, if any) a question is about."""
+    match = next((i for i in items if i["symbol"] == question["symbol"]), None)
+    if not match:
+        return {"target_item_id": None, "target_record_id": None}
+    iid = item_id(match["kind"], match["symbol"])
+    return {"target_item_id": iid, "target_record_id": record_by_item.get(iid)}
+
+
+def _notes(inv: dict, records: list, comments: list) -> list:
+    """Say once, on 'Main stakeholder', that real roles are now visible in the code."""
+    marker = build_question_marker(item_id("note", "roles-visible"))
+    posted = any(marker in c.get("body", "") for c in comments)
+    main = next((r for r in records if " ".join(r.get("title", "").split()).casefold() == "main stakeholder"), None)
+    if not inv.get("roles") or not main or posted:
+        return []
+    return [{"record_id": main["id"], "marker": marker,
+             "text": "Roles are now visible in the code (" + ", ".join(inv["roles"]) + "). "
+                     "Stakeholder Needs were created for them beside this one; nothing was re-linked. " + marker}]
 
 
 def _summary(n_questions, selection, plan) -> str:
@@ -50,7 +76,16 @@ def _summary(n_questions, selection, plan) -> str:
 
 
 def cmd_scan(args) -> int:
+    if not Path(args.root).is_dir():
+        print(f"{args.root} is not a folder", file=sys.stderr)
+        return 1
     result = scan(args.root)
+    if result["files_scanned"] == 0:
+        print(f"Warning: no .cs, .razor or .feature files found under {args.root}. Is this the right path? "
+              f"Planning against an empty inventory would report every recovered record as possibly removed.",
+              file=sys.stderr)
+    for rel in result["warnings"]:
+        print(f"Warning: {rel} is not UTF-8; read with a fallback encoding", file=sys.stderr)
     _write(args.out, {"items": result["items"], "roles": result["roles"],
                       "questions": detect_questions(result)})
     return 0
@@ -65,14 +100,17 @@ def cmd_plan(args) -> int:
     inv, records, comments = _read(args.inventory), _read(args.records), _read(args.comments)
     rec = reconcile(inv["items"], records, comments)
     selection = select(inv["questions"], comments, sensitivity)
+    record_by_item = {m["id"]: r["id"] for r in records
+                      for m in parse_markers(r.get("description", "")) if m["type"] == "record"}
     plan = {
         "create": [_annotate(i) for i in rec["create"]],
         "skip": [_annotate(i) for i in rec["skip"]],
         "drift": [{**d, "id": item_id(d["item"]["kind"], d["item"]["symbol"])} for d in rec["drift"]],
         "possibly_removed": rec["possibly_removed"],
         "overlap": rec["overlap"],
-        "file_questions": [{**q, "id": question_id(q), "marker": build_question_marker(question_id(q))}
-                           for q in selection["file"]],
+        "file_questions": [{**q, "id": question_id(q), "marker": build_question_marker(question_id(q)),
+                            **_targets(q, inv["items"], record_by_item)} for q in selection["file"]],
+        "notes": _notes(inv, records, comments),
     }
     plan["summary"] = _summary(len(inv["questions"]), selection, plan)
     if args.out:

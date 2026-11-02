@@ -1,9 +1,11 @@
 using ShiftSoftware.TypeAuth.Core;
+using ShiftSoftware.TypeAuth.Core.Actions;
 
 namespace Fixture.Shared;
 
-public class OrdersActions : ActionTree
+[ActionTree("Orders", "Orders")]
+public class OrdersActions
 {
-    public static readonly ActionTreeAction OrdersRead = new("Orders Read");
-    public static readonly ActionTreeAction OrdersCancel = new("Orders Cancel");
+    public static ReadAction OrdersRead = new("Orders Read");
+    public static ReadWriteAction OrdersCancel = new("Orders Cancel");
 }
