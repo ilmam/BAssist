@@ -25,11 +25,12 @@ class ProjectExportController extends Controller
 
         $pack = $this->export->build($project);
 
-        // ?comments=1 shown (default), ?comments=replied hides threads already answered, ?comments=0 hides all.
-        $commentsMode = match (request()->query('comments', '1')) {
+        // Default (or ?comments=replied) is Open only: threads already answered are hidden.
+        // ?comments=1 shows all, ?comments=0 hides all.
+        $commentsMode = match (request()->query('comments')) {
             '0' => 'none',
-            'replied' => 'replied',
-            default => 'all',
+            '1' => 'all',
+            default => 'replied',
         };
         $includeComments = $commentsMode !== 'none';
         $threads = $includeComments ? app(CommentService::class)->openThreadsForProject($project) : [];

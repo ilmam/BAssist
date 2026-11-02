@@ -11,10 +11,10 @@
             <a class="print-btn" href="{{ model_route('Project', 'index') }}">{{ __('ui.back_to_projects') }}</a>
             <span class="print-switch__label">{{ __('ui.comments_print_switch') }}:</span>
             <div class="print-switch" role="group" aria-label="{{ __('ui.comments_print_switch') }}" title="{{ __('ui.comments_print_toggle_help') }}">
-                @foreach (['all' => [null, 'comments_print_shown'], 'replied' => ['replied', 'comments_print_no_replied'], 'none' => ['0', 'comments_print_hidden']] as $mode => [$query, $label])
-                    <a class="print-btn {{ ($commentsMode ?? 'all') === $mode ? 'print-btn--on' : '' }}"
+                @foreach (['all' => ['1', 'comments_print_shown'], 'replied' => ['replied', 'comments_print_no_replied'], 'none' => ['0', 'comments_print_hidden']] as $mode => [$query, $label])
+                    <a class="print-btn {{ ($commentsMode ?? 'replied') === $mode ? 'print-btn--on' : '' }}"
                        href="{{ request()->fullUrlWithQuery(['comments' => $query]) }}"
-                       aria-pressed="{{ ($commentsMode ?? 'all') === $mode ? 'true' : 'false' }}">{{ __('ui.'.$label) }}</a>
+                       aria-pressed="{{ ($commentsMode ?? 'replied') === $mode ? 'true' : 'false' }}">{{ __('ui.'.$label) }}</a>
                 @endforeach
             </div>
             <button type="button" class="print-btn print-btn--primary" data-print-pack>

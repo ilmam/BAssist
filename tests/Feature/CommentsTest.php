@@ -115,14 +115,27 @@ class CommentsTest extends TestCase
 
         $url = route('projects.export', $this->project);
 
-        $this->get($url.'?comments=replied')
+        // Open only is the default view of the pack.
+        $default = $this->get($url)
             ->assertOk()
             ->assertSee('Gap waiting for an answer')
             ->assertDontSee('Gap already answered')
             ->assertDontSee('Gap already applied')
             ->assertSee('This document has 1 open comment');
+        $this->assertMatchesRegularExpression(
+            '/print-btn print-btn--on"\s+href="[^"]*comments=replied/',
+            $default->getContent(),
+            'The Open only button should be the one switched on by default.',
+        );
+        // "All shown" must say so explicitly, because no parameter now means Open only.
+        $default->assertSee('comments=1', false);
 
-        $this->get($url)
+        $this->get($url.'?comments=replied')
+            ->assertOk()
+            ->assertSee('Gap waiting for an answer')
+            ->assertDontSee('Gap already answered');
+
+        $this->get($url.'?comments=1')
             ->assertOk()
             ->assertSee('Gap waiting for an answer')
             ->assertSee('Gap already answered')
