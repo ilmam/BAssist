@@ -15,6 +15,7 @@ use App\Http\Controllers\GuardrailsController;
 use App\Http\Controllers\HelpController;
 use App\Http\Controllers\HelpGuideController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\BriefProjectController;
 use App\Http\Controllers\NavProjectController;
 use App\Http\Controllers\ProjectCommentsController;
 use App\Http\Controllers\ProjectDashboardController;
@@ -86,7 +87,13 @@ Route::middleware('auth')->group(function (): void {
     Route::get('swimlane_flows/stakeholder-need-options', [SwimlaneFlowController::class, 'stakeholderNeedOptions'])
         ->middleware('entity.access')
         ->name('swimlane_flows.stakeholder-need-options');
-    Route::get('projects/{project}/dashboard', [ProjectDashboardController::class, 'show'])->name('projects.dashboard');
+    // Brief <-> project links (docs/brief-entity.md). Optional in both directions.
+    Route::post('briefs/{brief}/projects', [BriefProjectController::class, 'storeFromBrief'])->whereNumber('brief')->name('briefs.projects.store');
+    Route::patch('briefs/{brief}/projects/{project}', [BriefProjectController::class, 'update'])->whereNumber(['brief', 'project'])->name('briefs.projects.update');
+    Route::delete('briefs/{brief}/projects/{project}', [BriefProjectController::class, 'destroy'])->whereNumber(['brief', 'project'])->name('briefs.projects.destroy');
+    Route::post('briefs/{brief}/create-project', [BriefProjectController::class, 'createProject'])->whereNumber('brief')->name('briefs.create-project');
+    Route::post('projects/{project}/briefs', [BriefProjectController::class, 'storeFromProject'])->whereNumber('project')->name('projects.briefs.store');
+    Route::get('projects/{project}/dashboard',[ProjectDashboardController::class, 'show'])->name('projects.dashboard');
     Route::get('navigation/projects/{project}', [NavProjectController::class, 'show'])->name('nav.project');
     Route::get('projects/{project}/export', [ProjectExportController::class, 'show'])->name('projects.export');
     Route::get('projects/{project}/ui-designs', [ProjectUiDesignController::class, 'show'])->name('projects.ui-designs');

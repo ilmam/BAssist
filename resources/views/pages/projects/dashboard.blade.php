@@ -107,6 +107,8 @@
             @endif
         </x-card>
 
+        @include('pages.projects.partials.from-brief')
+
         @php
             $readinessItems = $readiness['items'] ?? [];
             $readinessSpine = $readiness['spine'] ?? [];

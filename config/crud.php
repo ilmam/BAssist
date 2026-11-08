@@ -69,6 +69,15 @@ return [
             'nav_icon_v8' => 'folder',
         ],
 
+        'Brief' => [
+            'home' => false,
+            // Workspace-level, listed under each workspace (NavTreeBuilder), not a project folder.
+            'nav' => false,
+            'nav_label' => 'Briefs',
+            'nav_icon' => 'notepad',
+            'nav_icon_v8' => 'notepad',
+        ],
+
         'Project' => [
             'home' => true,
             'nav' => true,

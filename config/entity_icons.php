@@ -22,6 +22,7 @@ return [
 
     'models' => [
         'Workspace' => 'folder',
+        'Brief' => 'notepad',
         'Project' => 'abstract-26',
 
         // Strategy & Alignment

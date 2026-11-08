@@ -12,6 +12,7 @@ use App\Support\Tenancy;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
@@ -52,6 +53,15 @@ class Project extends BaseModel
     public function status(): BelongsTo
     {
         return $this->belongsTo(Status::class);
+    }
+
+    /** Briefs this project came from. Empty is normal: many projects start without one. */
+    #[Relation('BelongsToMany')]
+    public function briefs(): BelongsToMany
+    {
+        return $this->belongsToMany(Brief::class)
+            ->withPivot('scope_note')
+            ->withTimestamps();
     }
 
     #[Relation('HasMany')]

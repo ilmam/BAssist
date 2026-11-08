@@ -139,6 +139,7 @@ class NavTreeBuilder
 
         $canViewWorkspace = EntityAccess::can($user, 'Workspace', EntityAccess::VIEW);
         $canViewProject = EntityAccess::can($user, 'Project', EntityAccess::VIEW);
+        $canViewBrief = EntityAccess::can($user, 'Brief', EntityAccess::VIEW);
         $folderTemplates = $this->folderTemplates();
 
         if (! $canViewWorkspace && ! $canViewProject && $folderTemplates === []) {
@@ -158,6 +159,7 @@ class NavTreeBuilder
             $workspaceChildren = $this->workspaceChildren(
                 $workspace,
                 $folderTemplates,
+                $canViewBrief,
             );
 
             if ($workspaceChildren === [] && ! $canViewWorkspace && ! $canViewProject) {
@@ -202,8 +204,21 @@ class NavTreeBuilder
     protected function workspaceChildren(
         Workspace $workspace,
         array $folderTemplates,
+        bool $canViewBrief = false,
     ): array {
         $children = [];
+
+        // Briefs sit above projects, so they are listed per workspace, before its projects.
+        if ($canViewBrief) {
+            $children[] = [
+                'label' => __('ui.briefs'),
+                'route' => model_route_name('Brief', 'index'),
+                'query' => ['workspace_id' => $workspace->id],
+                'icon' => entity_icon('Brief'),
+                'icon_v8' => entity_icon('Brief'),
+                'context' => ['workspace_id' => (int) $workspace->id],
+            ];
+        }
 
         /** @var Collection<int, Project> $projects */
         $projects = $workspace->projects;
