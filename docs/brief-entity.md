@@ -106,7 +106,8 @@ Rules:
 3. A brief can be **linked later**. A project that started without one can be linked to a brief afterwards (for example when the sponsor's original email turns up), with a scope note. The link can also be removed.
 4. Project list and filters: add a "Brief" column or filter (has brief / no brief). Informational only.
 5. Existing projects stay valid with no migration: all current projects are simply "no brief".
-6. Creating a project from a brief requires the brief to be **approved**. Linking after the fact does not.
+6. A project can be created from any brief that is not **declined** (a declined brief is a dead end). Linking an existing project works for any brief.
+7. Menu: each workspace has two sub-folders, **Briefs** (the list plus each brief) and **Projects**. A brief page lists its linked projects, each a link to the project.
 
 ## Rules and behaviour
 

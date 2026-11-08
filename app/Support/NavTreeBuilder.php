@@ -87,7 +87,8 @@ class NavTreeBuilder
     {
         $permissions = (string) RoleEntityPermission::query()->where('role_id', $user->role_id)->max('updated_at');
         $tree = Workspace::query()->count().'|'.(string) Workspace::query()->max('updated_at')
-            .'|'.Project::query()->count().'|'.(string) Project::query()->max('updated_at');
+            .'|'.Project::query()->count().'|'.(string) Project::query()->max('updated_at')
+            .'|'.\App\Models\Brief::query()->count().'|'.(string) \App\Models\Brief::query()->max('updated_at');
 
         return 'nav:'.$user->id.':'.md5($user->role_id.'|'.$permissions.'|'.$tree.'|'.(int) $this->lazy()).':'.$part;
     }
@@ -208,20 +209,42 @@ class NavTreeBuilder
     ): array {
         $children = [];
 
-        // Briefs sit above projects, so they are listed per workspace, before its projects.
+        // Two sub-folders per workspace: Briefs (the asks, above projects) and Projects.
         if ($canViewBrief) {
-            $children[] = [
+            $briefLeaves = [[
                 'label' => __('ui.briefs'),
                 'route' => model_route_name('Brief', 'index'),
                 'query' => ['workspace_id' => $workspace->id],
                 'icon' => entity_icon('Brief'),
                 'icon_v8' => entity_icon('Brief'),
                 'context' => ['workspace_id' => (int) $workspace->id],
+            ]];
+
+            foreach (\App\Models\Brief::query()->where('workspace_id', $workspace->id)->orderBy('title')->get(['id', 'title']) as $brief) {
+                $briefLeaves[] = [
+                    'label' => $brief->title,
+                    'route' => 'briefs.show',
+                    'route_params' => ['brief' => $brief->id],
+                    'icon' => entity_icon('Brief'),
+                    'icon_v8' => entity_icon('Brief'),
+                    'context' => ['workspace_id' => (int) $workspace->id],
+                ];
+            }
+
+            $children[] = [
+                'type' => 'folder',
+                'label' => __('ui.briefs'),
+                'icon' => entity_icon('Brief'),
+                'icon_v8' => entity_icon('Brief'),
+                'children' => $briefLeaves,
+                'force_open' => false,
             ];
         }
 
         /** @var Collection<int, Project> $projects */
         $projects = $workspace->projects;
+
+        $projectItems = [];
 
         foreach ($projects as $project) {
             $projectQuery = [
@@ -229,7 +252,7 @@ class NavTreeBuilder
                 'project_id' => $project->id,
             ];
 
-            $children[] = [
+            $projectItems[] = [
                 'type' => 'project',
                 'label' => $project->name,
                 'route' => 'projects.dashboard',
@@ -245,6 +268,17 @@ class NavTreeBuilder
                 // Folders come from withActiveContext() (active project) or lazy_url (the rest).
                 'children' => $this->lazy() ? [] : $this->projectFolderItems($project, $folderTemplates, $projectQuery),
                 'lazy_url' => $this->lazy() ? route('nav.project', $project) : null,
+            ];
+        }
+
+        if ($projectItems !== []) {
+            $children[] = [
+                'type' => 'folder',
+                'label' => __('ui.projects'),
+                'icon' => config('navigation.hierarchy.project_icon', 'abstract-26'),
+                'icon_v8' => config('navigation.hierarchy.project_icon_v8', config('navigation.hierarchy.project_icon', 'abstract-26')),
+                'children' => $projectItems,
+                'force_open' => true,
             ];
         }
 

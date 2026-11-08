@@ -4,9 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Brief;
 use App\Models\Project;
-use App\Support\EntityAccess;
-use App\Support\ProjectAccess;
-use App\Support\ProjectAccessLevel;
+use App\Services\BriefProjectService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -15,10 +13,14 @@ use Illuminate\Validation\ValidationException;
  * Which projects came from a brief, and which part of the ask each takes.
  * The link is optional in both directions: a project may start without a brief
  * and be linked to one later, and a brief may never get a project (a dead end).
- * See docs/brief-entity.md.
+ * Rules live in BriefProjectService. See docs/brief-entity.md.
  */
 class BriefProjectController extends Controller
 {
+    public function __construct(protected BriefProjectService $links)
+    {
+    }
+
     /** Link from the brief page. */
     public function storeFromBrief(Request $request, Brief $brief): RedirectResponse
     {
@@ -27,7 +29,7 @@ class BriefProjectController extends Controller
             'scope_note' => ['nullable', 'string'],
         ]);
 
-        $this->link($brief, $this->findProject($validated['project_id']), $validated['scope_note'] ?? null);
+        $this->links->link($brief, $this->findProject($validated['project_id']), $validated['scope_note'] ?? null);
 
         return back();
     }
@@ -45,57 +47,37 @@ class BriefProjectController extends Controller
             throw ValidationException::withMessages(['brief_id' => __('validation.exists', ['attribute' => 'brief'])]);
         }
 
-        $this->link($brief, $project, $validated['scope_note'] ?? null);
+        $this->links->link($brief, $project, $validated['scope_note'] ?? null);
 
         return back();
     }
 
     public function update(Request $request, Brief $brief, Project $project): RedirectResponse
     {
-        $this->authorizeLink($brief, $project);
-
         $validated = $request->validate(['scope_note' => ['nullable', 'string']]);
 
-        $brief->projects()->updateExistingPivot($project->getKey(), ['scope_note' => $validated['scope_note'] ?? null]);
+        $this->links->updateNote($brief, $project, $validated['scope_note'] ?? null);
 
         return back();
     }
 
     public function destroy(Brief $brief, Project $project): RedirectResponse
     {
-        $this->authorizeLink($brief, $project);
-
-        $brief->projects()->detach($project->getKey());
+        $this->links->unlink($brief, $project);
 
         return back();
     }
 
-    /**
-     * Start a project from an approved brief. Linking an existing project does not
-     * need approval; starting a new one from the ask does.
-     */
+    /** Start a project from a brief (any brief that is not declined). */
     public function createProject(Request $request, Brief $brief): RedirectResponse
     {
-        EntityAccess::authorize($request->user(), 'Brief', EntityAccess::UPDATE);
-        EntityAccess::authorize($request->user(), 'Project', EntityAccess::CREATE);
-
-        if (! $brief->isApproved()) {
-            throw ValidationException::withMessages(['name' => __('ui.brief_must_be_approved')]);
-        }
-
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'code' => ['nullable', 'string', 'max:255'],
             'scope_note' => ['nullable', 'string'],
         ]);
 
-        $project = Project::query()->create([
-            'workspace_id' => $brief->workspace_id,
-            'name' => $validated['name'],
-            'code' => $validated['code'] ?? null,
-        ]);
-
-        $brief->projects()->attach($project->getKey(), ['scope_note' => $validated['scope_note'] ?? null]);
+        $project = $this->links->createProject($brief, $validated['name'], $validated['code'] ?? null, $validated['scope_note'] ?? null);
 
         return redirect()->route('projects.dashboard', $project);
     }
@@ -109,23 +91,5 @@ class BriefProjectController extends Controller
         }
 
         return $project;
-    }
-
-    protected function link(Brief $brief, Project $project, ?string $scopeNote): void
-    {
-        $this->authorizeLink($brief, $project);
-
-        if ((int) $project->workspace_id !== (int) $brief->workspace_id) {
-            throw ValidationException::withMessages(['project_id' => __('ui.brief_same_workspace')]);
-        }
-
-        // Linking twice only updates the note.
-        $brief->projects()->syncWithoutDetaching([$project->getKey() => ['scope_note' => $scopeNote]]);
-    }
-
-    protected function authorizeLink(Brief $brief, Project $project): void
-    {
-        EntityAccess::authorize(auth()->user(), 'Brief', EntityAccess::UPDATE);
-        ProjectAccess::assertCan([(int) $project->getKey()], ProjectAccessLevel::Edit);
     }
 }

@@ -69,6 +69,16 @@ class FormBuilder
         return $this->input('text', $name, $value, $options);
     }
 
+    public function date(string $name, $value = null, array $options = []): HtmlString
+    {
+        // A date input only accepts Y-m-d; drop any time part from a stored value.
+        if (is_string($value) && preg_match('/^\d{4}-\d{2}-\d{2}/', $value) === 1) {
+            $value = substr($value, 0, 10);
+        }
+
+        return $this->input('date', $name, $value, $options);
+    }
+
     public function textarea(string $name, $value = null, array $options = []): HtmlString
     {
         $options = $this->mergeName($name, $options);

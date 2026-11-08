@@ -8,6 +8,10 @@
         {{ Form::bsText($name, $value, $attributes) }}
         @break
 
+    @case('date')
+        {{ Form::bsText($name, $value, $attributes + ['input_kind' => 'date']) }}
+        @break
+
     @case('textarea')
         {{ Form::bsTextarea($name, $value, $attributes) }}
         @break

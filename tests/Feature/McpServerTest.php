@@ -12,6 +12,7 @@ use App\Mcp\Tools\GetGherkinTool;
 use App\Mcp\Tools\GetLineageTool;
 use App\Mcp\Tools\GetProcessFlowTool;
 use App\Mcp\Tools\GetReadinessTool;
+use App\Mcp\Tools\LinkBriefProjectTool;
 use App\Mcp\Tools\GetRecordTool;
 use App\Mcp\Tools\ListCommentsTool;
 use App\Mcp\Tools\ListProjectsTool;
@@ -314,6 +315,99 @@ class McpServerTest extends TestCase
         BAssistServer::actingAs($this->userA)
             ->tool(GetRecordTool::class, ['entity' => 'FunctionalRequirement', 'id' => $this->b['fr']->id])
             ->assertHasErrors();
+    }
+
+    public function test_a_brief_is_listed_created_and_shows_its_projects(): void
+    {
+        BAssistServer::actingAs($this->userA)
+            ->tool(DescribeEntityTool::class, ['entity' => 'Brief'])
+            ->assertOk()
+            ->assertSee(['workspace_id', 'ask', 'received_at']);
+
+        BAssistServer::actingAs($this->userA)
+            ->tool(CreateRecordTool::class, [
+                'entity' => 'Brief',
+                'data' => [
+                    'workspace_id' => $this->a['workspace']->id,
+                    'title' => 'Dealer portal ask',
+                    'ask' => 'Build us an app for dealers',
+                    'source_type' => 'email',
+                    'status' => 'received',
+                ],
+            ])
+            ->assertOk()
+            ->assertSee('Dealer portal ask');
+
+        $brief = \App\Models\Brief::query()->where('title', 'Dealer portal ask')->sole();
+        $brief->projects()->attach($this->a['project']->id, ['scope_note' => 'Phase one']);
+
+        BAssistServer::actingAs($this->userA)
+            ->tool(GetRecordTool::class, ['entity' => 'Brief', 'id' => $brief->id])
+            ->assertOk()
+            ->assertSee(['Phase one', $this->a['project']->name]);
+
+        BAssistServer::actingAs($this->userA)
+            ->tool(ListRecordsTool::class, ['entity' => 'Brief'])
+            ->assertOk()
+            ->assertSee('Dealer portal ask');
+    }
+
+    public function test_a_brief_links_unlinks_and_starts_projects_through_mcp(): void
+    {
+        $brief = \App\Models\Brief::query()->create([
+            'title' => 'Dealer portal ask',
+            'workspace_id' => $this->a['workspace']->id,
+            'ask' => 'Build us an app for dealers',
+        ]);
+
+        BAssistServer::actingAs($this->userA)
+            ->tool(LinkBriefProjectTool::class, [
+                'action' => 'link',
+                'brief_id' => $brief->id,
+                'project_id' => $this->a['project']->id,
+                'scope_note' => 'Phase one',
+            ])
+            ->assertOk()
+            ->assertSee('Phase one');
+
+        BAssistServer::actingAs($this->userA)
+            ->tool(LinkBriefProjectTool::class, [
+                'action' => 'create_project',
+                'brief_id' => $brief->id,
+                'name' => 'Dealer app',
+                'scope_note' => 'Phase two',
+            ])
+            ->assertOk()
+            ->assertSee('Dealer app');
+        $this->assertCount(2, $brief->fresh()->projects);
+
+        BAssistServer::actingAs($this->userA)
+            ->tool(LinkBriefProjectTool::class, [
+                'action' => 'unlink',
+                'brief_id' => $brief->id,
+                'project_id' => $this->a['project']->id,
+            ])
+            ->assertOk();
+        $this->assertCount(1, $brief->fresh()->projects);
+
+        // Another organisation's project and brief are not reachable.
+        BAssistServer::actingAs($this->userA)
+            ->tool(LinkBriefProjectTool::class, [
+                'action' => 'link',
+                'brief_id' => $brief->id,
+                'project_id' => $this->b['project']->id,
+            ])
+            ->assertHasErrors();
+
+        $brief->update(['status' => 'declined', 'status_reason' => 'Out of scope']);
+        BAssistServer::actingAs($this->userA)
+            ->tool(LinkBriefProjectTool::class, [
+                'action' => 'create_project',
+                'brief_id' => $brief->id,
+                'name' => 'Not allowed',
+            ])
+            ->assertHasErrors();
+        $this->assertSame(0, \App\Models\Project::query()->where('name', 'Not allowed')->count());
     }
 
     public function test_create_record_validates_and_links_lineage(): void

@@ -72,7 +72,7 @@
             </form>
         @endif
 
-        @if ($canEdit && $brief->isApproved() && entity_can('Project', 'create'))
+        @if ($canEdit && $brief->status !== \App\Support\BriefStatus::DECLINED && entity_can('Project', 'create'))
             <form method="POST" action="{{ route('briefs.create-project', $brief->id) }}" class="flex flex-wrap items-end gap-3">
                 @csrf
                 <div class="kt-form-item grow">

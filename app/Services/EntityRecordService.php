@@ -159,6 +159,19 @@ class EntityRecordService
                 ->all();
         }
 
+        if ($model === 'Brief') {
+            $record['projects'] = \App\Models\Brief::query()->with('projects:id,name,code')->find($id)
+                ?->projects
+                ->map(fn ($project) => [
+                    'id' => (int) $project->id,
+                    'name' => $project->name,
+                    'code' => $project->code,
+                    'scope_note' => $project->pivot->scope_note,
+                ])
+                ->values()
+                ->all() ?? [];
+        }
+
         return $record;
     }
 

@@ -26,6 +26,8 @@
 
 @section('content')
     @php
+        $briefs = $briefs ?? collect();
+        $hasBriefs = $briefs->isNotEmpty();
         $hasObjectives = $objectives->isNotEmpty();
         $hasNeeds = $needs->isNotEmpty();
         $hasStakeholders = $stakeholders->isNotEmpty();
@@ -52,7 +54,8 @@
         $hasMatrix = $matrixRows !== [];
         $readinessItems = $readiness['items'] ?? [];
         $readinessTotal = (int) ($readiness['total_gaps'] ?? 0);
-        $hasAnyArtifacts = $hasObjectives
+        $hasAnyArtifacts = $hasBriefs
+            || $hasObjectives
             || $hasNeeds
             || $hasStakeholders
             || $hasStakeholderNeeds
@@ -76,6 +79,7 @@
         $hasProjectComments = app(\App\Support\PrintComments::class)->for($project) !== [];
 
         $tocSections = array_values(array_filter([
+            $hasBriefs ? ['id' => 'section-briefs', 'label' => $briefs->count() > 1 ? __('ui.briefs') : __('ui.brief')] : null,
             $hasStrategicBaseline ? ['id' => 'section-strategic-baseline', 'label' => __('ui.strategic_baseline')] : null,
             $hasScopeItems ? ['id' => 'section-scope-items', 'label' => __('ui.scope_items')] : null,
             $hasNeeds ? ['id' => 'section-business-needs', 'label' => __('ui.business_needs')] : null,
@@ -140,6 +144,52 @@
                 @endforeach
             </ol>
         </nav>
+    @endif
+
+    {{-- The ask the project came from. First item of the pack; absent when there is no brief. --}}
+    @if ($hasBriefs)
+        <h2 id="section-briefs" class="section-title">{{ $briefs->count() > 1 ? __('ui.briefs') : __('ui.brief') }}</h2>
+        @foreach ($briefs as $brief)
+            <article class="artifact">
+                <h3 class="item-title">{{ $brief->title }}</h3>
+                <div class="artifact__meta">
+                    <span><strong>{{ __('ui.brief_version') }}</strong>{{ $brief->version }}</span>
+                    <span><strong>{{ __('ui.status') }}</strong>{{ $brief->statusLabel() }}</span>
+                    @if ($brief->received_at)
+                        <span><strong>{{ __('ui.brief_received_at') }}</strong>{{ $brief->received_at->format('Y-m-d') }}</span>
+                    @endif
+                    @if ($brief->source_type)
+                        <span><strong>{{ __('ui.brief_source') }}</strong>{{ \App\Support\BriefSourceType::label($brief->source_type) }}@if ($brief->source_note) — {{ $brief->source_note }}@endif</span>
+                    @endif
+                </div>
+                <dl class="kv">
+                    @if ($brief->pivot?->scope_note)
+                        <dt>{{ __('ui.brief_scope_taken') }}</dt>
+                        <dd class="prose">{{ $brief->pivot->scope_note }}</dd>
+                    @endif
+                    @if ($brief->ask)
+                        <dt>{{ __('ui.brief_ask') }}</dt>
+                        <dd class="prose">{{ $brief->ask }}</dd>
+                    @endif
+                    @if ($brief->stated_constraints)
+                        <dt>{{ __('ui.brief_stated_constraints') }}</dt>
+                        <dd class="prose">{{ $brief->stated_constraints }}</dd>
+                    @endif
+                    @if ($brief->stated_success_measures)
+                        <dt>{{ __('ui.brief_stated_success_measures') }}</dt>
+                        <dd class="prose">{{ $brief->stated_success_measures }}</dd>
+                    @endif
+                    @if ($brief->open_questions)
+                        <dt>{{ __('ui.brief_open_questions') }}</dt>
+                        <dd class="prose">{{ $brief->open_questions }}</dd>
+                    @endif
+                    @if (! empty($brief->attachment_names))
+                        <dt>{{ __('ui.attachments') }}</dt>
+                        <dd class="prose">{{ implode(', ', $brief->attachment_names) }}</dd>
+                    @endif
+                </dl>
+            </article>
+        @endforeach
     @endif
 
     <h2 class="section-title">{{ __('ui.project_readiness') }}</h2>

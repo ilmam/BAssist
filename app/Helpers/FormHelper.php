@@ -14,6 +14,7 @@ class FormHelper
                 case 'text':
                 case 'textarea':
                 case 'code':
+                case 'date':
                 case 'select':
                 case 'kt-select':
                 case 'checkbox':

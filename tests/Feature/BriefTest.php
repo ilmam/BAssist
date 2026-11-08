@@ -201,6 +201,9 @@ class BriefTest extends TestCase
 
     public function test_the_menu_lists_briefs_under_each_workspace(): void
     {
+        $this->project('Menu project', 'MNU');
+        $this->brief();
+
         $labels = [];
         $walk = function (array $items) use (&$walk, &$labels): void {
             foreach ($items as $item) {
@@ -211,13 +214,15 @@ class BriefTest extends TestCase
         $walk(app(NavTreeBuilder::class)->build());
 
         $this->assertContains('Briefs', $labels);
+        $this->assertContains('Projects', $labels);
     }
 
     public function test_brief_pages_open_and_save(): void
     {
         $this->get(route('briefs.index'))->assertOk();
 
-        $this->get(route('briefs.create'))->assertOk()->assertSee('name="attachments[]"', false);
+        $this->get(route('briefs.create'))->assertOk()->assertSee('name="attachments[]"', false)
+            ->assertSee('type="date"', false);
 
         $this->post(route('briefs.store'), [
             'title' => 'From the form',
@@ -289,15 +294,19 @@ class BriefTest extends TestCase
         $this->assertCount(0, $brief->fresh()->projects);
     }
 
-    public function test_only_an_approved_brief_starts_a_new_project(): void
+    public function test_a_declined_brief_does_not_start_a_new_project(): void
     {
         $brief = $this->brief();
+        $brief->update(['status' => BriefStatus::DECLINED, 'status_reason' => 'Out of scope']);
 
         $this->post(route('briefs.create-project', $brief->id), ['name' => 'Dealer app'])
             ->assertSessionHasErrors('name');
         $this->assertSame(0, Project::query()->where('name', 'Dealer app')->count());
+    }
 
-        $brief->update(['status' => BriefStatus::APPROVED]);
+    public function test_a_brief_starts_a_new_project_and_the_brief_page_links_to_it(): void
+    {
+        $brief = $this->brief();
 
         $response = $this->post(route('briefs.create-project', $brief->id), [
             'name' => 'Dealer app',
@@ -309,6 +318,34 @@ class BriefTest extends TestCase
         $response->assertRedirect(route('projects.dashboard', $project));
         $this->assertSame($this->workspace->id, $project->workspace_id);
         $this->assertSame('Everything in the first release', $project->briefs->first()->pivot->scope_note);
+
+        $this->get(route('briefs.show', $brief->id))
+            ->assertOk()
+            ->assertSee('Dealer app')
+            ->assertSee(route('projects.dashboard', $project), false);
+    }
+
+    public function test_the_export_pack_opens_with_the_brief_when_there_is_one(): void
+    {
+        $with = $this->project('With brief', 'WTH');
+        $without = $this->project('Without brief', 'WTO');
+        $brief = $this->brief();
+        $brief->update(['stated_constraints' => 'Live by March']);
+        $with->briefs()->attach($brief->id, ['scope_note' => 'The dealer side only']);
+
+        $html = $this->get(route('projects.export', $with))->assertOk()
+            ->assertSee('section-briefs', false)
+            ->assertSee('Live by March')
+            ->assertSee('The dealer side only')
+            ->getContent();
+
+        $briefAt = strpos($html, '<h2 id="section-briefs"');
+        $readinessAt = strpos($html, '>'.e(__('ui.project_readiness')).'</h2>');
+        $this->assertNotFalse($briefAt);
+        $this->assertNotFalse($readinessAt);
+        $this->assertLessThan($readinessAt, $briefAt);
+
+        $this->get(route('projects.export', $without))->assertOk()->assertDontSee('<h2 id="section-briefs"', false);
     }
 
     public function test_the_project_list_can_filter_by_having_a_brief(): void

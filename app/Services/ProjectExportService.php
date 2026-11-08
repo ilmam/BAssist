@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Architecture;
 use App\Models\Project;
+use App\Support\EntityAccess;
 use App\Support\ScopeItemDirection;
 
 /**
@@ -95,6 +96,8 @@ class ProjectExportService
             'project' => $project,
             'generated_at' => now(),
             'readiness' => $this->readiness->forProject($project),
+            // The ask the project came from: first item of the pack, only when there is one.
+            'briefs' => $this->briefsFor($project),
             // Strategy early in the pack (blade order: after readiness, before BO/BN).
             'strategic_baseline' => $project->strategicBaseline,
             'scope_items' => $project->scopeItems
@@ -154,6 +157,25 @@ class ProjectExportService
                 'summary' => $matrix['summary'],
             ],
         ];
+    }
+
+    /**
+     * Briefs this project came from, with their attachment names. Empty when the project
+     * has none (normal) or the reader may not view briefs.
+     *
+     * @return \Illuminate\Support\Collection<int, \App\Models\Brief>
+     */
+    protected function briefsFor(Project $project): \Illuminate\Support\Collection
+    {
+        if (! EntityAccess::can(auth()->user(), 'Brief', EntityAccess::VIEW)) {
+            return collect();
+        }
+
+        return $project->briefs()->orderBy('title')->get()->each(function ($brief): void {
+            $brief->setAttribute('attachment_names', collect(app(AttachmentService::class)->list('Brief', (int) $brief->getKey()))
+                ->map(fn ($attachment) => $attachment->original_name)
+                ->all());
+        });
     }
 
     /**

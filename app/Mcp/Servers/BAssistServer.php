@@ -16,6 +16,7 @@ use App\Mcp\Tools\GetProcessFlowTool;
 use App\Mcp\Tools\GetReadinessTool;
 use App\Mcp\Tools\GetRecordTool;
 use App\Mcp\Tools\GetTraceabilityTool;
+use App\Mcp\Tools\LinkBriefProjectTool;
 use App\Mcp\Tools\ListCommentsTool;
 use App\Mcp\Tools\ListProjectsTool;
 use App\Mcp\Tools\ListRecordsTool;
@@ -50,6 +51,8 @@ class BAssistServer extends Server
         5. Acceptance: Scenarios under a Feature; acceptance criteria on a requirement.
 
         Guardrails attach to these: Business Rule, Assumption, Constraint, Risk, Scope Item, Change Request.
+
+        A Brief is the ask as received (an email, meeting or document), before analysis. It belongs to a workspace (workspace_id, not project_id) and sits above projects; get-record on a Brief lists the projects started from it; link-brief-project links, unlinks or starts a project from it. A project may have no brief, and that is normal. Never rewrite a brief's ask: a re-brief is a new version.
 
         How to work:
         - Start with list-projects, then get-readiness for the project in question.
@@ -93,6 +96,7 @@ class BAssistServer extends Server
         CreateRecordTool::class,
         UpdateRecordTool::class,
         DeleteRecordTool::class,
+        LinkBriefProjectTool::class,
         ListCommentsTool::class,
         AddCommentTool::class,
         MarkCommentImplementedTool::class,
