@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Need Spine process</title>
+<style>
+:root{--bg:#fff;--text:#2C2C2A;--muted:#5F5E5A;--line:#888780;--am:#BA7517;--am-f:#FAEEDA;--am-t:#633806;
+--pu-f:#EEEDFE;--pu-s:#534AB7;--pu-t:#3C3489;--pu-t2:#534AB7;
+--te-f:#E1F5EE;--te-s:#0F6E56;--te-t:#085041;--te-t2:#0F6E56;
+--co-f:#FAECE7;--co-s:#993C1D;--co-t:#712B13;--co-t2:#993C1D;
+--gr-f:#F1EFE8;--gr-s:#5F5E5A;--gr-t:#444441;--gr-t2:#5F5E5A}
+@media (prefers-color-scheme:dark){:root{--bg:#1c1c1a;--text:#F1EFE8;--muted:#B4B2A9;--line:#B4B2A9;--am:#EF9F27;--am-f:#633806;--am-t:#FAC775;
+--pu-f:#3C3489;--pu-s:#AFA9EC;--pu-t:#CECBF6;--pu-t2:#AFA9EC;
+--te-f:#085041;--te-s:#9FE1CB;--te-t:#E1F5EE;--te-t2:#9FE1CB;
+--co-f:#712B13;--co-s:#F0997B;--co-t:#F5C4B3;--co-t2:#F0997B;
+--gr-f:#444441;--gr-s:#B4B2A9;--gr-t:#F1EFE8;--gr-t2:#D3D1C7}}
+body{margin:0;padding:16px;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+svg{display:block;max-width:1040px;margin:0 auto}
+text{font-family:inherit;fill:var(--text)}
+.th{font-size:14px;font-weight:500}.ts{font-size:12px;fill:var(--muted)}
+.pu rect{fill:var(--pu-f);stroke:var(--pu-s);stroke-width:.5}.pu .th{fill:var(--pu-t)}.pu .ts{fill:var(--pu-t2)}
+.te rect{fill:var(--te-f);stroke:var(--te-s);stroke-width:.5}.te .th{fill:var(--te-t)}.te .ts{fill:var(--te-t2)}
+.co rect{fill:var(--co-f);stroke:var(--co-s);stroke-width:.5}.co .th{fill:var(--co-t)}.co .ts{fill:var(--co-t2)}
+.gr rect{fill:var(--gr-f);stroke:var(--gr-s);stroke-width:.5}.gr .th{fill:var(--gr-t)}.gr .ts{fill:var(--gr-t2)}
+.chip{fill:var(--bg);stroke:var(--gr-s);stroke-width:.5}
+.gate{fill:var(--am-f);stroke:var(--am);stroke-width:1}
+.gatet{fill:var(--am-t);font-size:12px;font-weight:500}
+.lane{fill:none;stroke:var(--line);stroke-width:.5;stroke-dasharray:4 4}
+.arr{fill:none;stroke:var(--line);stroke-width:1.5}
+.up{fill:none;stroke:var(--am);stroke-width:1.5}
+.upt{fill:var(--am);font-size:12px}
+</style>
+</head>
+<body>
+<svg width="100%" viewBox="0 0 1040 846" role="img">
+<title>Need Spine: actors, BAssist, MCP server and Claude skills</title>
+<desc>People build and agree the spine in BAssist. The MCP server connects it to Claude Code, where the developer and the AI run skills that check the build gate, write tests and code, and send gaps back as comments for people to answer.</desc>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+
+<text class="th" x="20" y="40">BAssist</text>
+<text class="ts" x="20" y="58">records and people</text>
+<text class="th" x="20" y="376">MCP server</text>
+<text class="ts" x="20" y="394">the bridge</text>
+<text class="th" x="20" y="516">Development</text>
+<text class="ts" x="20" y="534">Claude or humans</text>
+
+<g transform="translate(0,36)">
+<rect class="lane" x="140" y="-16" width="890" height="254" rx="16"/>
+<rect x="150" y="-8" width="330" height="28" rx="6" fill="none" stroke="var(--pu-s)" stroke-width="1" stroke-dasharray="4 3"/>
+<text class="th" x="165" y="6" dominant-baseline="central" style="fill:var(--pu-t)">Brief (optional): the ask, as received</text>
+<text class="ts" x="500" y="6" dominant-baseline="central">received → under review → approved, declined or on hold</text>
+<line class="arr" x1="217" y1="20" x2="217" y2="42" marker-end="url(#arrow)"/>
+<g class="pu">
+<rect x="150" y="44" width="134" height="56" rx="8"/>
+<text class="th" x="217" y="62" text-anchor="middle" dominant-baseline="central">Business need</text>
+<text class="ts" x="217" y="82" text-anchor="middle" dominant-baseline="central">The problem</text>
+<rect x="304" y="44" width="134" height="56" rx="8"/>
+<text class="th" x="371" y="62" text-anchor="middle" dominant-baseline="central">Objective</text>
+<text class="ts" x="371" y="82" text-anchor="middle" dominant-baseline="central">Measurable goal</text>
+<rect x="458" y="44" width="134" height="56" rx="8"/>
+<text class="th" x="525" y="62" text-anchor="middle" dominant-baseline="central">Stakeholder need</text>
+<text class="ts" x="525" y="82" text-anchor="middle" dominant-baseline="central">Who needs what</text>
+<rect x="612" y="44" width="134" height="56" rx="8"/>
+<text class="th" x="679" y="62" text-anchor="middle" dominant-baseline="central">Solution</text>
+<text class="ts" x="679" y="82" text-anchor="middle" dominant-baseline="central">FR, NFR, Feature</text>
+<rect x="766" y="44" width="134" height="56" rx="8"/>
+<text class="th" x="833" y="62" text-anchor="middle" dominant-baseline="central">Acceptance</text>
+<text class="ts" x="833" y="82" text-anchor="middle" dominant-baseline="central">Given/When/Then</text>
+<rect x="915" y="44" width="105" height="56" rx="8"/>
+<text class="th" x="967" y="62" text-anchor="middle" dominant-baseline="central">Guardrails</text>
+<text class="ts" x="967" y="82" text-anchor="middle" dominant-baseline="central">BR, AS, CO, RK</text>
+</g>
+<line class="arr" x1="286" y1="72" x2="302" y2="72" marker-end="url(#arrow)"/>
+<line class="arr" x1="440" y1="72" x2="456" y2="72" marker-end="url(#arrow)"/>
+<line class="arr" x1="594" y1="72" x2="610" y2="72" marker-end="url(#arrow)"/>
+<line class="arr" x1="748" y1="72" x2="764" y2="72" marker-end="url(#arrow)"/>
+<text class="ts" x="150" y="113" dominant-baseline="central">Soft while shaping: capture in any order, record unknowns as open assumptions</text>
+
+<g class="co">
+<rect x="150" y="128" width="215" height="96" rx="8"/>
+<text class="th" x="165" y="148" dominant-baseline="central">Business analyst</text>
+<text class="ts" x="165" y="170" dominant-baseline="central">Builds and links the spine</text>
+<text class="ts" x="165" y="188" dominant-baseline="central">Marks items agreed</text>
+<text class="ts" x="165" y="206" dominant-baseline="central">Answers threads, closes them</text>
+<rect x="715" y="128" width="305" height="96" rx="8"/>
+<text class="th" x="730" y="148" dominant-baseline="central">Stakeholders and reviewers</text>
+<text class="ts" x="730" y="170" dominant-baseline="central">Review and approve the baseline</text>
+<text class="ts" x="730" y="188" dominant-baseline="central">Answer open threads</text>
+<text class="ts" x="730" y="206" dominant-baseline="central">Ask for changes (change requests)</text>
+</g>
+<g class="pu">
+<rect x="380" y="128" width="320" height="96" rx="8"/>
+<text class="th" x="540" y="148" text-anchor="middle" dominant-baseline="central">Comment threads on any record</text>
+<text class="ts" x="540" y="170" text-anchor="middle" dominant-baseline="central">open → answered → implemented → closed</text>
+<text class="ts" x="540" y="188" text-anchor="middle" dominant-baseline="central">AI files and applies</text>
+<text class="ts" x="540" y="206" text-anchor="middle" dominant-baseline="central">People answer and close</text>
+</g>
+<line class="arr" x1="367" y1="176" x2="378" y2="176" marker-end="url(#arrow)"/>
+<line class="arr" x1="713" y1="176" x2="702" y2="176" marker-end="url(#arrow)"/>
+
+<line class="arr" x1="250" y1="240" x2="250" y2="284" marker-end="url(#arrow)"/>
+<text class="ts" x="260" y="264">specs and answers</text>
+<line class="up" x1="960" y1="284" x2="960" y2="240" marker-end="url(#arrow)"/>
+<text class="upt" x="950" y="264" text-anchor="end">gaps and reports</text>
+
+<g class="gr">
+<rect x="140" y="286" width="890" height="120" rx="12"/>
+<text class="th" x="160" y="308" dominant-baseline="central">MCP server: bassist</text>
+<text class="ts" x="330" y="308" dominant-baseline="central">Acts as the signed-in user; writes need a write-access token</text>
+</g>
+<text class="ts" x="160" y="341" dominant-baseline="central">Read</text>
+<rect class="chip" x="215" y="328" width="105" height="26" rx="4"/><text class="ts" x="267" y="341" text-anchor="middle" dominant-baseline="central">get-readiness</text>
+<rect class="chip" x="328" y="328" width="95" height="26" rx="4"/><text class="ts" x="375" y="341" text-anchor="middle" dominant-baseline="central">get-lineage</text>
+<rect class="chip" x="431" y="328" width="95" height="26" rx="4"/><text class="ts" x="478" y="341" text-anchor="middle" dominant-baseline="central">get-gherkin</text>
+<rect class="chip" x="534" y="328" width="110" height="26" rx="4"/><text class="ts" x="589" y="341" text-anchor="middle" dominant-baseline="central">list-comments</text>
+<rect class="chip" x="652" y="328" width="100" height="26" rx="4"/><text class="ts" x="702" y="341" text-anchor="middle" dominant-baseline="central">list-records</text>
+<text class="ts" x="160" y="379" dominant-baseline="central">Write</text>
+<rect class="chip" x="215" y="366" width="105" height="26" rx="4"/><text class="ts" x="267" y="379" text-anchor="middle" dominant-baseline="central">create-record</text>
+<rect class="chip" x="328" y="366" width="105" height="26" rx="4"/><text class="ts" x="380" y="379" text-anchor="middle" dominant-baseline="central">add-comment</text>
+<rect class="chip" x="441" y="366" width="190" height="26" rx="4"/><text class="ts" x="536" y="379" text-anchor="middle" dominant-baseline="central">mark-comment-implemented</text>
+
+<line class="arr" x1="250" y1="408" x2="250" y2="444" marker-end="url(#arrow)"/>
+<line class="up" x1="960" y1="444" x2="960" y2="408" marker-end="url(#arrow)"/>
+<text class="upt" x="950" y="430" text-anchor="end">add-comment</text>
+
+<rect class="lane" x="140" y="446" width="890" height="340" rx="16"/>
+<g class="co">
+<rect x="150" y="460" width="430" height="64" rx="8"/>
+<text class="th" x="165" y="478" dominant-baseline="central">Developer</text>
+<text class="ts" x="165" y="498" dominant-baseline="central">Codes, or directs Claude, and makes the decisions</text>
+<text class="ts" x="165" y="514" dominant-baseline="central">Only person who can waive the build gate</text>
+</g>
+<g class="te">
+<rect x="590" y="460" width="430" height="64" rx="8"/>
+<text class="th" x="605" y="478" dominant-baseline="central">Claude Code</text>
+<text class="ts" x="605" y="498" dominant-baseline="central">Reads the spec, writes tests and code, logs gaps</text>
+<text class="ts" x="605" y="514" dominant-baseline="central">Never agrees a record or closes a thread</text>
+</g>
+
+<g class="te">
+<rect x="150" y="540" width="185" height="190" rx="8"/>
+<text class="th" x="242" y="562" text-anchor="middle" dominant-baseline="central">1  Set up</text>
+<text class="ts" x="242" y="580" text-anchor="middle" dominant-baseline="central">Developer, once</text>
+<text class="th" x="165" y="606" dominant-baseline="central">/spine-init</text>
+<text class="ts" x="165" y="624" dominant-baseline="central">Bind repo to project</text>
+<text class="th" x="165" y="650" dominant-baseline="central">/spine-guardrails</text>
+<text class="ts" x="165" y="668" dominant-baseline="central">Install hooks and CI</text>
+<text class="th" x="165" y="694" dominant-baseline="central">/spine-recover</text>
+<text class="ts" x="165" y="712" dominant-baseline="central">Draft spine from code</text>
+
+<rect x="378" y="540" width="185" height="190" rx="8"/>
+<text class="th" x="470" y="562" text-anchor="middle" dominant-baseline="central">2  Check</text>
+<text class="ts" x="470" y="580" text-anchor="middle" dominant-baseline="central">Developer and Claude</text>
+<text class="th" x="393" y="606" dominant-baseline="central">/spine-status</text>
+<text class="ts" x="393" y="624" dominant-baseline="central">Readiness and gaps</text>
+<text class="th" x="393" y="650" dominant-baseline="central">/spine-change</text>
+<text class="ts" x="393" y="668" dominant-baseline="central">Change request first</text>
+<text class="th" x="393" y="694" dominant-baseline="central">/spine-ready</text>
+<text class="ts" x="393" y="712" dominant-baseline="central">Build gate for an item</text>
+
+<rect x="606" y="540" width="185" height="190" rx="8"/>
+<text class="th" x="698" y="562" text-anchor="middle" dominant-baseline="central">3  Build</text>
+<text class="ts" x="698" y="580" text-anchor="middle" dominant-baseline="central">Claude, developer reviews</text>
+<text class="th" x="621" y="606" dominant-baseline="central">/spine-pull</text>
+<text class="ts" x="621" y="624" dominant-baseline="central">Gherkin into features/</text>
+<text class="th" x="621" y="650" dominant-baseline="central">Tests first, then code</text>
+<text class="ts" x="621" y="668" dominant-baseline="central">Names cite FR and SC codes</text>
+<text class="th" x="621" y="694" dominant-baseline="central">/spine-verify</text>
+<text class="ts" x="621" y="712" dominant-baseline="central">Trace scenarios to tests</text>
+
+<rect x="834" y="540" width="185" height="190" rx="8"/>
+<text class="th" x="926" y="562" text-anchor="middle" dominant-baseline="central">4  Feed back</text>
+<text class="ts" x="926" y="580" text-anchor="middle" dominant-baseline="central">Claude files, BA answers</text>
+<text class="th" x="849" y="606" dominant-baseline="central">Gap log</text>
+<text class="ts" x="849" y="624" dominant-baseline="central">docs/requirements-gaps.md</text>
+<text class="th" x="849" y="650" dominant-baseline="central">/spine-feedback</text>
+<text class="ts" x="849" y="668" dominant-baseline="central">File rows as comments</text>
+<text class="th" x="849" y="694" dominant-baseline="central">/spine-apply</text>
+<text class="ts" x="849" y="712" dominant-baseline="central">Act on answered threads</text>
+</g>
+<line class="arr" x1="337" y1="635" x2="376" y2="635" marker-end="url(#arrow)"/>
+<rect class="gate" x="566" y="596" width="36" height="22" rx="4"/>
+<text class="gatet" x="584" y="607" text-anchor="middle" dominant-baseline="central">Gate</text>
+<line class="arr" x1="565" y1="635" x2="604" y2="635" marker-end="url(#arrow)"/>
+<line class="arr" x1="793" y1="635" x2="832" y2="635" marker-end="url(#arrow)"/>
+
+<path class="up" d="M926 732 L926 752 L470 752 L470 734" marker-end="url(#arrow)"/>
+<text class="upt" x="698" y="772" text-anchor="middle">After /spine-apply: re-check the gate, then rebuild</text>
+</g>
+</svg>
+</body>
+</html>
