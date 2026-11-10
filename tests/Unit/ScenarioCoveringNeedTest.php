@@ -102,6 +102,50 @@ GHERKIN;
         $this->assertTrue($rows->every(fn (array $row) => ($row['deferred_this_release'] ?? false) === true));
     }
 
+    public function test_deprecated_feature_and_its_scenarios_are_left_out_of_the_matrix(): void
+    {
+        (new StatusPrioritySeeder)->run();
+        [$project, $ownerNeed, $coveredNeed, $feature] = $this->seedCoveringExample();
+        $feature->update(['status_id' => EntityStatus::id(EntityStatus::DEPRECATED)]);
+
+        $rows = collect(app(TraceabilityMatrixService::class)->build(['project_id' => $project->id])['rows']);
+
+        $this->assertTrue($rows->whereNotNull('feature_id')->isEmpty());
+        $this->assertTrue($rows->whereNotNull('scenario_id')->isEmpty());
+        $this->assertTrue($rows->where('stakeholder_need_id', $ownerNeed->id)->isNotEmpty());
+    }
+
+    public function test_deprecated_scenarios_do_not_count_as_coverage(): void
+    {
+        (new StatusPrioritySeeder)->run();
+        [$project, , , $feature, $scenario] = $this->seedCoveringExample();
+        $scenario->update(['status_id' => EntityStatus::id(EntityStatus::DEPRECATED)]);
+
+        $rows = collect(app(TraceabilityMatrixService::class)->build(['project_id' => $project->id])['rows']);
+        $featureRow = $rows->firstWhere('feature_id', $feature->id);
+
+        $this->assertNotNull($featureRow);
+        $this->assertSame(0, $featureRow['scenarios_count']);
+        $this->assertContains('missing_scenarios', $featureRow['gaps']);
+    }
+
+    public function test_a_scenario_cannot_be_deprecated(): void
+    {
+        (new StatusPrioritySeeder)->run();
+        [, , , $feature, $scenario] = $this->seedCoveringExample();
+        $deprecatedId = EntityStatus::id(EntityStatus::DEPRECATED);
+
+        try {
+            (new ScenarioRepository)->update($scenario->id, ['status_id' => $deprecatedId]);
+            $this->fail('Deprecating a scenario should be rejected.');
+        } catch (ValidationException $e) {
+            $this->assertArrayHasKey('status_id', $e->errors());
+        }
+
+        $fields = app(\App\Support\EntityFormBuilder::class)->fields(\App\Data\ScenarioData::class);
+        $this->assertArrayNotHasKey($deprecatedId, collect($fields['status_id']['list'] ?? [])->all());
+    }
+
     public function test_readiness_does_not_count_wont_needs_as_unpackaged(): void
     {
         (new SuperAdminSeeder)->run();

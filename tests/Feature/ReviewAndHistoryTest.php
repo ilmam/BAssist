@@ -131,6 +131,15 @@ class ReviewAndHistoryTest extends TestCase
             ->assertSee('Approved by Owner User');
     }
 
+    public function test_export_pack_has_no_signoff_section(): void
+    {
+        $this->postJson($this->url('review.approve'))->assertOk();
+
+        $this->get(route('projects.export', $this->project))
+            ->assertOk()
+            ->assertDontSee(__('ui.review_signoff_title'));
+    }
+
     public function test_roles_matrix_saves_approve_only_for_approvable_entities(): void
     {
         $role = Role::query()->create(['name' => 'QA', 'slug' => 'qa']);

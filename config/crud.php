@@ -112,6 +112,22 @@ return [
             'nav_icon_v8' => 'people',
         ],
 
+        'RaciItem' => [
+            'home' => false,
+            'nav' => false,
+            'nav_label' => 'RACI Items',
+            'nav_icon' => 'element-11',
+            'nav_icon_v8' => 'element-11',
+        ],
+
+        'RaciAssignment' => [
+            'home' => false,
+            'nav' => false,
+            'nav_label' => 'RACI Assignments',
+            'nav_icon' => 'element-11',
+            'nav_icon_v8' => 'element-11',
+        ],
+
         'StakeholderNeed' => [
             'home' => true,
             'nav' => false,

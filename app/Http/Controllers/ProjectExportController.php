@@ -43,7 +43,8 @@ class ProjectExportController extends Controller
         app()->instance(PrintComments::class, new PrintComments(
             $includeComments,
             $threads,
-            app(\App\Services\ApprovalService::class)->currentForProject($project),
+            // Sign-off block switched off in the export pack (null = none); BABOK documents keep it.
+            null,
         ));
         $pack['includeComments'] = $includeComments;
         $pack['commentsMode'] = $commentsMode;

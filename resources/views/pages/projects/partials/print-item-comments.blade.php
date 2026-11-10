@@ -2,6 +2,15 @@
 @php
     $printComments = app(\App\Support\PrintComments::class);
     $printThreads = $printComments->for($item ?? null);
+    $printItemUrl = null;
+    if ($printThreads !== [] && ($item ?? null) instanceof \Illuminate\Database\Eloquent\Model) {
+        $printModel = class_basename($item);
+        $printItemUrl = $item instanceof \App\Models\Project
+            ? route('projects.dashboard', $item)
+            : (array_key_exists($printModel, \App\Support\CrudEntityRegistry::all())
+                ? model_route($printModel, 'show', $item->getKey())
+                : null);
+    }
 @endphp
 @if ($printThreads !== [])
     <aside class="print-comments" aria-label="{{ __('ui.comments_open_title') }}">
@@ -10,7 +19,7 @@
                 @foreach (collect([$thread])->concat($thread->replies) as $comment)
                     <div class="print-comments__line {{ $comment->parent_id ? 'print-comments__line--reply' : '' }}">
                         <div class="print-comments__who">
-                            @unless ($comment->parent_id)<span class="print-comments__num">C{{ $printComments->numberOf($thread) }}</span><span class="print-comments__when">{{ __('ui.comments_status_'.$thread->currentStatus()) }}</span>@endunless
+                            @unless ($comment->parent_id)<span class="print-comments__num">@if ($printItemUrl)<a href="{{ $printItemUrl }}#comment-{{ $thread->id }}" title="{{ __('ui.comments_open_thread') }}">C{{ $printComments->numberOf($thread) }}</a>@else C{{ $printComments->numberOf($thread) }}@endif</span><span class="print-comments__when">{{ __('ui.comments_status_'.$thread->currentStatus()) }}</span>@endunless
                             <strong>{{ $comment->author?->name ?? __('ui.comments_former_user') }}</strong>
                             <span class="print-comments__when">{{ $comment->created_at?->format('Y-m-d') }}</span>
                         </div>

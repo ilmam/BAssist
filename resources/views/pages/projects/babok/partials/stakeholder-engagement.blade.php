@@ -7,7 +7,6 @@
             <tr>
                 <th>{{ __('ui.stakeholder') }}</th>
                 <th>{{ __('ui.type') }}</th>
-                <th>{{ __('ui.responsibility') }}</th>
                 <th>{{ __('ui.influence') }}</th>
                 <th>{{ __('ui.interest') }}</th>
             </tr>
@@ -16,10 +15,9 @@
             @foreach ($stakeholders as $stakeholder)
                 <tr>
                     <td>{{ $stakeholder->name ?: '—' }}</td>
-                    <td>{{ $stakeholder->type ?: '—' }}</td>
-                    <td>{{ $stakeholder->notes ?: '—' }}</td>
-                    <td>{{ $stakeholder->influence ?: '—' }}</td>
-                    <td>{{ $stakeholder->interest ?: '—' }}</td>
+                    <td>{{ \App\Support\StakeholderType::label($stakeholder->type) }}</td>
+                    <td>{{ \App\Support\StakeholderLevel::label($stakeholder->influence) }}</td>
+                    <td>{{ \App\Support\StakeholderLevel::label($stakeholder->interest) }}</td>
                 </tr>
             @endforeach
         </tbody>

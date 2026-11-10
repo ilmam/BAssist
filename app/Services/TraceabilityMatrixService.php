@@ -12,6 +12,7 @@ use App\Models\SwimlaneFlowStep;
 use App\Models\Project;
 use App\Models\StakeholderNeed;
 use App\Models\Workspace;
+use App\Support\EntityStatus;
 use App\Support\ProjectContext;
 use App\Support\WorkspaceContext;
 use Illuminate\Database\Eloquent\Builder;
@@ -141,31 +142,31 @@ class TraceabilityMatrixService
                 'businessObjectives:id,number,title',
                 'businessObjectives.stakeholderNeeds:id,number,title,project_id,priority_id,status_id',
                 'businessObjectives.stakeholderNeeds.stakeholders:id,name',
-                'businessObjectives.stakeholderNeeds.features' => fn ($query) => $query
-                    ->withCount('scenarios')
+                'businessObjectives.stakeholderNeeds.features' => fn ($query) => $this->live($query)
+                    ->withCount(['scenarios' => fn ($q) => $this->live($q)])
                     ->with(['swimlaneFlowStep.swimlaneFlow:id,title', 'swimlaneFlowStep.project:id,name,code'])
                     ->orderBy('number')
                     ->orderBy('title'),
-                'businessObjectives.stakeholderNeeds.functionalRequirements' => fn ($query) => $query
+                'businessObjectives.stakeholderNeeds.functionalRequirements' => fn ($query) => $this->live($query)
                     ->with(['swimlaneFlowStep.swimlaneFlow:id,title', 'swimlaneFlowStep.project:id,name,code'])
                     ->orderBy('number')
                     ->orderBy('title'),
-                'businessObjectives.stakeholderNeeds.nonFunctionalRequirements' => fn ($query) => $query
+                'businessObjectives.stakeholderNeeds.nonFunctionalRequirements' => fn ($query) => $this->live($query)
                     ->orderBy('number')
                     ->orderBy('title'),
                 'businessObjectives.stakeholderNeeds.coveringScenarios' => fn ($query) => $this->coveringScenarioEagerLoad($query),
-                'businessObjectives.stakeholderNeeds.changeRequests.features' => fn ($query) => $query
+                'businessObjectives.stakeholderNeeds.changeRequests.features' => fn ($query) => $this->live($query)
                     ->whereNull('stakeholder_need_id')
-                    ->withCount('scenarios')
+                    ->withCount(['scenarios' => fn ($q) => $this->live($q)])
                     ->with(['swimlaneFlowStep.swimlaneFlow:id,title', 'swimlaneFlowStep.project:id,name,code'])
                     ->orderBy('number')
                     ->orderBy('title'),
-                'businessObjectives.stakeholderNeeds.changeRequests.functionalRequirements' => fn ($query) => $query
+                'businessObjectives.stakeholderNeeds.changeRequests.functionalRequirements' => fn ($query) => $this->live($query)
                     ->whereNull('stakeholder_need_id')
                     ->with(['swimlaneFlowStep.swimlaneFlow:id,title', 'swimlaneFlowStep.project:id,name,code'])
                     ->orderBy('number')
                     ->orderBy('title'),
-                'businessObjectives.stakeholderNeeds.changeRequests.nonFunctionalRequirements' => fn ($query) => $query
+                'businessObjectives.stakeholderNeeds.changeRequests.nonFunctionalRequirements' => fn ($query) => $this->live($query)
                     ->whereNull('stakeholder_need_id')
                     ->orderBy('number')
                     ->orderBy('title'),
@@ -285,31 +286,31 @@ class TraceabilityMatrixService
                 'project:id,name,code',
                 'stakeholderNeeds:id,number,title,project_id,priority_id,status_id',
                 'stakeholderNeeds.stakeholders:id,name',
-                'stakeholderNeeds.features' => fn ($query) => $query
-                    ->withCount('scenarios')
+                'stakeholderNeeds.features' => fn ($query) => $this->live($query)
+                    ->withCount(['scenarios' => fn ($q) => $this->live($q)])
                     ->with(['swimlaneFlowStep.swimlaneFlow:id,title', 'swimlaneFlowStep.project:id,name,code'])
                     ->orderBy('number')
                     ->orderBy('title'),
-                'stakeholderNeeds.functionalRequirements' => fn ($query) => $query
+                'stakeholderNeeds.functionalRequirements' => fn ($query) => $this->live($query)
                     ->with(['swimlaneFlowStep.swimlaneFlow:id,title', 'swimlaneFlowStep.project:id,name,code'])
                     ->orderBy('number')
                     ->orderBy('title'),
-                'stakeholderNeeds.nonFunctionalRequirements' => fn ($query) => $query
+                'stakeholderNeeds.nonFunctionalRequirements' => fn ($query) => $this->live($query)
                     ->orderBy('number')
                     ->orderBy('title'),
                 'stakeholderNeeds.coveringScenarios' => fn ($query) => $this->coveringScenarioEagerLoad($query),
-                'stakeholderNeeds.changeRequests.features' => fn ($query) => $query
+                'stakeholderNeeds.changeRequests.features' => fn ($query) => $this->live($query)
                     ->whereNull('stakeholder_need_id')
-                    ->withCount('scenarios')
+                    ->withCount(['scenarios' => fn ($q) => $this->live($q)])
                     ->with(['swimlaneFlowStep.swimlaneFlow:id,title', 'swimlaneFlowStep.project:id,name,code'])
                     ->orderBy('number')
                     ->orderBy('title'),
-                'stakeholderNeeds.changeRequests.functionalRequirements' => fn ($query) => $query
+                'stakeholderNeeds.changeRequests.functionalRequirements' => fn ($query) => $this->live($query)
                     ->whereNull('stakeholder_need_id')
                     ->with(['swimlaneFlowStep.swimlaneFlow:id,title', 'swimlaneFlowStep.project:id,name,code'])
                     ->orderBy('number')
                     ->orderBy('title'),
-                'stakeholderNeeds.changeRequests.nonFunctionalRequirements' => fn ($query) => $query
+                'stakeholderNeeds.changeRequests.nonFunctionalRequirements' => fn ($query) => $this->live($query)
                     ->whereNull('stakeholder_need_id')
                     ->orderBy('number')
                     ->orderBy('title'),
@@ -420,31 +421,31 @@ class TraceabilityMatrixService
             ->with([
                 'project:id,name,code',
                 'stakeholders:id,name',
-                'features' => fn ($query) => $query
-                    ->withCount('scenarios')
+                'features' => fn ($query) => $this->live($query)
+                    ->withCount(['scenarios' => fn ($q) => $this->live($q)])
                     ->with(['swimlaneFlowStep.swimlaneFlow:id,title', 'swimlaneFlowStep.project:id,name,code'])
                     ->orderBy('number')
                     ->orderBy('title'),
-                'functionalRequirements' => fn ($query) => $query
+                'functionalRequirements' => fn ($query) => $this->live($query)
                     ->with(['swimlaneFlowStep.swimlaneFlow:id,title', 'swimlaneFlowStep.project:id,name,code'])
                     ->orderBy('number')
                     ->orderBy('title'),
-                'nonFunctionalRequirements' => fn ($query) => $query
+                'nonFunctionalRequirements' => fn ($query) => $this->live($query)
                     ->orderBy('number')
                     ->orderBy('title'),
                 'coveringScenarios' => fn ($query) => $this->coveringScenarioEagerLoad($query),
-                'changeRequests.features' => fn ($query) => $query
+                'changeRequests.features' => fn ($query) => $this->live($query)
                     ->whereNull('stakeholder_need_id')
-                    ->withCount('scenarios')
+                    ->withCount(['scenarios' => fn ($q) => $this->live($q)])
                     ->with(['swimlaneFlowStep.swimlaneFlow:id,title', 'swimlaneFlowStep.project:id,name,code'])
                     ->orderBy('number')
                     ->orderBy('title'),
-                'changeRequests.functionalRequirements' => fn ($query) => $query
+                'changeRequests.functionalRequirements' => fn ($query) => $this->live($query)
                     ->whereNull('stakeholder_need_id')
                     ->with(['swimlaneFlowStep.swimlaneFlow:id,title', 'swimlaneFlowStep.project:id,name,code'])
                     ->orderBy('number')
                     ->orderBy('title'),
-                'changeRequests.nonFunctionalRequirements' => fn ($query) => $query
+                'changeRequests.nonFunctionalRequirements' => fn ($query) => $this->live($query)
                     ->whereNull('stakeholder_need_id')
                     ->orderBy('number')
                     ->orderBy('title'),
@@ -544,10 +545,10 @@ class TraceabilityMatrixService
      */
     protected function orphanFeatureRows(?int $projectId, ?int $workspaceId): array
     {
-        $features = $this->scopedQuery(Feature::query(), $projectId, $workspaceId)
+        $features = $this->live($this->scopedQuery(Feature::query(), $projectId, $workspaceId))
             ->whereNull('stakeholder_need_id')
             ->whereNull('change_request_id')
-            ->withCount('scenarios')
+            ->withCount(['scenarios' => fn ($q) => $this->live($q)])
             ->with(['project:id,name,code', 'swimlaneFlowStep.swimlaneFlow:id,title', 'swimlaneFlowStep.project:id,name,code'])
             ->orderBy('number')
             ->orderBy('title')
@@ -571,7 +572,7 @@ class TraceabilityMatrixService
      */
     protected function orphanFunctionalRequirementRows(?int $projectId, ?int $workspaceId): array
     {
-        $requirements = $this->scopedQuery(FunctionalRequirement::query(), $projectId, $workspaceId)
+        $requirements = $this->live($this->scopedQuery(FunctionalRequirement::query(), $projectId, $workspaceId))
             ->whereNull('stakeholder_need_id')
             ->whereNull('change_request_id')
             ->with(['project:id,name,code', 'swimlaneFlowStep.swimlaneFlow:id,title', 'swimlaneFlowStep.project:id,name,code'])
@@ -597,7 +598,7 @@ class TraceabilityMatrixService
      */
     protected function orphanNonFunctionalRequirementRows(?int $projectId, ?int $workspaceId): array
     {
-        $requirements = $this->scopedQuery(NonFunctionalRequirement::query(), $projectId, $workspaceId)
+        $requirements = $this->live($this->scopedQuery(NonFunctionalRequirement::query(), $projectId, $workspaceId))
             ->whereNull('stakeholder_need_id')
             ->whereNull('change_request_id')
             ->with(['project:id,name,code'])
@@ -895,11 +896,27 @@ class TraceabilityMatrixService
      */
     protected function coveringScenarioEagerLoad($query)
     {
-        return $query
+        return $this->live($query)
+            ->whereHas('feature', fn ($featureQuery) => $this->live($featureQuery))
             ->with(['feature' => fn ($featureQuery) => $featureQuery
-                ->withCount('scenarios')
+                ->withCount(['scenarios' => fn ($q) => $this->live($q)])
                 ->with(['swimlaneFlowStep.swimlaneFlow:id,title', 'swimlaneFlowStep.project:id,name,code'])])
             ->orderBy('title');
+    }
+
+    /**
+     * Deprecated records are retired but kept for history; they do not belong in the live matrix.
+     *
+     * @param  \Illuminate\Database\Eloquent\Relations\Relation|Builder  $query
+     * @return \Illuminate\Database\Eloquent\Relations\Relation|Builder
+     */
+    protected function live($query)
+    {
+        $deprecatedId = EntityStatus::id(EntityStatus::DEPRECATED);
+
+        return $deprecatedId === null
+            ? $query
+            : $query->where(fn ($q) => $q->whereNull('status_id')->orWhere('status_id', '!=', $deprecatedId));
     }
 
     /**

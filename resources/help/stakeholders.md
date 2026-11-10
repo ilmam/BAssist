@@ -13,8 +13,9 @@ Projects fail long before delivery when requirements are gathered in an echo cha
 ## How to Use
 
 1. **Map Operational Roles (Not Names):** Capture organizational titles or functional groups rather than temporary staff names. (e.g., Write “Parts Field Team” or “Regional Operations Manager,” not “John Smith”).
-2. **Evaluate Influence vs. Interest:** For each stakeholder group, assess their power to veto, fund, or authorize the change against their day-to-day operational interest in using the final system.
-3. **Assign Accountability:** Connect specific stakeholder groups directly to the Stakeholder Requirements they own. No requirement, system feature, or process flow should proceed to development without a clear, documented stakeholder sponsor.
+2. **Choose the Stakeholder Type:** Pick the one type that fits best: Customer, Supplier, Regulator, Executive, Sponsor, Domain subject matter expert, End user, Operational support, Implementation subject matter expert, Business analyst, Project manager, Tester, or Other. The list runs from outside the organization inward, following the BABOK stakeholder onion diagram.
+3. **Evaluate Influence vs. Interest:** Pick Low, Medium or High for each. Influence is their power to veto, fund, or authorize the change; Interest is how much the change matters to their day-to-day work. High influence with high interest means work closely with them.
+4. **Assign Accountability:** Connect specific stakeholder groups directly to the Stakeholder Requirements they own. No requirement, system feature, or process flow should proceed to development without a clear, documented stakeholder sponsor.
 
 ## The Bigger Picture & Downstream Links
 

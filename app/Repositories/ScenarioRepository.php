@@ -7,6 +7,7 @@ use App\Data\ScenarioViewData;
 use App\Models\Feature;
 use App\Models\Scenario;
 use App\Models\StakeholderNeed;
+use App\Support\EntityStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Validation\ValidationException;
 
@@ -40,6 +41,7 @@ class ScenarioRepository extends BaseRepository
 
     public function create(array $data)
     {
+        $this->assertNotDeprecated($data);
         $this->assertCoveringNeedInProject($data);
         $scenario = new Scenario($this->filterFillable($data));
         $scenario->syncDocumentFields();
@@ -52,6 +54,7 @@ class ScenarioRepository extends BaseRepository
     {
         /** @var Scenario $scenario */
         $scenario = Scenario::query()->findOrFail($id);
+        $this->assertNotDeprecated($newData);
         $this->assertCoveringNeedInProject(array_merge(
             ['feature_id' => $scenario->feature_id],
             $newData,
@@ -69,6 +72,18 @@ class ScenarioRepository extends BaseRepository
         $scenario = $this->findModel($id, ['feature.project', 'stakeholderNeed', 'status']);
 
         return $scenario;
+    }
+
+    /** Scenarios are deleted, never deprecated. */
+    protected function assertNotDeprecated(array $data): void
+    {
+        $deprecatedId = EntityStatus::id(EntityStatus::DEPRECATED);
+
+        if ($deprecatedId !== null && (int) ($data['status_id'] ?? 0) === (int) $deprecatedId) {
+            throw ValidationException::withMessages([
+                'status_id' => 'A scenario cannot be deprecated. Delete it instead.',
+            ]);
+        }
     }
 
     /**

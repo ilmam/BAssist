@@ -33,6 +33,7 @@ class ProjectExportService
      *   objectives: \Illuminate\Database\Eloquent\Collection,
      *   needs: \Illuminate\Database\Eloquent\Collection,
      *   stakeholders: \Illuminate\Database\Eloquent\Collection,
+     *   raci_items: \Illuminate\Database\Eloquent\Collection,
      *   stakeholder_needs: \Illuminate\Database\Eloquent\Collection,
      *   state_flows: list<array{model: \App\Models\StateFlow, mermaid: string}>,
      *   swimlane_flows: list<array{model: \App\Models\SwimlaneFlow, mermaid: string}>,
@@ -55,8 +56,10 @@ class ProjectExportService
             'status',
             'businessObjectives.businessNeeds',
             'businessNeeds.businessObjectives',
-            // Export stakeholders matrix: only rows linked to ≥1 StakeholderNeed (project "requirements").
+            // Export stakeholders: manually added rows, or system rows linked to ≥1 StakeholderNeed.
             'stakeholders.stakeholderNeeds',
+            'stakeholders.raciAssignments',
+            'raciItems.assignments',
             'stakeholderNeeds.priority',
             'stakeholderNeeds.status',
             'stakeholderNeeds.stakeholders',
@@ -85,10 +88,13 @@ class ProjectExportService
 
         $matrix = $this->matrix->build(['project_id' => $project->id]);
 
-        // Stakeholders section rule: include only stakeholders that have at least one
-        // related StakeholderNeed (pivot). Unlinked role seeds / profiles are omitted.
+        // Stakeholders section rule: include stakeholders that were added manually to the
+        // project (not Need Spine system defaults) OR that have at least one related
+        // StakeholderNeed. Unused system default stakeholders are omitted.
         $stakeholdersWithNeeds = $project->stakeholders
-            ->filter(fn ($stakeholder) => $stakeholder->stakeholderNeeds->isNotEmpty())
+            ->filter(fn ($stakeholder) => ! $stakeholder->is_system
+                || $stakeholder->stakeholderNeeds->isNotEmpty()
+                || $stakeholder->raciAssignments->isNotEmpty())
             ->sortBy('name')
             ->values();
 
@@ -109,6 +115,7 @@ class ProjectExportService
             'objectives' => $project->businessObjectives->sortBy('number')->values(),
             'needs' => $project->businessNeeds->sortBy('number')->values(),
             'stakeholders' => $stakeholdersWithNeeds,
+            'raci_items' => $project->raciItems->sortBy('title')->values(),
             'stakeholder_needs' => $project->stakeholderNeeds->sortBy('number')->values(),
             'state_flows' => $project->stateFlows
                 ->sortBy('title')
@@ -139,12 +146,13 @@ class ProjectExportService
             'constraints' => $project->constraints->sortBy('title')->values(),
             'business_rules' => $project->businessRules->sortBy('title')->values(),
             'risks' => $project->risks->sortBy('number')->values(),
-            'functional_requirements' => $project->functionalRequirements->sortBy('number')->values(),
-            'non_functional_requirements' => $project->nonFunctionalRequirements->sortBy('number')->values(),
+            'functional_requirements' => $project->functionalRequirements->reject->isDeprecated()->sortBy('number')->values(),
+            'non_functional_requirements' => $project->nonFunctionalRequirements->reject->isDeprecated()->sortBy('number')->values(),
             // Features last among artifacts (before the matrix appendix).
             // UI designs (docs/design-layer.md): every screen with the Salt text its mockup is drawn from.
             'screens' => $this->uiDesigns->build($project)['screens'],
             'features' => $project->features
+                ->reject->isDeprecated()
                 ->sortBy('number')
                 ->values()
                 ->map(fn ($feature) => [

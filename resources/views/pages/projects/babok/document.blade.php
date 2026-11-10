@@ -7,6 +7,7 @@
     $objectives = $pack['objectives'] ?? collect();
     $needs = $pack['needs'] ?? collect();
     $stakeholders = $pack['stakeholders'] ?? collect();
+    $raci_items = $pack['raci_items'] ?? collect();
     $stakeholder_needs = $pack['stakeholder_needs'] ?? collect();
     $state_flows = $pack['state_flows'] ?? [];
     $swimlane_flows = $pack['swimlane_flows'] ?? [];

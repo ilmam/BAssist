@@ -98,7 +98,6 @@ class NeedSpineSeeder extends Seeder
                 'is_system' => false,
             ],
             [
-                'type' => 'role',
                 'status_id' => $agreedId,
                 'notes' => 'Example custom stakeholder (Agile). Not a BABOK system default.',
             ],

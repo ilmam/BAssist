@@ -40,14 +40,29 @@
                         $item = $row['item'];
                         $thread = $row['thread'];
                         $days = (int) $thread->created_at?->diffInDays(now());
+                        // Deep link to the live thread, so it can be answered straight away.
+                        $model = class_basename($item);
+                        $recordUrl = $item instanceof \App\Models\Project
+                            ? route('projects.dashboard', $item)
+                            : (array_key_exists($model, \App\Support\CrudEntityRegistry::all())
+                                ? model_route($model, 'show', $item->getKey())
+                                : null);
+                        $threadUrl = $recordUrl ? $recordUrl.'#comment-'.$thread->id : null;
                     @endphp
                     <tr>
-                        <td>C{{ $row['number'] }}</td>
                         <td>
+                            @if ($threadUrl)<a href="{{ $threadUrl }}" title="{{ __('ui.comments_open_thread') }}">C{{ $row['number'] }}</a>@else C{{ $row['number'] }}@endif
+                        </td>
+                        <td>
+                            @if ($recordUrl)<a href="{{ $recordUrl }}">@endif
                             @if ($item->getAttribute('code'))<span class="artifact__code">{{ $item->getAttribute('code') }}</span>@endif
                             {{ $item->getAttribute('title') ?? $item->getAttribute('name') }}
+                            @if ($recordUrl)</a>@endif
                         </td>
-                        <td>{!! \App\Services\CommentService::render(\Illuminate\Support\Str::limit($thread->body, 280)) !!}</td>
+                        <td>
+                            {!! \App\Services\CommentService::render(\Illuminate\Support\Str::limit($thread->body, 280)) !!}
+                            @if ($threadUrl)<br><a href="{{ $threadUrl }}">{{ __('ui.comments_open_thread') }} →</a>@endif
+                        </td>
                         <td>{{ __('ui.comments_status_'.$thread->currentStatus()) }}</td>
                         <td>{{ $thread->author?->name ?? '—' }}</td>
                         <td>{{ trans_choice('ui.comments_age_days', $days, ['count' => $days]) }}</td>

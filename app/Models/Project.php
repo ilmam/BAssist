@@ -83,6 +83,12 @@ class Project extends BaseModel
     }
 
     #[Relation('HasMany')]
+    public function raciItems(): HasMany
+    {
+        return $this->hasMany(RaciItem::class);
+    }
+
+    #[Relation('HasMany')]
     public function stakeholderNeeds(): HasMany
     {
         return $this->hasMany(StakeholderNeed::class);

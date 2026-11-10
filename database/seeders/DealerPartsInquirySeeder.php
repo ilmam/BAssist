@@ -278,7 +278,7 @@ TXT,
         $sponsor = Stakeholder::query()->updateOrCreate(
             ['project_id' => $project->id, 'name' => 'Omar San', 'is_system' => false],
             [
-                'type' => 'role',
+                'type' => 'sponsor',
                 'influence' => 'high',
                 'interest' => 'high',
                 'status_id' => $agreedId,
@@ -289,7 +289,7 @@ TXT,
         $partsField = Stakeholder::query()->updateOrCreate(
             ['project_id' => $project->id, 'name' => 'Parts Field Team', 'is_system' => false],
             [
-                'type' => 'role',
+                'type' => 'end_user',
                 'influence' => 'high',
                 'interest' => 'high',
                 'status_id' => $agreedId,
@@ -300,7 +300,7 @@ TXT,
         $partsPlanning = Stakeholder::query()->updateOrCreate(
             ['project_id' => $project->id, 'name' => 'Parts Planning Team', 'is_system' => false],
             [
-                'type' => 'role',
+                'type' => 'operational_support',
                 'influence' => 'high',
                 'interest' => 'high',
                 'status_id' => $agreedId,
@@ -311,7 +311,7 @@ TXT,
         $dealers = Stakeholder::query()->updateOrCreate(
             ['project_id' => $project->id, 'name' => 'Dealers', 'is_system' => false],
             [
-                'type' => 'role',
+                'type' => 'end_user',
                 'influence' => 'medium',
                 'interest' => 'high',
                 'status_id' => $agreedId,
@@ -322,7 +322,7 @@ TXT,
         Stakeholder::query()->updateOrCreate(
             ['project_id' => $project->id, 'name' => 'DX Team', 'is_system' => false],
             [
-                'type' => 'role',
+                'type' => 'implementation_sme',
                 'influence' => 'medium',
                 'interest' => 'medium',
                 'status_id' => $agreedId,
@@ -333,7 +333,7 @@ TXT,
         Stakeholder::query()->updateOrCreate(
             ['project_id' => $project->id, 'name' => 'Shift Software', 'is_system' => false],
             [
-                'type' => 'role',
+                'type' => 'supplier',
                 'influence' => 'medium',
                 'interest' => 'high',
                 'status_id' => $agreedId,

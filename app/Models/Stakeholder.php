@@ -11,6 +11,7 @@ use App\Models\Concerns\HasEntityStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use RuntimeException;
 
 #[RoutableAttribute]
@@ -64,6 +65,12 @@ class Stakeholder extends BaseModel
     public function status(): BelongsTo
     {
         return $this->belongsTo(Status::class);
+    }
+
+    #[Relation('HasMany')]
+    public function raciAssignments(): HasMany
+    {
+        return $this->hasMany(RaciAssignment::class);
     }
 
     #[Relation('BelongsToMany')]

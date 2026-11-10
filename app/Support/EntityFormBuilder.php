@@ -32,7 +32,18 @@ class EntityFormBuilder
 
         $fields = ValidationHints::apply($dtoClass, $fields);
 
-        return FormHelper::getFormFields($this->populateSelectOptions($fields));
+        $fields = $this->populateSelectOptions($fields);
+
+        // Scenarios are deleted, never deprecated: no Deprecated choice in the status dropdown.
+        if ($dtoClass === \App\Data\ScenarioData::class && isset($fields['status_id']['list'])) {
+            $deprecatedId = EntityStatus::id(EntityStatus::DEPRECATED);
+            $list = $fields['status_id']['list'];
+            $fields['status_id']['list'] = $list instanceof \Illuminate\Support\Collection
+                ? $list->except([$deprecatedId])
+                : array_diff_key($list, [$deprecatedId => true]);
+        }
+
+        return FormHelper::getFormFields($fields);
     }
 
     /**

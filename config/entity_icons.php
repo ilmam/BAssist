@@ -34,6 +34,8 @@ return [
 
         // Requirements Modeling
         'Stakeholder' => 'people',
+        'RaciItem' => 'element-11',
+        'RaciAssignment' => 'element-11',
         'StakeholderNeed' => 'message-text',     // speech bubble
         'Feature' => 'category',
         'Scenario' => 'category',
